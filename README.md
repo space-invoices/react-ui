@@ -1,39 +1,70 @@
 # @spaceinvoices/react-ui - Space Invoices Component Library
 
-> **Pre-built components for the Space Invoices API with shadcn/ui compatibility**
+> **Pre-built React components for the Space Invoices API**
 
-A component library designed for the Space Invoices platform. Components integrate with the Space Invoices API/SDK and are meant to be copied into your project for full customization freedom.
+70+ components for building invoicing applications with the Space Invoices API. Includes forms, tables, dashboard charts, and more - all designed to be copied into your project for full customization.
 
 ## Philosophy
 
-Space Invoices UI components are **designed to be copied**, not installed as a package. This gives you:
+These components are **designed to be copied**, not installed as a package:
 
-- ✅ **Full ownership** - Modify freely without breaking changes
-- ✅ **Complete customization** - Change behavior and structure
-- ✅ **No version conflicts** - You control when to update
-- ✅ **Zero lock-in** - Components work standalone in your codebase
-- ✅ **Space Invoices-powered** - Pre-built integration with Space Invoices SDK
+- **Full ownership** - Modify freely without breaking changes
+- **Complete customization** - Change behavior and structure
+- **No version conflicts** - You control when to update
+- **Zero lock-in** - Components work standalone in your codebase
 
-**Important**: Space Invoices UI components are built on top of **shadcn/ui primitives**. We recommend users bring their own shadcn/ui components or use an alternative design system. The `components/ui/` folder is included only as reference and can be replaced with your own implementation.
+**Note**: Components are built on **shadcn/ui primitives**. Bring your own shadcn/ui components or use any alternative. The `components/ui/` folder is included as reference only.
 
 ## Quick Start
 
 ### 1. Install Dependencies
 
 ```bash
-# Space Invoices core
+# Core requirements
 npm install @spaceinvoices/js-sdk @tanstack/react-query
 
-# Forms (if using form components)
+# For forms
 npm install react-hook-form @hookform/resolvers zod
 
-# Your UI library (choose one):
-# - Use shadcn/ui: npx shadcn@latest init
-# - Or your own Radix UI components
-# - Or any other React component library
+# UI components (choose one):
+# Option A: Use shadcn/ui (recommended)
+npx shadcn@latest init
+
+# Option B: Use your existing component library
 ```
 
-### 2. Setup Providers
+### 2. Clone This Repository
+
+```bash
+git clone https://github.com/space-invoices/react-ui.git
+```
+
+### 3. Copy What You Need
+
+```bash
+# Required: Core utilities and providers
+cp -r react-ui/src/lib/ your-project/src/lib/
+cp -r react-ui/src/providers/ your-project/src/providers/
+cp -r react-ui/src/hooks/ your-project/src/hooks/
+
+# Copy the components you need
+cp -r react-ui/src/components/invoices/ your-project/src/components/space-invoices/
+cp -r react-ui/src/components/customers/ your-project/src/components/space-invoices/
+cp -r react-ui/src/components/table/ your-project/src/components/space-invoices/
+# ... add more as needed
+
+# DON'T copy components/ui/ - use shadcn/ui instead
+```
+
+### 4. Update Import Paths
+
+```bash
+# Replace @/ui/ imports with your path alias
+find your-project/src/components/space-invoices -type f -name "*.tsx" \
+  -exec sed -i '' 's/@\/ui\//@\//g' {} +
+```
+
+### 5. Setup Providers
 
 ```tsx
 // app.tsx
@@ -59,222 +90,140 @@ export function App() {
 }
 ```
 
-### 3. Copy Space Invoices Components
+## What's Included
+
+### Business Components (Copy These)
+
+```
+src/components/
+├── invoices/           # Create, list, view invoices
+├── customers/          # Customer management
+├── items/              # Products/services catalog
+├── payments/           # Payment tracking
+├── taxes/              # Tax rate management
+├── estimates/          # Quotes and estimates
+├── credit-notes/       # Credit note handling
+├── advance-invoices/   # Advance invoice handling
+├── dashboard/          # Analytics charts
+├── entities/           # Company/organization settings
+├── documents/          # Shared document components
+└── table/              # Generic data table infrastructure
+```
+
+### UI Primitives (Reference Only)
+
+The `components/ui/` folder contains shadcn/ui-style components. **Don't copy these** - use shadcn/ui directly:
 
 ```bash
-# Copy core dependencies (required)
-cp -r packages/ui/src/lib/ your-project/lib/
-cp -r packages/ui/src/providers/ your-project/providers/
-cp -r packages/ui/src/schemas/ your-project/schemas/
-
-# Copy Space Invoices components you need
-cp -r packages/ui/src/components/customers/ your-project/components/leka/
-cp -r packages/ui/src/components/invoices/ your-project/components/leka/
-cp -r packages/ui/src/components/table/ your-project/components/leka/
-
-# Note: DON'T copy components/ui/ - use your own or shadcn/ui instead
+npx shadcn@latest add button input form table dialog select
 ```
 
-### 4. Update Import Paths
+Or use your own component library and update imports in the copied components.
 
-```bash
-# Replace @/ui/ with your path alias
-find your-project/components/leka -type f -exec sed -i '' 's/@\/ui\//@\//g' {} +
-find your-project/providers -type f -exec sed -i '' 's/@\/ui\//@\//g' {} +
-find your-project/schemas -type f -exec sed -i '' 's/@\/ui\//@\//g' {} +
-```
-
-### 5. Configure Path Aliases
-
-```json
-// tsconfig.json
-{
-  "compilerOptions": {
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["./src/*"]
-    }
-  }
-}
-```
-
-## Component Structure
-
-### Space Invoices Components (Copy These)
-
-**Pre-built Space Invoices API integration with forms, tables, and business logic:**
+### Required Utilities
 
 ```
-components/
-├── customers/              # Customer management
-│   ├── create-customer-form/
-│   ├── customer-list-table/
-│   ├── customer-combobox.tsx
-│   └── customers.hooks.ts
-├── invoices/               # Invoice management
-│   ├── create/
-│   └── invoice-list-table/
-├── items/                  # Item/product management
-│   ├── create-item-form/
-│   └── item-list-table/
-├── entities/               # Entity management
-│   └── create-entity-form.tsx
-└── table/                  # Generic data table
-    └── data-table.tsx
-```
-
-**Dependencies**: Require `@spaceinvoices/js-sdk`, TanStack Query, React Hook Form, Zod
-
-### UI Primitives (Use Your Own)
-
-**The `components/ui/` folder contains shadcn/ui components for reference only.**
-
-**Recommended approaches:**
-
-1. **Use shadcn/ui** (recommended):
-   ```bash
-   npx shadcn@latest init
-   npx shadcn@latest add button input form table dialog
-   ```
-
-2. **Use your existing component library**: Space Invoices components can work with any UI library - just update the imports in copied Space Invoices components to point to your components.
-
-3. **Copy our reference**: If you prefer, you can copy our `components/ui/` as a starting point, but you own and maintain these separately.
-
-### Shared Utilities (Copy These)
-
-```
-lib/
-├── utils.ts               # cn() utility (or use from shadcn)
-└── translation.ts         # i18n helper (Space Invoices-specific)
-
-providers/
-├── sdk-provider.tsx       # Space Invoices SDK context (required)
-└── entities-provider.tsx  # Active entity context (required)
-
-schemas/
-├── customer.ts            # Customer validation
-├── entity.ts              # Entity validation
-├── invoice.ts             # Invoice validation
-└── item.ts                # Item validation
+src/
+├── providers/
+│   ├── sdk-provider.tsx       # SDK context (required)
+│   └── entities-provider.tsx  # Active entity context (required)
+├── hooks/
+│   └── *.ts                   # Shared hooks
+└── lib/
+    ├── utils.ts               # cn() utility
+    └── translation.ts         # i18n helper
 ```
 
 ## Usage Examples
 
-### Customer Management
+### Customer List
 
 ```tsx
-import CreateCustomerForm from "@/components/leka/customers/create-customer-form/create-customer-form";
-import { CustomerListTable } from "@/components/leka/customers/customer-list-table/customer-list-table";
+import { CustomerListTable } from "@/components/space-invoices/customers/customer-list-table";
 import { useEntities } from "@/providers/entities-provider";
-import { Button } from "@/components/ui/button"; // Your own UI component
 
 export function CustomersPage() {
   const { activeEntity } = useEntities();
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-6">Customers</h1>
-
-      <CustomerListTable
-        entityId={activeEntity.id}
-        onRowClick={(customer) => {
-          console.log("View customer:", customer);
-        }}
-      />
-    </div>
+    <CustomerListTable
+      entityId={activeEntity.id}
+      onRowClick={(customer) => console.log("Selected:", customer)}
+    />
   );
 }
 ```
 
-### Custom Resource Table
+### Create Invoice Form
 
 ```tsx
-import { DataTable } from "@/components/leka/table/data-table";
-import { useSDK } from "@/providers/sdk-provider";
-import { Button } from "@/components/ui/button"; // Your own
+import { CreateInvoiceForm } from "@/components/space-invoices/invoices/create";
+import { useEntities } from "@/providers/entities-provider";
 
-export function MyResourceList() {
-  const { sdk } = useSDK();
+export function NewInvoicePage() {
   const { activeEntity } = useEntities();
 
   return (
-    <DataTable
-      columns={[
-        { id: "name", header: "Name", sortable: true },
-        {
-          id: "actions",
-          header: "",
-          cell: (item) => <Button size="sm">View</Button>,
-        },
-      ]}
-      cacheKey="my-resources"
-      onFetch={async (params) => {
-        return sdk.myResource.list({
-          entityId: activeEntity.id,
-          ...params,
-        });
-      }}
-      resourceName="resource"
+    <CreateInvoiceForm
       entityId={activeEntity.id}
+      onSuccess={(invoice) => {
+        console.log("Created invoice:", invoice.number);
+      }}
     />
+  );
+}
+```
+
+### Dashboard Charts
+
+```tsx
+import { RevenueTrendChart } from "@/components/space-invoices/dashboard/revenue-trend-chart";
+import { InvoiceStatusChart } from "@/components/space-invoices/dashboard/invoice-status-chart";
+
+export function DashboardPage() {
+  return (
+    <div className="grid grid-cols-2 gap-4">
+      <RevenueTrendChart entityId={activeEntity.id} />
+      <InvoiceStatusChart entityId={activeEntity.id} />
+    </div>
   );
 }
 ```
 
 ## Customization
 
-### Styling
+Since you own the code, customize freely:
 
-Space Invoices components use TailwindCSS utility classes. Since you own the code:
+### Modify Styles
 
 ```tsx
-// In your copied create-customer-form.tsx
-<FormItem className="bg-gray-50 p-4 rounded">  {/* Add your styles */}
-  <FormLabel className="text-purple-600">Name</FormLabel>
-  <FormControl>
-    <Input {...field} />
-  </FormControl>
+// In your copied component
+<FormItem className="bg-gray-50 p-4 rounded-lg">
+  <FormLabel className="text-blue-600 font-semibold">Customer Name</FormLabel>
+  ...
 </FormItem>
 ```
 
-### Adding Fields
-
-Add custom fields to forms by editing the copied component:
+### Add Fields
 
 ```tsx
-// In your copied customer form schema
-export const createCustomerSchema = z.object({
+// Extend the schema
+const createCustomerSchema = z.object({
   name: z.string().min(1),
-  website: z.string().url().optional(),  // Your new field
-  // ... existing fields
+  customField: z.string().optional(), // Your addition
 });
 
-// In your copied form component
-<FormField
-  control={form.control}
-  name="website"
-  render={({ field }) => (
-    <FormItem>
-      <FormLabel>Website</FormLabel>
-      <FormControl>
-        <Input {...field} type="url" />
-      </FormControl>
-    </FormItem>
-  )}
-/>
+// Add to the form
+<FormField name="customField" ... />
 ```
 
-### Translations
-
-Add or modify translations in component locale files:
+### Add Translations
 
 ```typescript
-// components/leka/customers/create-customer-form/locales/fr.ts
+// components/space-invoices/customers/locales/fr.ts
 export default {
-  "customer.Name": "Nom",
-  "customer.Website": "Site web",
-  // ...
+  "customer.name": "Nom du client",
+  "customer.email": "Adresse e-mail",
 };
 ```
 
@@ -282,16 +231,14 @@ export default {
 
 ### SDK Integration
 
-Space Invoices components use TanStack Query hooks wrapping the SDK:
+Components use TanStack Query hooks wrapping the SDK:
 
 ```typescript
 // customers.hooks.ts
-export function useCreateCustomer(options) {
+export function useCreateCustomer() {
   const { sdk } = useSDK();
-
   return useMutation({
     mutationFn: (data) => sdk.customers.createCustomer({ data }),
-    ...options,
   });
 }
 ```
@@ -301,93 +248,20 @@ export function useCreateCustomer(options) {
 All types come from `@spaceinvoices/js-sdk`:
 
 ```typescript
-import type { Customer, CreateCustomerRequest } from "@spaceinvoices/js-sdk";
-
-function MyComponent(props: { customer: Customer }) {
-  // Fully typed
-}
+import type { Customer, Invoice } from "@spaceinvoices/js-sdk";
 ```
-
-### Form Validation
-
-Zod schemas match Space Invoices API exactly:
-
-```typescript
-// schemas/customer.ts
-export const createCustomerSchema = z.object({
-  name: z.string().min(1),
-  address: z.string().nullable().optional(),
-  // Matches Space Invoices API CreateCustomerRequest
-});
-```
-
-## UI Component Conventions
-
-### Separation of Concerns
-
-**DO**: Keep Space Invoices business logic separate from UI primitives
-
-```
-src/
-├── components/
-│   ├── ui/                    # Your shadcn/ui or equivalent
-│   │   ├── button.tsx
-│   │   └── input.tsx
-│   └── leka/                  # Space Invoices-specific components
-│       ├── customers/
-│       └── invoices/
-```
-
-**DON'T**: Mix Space Invoices logic into ui/ primitives
-
-### Import Patterns
-
-Space Invoices components should import from `ui/`:
-
-```tsx
-// In components/leka/customers/create-customer-form.tsx
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Form, FormField } from "@/components/ui/form";
-import { useSDK } from "@/providers/sdk-provider";  // Space Invoices-specific
-```
-
-### Component Naming
-
-- **UI Primitives**: `Button`, `Input`, `Table` (PascalCase, noun)
-- **Space Invoices Components**: `CreateCustomerForm`, `CustomerListTable` (PascalCase, descriptive)
-- **Hooks**: `useCustomers`, `useCreateCustomer` (camelCase, verb)
-- **Schemas**: `createCustomerSchema`, `patchCustomerSchema` (camelCase)
 
 ## Dependencies
 
-### Minimal (Space Invoices Components Only)
-
 ```json
 {
   "dependencies": {
+    "@spaceinvoices/js-sdk": "^2.0.0",
+    "@tanstack/react-query": "^5.0.0",
     "react": "^19.0.0",
-    "@spaceinvoices/js-sdk": "latest",
-    "@tanstack/react-query": "^5.72.1",
-    "react-hook-form": "^7.55.0",
-    "@hookform/resolvers": "^5.1.0",
-    "zod": "^4.1.12"
-  }
-}
-```
-
-### With shadcn/ui (Recommended)
-
-```json
-{
-  "dependencies": {
-    // ... above, plus:
-    "@radix-ui/react-*": "latest",
-    "class-variance-authority": "^0.7.1",
-    "clsx": "^2.1.1",
-    "tailwind-merge": "^3.2.0",
-    "tailwindcss": "^4.1.3",
-    "lucide-react": "^0.475.0"
+    "react-hook-form": "^7.0.0",
+    "@hookform/resolvers": "^5.0.0",
+    "zod": "^3.0.0"
   }
 }
 ```
@@ -395,43 +269,24 @@ import { useSDK } from "@/providers/sdk-provider";  // Space Invoices-specific
 ## Documentation
 
 - **[CONVENTIONS.md](./CONVENTIONS.md)** - Component patterns and architecture
-- **[registry.json](./registry.json)** - Complete component registry with dependencies
-- **API Documentation** - https://eu.spaceinvoices.com/docs
-- **shadcn/ui** - https://ui.shadcn.com
+- **[registry.json](./registry.json)** - Component registry with dependencies
+- **[Space Invoices API Docs](https://docs.spaceinvoices.com)**
+- **[shadcn/ui](https://ui.shadcn.com)**
 
 ## FAQ
 
-**Q: Should I copy the `components/ui/` folder?**
-A: No. Use shadcn/ui (`npx shadcn@latest init`) or your own component library. The ui/ folder is reference only.
-
-**Q: What's the difference between Space Invoices components and shadcn/ui?**
-A: shadcn/ui provides generic UI primitives (button, input, etc.). Space Invoices components provide business logic and API integration (customer forms, invoice tables, etc.) built ON TOP of those primitives.
-
-**Q: Can I use a different UI library instead of shadcn/ui?**
-A: Yes! Update the imports in Space Invoices components to point to your UI library (Material UI, Chakra, Mantine, etc.).
-
 **Q: Why copy-paste instead of npm install?**
-A: Full ownership and customization. Modify components freely without worrying about breaking changes or version conflicts.
+A: Full ownership. Modify components freely without version conflicts or breaking changes.
+
+**Q: Can I use Material UI / Chakra / other libraries?**
+A: Yes. Update the imports in copied components to use your UI library instead of shadcn/ui.
 
 **Q: Do I need the Space Invoices API?**
-A: Yes. Space Invoices components are specifically designed for Space Invoices's backend and won't work with other APIs.
+A: Yes. These components are built specifically for Space Invoices and won't work with other APIs.
 
-**Q: How do I update Space Invoices components?**
-A: Review changes in this repo, then manually merge updates into your customized versions. You control when and what to update.
-
-**Q: What about TypeScript?**
-A: All components are fully typed using `@spaceinvoices/js-sdk` types.
-
-**Q: Which React frameworks are supported?**
-A: All of them! Next.js, Remix, Vite, CRA - works with any React setup.
-
-## Getting Help
-
-- **Space Invoices API Docs**: https://eu.spaceinvoices.com/docs
-- **SDK Documentation**: See `@spaceinvoices/js-sdk` package
-- **shadcn/ui Docs**: https://ui.shadcn.com
-- **Space Invoices Support**: Contact your account team
+**Q: How do I get updates?**
+A: Check this repo for changes and manually merge what you need into your customized versions.
 
 ## License
 
-MIT License - see [LICENSE](./LICENSE) for details.
+MIT License - see [LICENSE](./LICENSE)

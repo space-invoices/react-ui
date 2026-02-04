@@ -1,0 +1,535 @@
+{
+  "$schema": "./registry.schema.json",
+  "name": "@space-invoices/ui",
+  "description": "Copy-paste UI components for Space Invoices applications",
+  "baseUrl": "src",
+  "categories": {
+    "ui": {
+      "name": "UI Primitives",
+      "description": "Low-level UI components (Button, Input, Form, etc.)"
+    },
+    "form": {
+      "name": "Form Components",
+      "description": "Form utilities and wrappers"
+    },
+    "table": {
+      "name": "Table Components",
+      "description": "Data table and related utilities"
+    },
+    "feature": {
+      "name": "Feature Components",
+      "description": "Business logic components (invoices, customers, etc.)"
+    }
+  },
+  "utils": {
+    "translation": {
+      "name": "Translation",
+      "files": ["lib/translation.ts"],
+      "description": "i18n helper for component-level translations"
+    },
+    "hooks": {
+      "name": "Resource Hooks",
+      "files": ["hooks/create-resource-hooks.ts", "hooks/use-resource-mutation.ts"],
+      "dependencies": ["providers/sdk-provider"],
+      "description": "Factory for creating CRUD hooks with optimistic updates"
+    },
+    "string-helpers": {
+      "name": "String Helpers",
+      "files": ["utils/string-helpers.ts"],
+      "description": "String utility functions"
+    }
+  },
+  "providers": {
+    "sdk-provider": {
+      "name": "SDK Provider",
+      "files": ["providers/sdk-provider.tsx", "lib/auth.ts", "lib/browser-cookies.ts"],
+      "description": "Initializes and provides SDK context"
+    },
+    "entities-provider": {
+      "name": "Entities Provider",
+      "files": ["providers/entities-provider.tsx", "providers/entities-context.tsx"],
+      "dependencies": ["sdk-provider"],
+      "description": "Multi-tenant entity management"
+    }
+  },
+  "components": {
+    "ui/button": {
+      "name": "Button",
+      "category": "ui",
+      "files": ["components/ui/button.tsx"],
+      "dependencies": []
+    },
+    "ui/input": {
+      "name": "Input",
+      "category": "ui",
+      "files": ["components/ui/input.tsx"],
+      "dependencies": []
+    },
+    "ui/form": {
+      "name": "Form",
+      "category": "ui",
+      "files": ["components/ui/form.tsx"],
+      "dependencies": ["ui/label"]
+    },
+    "ui/label": {
+      "name": "Label",
+      "category": "ui",
+      "files": ["components/ui/label.tsx"],
+      "dependencies": []
+    },
+    "ui/select": {
+      "name": "Select",
+      "category": "ui",
+      "files": ["components/ui/select.tsx"],
+      "dependencies": []
+    },
+    "ui/dialog": {
+      "name": "Dialog",
+      "category": "ui",
+      "files": ["components/ui/dialog.tsx"],
+      "dependencies": []
+    },
+    "ui/table": {
+      "name": "Table",
+      "category": "ui",
+      "files": ["components/ui/table.tsx"],
+      "dependencies": []
+    },
+    "ui/card": {
+      "name": "Card",
+      "category": "ui",
+      "files": ["components/ui/card.tsx"],
+      "dependencies": []
+    },
+    "ui/skeleton": {
+      "name": "Skeleton",
+      "category": "ui",
+      "files": ["components/ui/skeleton.tsx"],
+      "dependencies": []
+    },
+    "ui/badge": {
+      "name": "Badge",
+      "category": "ui",
+      "files": ["components/ui/badge.tsx"],
+      "dependencies": []
+    },
+    "ui/dropdown-menu": {
+      "name": "Dropdown Menu",
+      "category": "ui",
+      "files": ["components/ui/dropdown-menu.tsx"],
+      "dependencies": []
+    },
+    "ui/popover": {
+      "name": "Popover",
+      "category": "ui",
+      "files": ["components/ui/popover.tsx"],
+      "dependencies": []
+    },
+    "ui/command": {
+      "name": "Command",
+      "category": "ui",
+      "files": ["components/ui/command.tsx"],
+      "dependencies": ["ui/dialog"]
+    },
+    "ui/calendar": {
+      "name": "Calendar",
+      "category": "ui",
+      "files": ["components/ui/calendar.tsx"],
+      "dependencies": ["ui/button"]
+    },
+    "ui/textarea": {
+      "name": "Textarea",
+      "category": "ui",
+      "files": ["components/ui/textarea.tsx"],
+      "dependencies": []
+    },
+    "ui/checkbox": {
+      "name": "Checkbox",
+      "category": "ui",
+      "files": ["components/ui/checkbox.tsx"],
+      "dependencies": []
+    },
+    "ui/switch": {
+      "name": "Switch",
+      "category": "ui",
+      "files": ["components/ui/switch.tsx"],
+      "dependencies": []
+    },
+    "ui/tabs": {
+      "name": "Tabs",
+      "category": "ui",
+      "files": ["components/ui/tabs.tsx"],
+      "dependencies": []
+    },
+    "ui/tooltip": {
+      "name": "Tooltip",
+      "category": "ui",
+      "files": ["components/ui/tooltip.tsx"],
+      "dependencies": []
+    },
+    "ui/alert": {
+      "name": "Alert",
+      "category": "ui",
+      "files": ["components/ui/alert.tsx"],
+      "dependencies": []
+    },
+    "ui/radio-group": {
+      "name": "Radio Group",
+      "category": "ui",
+      "files": ["components/ui/radio-group.tsx"],
+      "dependencies": []
+    },
+    "ui/loading-spinner": {
+      "name": "Loading Spinner",
+      "category": "ui",
+      "files": ["components/ui/loading-spinner.tsx"],
+      "dependencies": []
+    },
+    "form/form-input": {
+      "name": "Form Input",
+      "category": "form",
+      "files": ["components/form/form-input.tsx", "components/form/index.ts"],
+      "dependencies": ["ui/form", "ui/input"]
+    },
+    "table/data-table": {
+      "name": "Data Table",
+      "category": "table",
+      "files": [
+        "components/table/data-table.tsx",
+        "components/table/search-input.tsx",
+        "components/table/table-skeleton.tsx",
+        "components/table/table-empty-state.tsx",
+        "components/table/table-no-results.tsx",
+        "components/table/table-pagination.tsx",
+        "components/table/sortable-header.tsx",
+        "components/table/date-cell.tsx",
+        "components/table/types.ts",
+        "components/table/hooks/use-table-fetch.ts",
+        "components/table/hooks/use-table-state.ts",
+        "components/table/index.ts"
+      ],
+      "dependencies": ["ui/table", "ui/skeleton", "ui/button", "ui/input"],
+      "utils": ["hooks"]
+    },
+    "taxes/create-tax-form": {
+      "name": "Create Tax Form",
+      "category": "feature",
+      "files": [
+        "components/taxes/create-tax-form/create-tax-form.tsx",
+        "components/taxes/create-tax-form/locales/de.ts",
+        "components/taxes/create-tax-form/locales/sl.ts",
+        "components/taxes/create-tax-form/index.ts",
+        "components/taxes/taxes.hooks.ts"
+      ],
+      "dependencies": ["form/form-input", "ui/form"],
+      "providers": ["sdk-provider"],
+      "utils": ["translation", "hooks"],
+      "schemas": ["createTaxSchema"]
+    },
+    "taxes/tax-list-table": {
+      "name": "Tax List Table",
+      "category": "feature",
+      "files": [
+        "components/taxes/tax-list-table/tax-list-table.tsx",
+        "components/taxes/tax-list-table/tax-list-header.tsx",
+        "components/taxes/tax-list-table/tax-list-row.tsx",
+        "components/taxes/tax-list-table/tax-list-row-actions.tsx",
+        "components/taxes/tax-list-table/locales/de.ts",
+        "components/taxes/tax-list-table/locales/sl.ts",
+        "components/taxes/tax-list-table/index.ts",
+        "components/taxes/taxes.hooks.ts"
+      ],
+      "dependencies": ["table/data-table", "ui/dropdown-menu", "ui/button"],
+      "providers": ["sdk-provider"],
+      "utils": ["translation", "hooks"]
+    },
+    "items/create-item-form": {
+      "name": "Create Item Form",
+      "category": "feature",
+      "files": [
+        "components/items/create-item-form/create-item-form.tsx",
+        "components/items/create-item-form/locales/de.ts",
+        "components/items/create-item-form/locales/sl.ts",
+        "components/items/create-item-form/index.ts",
+        "components/items/items.hooks.ts"
+      ],
+      "dependencies": ["form/form-input", "ui/form"],
+      "providers": ["sdk-provider"],
+      "utils": ["translation", "hooks"],
+      "schemas": ["createItemSchema"]
+    },
+    "items/item-list-table": {
+      "name": "Item List Table",
+      "category": "feature",
+      "files": [
+        "components/items/item-list-table/item-list-table.tsx",
+        "components/items/item-list-table/item-list-header.tsx",
+        "components/items/item-list-table/item-list-row.tsx",
+        "components/items/item-list-table/item-list-row-actions.tsx",
+        "components/items/item-list-table/locales/de.ts",
+        "components/items/item-list-table/locales/sl.ts",
+        "components/items/item-list-table/index.ts",
+        "components/items/items.hooks.ts"
+      ],
+      "dependencies": ["table/data-table", "ui/dropdown-menu", "ui/button"],
+      "providers": ["sdk-provider"],
+      "utils": ["translation", "hooks"]
+    },
+    "payments/create-payment-form": {
+      "name": "Create Payment Form",
+      "category": "feature",
+      "files": [
+        "components/payments/create-payment-form/create-payment-form.tsx",
+        "components/payments/create-payment-form/locales/de.ts",
+        "components/payments/create-payment-form/locales/sl.ts",
+        "components/payments/create-payment-form/index.ts",
+        "components/payments/payments.hooks.ts"
+      ],
+      "dependencies": ["form/form-input", "ui/form", "ui/select"],
+      "providers": ["sdk-provider"],
+      "utils": ["translation", "hooks"],
+      "schemas": ["createPaymentSchema"]
+    },
+    "customers/create-customer-form": {
+      "name": "Create Customer Form",
+      "category": "feature",
+      "files": [
+        "components/customers/create-customer-form/create-customer-form.tsx",
+        "components/customers/create-customer-form/locales/de.ts",
+        "components/customers/create-customer-form/locales/sl.ts",
+        "components/customers/create-customer-form/index.ts",
+        "components/customers/customers.hooks.ts"
+      ],
+      "dependencies": ["form/form-input", "ui/form"],
+      "providers": ["sdk-provider"],
+      "utils": ["translation", "hooks"],
+      "schemas": ["createCustomerSchema"]
+    },
+    "customers/customer-list-table": {
+      "name": "Customer List Table",
+      "category": "feature",
+      "files": [
+        "components/customers/customer-list-table/customer-list-table.tsx",
+        "components/customers/customer-list-table/customer-list-header.tsx",
+        "components/customers/customer-list-table/customer-list-row.tsx",
+        "components/customers/customer-list-table/customer-list-row-actions.tsx",
+        "components/customers/customer-list-table/locales/de.ts",
+        "components/customers/customer-list-table/locales/sl.ts",
+        "components/customers/customer-list-table/index.ts",
+        "components/customers/customers.hooks.ts"
+      ],
+      "dependencies": ["table/data-table", "ui/dropdown-menu", "ui/button"],
+      "providers": ["sdk-provider"],
+      "utils": ["translation", "hooks"]
+    },
+    "customers/customer-combobox": {
+      "name": "Customer Combobox",
+      "category": "feature",
+      "files": ["components/customers/customer-combobox.tsx", "components/customers/customers.hooks.ts"],
+      "dependencies": ["ui/popover", "ui/command", "ui/button"],
+      "providers": ["sdk-provider"],
+      "utils": ["hooks"]
+    },
+    "entities/create-entity-form": {
+      "name": "Create Entity Form",
+      "category": "feature",
+      "files": ["components/entities/create-entity-form.tsx", "components/entities/entities.hooks.ts"],
+      "dependencies": ["form/form-input", "ui/form", "ui/select"],
+      "providers": ["sdk-provider"],
+      "utils": ["translation", "hooks"],
+      "schemas": ["createEntitySchema"]
+    },
+    "invoices/create-invoice-form": {
+      "name": "Create Invoice Form",
+      "category": "feature",
+      "files": [
+        "components/invoices/create/create-invoice-form.tsx",
+        "components/invoices/invoices.hooks.ts",
+        "components/documents/create/document-details-section.tsx",
+        "components/documents/create/document-recipient-section.tsx",
+        "components/documents/create/document-items-section.tsx",
+        "components/documents/create/document-add-item-form.tsx",
+        "components/documents/create/document-add-item-tax-rate-field.tsx",
+        "components/documents/create/mark-as-paid-section.tsx",
+        "components/documents/create/live-preview.tsx"
+      ],
+      "dependencies": [
+        "form/form-input",
+        "ui/form",
+        "ui/card",
+        "ui/button",
+        "ui/calendar",
+        "ui/popover",
+        "customers/customer-combobox"
+      ],
+      "providers": ["sdk-provider", "entities-provider"],
+      "utils": ["translation", "hooks"],
+      "schemas": ["createInvoiceSchema"]
+    },
+    "invoices/invoice-list-table": {
+      "name": "Invoice List Table",
+      "category": "feature",
+      "files": [
+        "components/invoices/list/list-table.tsx",
+        "components/invoices/list/list-header.tsx",
+        "components/invoices/list/list-row.tsx",
+        "components/invoices/list/list-row-actions.tsx",
+        "components/invoices/invoices.hooks.ts"
+      ],
+      "dependencies": ["table/data-table", "ui/dropdown-menu", "ui/button", "ui/badge"],
+      "providers": ["sdk-provider"],
+      "utils": ["translation", "hooks"]
+    },
+    "estimates/create-estimate-form": {
+      "name": "Create Estimate Form",
+      "category": "feature",
+      "files": ["components/estimates/create/create-estimate-form.tsx", "components/estimates/estimates.hooks.ts"],
+      "dependencies": ["form/form-input", "ui/form", "ui/card", "customers/customer-combobox"],
+      "providers": ["sdk-provider", "entities-provider"],
+      "utils": ["translation", "hooks"],
+      "schemas": ["createEstimateSchema"]
+    },
+    "estimates/estimate-list-table": {
+      "name": "Estimate List Table",
+      "category": "feature",
+      "files": [
+        "components/estimates/list/list-table.tsx",
+        "components/estimates/list/list-header.tsx",
+        "components/estimates/list/list-row.tsx",
+        "components/estimates/list/list-row-actions.tsx",
+        "components/estimates/estimates.hooks.ts"
+      ],
+      "dependencies": ["table/data-table", "ui/dropdown-menu", "ui/button", "ui/badge"],
+      "providers": ["sdk-provider"],
+      "utils": ["translation", "hooks"]
+    },
+    "credit-notes/create-credit-note-form": {
+      "name": "Create Credit Note Form",
+      "category": "feature",
+      "files": [
+        "components/credit-notes/create/create-credit-note-form.tsx",
+        "components/credit-notes/credit-notes.hooks.ts"
+      ],
+      "dependencies": ["form/form-input", "ui/form", "ui/card", "customers/customer-combobox"],
+      "providers": ["sdk-provider", "entities-provider"],
+      "utils": ["translation", "hooks"],
+      "schemas": ["createCreditNoteSchema"]
+    },
+    "credit-notes/credit-note-list-table": {
+      "name": "Credit Note List Table",
+      "category": "feature",
+      "files": [
+        "components/credit-notes/list/list-table.tsx",
+        "components/credit-notes/list/list-header.tsx",
+        "components/credit-notes/list/list-row.tsx",
+        "components/credit-notes/list/list-row-actions.tsx",
+        "components/credit-notes/credit-notes.hooks.ts"
+      ],
+      "dependencies": ["table/data-table", "ui/dropdown-menu", "ui/button", "ui/badge"],
+      "providers": ["sdk-provider"],
+      "utils": ["translation", "hooks"]
+    },
+    "dashboard/chart-empty-state": {
+      "name": "Chart Empty State",
+      "category": "ui",
+      "files": ["components/dashboard/chart-empty-state.tsx"],
+      "dependencies": []
+    },
+    "dashboard/loading-card": {
+      "name": "Loading Card",
+      "category": "ui",
+      "files": ["components/dashboard/loading-card.tsx"],
+      "dependencies": ["ui/card", "ui/skeleton"]
+    },
+    "dashboard/stat-card": {
+      "name": "Stat Card",
+      "category": "ui",
+      "files": ["components/dashboard/stat-card.tsx"],
+      "dependencies": ["ui/card"]
+    },
+    "dashboard/revenue-card": {
+      "name": "Revenue Card",
+      "category": "ui",
+      "files": ["components/dashboard/revenue-card.tsx"],
+      "dependencies": ["ui/card"]
+    },
+    "dashboard/revenue-trend-chart": {
+      "name": "Revenue Trend Chart",
+      "category": "feature",
+      "files": [
+        "components/dashboard/revenue-trend-chart/revenue-trend-chart.tsx",
+        "components/dashboard/revenue-trend-chart/use-revenue-trend.ts",
+        "components/dashboard/revenue-trend-chart/locales/sl.ts",
+        "components/dashboard/revenue-trend-chart/index.ts"
+      ],
+      "dependencies": ["ui/card", "ui/chart", "dashboard/chart-empty-state", "dashboard/loading-card"],
+      "providers": ["sdk-provider"],
+      "utils": ["translation"]
+    },
+    "dashboard/invoice-status-chart": {
+      "name": "Invoice Status Chart",
+      "category": "feature",
+      "files": [
+        "components/dashboard/invoice-status-chart/invoice-status-chart.tsx",
+        "components/dashboard/invoice-status-chart/use-invoice-status.ts",
+        "components/dashboard/invoice-status-chart/locales/sl.ts",
+        "components/dashboard/invoice-status-chart/index.ts"
+      ],
+      "dependencies": ["ui/card", "ui/chart", "dashboard/chart-empty-state", "dashboard/loading-card"],
+      "providers": ["sdk-provider"],
+      "utils": ["translation"]
+    },
+    "dashboard/payment-trend-chart": {
+      "name": "Payment Trend Chart",
+      "category": "feature",
+      "files": [
+        "components/dashboard/payment-trend-chart/payment-trend-chart.tsx",
+        "components/dashboard/payment-trend-chart/use-payment-trend.ts",
+        "components/dashboard/payment-trend-chart/locales/sl.ts",
+        "components/dashboard/payment-trend-chart/index.ts"
+      ],
+      "dependencies": ["ui/card", "ui/chart", "dashboard/chart-empty-state", "dashboard/loading-card"],
+      "providers": ["sdk-provider"],
+      "utils": ["translation"]
+    },
+    "dashboard/payment-methods-chart": {
+      "name": "Payment Methods Chart",
+      "category": "feature",
+      "files": [
+        "components/dashboard/payment-methods-chart/payment-methods-chart.tsx",
+        "components/dashboard/payment-methods-chart/use-payment-methods.ts",
+        "components/dashboard/payment-methods-chart/locales/sl.ts",
+        "components/dashboard/payment-methods-chart/index.ts"
+      ],
+      "dependencies": ["ui/card", "ui/chart", "dashboard/chart-empty-state", "dashboard/loading-card"],
+      "providers": ["sdk-provider"],
+      "utils": ["translation"]
+    },
+    "dashboard/top-customers-chart": {
+      "name": "Top Customers Chart",
+      "category": "feature",
+      "files": [
+        "components/dashboard/top-customers-chart/top-customers-chart.tsx",
+        "components/dashboard/top-customers-chart/use-top-customers.ts",
+        "components/dashboard/top-customers-chart/locales/sl.ts",
+        "components/dashboard/top-customers-chart/index.ts"
+      ],
+      "dependencies": ["ui/card", "ui/chart", "dashboard/chart-empty-state", "dashboard/loading-card"],
+      "providers": ["sdk-provider"],
+      "utils": ["translation"]
+    },
+    "dashboard/collection-rate-card": {
+      "name": "Collection Rate Card",
+      "category": "feature",
+      "files": [
+        "components/dashboard/collection-rate-card/collection-rate-card.tsx",
+        "components/dashboard/collection-rate-card/use-collection-rate.ts",
+        "components/dashboard/collection-rate-card/locales/sl.ts",
+        "components/dashboard/collection-rate-card/index.ts"
+      ],
+      "dependencies": ["ui/card", "dashboard/loading-card"],
+      "providers": ["sdk-provider"],
+      "utils": ["translation"]
+    }
+  }
+}

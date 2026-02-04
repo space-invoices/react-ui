@@ -1,0 +1,18 @@
+export default {
+  "PDF Template": "PDF-Vorlage",
+  "Choose the design template for your invoices and documents":
+    "Wählen Sie die Design-Vorlage für Ihre Rechnungen und Dokumente",
+  Preview: "Vorschau",
+  Template: "Vorlage",
+  Modern: "Modern",
+  "Modern template description": "Klares, professionelles Design für die meisten Unternehmen geeignet",
+  Classic: "Klassisch",
+  "Classic template description": "Traditioneller Rechnungsstil mit Serifenschriften und Rahmen",
+  Minimal: "Minimal",
+  "Minimal template description": "Typografie-fokussiertes Design mit klarer Ästhetik",
+  Fashion: "Mode",
+  "Fashion template description": "Redaktioneller Stil mit eleganten Überschriften für kreative Unternehmen",
+  "Save Template": "Vorlage speichern",
+  "Template saved successfully": "Vorlage erfolgreich gespeichert",
+  "Failed to save template": "Vorlage konnte nicht gespeichert werden",
+} as const;

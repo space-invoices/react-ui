@@ -1,0 +1,420 @@
+import { zodResolver } from "@hookform/resolvers/zod";
+import type { Entity } from "@spaceinvoices/js-sdk";
+import type { FC } from "react";
+import { useForm } from "react-hook-form";
+import type { z } from "zod";
+import { Button } from "@/ui/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/ui/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/ui/components/ui/form";
+import { Input } from "@/ui/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui/components/ui/select";
+import { registerFursMovablePremiseSchema, registerFursRealEstatePremiseSchema } from "@/ui/generated/schemas";
+import { useRegisterMovablePremise, useRegisterRealEstatePremise } from "../furs-settings.hooks";
+
+// Use auto-generated schemas from OpenAPI spec
+// These are automatically kept in sync with the API
+const realEstatePremiseSchema = registerFursRealEstatePremiseSchema;
+const movablePremiseSchema = registerFursMovablePremiseSchema;
+
+type RealEstatePremiseForm = z.infer<typeof realEstatePremiseSchema>;
+type MovablePremiseForm = z.infer<typeof movablePremiseSchema>;
+
+interface RegisterPremiseDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  entity: Entity;
+  type: "real-estate" | "movable";
+  t: (key: string) => string;
+  onSuccess?: () => void;
+  onError?: (error: unknown) => void;
+}
+
+export const RegisterPremiseDialog: FC<RegisterPremiseDialogProps> = ({
+  open,
+  onOpenChange,
+  entity,
+  type,
+  t,
+  onSuccess,
+  onError,
+}) => {
+  const isRealEstate = type === "real-estate";
+
+  // Real Estate Form
+  const realEstateForm = useForm<RealEstatePremiseForm>({
+    resolver: zodResolver(realEstatePremiseSchema),
+    defaultValues: {
+      business_premise_name: "",
+      real_estate: {
+        cadastral_number: "",
+        building_number: "",
+        building_section: "",
+        community: "",
+        city: "",
+        street: "",
+        house_number: "",
+        house_number_additional: "",
+        postal_code: "",
+      },
+      numbering_strategy: "C",
+    },
+  });
+
+  // Movable Form
+  const movableForm = useForm<MovablePremiseForm>({
+    resolver: zodResolver(movablePremiseSchema),
+    defaultValues: {
+      business_premise_name: "",
+      movable_premise: {
+        premise_type: "A",
+      },
+      numbering_strategy: "C",
+    },
+  });
+
+  const { mutate: registerRealEstate, isPending: isRealEstatePending } = useRegisterRealEstatePremise({
+    onSuccess: () => {
+      realEstateForm.reset();
+      onSuccess?.();
+    },
+    onError,
+  });
+
+  const { mutate: registerMovable, isPending: isMovablePending } = useRegisterMovablePremise({
+    onSuccess: () => {
+      movableForm.reset();
+      onSuccess?.();
+    },
+    onError,
+  });
+
+  const handleRealEstateSubmit = (data: RealEstatePremiseForm) => {
+    registerRealEstate({
+      entityId: entity.id,
+      data,
+    });
+  };
+
+  const handleMovableSubmit = (data: MovablePremiseForm) => {
+    registerMovable({
+      entityId: entity.id,
+      data,
+    });
+  };
+
+  const isPending = isRealEstatePending || isMovablePending;
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>{isRealEstate ? t("Register Real Estate Premise") : t("Register Movable Premise")}</DialogTitle>
+          <DialogDescription>
+            {t(
+              "Register a new business premise with FURS. After registration, you'll need to manually add at least one electronic device for this premise.",
+            )}
+          </DialogDescription>
+        </DialogHeader>
+
+        {isRealEstate ? (
+          <Form {...realEstateForm}>
+            <form onSubmit={realEstateForm.handleSubmit(handleRealEstateSubmit)} className="space-y-4">
+              {/* Premise Name */}
+              <FormField
+                control={realEstateForm.control}
+                name="business_premise_name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t("Premise Name")}</FormLabel>
+                    <FormControl>
+                      <Input placeholder="P1" {...field} />
+                    </FormControl>
+                    <FormDescription>{t("Unique identifier for this premise (e.g., P1, P2)")}</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Property Information */}
+              <FormField
+                control={realEstateForm.control}
+                name="real_estate.cadastral_number"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t("Cadastral Number")} *</FormLabel>
+                    <FormControl>
+                      <Input type="text" inputMode="numeric" pattern="[0-9]*" placeholder="123" {...field} />
+                    </FormControl>
+                    <FormDescription>{t("Required by FURS (must be numeric)")}</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Building Information */}
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={realEstateForm.control}
+                  name="real_estate.building_number"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t("Building Number")}</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="text"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          placeholder="456"
+                          {...field}
+                          value={field.value || ""}
+                        />
+                      </FormControl>
+                      <FormDescription className="text-xs">{t("Must be numeric (optional)")}</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={realEstateForm.control}
+                  name="real_estate.building_section"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t("Building Section")}</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="text"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          placeholder="1"
+                          {...field}
+                          value={field.value || ""}
+                        />
+                      </FormControl>
+                      <FormDescription className="text-xs">{t("Must be numeric (optional)")}</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              {/* Community */}
+              <FormField
+                control={realEstateForm.control}
+                name="real_estate.community"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t("Community")} *</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Ljubljana" {...field} />
+                    </FormControl>
+                    <FormDescription>{t("Slovenian administrative community (občina) name")}</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Address */}
+              <FormField
+                control={realEstateForm.control}
+                name="real_estate.street"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t("Street")}</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Dunajska cesta" {...field} value={field.value || ""} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={realEstateForm.control}
+                  name="real_estate.house_number"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t("House Number")}</FormLabel>
+                      <FormControl>
+                        <Input placeholder="22" {...field} value={field.value || ""} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={realEstateForm.control}
+                  name="real_estate.house_number_additional"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t("Additional")}</FormLabel>
+                      <FormControl>
+                        <Input placeholder="A" {...field} value={field.value || ""} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={realEstateForm.control}
+                  name="real_estate.city"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t("City")}</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Ljubljana" {...field} value={field.value || ""} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={realEstateForm.control}
+                  name="real_estate.postal_code"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t("Postal Code")}</FormLabel>
+                      <FormControl>
+                        <Input placeholder="1000" {...field} value={field.value || ""} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              {/* Numbering Strategy */}
+              <FormField
+                control={realEstateForm.control}
+                name="numbering_strategy"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t("Numbering Strategy")}</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select strategy" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="B">{t("Strategy B (Device-level)")}</SelectItem>
+                        <SelectItem value="C">{t("Strategy C (Centralized)")}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormDescription>{t("Choose how invoice numbers are generated")}</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>
+                  {t("Cancel")}
+                </Button>
+                <Button type="submit" disabled={isPending}>
+                  {isPending ? t("Registering...") : t("Register Premise")}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        ) : (
+          <Form {...movableForm}>
+            <form onSubmit={movableForm.handleSubmit(handleMovableSubmit)} className="space-y-4">
+              {/* Premise Name */}
+              <FormField
+                control={movableForm.control}
+                name="business_premise_name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t("Premise Name")}</FormLabel>
+                    <FormControl>
+                      <Input placeholder="P1" {...field} />
+                    </FormControl>
+                    <FormDescription>{t("Unique identifier for this premise (e.g., P1, P2)")}</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Premise Type */}
+              <FormField
+                control={movableForm.control}
+                name="movable_premise.premise_type"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t("Premise Type")}</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select type" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="A">{t("A - Vehicle")}</SelectItem>
+                        <SelectItem value="B">{t("B - Object at Market/Fair")}</SelectItem>
+                        <SelectItem value="C">{t("C - Other Movable")}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormDescription>{t("Type of movable business premise")}</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Numbering Strategy */}
+              <FormField
+                control={movableForm.control}
+                name="numbering_strategy"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t("Numbering Strategy")}</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select strategy" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="B">{t("Strategy B (Device-level)")}</SelectItem>
+                        <SelectItem value="C">{t("Strategy C (Centralized)")}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormDescription>{t("Choose how invoice numbers are generated")}</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>
+                  {t("Cancel")}
+                </Button>
+                <Button type="submit" disabled={isPending}>
+                  {isPending ? t("Registering...") : t("Register Premise")}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+};

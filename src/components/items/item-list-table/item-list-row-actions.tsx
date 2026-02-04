@@ -1,0 +1,48 @@
+import type { Item } from "@spaceinvoices/js-sdk";
+
+import { MoreHorizontal } from "lucide-react";
+import { Button } from "@/ui/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/ui/components/ui/dropdown-menu";
+import type { ComponentTranslationProps } from "@/ui/lib/translation";
+import { createTranslation } from "@/ui/lib/translation";
+
+type ItemListRowActionsProps = {
+  item: Item;
+} & ComponentTranslationProps;
+
+export default function ItemListRowActions({ item, ...i18nProps }: ItemListRowActionsProps) {
+  const t = createTranslation(i18nProps);
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" className="h-8 w-8 p-0" id="action-menu-trigger">
+          <span className="sr-only">{t("Open menu")}</span>
+          <MoreHorizontal className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuLabel>{t("Actions")}</DropdownMenuLabel>
+        <DropdownMenuItem className="cursor-pointer" onClick={() => navigator.clipboard.writeText(item.id)}>
+          {t("Copy item ID")}
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          className="cursor-pointer"
+          onClick={() => {
+            window.location.href = `/app/items/${item.id}`;
+          }}
+        >
+          {t("View item")}
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}

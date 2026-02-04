@@ -1,0 +1,18 @@
+export default {
+  "PDF Template": "PDF predloga",
+  "Choose the design template for your invoices and documents":
+    "Izberite oblikovno predlogo za vaše račune in dokumente",
+  Preview: "Predogled",
+  Template: "Predloga",
+  Modern: "Moderna",
+  "Modern template description": "Čista, profesionalna oblika primerna za večino podjetij",
+  Classic: "Klasična",
+  "Classic template description": "Tradicionalna oblika računa s serifnimi pisavami in okvirji",
+  Minimal: "Minimalistična",
+  "Minimal template description": "Tipografsko osredotočena oblika s čisto estetiko",
+  Fashion: "Modna",
+  "Fashion template description": "Uredniški slog z elegantnimi naslovi za kreativna podjetja",
+  "Save Template": "Shrani predlogo",
+  "Template saved successfully": "Predloga uspešno shranjena",
+  "Failed to save template": "Shranjevanje predloge ni uspelo",
+} as const;

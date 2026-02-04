@@ -1,0 +1,16 @@
+export default {
+  Name: "Ime",
+  Address: "Naslov",
+  "Post Code": "Poštna številka",
+  City: "Mesto",
+  State: "Kraj",
+  Country: "Država",
+  "Tax number": "Davčna številka",
+  Email: "E-pošta",
+  "Created At": "Ustvarjeno",
+  Actions: "Akcije",
+  "Create new customer": "Ustvari novo stranko",
+  "Copy customer ID": "Kopiraj ID stranke",
+  "View customer": "Prikaži stranko",
+  "Open menu": "Odpri meni",
+} as const;

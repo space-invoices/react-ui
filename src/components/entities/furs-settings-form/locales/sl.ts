@@ -1,0 +1,196 @@
+export default {
+  "FURS is for Slovenian Entities": "FURS je samo za slovenska podjetja",
+  "FURS fiscalization is only available for entities with country code SI":
+    "Fiskalizacija FURS je na voljo samo za podjetja z državo SI (Slovenija)",
+  "Test Mode (Sandbox)": "Testni način (Sandbox)",
+  "This entity is in test mode. FURS invoices will be sent to the test/demo environment. No real fiscalization will occur.":
+    "To podjetje je v testnem načinu. FURS računi bodo poslani v testno/demo okolje. Prava fiskalizacija se ne bo izvedla.",
+  "General Settings": "Splošne nastavitve",
+  Certificate: "Certifikat",
+  "Business Premises": "Poslovni prostori",
+  "Business Premise": "Poslovni prostor",
+  "Enable FURS fiscalization in General Settings first": "Najprej omogočite fiskalizacijo FURS v splošnih nastavitvah",
+  "Upload and validate digital certificate first": "Najprej naložite in potrdite digitalni certifikat",
+  "Certificate Required": "Certifikat je obvezen",
+  "You must upload a digital certificate before you can fiscalize invoices":
+    "Naložiti morate digitalni certifikat, preden lahko fiskalizirate račune",
+  "Business Premise Required": "Obvezna registracija prostora",
+  "Register at least one business premise before fiscalizing invoices":
+    "Registrirajte vsaj en poslovni prostor, preden fiskalizirate račune",
+  "Configure FURS fiscalization behavior": "Konfigurirajte obnašanje fiskalizacije FURS",
+  "Configure how FURS fiscalization works for your entity. Enable fiscalization, choose your numbering strategy, and set operator information.":
+    "Konfigurirajte, kako deluje fiskalizacija FURS za vaše podjetje. Omogočite fiskalizacijo, izberite strategijo številčenja in nastavite informacije o operaterju.",
+  "Enable FURS Fiscalization": "Omogoči fiskalizacijo FURS",
+  "Automatically fiscalize invoices with FURS (Financial Administration of Slovenia)":
+    "Samodejno fiskaliziraj račune z FURS (Finančna uprava Republike Slovenije)",
+  "Numbering Strategy": "Strategija številčenja",
+  "Choose how invoice numbers are assigned across your business premises":
+    "Izberite način dodeljevanja številk računov v vaših poslovnih prostorih",
+  "Device-Level (B) - Separate sequences per electronic device":
+    "Na ravni naprave (B) - Ločene sekvence za vsako elektronsko napravo",
+  "Centralized (C) - Sequential numbers across all premises":
+    "Centralizirano (C) - Zaporedne številke preko vseh prostorov",
+  Centralized: "Centralizirano",
+  "Per Device": "Po napravi",
+  Recommended: "Priporočeno",
+  "One sequence across all premises. Simpler to manage and track.":
+    "Ena sekvenca za vse prostore. Enostavnejše za upravljanje in sledenje.",
+  "Separate sequence per electronic device. For complex multi-location setups.":
+    "Ločena sekvenca za vsako napravo. Za kompleksne nastavitve z več lokacijami.",
+  "Operator Information": "Informacije o operaterju",
+  "Configure default operator for API usage": "Konfigurirajte privzetega operaterja za uporabo API-ja",
+  "Operator Tax Number": "Davčna številka operaterja",
+  "Tax number of the operator for API key usage (optional)":
+    "Davčna številka operaterja za uporabo z API ključem (opcijsko)",
+  "Operator Label": "Oznaka operaterja",
+  "Descriptive label for the operator (optional)": "Opisna oznaka za operaterja (opcijsko)",
+  "Digital Certificate": "Digitalni certifikat",
+  "Upload your FURS digital certificate": "Naložite svoj digitalni certifikat FURS",
+  "Your certificate is required to digitally sign all fiscalized invoices. The certificate must be obtained from the Slovenian Financial Administration (FURS).":
+    "Vaš certifikat je potreben za digitalno podpisovanje vseh fiskaliziranih računov. Certifikat morate pridobiti pri Finančni upravi Republike Slovenije (FURS).",
+  "Once uploaded, your certificate will be validated and you'll be able to register business premises and start fiscalizing invoices.":
+    "Po nalaganju bo vaš certifikat potrjen in lahko boste registrirali poslovne prostore ter začeli fiskalizirati račune.",
+  "Invalid file type. Please upload a .p12 or .pfx certificate file.":
+    "Neveljavna vrsta datoteke. Prosimo, naložite datoteko certifikata .p12 ali .pfx.",
+  "Please select a certificate file and enter the passphrase":
+    "Prosimo, izberite datoteko certifikata in vnesite geslo",
+  Valid: "Veljaven",
+  "Expiring Soon": "Kmalu poteče",
+  Expired: "Potekel",
+  Missing: "Manjka",
+  Expires: "Poteče",
+  Issuer: "Izdajatelj",
+  Subject: "Subjekt",
+  "Change Certificate": "Spremeni certifikat",
+  "P12/PFX Certificate File": "Datoteka certifikata P12/PFX",
+  Selected: "Izbrano",
+  "Certificate Passphrase": "Geslo certifikata",
+  "Enter certificate passphrase": "Vnesite geslo certifikata",
+  "Upload Certificate": "Naloži certifikat",
+  "Upload New Certificate": "Naloži nov certifikat",
+  "Register your business premises with FURS": "Registrirajte svoje poslovne prostore pri FURS",
+  "Each premise must be registered with FURS before you can issue fiscalized invoices from that location. You can register both real estate premises (physical locations) and movable premises (vehicles, market stalls, etc.).":
+    "Vsak prostor mora biti registriran pri FURS, preden lahko s te lokacije izdajate fiskalizirane račune. Registrirate lahko tako nepremične prostore (fizične lokacije) kot premične prostore (vozila, stojnice na tržnici itd.).",
+  "After registering a premise, you must manually add at least one electronic device (cash register, POS terminal) for that premise. Click on a premise to manage its devices.":
+    "Po registraciji prostora morate ročno dodati vsaj eno elektronsko napravo (blagajno, POS terminal) za ta prostor. Kliknite na prostor za upravljanje njegovih naprav.",
+  "Add Real Estate": "Dodaj nepremičnino",
+  "Add Movable": "Dodaj premičnino",
+  "No premises registered yet": "Še ni registriranih prostorov",
+  Active: "Aktiven",
+  Closed: "Zaprt",
+  "Real Estate": "Nepremičnina",
+  Movable: "Premična enota",
+  "Close Premise": "Zapri prostor",
+  "Are you sure you want to close this premise? This action cannot be undone.":
+    "Ali ste prepričani, da želite zapreti ta prostor? Tega dejanja ni mogoče razveljaviti.",
+  "Test Environment": "Testno okolje",
+  Production: "Produkcija",
+  Vehicle: "Vozilo",
+  "Object at Market": "Objekt na tržnici",
+  Other: "Drugo",
+  Device: "Naprava",
+  Devices: "Naprave",
+  Unnamed: "Neimenovana",
+  "No devices registered. Add at least one device to fiscalize invoices.":
+    "Ni registriranih naprav. Dodajte vsaj eno napravo za fiskalizacijo računov.",
+  Created: "Ustvarjeno",
+  "Add Electronic Device": "Dodaj elektronsko napravo",
+  "Register an electronic device (cash register, POS terminal) for this business premise.":
+    "Registrirajte elektronsko napravo (blagajno, POS terminal) za ta poslovni prostor.",
+  "Device Name": "Ime naprave",
+  E1: "E1",
+  "Enter a unique name for this device (e.g., E1, E2, POS1, DEVICE1)":
+    "Vnesite edinstveno ime za to napravo (npr. E1, E2, POS1, BLAGAJNA1)",
+  Cancel: "Prekliči",
+  "Register Device": "Registriraj napravo",
+  "Registering...": "Registracija...",
+  "Register Real Estate Premise": "Registriraj nepremični prostor",
+  "Register Movable Premise": "Registriraj premični prostor",
+  "Register a new business premise with FURS. After registration, you'll need to manually add at least one electronic device for this premise.":
+    "Registrirajte nov poslovni prostor pri FURS. Po registraciji boste morali ročno dodati vsaj eno elektronsko napravo za ta prostor.",
+  "Premise Name": "Ime prostora",
+  "Unique identifier for this premise (e.g., P1, P2)": "Edinstven identifikator za ta prostor (npr. P1, P2)",
+  "Cadastral Number": "Katastrska občina",
+  "Required by FURS (must be numeric)": "Obvezno za FURS (mora biti številka)",
+  "Building Number": "Številka stavbe",
+  "Building Section": "Del stavbe",
+  "Must be numeric (optional)": "Mora biti številka (opcijsko)",
+  Community: "Občina",
+  "Slovenian administrative community (občina) name": "Ime slovenske upravne občine",
+  Street: "Ulica",
+  "House Number": "Hišna številka",
+  Additional: "Dodatek k h.št.",
+  City: "Naselje",
+  "Postal Code": "Poštna številka",
+  "Choose how invoice numbers are generated": "Izberite način generiranja številk računov",
+  "Strategy B (Device-level)": "Strategija B (Na ravni naprave)",
+  "Strategy C (Centralized)": "Strategija C (Centralizirano)",
+  "Premise Type": "Vrsta prostora",
+  "Type of movable business premise": "Vrsta premičnega poslovnega prostora",
+  "A - Vehicle": "A - Vozilo",
+  "B - Object at Market/Fair": "B - Objekt na tržnici/sejmu",
+  "C - Other Movable": "C - Drugo premično",
+  "Register Premise": "Registriraj prostor",
+  "Save Settings": "Shrani nastavitve",
+  "Saving...": "Shranjevanje...",
+  "Loading...": "Nalaganje...",
+  "FURS Fiscalization": "FURS Fiskalisacija",
+  "Slovenian tax authority fiscalization details": "Podrobnosti fiskalizacije pri Finančni upravi RS",
+  Fiscalized: "Fiskalizirano",
+  Pending: "V teku",
+  Failed: "Neuspešno",
+  "Fiscalization Error": "Napaka pri fiskalizaciji",
+  Cancelled: "Preklicano",
+  ZOI: "ZOI",
+  EOR: "EOR",
+  "Cancellation EOR": "EOR preklica",
+  "Electronic Device": "Elektronska naprava",
+  "Invoice Number": "Številka računa",
+  Iteration: "Iteracija",
+  "QR Code": "QR koda",
+  "Fiscalized at": "Fiskalizirano dne",
+  // New flow translations
+  "Enable Fiscalization": "Omogoči fiskalizacijo",
+  "Turn on FURS fiscalization for invoices": "Vklopite fiskalizacijo FURS za račune",
+  "Setup Checklist": "Kontrolni seznam nastavitev",
+  "Valid certificate uploaded": "Veljaven certifikat naložen",
+  "At least one business premise registered": "Vsaj en poslovni prostor registriran",
+  "At least one electronic device registered": "Vsaj ena elektronska naprava registrirana",
+  "Cannot Enable Fiscalization": "Fiskalizacije ni mogoče omogočiti",
+  "Complete all prerequisites above before enabling FURS fiscalization.":
+    "Izpolnite vse zgornje pogoje, preden omogočite fiskalizacijo FURS.",
+  "Once enabled, all new invoices will be automatically fiscalized with FURS":
+    "Po omogočenju bodo vsi novi računi samodejno fiskalizirani pri FURS",
+  "Warning: Disabling fiscalization will prevent new invoices from being fiscalized.":
+    "Opozorilo: Onemogočenje fiskalizacije bo preprečilo fiskalizacijo novih računov.",
+  "Register at least one business premise first": "Najprej registrirajte vsaj en poslovni prostor",
+  "Register at least one electronic device first": "Najprej registrirajte vsaj eno elektronsko napravo",
+  "Activate FURS fiscalization for your invoices": "Aktivirajte fiskalizacijo FURS za vaše račune",
+  "Once enabled, all new invoices will be automatically sent to FURS for fiscalization. Make sure you have completed all the setup steps before enabling.":
+    "Po omogočenju bodo vsi novi računi samodejno poslani FURS za fiskalizacijo. Prepričajte se, da ste pred omogočenjem dokončali vse korake nastavitve.",
+  "You can disable fiscalization at any time, but note that invoices issued while disabled will not be fiscalized.":
+    "Fiskalizacijo lahko kadarkoli onemogočite, vendar vedite, da računi, izdani med onemogočenjem, ne bodo fiskalizirani.",
+  "You must upload a digital certificate before you can register business premises":
+    "Naložiti morate digitalni certifikat, preden lahko registrirate poslovne prostore",
+  // User FURS settings
+  "Your Operator Settings": "Vaše nastavitve operaterja",
+  "Your personal operator info for FURS invoices": "Vaši osebni podatki operaterja za FURS račune",
+  "Save Operator Settings": "Shrani nastavitve operaterja",
+  "Your tax number for FURS fiscalization": "Vaša davčna številka za fiskalizacijo FURS",
+  "Your name or identifier for FURS invoices": "Vaše ime ali identifikator za FURS račune",
+  "Your Name": "Vaše ime",
+  "Fiscalization Settings": "Nastavitve fiskalizacije",
+  "Advanced Settings": "Napredne nastavitve",
+  "API Default Operator": "Privzeti operater za API",
+  "Default operator settings for API key usage (when no user context)":
+    "Privzete nastavitve operaterja za uporabo API ključa (ko ni uporabniškega konteksta)",
+  "Tax number for API key usage (optional)": "Davčna številka za uporabo API ključa (opcijsko)",
+  "Operator label for API key usage (optional)": "Oznaka operaterja za uporabo API ključa (opcijsko)",
+  // Updated help text
+  "Your personal tax number and label that appear on FURS invoices you issue. Each user can have their own operator info.":
+    "Vaša osebna davčna številka in oznaka, ki se pojavita na FURS računih, ki jih izdajate. Vsak uporabnik ima lahko svoje podatke operaterja.",
+  "Choose the numbering strategy for your invoices. Device-level creates separate sequences per device, centralized uses one sequence across all premises.":
+    "Izberite strategijo številčenja za vaše račune. Na ravni naprave ustvari ločene sekvence za vsako napravo, centralizirano pa uporablja eno sekvenco preko vseh prostorov.",
+  "Default operator info used when invoices are created via API without a logged-in user.":
+    "Privzeti podatki operaterja, ki se uporabljajo, ko so računi ustvarjeni preko API-ja brez prijavljenega uporabnika.",
+} as const;

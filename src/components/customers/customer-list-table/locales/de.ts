@@ -1,0 +1,16 @@
+export default {
+  Name: "Name",
+  Address: "Adresse",
+  "Post Code": "Postleitzahl",
+  City: "Stadt",
+  State: "Bundesland",
+  Country: "Land",
+  "Tax number": "Steuernummer",
+  Email: "E-Mail",
+  "Created At": "Erstellt am",
+  Actions: "Aktionen",
+  "Create new customer": "Neuen Kunden erstellen",
+  "Copy customer ID": "Kunden-ID kopieren",
+  "View customer": "Kunde anzeigen",
+  "Open menu": "Menü öffnen",
+} as const;

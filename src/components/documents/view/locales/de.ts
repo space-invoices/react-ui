@@ -1,0 +1,85 @@
+export default {
+  // Actions
+  PDF: "PDF",
+  Send: "Senden",
+  Payment: "Zahlung",
+  Share: "Teilen",
+  Unshare: "Freigabe aufheben",
+  Copied: "Kopiert",
+  "Copy shareable link": "Freigabelink kopieren",
+  "Unshare document": "Dokumentfreigabe aufheben",
+  "Unshare document confirmation":
+    "Sind Sie sicher, dass Sie den öffentlichen Zugang zu diesem Dokument entfernen möchten?",
+  "Document unshared": "Dokument ist nicht mehr freigegeben",
+  "Unshare failed": "Freigabe aufheben fehlgeschlagen",
+  "Download failed": "Download fehlgeschlagen",
+  "e-SLOG download failed": "e-SLOG Download fehlgeschlagen",
+  Duplicate: "Duplizieren",
+  "Duplicate invoice": "Rechnung duplizieren",
+  "Duplicate estimate": "Angebot duplizieren",
+  "Duplicate credit_note": "Gutschrift duplizieren",
+  "Duplicate advance_invoice": "Anzahlungsrechnung duplizieren",
+  "Create invoice": "Rechnung erstellen",
+  "Create estimate": "Angebot erstellen",
+  "Create credit_note": "Gutschrift erstellen",
+  "Create advance_invoice": "Anzahlungsrechnung erstellen",
+
+  // Details card
+  Details: "Details",
+  Number: "Nummer",
+  Date: "Datum",
+  "Due date": "Fälligkeitsdatum",
+  "Service date": "Leistungsdatum",
+  "Service period": "Leistungszeitraum",
+  "Valid until": "Gültig bis",
+  Customer: "Kunde",
+  Subtotal: "Zwischensumme",
+  Tax: "Steuer",
+  Total: "Gesamt",
+  Paid: "Bezahlt",
+  Due: "Offen",
+  Status: "Status",
+
+  // Payment status
+  "Paid in full": "Vollständig bezahlt",
+  "Partially paid": "Teilweise bezahlt",
+  Unpaid: "Unbezahlt",
+  Voided: "Storniert",
+
+  // Payments list
+  Payments: "Zahlungen",
+  "No payments": "Keine Zahlungen",
+  "Add payment": "Zahlung hinzufügen",
+  Edit: "Bearbeiten",
+  Delete: "Löschen",
+  "Delete payment": "Zahlung löschen",
+  "Delete payment confirmation": "Sind Sie sicher, dass Sie diese Zahlung löschen möchten?",
+  Cancel: "Abbrechen",
+
+  // Payment types
+  cash: "Bargeld",
+  bank_transfer: "Banküberweisung",
+  card: "Karte",
+  check: "Scheck",
+  credit_note: "Gutschrift",
+  other: "Andere",
+  advance_invoice: "Anzahlungsrechnung",
+
+  // Errors
+  "Delete failed": "Löschen fehlgeschlagen",
+
+  // Draft actions
+  Finalize: "Fertigstellen",
+  "Delete Draft": "Entwurf löschen",
+  "Finalize document": "Dokument fertigstellen",
+  "Finalize document confirmation":
+    "Dadurch wird dem Dokument eine endgültige Nummer zugewiesen. Nach der Fertigstellung kann das Dokument nicht mehr gelöscht werden. Möchten Sie fortfahren?",
+  "Delete draft document": "Entwurfsdokument löschen",
+  "Delete draft confirmation":
+    "Sind Sie sicher, dass Sie diesen Entwurf löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
+  "Document finalized": "Dokument wurde fertiggestellt",
+  "Finalize failed": "Fertigstellung fehlgeschlagen",
+  "Draft deleted": "Entwurf wurde gelöscht",
+  "Delete draft failed": "Entwurf löschen fehlgeschlagen",
+  Draft: "Entwurf",
+} as const;

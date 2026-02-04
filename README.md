@@ -15,7 +15,55 @@ These components are **designed to be copied**, not installed as a package:
 
 **Note**: Components are built on **shadcn/ui primitives**. Bring your own shadcn/ui components or use any alternative. The `components/ui/` folder is included as reference only.
 
-## Quick Start
+## Quick Start (CLI - Recommended)
+
+The easiest way to get started is using the CLI:
+
+```bash
+# Initialize in your project
+npx @spaceinvoices/react-ui init
+
+# Add components as needed
+npx @spaceinvoices/react-ui add customers/create-customer-form
+npx @spaceinvoices/react-ui add invoices/create-invoice-form
+npx @spaceinvoices/react-ui add table/data-table
+
+# See all available components
+npx @spaceinvoices/react-ui list
+```
+
+The CLI will:
+- Create `spaceinvoices.json` config with your preferred paths
+- Install required dependencies (`@spaceinvoices/js-sdk`, `@tanstack/react-query`)
+- Copy essential files (SDK provider, utilities)
+- Transform import paths to match your project structure
+- Install npm dependencies for each component
+
+### CLI Commands
+
+| Command | Description |
+|---------|-------------|
+| `init` | Initialize Space Invoices UI in your project |
+| `add <component...>` | Add one or more components |
+| `add --all` | Add all available components |
+| `list` | List all available components |
+
+### CLI Options
+
+```bash
+# Skip prompts and use defaults
+npx @spaceinvoices/react-ui init --yes
+
+# Overwrite existing files
+npx @spaceinvoices/react-ui add customers --overwrite
+
+# Specify working directory
+npx @spaceinvoices/react-ui add invoices --cwd ./my-app
+```
+
+## Manual Setup (Alternative)
+
+If you prefer manual control:
 
 ### 1. Install Dependencies
 

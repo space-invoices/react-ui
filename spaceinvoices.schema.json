@@ -1,0 +1,47 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Space Invoices React UI Configuration",
+  "description": "Configuration file for Space Invoices React UI CLI",
+  "type": "object",
+  "required": ["aliases"],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "JSON schema reference"
+    },
+    "aliases": {
+      "type": "object",
+      "description": "Path aliases for component installation",
+      "required": ["components", "ui", "lib", "hooks", "providers"],
+      "properties": {
+        "components": {
+          "type": "string",
+          "description": "Path alias for feature components (e.g., @/components/space-invoices)",
+          "default": "@/components/space-invoices"
+        },
+        "ui": {
+          "type": "string",
+          "description": "Path alias for UI primitives (e.g., @/components/ui)",
+          "default": "@/components/ui"
+        },
+        "lib": {
+          "type": "string",
+          "description": "Path alias for utility functions (e.g., @/lib)",
+          "default": "@/lib"
+        },
+        "hooks": {
+          "type": "string",
+          "description": "Path alias for React hooks (e.g., @/hooks)",
+          "default": "@/hooks"
+        },
+        "providers": {
+          "type": "string",
+          "description": "Path alias for React providers (e.g., @/providers)",
+          "default": "@/providers"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

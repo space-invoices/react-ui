@@ -26,6 +26,7 @@ export function ScaledDocumentPreview({
         transformOrigin: "top left",
         height: contentHeight,
       }}
+      // biome-ignore lint/security/noDangerouslySetInnerHtml: server-rendered document preview
       dangerouslySetInnerHTML={{ __html: htmlContent }}
     />
   );

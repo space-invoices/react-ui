@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, mock, test } from "bun:test";
-import type { GetItems200Response, Item } from "@spaceinvoices/js-sdk";
+import type { Item } from "@spaceinvoices/js-sdk";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -9,7 +9,7 @@ import ItemListTable from "@/ui/components/items/item-list-table/item-list-table
 // Mock the SDK provider
 const mockSDK = {
   items: {
-    list: mock<(params: any) => Promise<GetItems200Response>>(),
+    list: mock<(params: any) => Promise<any>>(),
   },
 };
 
@@ -25,14 +25,30 @@ mock.module("@/ui/providers/sdk-provider", () => ({
 // Mock the translation function
 mock.module("@/ui/lib/translation", () => ({
   createTranslation:
-    ({ t, _translations }: { t?: (key: string) => string; translations?: Record<string, Record<string, string>> }) =>
-    (key: string) =>
-      t?.(key) || key,
+    ({
+      t,
+      namespace,
+      locale = "en",
+      translations = {},
+    }: {
+      t?: (key: string) => string;
+      namespace?: string;
+      locale?: string;
+      translations?: Record<string, Record<string, string>>;
+    }) =>
+    (key: string) => {
+      if (t) {
+        const k = namespace ? `${namespace}.${key}` : key;
+        const r = t(k);
+        if (r !== k && r !== key) return r;
+      }
+      return translations[locale]?.[key] || key;
+    },
 }));
 
 describe("ItemListTable", () => {
   let queryClient: QueryClient;
-  const mockItems: Item[] = [
+  const mockItems = [
     {
       id: "item-1",
       name: "Item 1",
@@ -40,8 +56,8 @@ describe("ItemListTable", () => {
       price: 99.99,
       unit: "pcs",
       entity_id: "entity1",
-      created_at: new Date("2023-01-01T00:00:00Z"),
-      updated_at: new Date("2023-01-01T00:00:00Z"),
+      created_at: new Date("2023-01-01T00:00:00Z").toISOString(),
+      updated_at: new Date("2023-01-01T00:00:00Z").toISOString(),
       metadata: {},
     },
     {
@@ -51,11 +67,11 @@ describe("ItemListTable", () => {
       price: 149.99,
       unit: "kg",
       entity_id: "entity1",
-      created_at: new Date("2023-01-02T00:00:00Z"),
-      updated_at: new Date("2023-01-02T00:00:00Z"),
+      created_at: new Date("2023-01-02T00:00:00Z").toISOString(),
+      updated_at: new Date("2023-01-02T00:00:00Z").toISOString(),
       metadata: {},
     },
-  ];
+  ] as any as Item[];
 
   beforeEach(() => {
     queryClient = new QueryClient({

@@ -16,8 +16,6 @@ export default {
   Duplicate: "Podvoji",
   "Failed to download PDF": "Prenos PDF ni uspel",
   "Credit Note": "Dobropis",
-  "No credit notes found": "Ni najdenih dobropisov",
-  "Create Credit Note": "Ustvari dobropis",
   // Filter translations
   "Search...": "Iskanje...",
   Filters: "Filtri",
@@ -30,4 +28,14 @@ export default {
   Overdue: "Zapadlo",
   Voided: "Stornirano",
   "Created At": "Ustvarjeno",
+  Partial: "Delno plačano",
+  Unshare: "Odstrani deljenje",
+  // Empty state translations
+  "Your list is empty": "Vaš seznam dobropisov je prazen",
+  "Get started by creating your first entry": "Začnite z ustvarjanjem prvega dobropisa",
+  "Create new": "Ustvari dobropis",
+  // No results translations
+  "No results found": "Ni najdenih dobropisov",
+  "Try adjusting your search criteria": "Poskusite prilagoditi iskalne kriterije",
+  "Clear search": "Počisti iskanje",
 } as const;

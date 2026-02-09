@@ -1,0 +1,83 @@
+export default {
+  // Actions
+  PDF: "PDF",
+  Send: "Envoyer",
+  Payment: "Paiement",
+  Share: "Partager",
+  Unshare: "Annuler le partage",
+  Copied: "Copié",
+  "Copy shareable link": "Copier le lien de partage",
+  "Unshare document": "Annuler le partage du document",
+  "Unshare document confirmation": "Êtes-vous sûr de vouloir supprimer l'accès public à ce document ?",
+  "Document unshared": "Document non partagé",
+  "Unshare failed": "Échec de l'annulation du partage",
+  "Download failed": "Échec du téléchargement",
+  "e-SLOG download failed": "Échec du téléchargement e-SLOG",
+  Duplicate: "Dupliquer",
+  "Duplicate invoice": "Dupliquer la facture",
+  "Duplicate estimate": "Dupliquer le devis",
+  "Duplicate credit_note": "Dupliquer l'avoir",
+  "Duplicate advance_invoice": "Dupliquer la facture d'acompte",
+  "Create invoice": "Créer une facture",
+  "Create estimate": "Créer un devis",
+  "Create credit_note": "Créer un avoir",
+  "Create advance_invoice": "Créer une facture d'acompte",
+
+  // Details card
+  Details: "Détails",
+  Number: "Numéro",
+  Date: "Date",
+  "Due date": "Date d'échéance",
+  "Service date": "Date de service",
+  "Service period": "Période de service",
+  "Valid until": "Valable jusqu'au",
+  Customer: "Client",
+  Subtotal: "Sous-total",
+  Tax: "Taxe",
+  Total: "Total",
+  Paid: "Payé",
+  Due: "Dû",
+  Status: "Statut",
+
+  // Payment status
+  "Paid in full": "Payé en totalité",
+  "Partially paid": "Partiellement payé",
+  Unpaid: "Impayé",
+  Voided: "Annulé",
+
+  // Payments list
+  Payments: "Paiements",
+  "No payments": "Aucun paiement",
+  "Add payment": "Ajouter un paiement",
+  Edit: "Modifier",
+  Delete: "Supprimer",
+  "Delete payment": "Supprimer le paiement",
+  "Delete payment confirmation": "Êtes-vous sûr de vouloir supprimer ce paiement ?",
+  Cancel: "Annuler",
+
+  // Payment types
+  cash: "Espèces",
+  bank_transfer: "Virement bancaire",
+  card: "Carte",
+  check: "Chèque",
+  credit_note: "Avoir",
+  other: "Autre",
+  advance_invoice: "Facture d'acompte",
+
+  // Errors
+  "Delete failed": "Échec de la suppression",
+
+  // Draft actions
+  Finalize: "Finaliser",
+  "Delete Draft": "Supprimer le brouillon",
+  "Finalize document": "Finaliser le document",
+  "Finalize document confirmation":
+    "Cela attribuera un numéro définitif au document. Après la finalisation, le document ne peut plus être supprimé. Voulez-vous continuer ?",
+  "Delete draft document": "Supprimer le brouillon du document",
+  "Delete draft confirmation": "Êtes-vous sûr de vouloir supprimer ce brouillon ? Cette action est irréversible.",
+  "Document finalized": "Document finalisé",
+  "Finalize failed": "Échec de la finalisation",
+  "Draft deleted": "Brouillon supprimé",
+  "Delete draft failed": "Échec de la suppression du brouillon",
+  Draft: "Brouillon",
+} as const;

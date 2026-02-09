@@ -9,7 +9,7 @@ export type DocumentType = "invoice" | "estimate" | "credit_note" | "advance_inv
 /** Response type for next document number preview */
 export type NextDocumentNumberResponse = {
   number: string | null;
-  furs: {
+  furs?: {
     business_premise_name: string;
     electronic_device_name: string;
   } | null;

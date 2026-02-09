@@ -1,6 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import type { TableQueryParams, TableQueryResponse } from "../types";
 
+// Re-export types for backward compatibility with tests
+export type { TableQueryParams, TableQueryResponse };
+
 type UseTableQueryOptions<T> = {
   /** Unique cache key for the query */
   cacheKey: string;

@@ -160,6 +160,7 @@ export function UsageBadge() {
 function getDefaultLockedMessage(feature: GatedFeature): string {
   const messages: Record<GatedFeature, string> = {
     furs: "FURS fiscalization requires a Starter or Advanced plan",
+    fina: "FINA fiscalization requires a Starter or Advanced plan",
     eslog: "eSlog export requires a Starter or Advanced plan",
     recurring: "Recurring invoices require a Starter or Advanced plan",
     email_sending: "Email sending requires a Starter or Advanced plan",

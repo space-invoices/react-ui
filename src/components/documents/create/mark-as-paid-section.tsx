@@ -1,4 +1,5 @@
-import { HelpCircle } from "lucide-react";
+import { HelpCircle, Plus, Trash2 } from "lucide-react";
+import { Button } from "@/ui/components/ui/button";
 import { Checkbox } from "@/ui/components/ui/checkbox";
 import { Label } from "@/ui/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui/components/ui/select";
@@ -22,10 +23,10 @@ type MarkAsPaidSectionProps = {
   checked: boolean;
   /** Called when the checkbox changes */
   onCheckedChange: (checked: boolean) => void;
-  /** Selected payment type */
-  paymentType: string;
-  /** Called when payment type changes */
-  onPaymentTypeChange: (value: string) => void;
+  /** Selected payment types */
+  paymentTypes: string[];
+  /** Called when payment types change */
+  onPaymentTypesChange: (values: string[]) => void;
   /** Translation function */
   t: (key: string) => string;
 };
@@ -33,12 +34,12 @@ type MarkAsPaidSectionProps = {
 export function MarkAsPaidSection({
   checked,
   onCheckedChange,
-  paymentType,
-  onPaymentTypeChange,
+  paymentTypes,
+  onPaymentTypesChange,
   t,
 }: MarkAsPaidSectionProps) {
   return (
-    <div className={cn("flex flex-col gap-4 rounded-md border p-4", checked && "md:flex-row md:items-center md:gap-6")}>
+    <div className={cn("flex flex-col gap-4 rounded-md border p-4", checked && "gap-3")}>
       <div className="flex flex-row items-center space-x-3 space-y-0">
         <Checkbox checked={checked} onCheckedChange={(v) => onCheckedChange(v === true)} />
         <div className="flex items-center gap-1 leading-none">
@@ -61,21 +62,57 @@ export function MarkAsPaidSection({
       </div>
 
       {checked && (
-        <>
-          <div className="hidden flex-1 md:block" />
-          <Select value={paymentType} onValueChange={(v) => v && onPaymentTypeChange(v)}>
-            <SelectTrigger className="w-full md:w-fit">
-              <SelectValue placeholder={t("Select payment type")}>{t(PAYMENT_TYPE_LABELS[paymentType])}</SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              {regularPaymentTypes.map((type) => (
-                <SelectItem key={type} value={type}>
-                  {t(PAYMENT_TYPE_LABELS[type])}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </>
+        <div className="flex flex-col gap-2">
+          {paymentTypes.map((type, index) => (
+            <div key={index} className="flex items-center gap-2">
+              <Select
+                value={type}
+                onValueChange={(v) => {
+                  if (v) {
+                    const updated = [...paymentTypes];
+                    updated[index] = v;
+                    onPaymentTypesChange(updated);
+                  }
+                }}
+              >
+                <SelectTrigger className="w-full md:w-fit">
+                  <SelectValue placeholder={t("Select payment type")}>{t(PAYMENT_TYPE_LABELS[type])}</SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {regularPaymentTypes.map((pt) => (
+                    <SelectItem key={pt} value={pt}>
+                      {t(PAYMENT_TYPE_LABELS[pt])}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {paymentTypes.length > 1 && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="size-8 shrink-0"
+                  onClick={() => {
+                    const updated = paymentTypes.filter((_, i) => i !== index);
+                    onPaymentTypesChange(updated);
+                  }}
+                >
+                  <Trash2 className="size-4 text-muted-foreground" />
+                </Button>
+              )}
+            </div>
+          ))}
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="w-fit gap-1 text-muted-foreground"
+            onClick={() => onPaymentTypesChange([...paymentTypes, "bank_transfer"])}
+          >
+            <Plus className="size-4" />
+            {t("Add payment")}
+          </Button>
+        </div>
       )}
     </div>
   );

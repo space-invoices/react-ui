@@ -4,9 +4,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/ui/components/ui/car
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
 import de from "./locales/de";
+import es from "./locales/es";
+import fr from "./locales/fr";
+import hr from "./locales/hr";
+import it from "./locales/it";
+import nl from "./locales/nl";
+import pl from "./locales/pl";
+import pt from "./locales/pt";
 import sl from "./locales/sl";
 
-const translations = { de, sl } as const;
+const translations = { de, es, fr, hr, it, nl, pl, pt, sl } as const;
 
 // Re-export for convenience
 export type { Activity };

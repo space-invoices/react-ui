@@ -25,7 +25,7 @@ export function createTranslation({ t, namespace, locale = "en", translations = 
       }
 
       // 2. Look up in local translations for current locale
-      if (locale !== "en" && translations[locale]) {
+      if (translations[locale]) {
         const translation = translations[locale][key];
         if (translation) return translation;
       }

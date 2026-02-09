@@ -121,12 +121,12 @@ describe("prepareDocumentSubmission", () => {
         documentType: "invoice",
         isDraft: true,
         markAsPaid: true,
-        paymentType: "cash",
+        paymentTypes: ["cash"],
       });
 
       // Both flags can technically be set, though the form logic prevents this
       expect(result.is_draft).toBe(true);
-      expect(result.payment).toBeDefined();
+      expect(result.payments).toBeDefined();
     });
   });
 });

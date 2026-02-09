@@ -12,5 +12,14 @@ export default {
   "Create new customer": "Ustvari novo stranko",
   "Copy customer ID": "Kopiraj ID stranke",
   "View customer": "Prikaži stranko",
+  "Edit customer": "Uredi stranko",
+  "Delete customer": "Izbriši stranko",
+  "Deleting...": "Brišem...",
   "Open menu": "Odpri meni",
+  // Empty state translations
+  "Your list is empty": "Vaš seznam strank je prazen",
+  "Get started by creating your first entry": "Začnite z ustvarjanjem prve stranke",
+  "No results found": "Ni najdenih strank",
+  "Try adjusting your search criteria": "Poskusite prilagoditi iskalne kriterije",
+  "Clear search": "Počisti iskanje",
 } as const;

@@ -51,7 +51,7 @@ export default function DocumentAddItemForm({
   index,
   control,
   entityId,
-  currencyCode,
+  currencyCode: _currencyCode,
   onRemove,
   onMoveUp,
   onMoveDown,

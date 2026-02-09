@@ -23,34 +23,38 @@ type EntitiesProviderProps = {
   children: ReactNode;
   initialActiveEntity?: Entity | null;
   onNoEntities?: () => void;
+  cookieDomain?: string;
+  /** When provided (from URL param), this entity ID is used as the source of truth instead of the cookie */
+  urlEntityId?: string;
 };
 
-export function EntitiesProvider({ children, initialActiveEntity, onNoEntities }: EntitiesProviderProps) {
+export function EntitiesProvider({
+  children,
+  initialActiveEntity,
+  onNoEntities,
+  cookieDomain,
+  urlEntityId,
+}: EntitiesProviderProps) {
   const { sdk, isInitialized } = useSDK();
   const [cookies, setCookie, removeCookie] = useCookies([ACTIVE_ENTITY_COOKIE, ACTIVE_ENVIRONMENT_COOKIE]);
   const isInitialMount = useRef(true);
   const initialEnvironmentFromCookie = cookies[ACTIVE_ENVIRONMENT_COOKIE] as EntityEnvironment | undefined;
-  const initialEntityFromCookie = cookies[ACTIVE_ENTITY_COOKIE] as Entity | undefined;
+  const initialEntityIdFromCookie = cookies[ACTIVE_ENTITY_COOKIE] as string | undefined;
+
+  // URL entity ID takes precedence over cookie
+  const resolvedEntityId = urlEntityId ?? initialEntityIdFromCookie;
 
   const resolvedInitialEnvironment: EntityEnvironment =
-    initialEnvironmentFromCookie ??
-    (initialEntityFromCookie?.environment as EntityEnvironment | undefined) ??
-    (initialActiveEntity?.environment as EntityEnvironment | undefined) ??
-    "live";
+    initialEnvironmentFromCookie ?? (initialActiveEntity?.environment as EntityEnvironment | undefined) ?? "live";
 
   const [environment, setEnvironmentState] = useState<EntityEnvironment>(resolvedInitialEnvironment);
   const previousEnvironment = useRef(environment);
 
-  // Initialize active entity from cookie or prop that matches the selected environment
-  const [activeEntityState, setActiveEntityState] = useState<Entity | null>(() => {
-    try {
-      if (initialEntityFromCookie && initialEntityFromCookie.environment === resolvedInitialEnvironment) {
-        return initialEntityFromCookie;
-      }
-    } catch (_e) {
-      // Ignore cookie parsing errors
-    }
+  // Store the initial entity ID (from URL or cookie) so we can match it when entities load
+  const initialEntityIdRef = useRef(resolvedEntityId);
 
+  // Initialize active entity from prop if it matches the selected environment
+  const [activeEntityState, setActiveEntityState] = useState<Entity | null>(() => {
     if (initialActiveEntity && initialActiveEntity.environment === resolvedInitialEnvironment) {
       return initialActiveEntity;
     }
@@ -83,14 +87,38 @@ export function EntitiesProvider({ children, initialActiveEntity, onNoEntities }
     refetchOnReconnect: true,
   });
 
-  // Redirect to add entity page when no entities exist
+  // When no entities in current environment, check the other before giving up
   const hasCalledNoEntities = useRef(false);
+  const hasTriedFallback = useRef(false);
   useEffect(() => {
-    if (!isLoading && entities.length === 0 && !hasCalledNoEntities.current) {
-      hasCalledNoEntities.current = true;
-      onNoEntities?.();
+    if (isLoading || entities.length > 0 || hasCalledNoEntities.current) return;
+
+    // Try the other environment before calling onNoEntities
+    if (!hasTriedFallback.current && sdk) {
+      hasTriedFallback.current = true;
+      const altEnv = environment === "live" ? "sandbox" : "live";
+      sdk.entities
+        .list({ limit: 1, environment: altEnv })
+        .then((res) => {
+          if (res.data.length > 0) {
+            // Other environment has entities — auto-switch
+            setEnvironmentState(altEnv as EntityEnvironment);
+          } else {
+            hasCalledNoEntities.current = true;
+            onNoEntities?.();
+          }
+        })
+        .catch(() => {
+          hasCalledNoEntities.current = true;
+          onNoEntities?.();
+        });
+      return;
     }
-  }, [isLoading, entities.length, onNoEntities]);
+
+    if (!hasTriedFallback.current) return;
+    hasCalledNoEntities.current = true;
+    onNoEntities?.();
+  }, [isLoading, entities.length, onNoEntities, sdk, environment]);
 
   // Memoize entities to prevent unnecessary re-renders
   const memoizedEntities = useMemo(() => entities, [entities]);
@@ -107,24 +135,39 @@ export function EntitiesProvider({ children, initialActiveEntity, onNoEntities }
   const activeEntityRef = useRef(activeEntityState);
   activeEntityRef.current = activeEntityState;
 
+  // When urlEntityId changes (e.g. entity switcher navigates to new URL), update the ref
+  useEffect(() => {
+    if (urlEntityId) {
+      initialEntityIdRef.current = urlEntityId;
+    }
+  }, [urlEntityId]);
+
   useEffect(() => {
     if (!memoizedEntities.length) return;
 
     const currentActive = activeEntityRef.current;
+    // When URL entity ID is provided, always try to match it first
+    const targetEntityId = urlEntityId ?? currentActive?.id;
 
     try {
-      if (currentActive) {
-        const updatedEntity = memoizedEntities.find((entity) => entity.id === currentActive.id);
+      if (targetEntityId) {
+        const updatedEntity = memoizedEntities.find((entity) => entity.id === targetEntityId);
 
         if (updatedEntity) {
           // Always update with fresh data from the server
           setActiveEntityState(updatedEntity);
+        } else if (currentActive) {
+          // URL entity not found but we have a current active — keep it or fall back
+          const stillExists = memoizedEntities.find((entity) => entity.id === currentActive.id);
+          setActiveEntityState(stillExists ?? memoizedEntities[0]);
         } else {
-          // If active entity no longer exists, fall back to first entity
           setActiveEntityState(memoizedEntities[0]);
         }
       } else {
-        setActiveEntityState(memoizedEntities[0]);
+        // No active entity yet — try to match by cookie/URL ID, then fall back to first
+        const entityId = initialEntityIdRef.current;
+        const matchedEntity = entityId ? memoizedEntities.find((entity) => entity.id === entityId) : undefined;
+        setActiveEntityState(matchedEntity ?? memoizedEntities[0]);
       }
     } catch (_e) {
       if (memoizedEntities.length > 0) {
@@ -135,28 +178,30 @@ export function EntitiesProvider({ children, initialActiveEntity, onNoEntities }
         isInitialMount.current = false;
       }
     }
-  }, [memoizedEntities]); // Only depend on entities list
+  }, [memoizedEntities, urlEntityId]); // Re-run when URL entity changes
 
-  // Update cookie when active entity changes
-  useEffect(() => {
-    if (activeEntityState) {
-      setCookie(ACTIVE_ENTITY_COOKIE, activeEntityState, {
-        path: "/",
-        maxAge: 60 * 60 * 24 * 365,
-        sameSite: "lax",
-      });
-    } else {
-      removeCookie(ACTIVE_ENTITY_COOKIE, { path: "/" });
-    }
-  }, [activeEntityState, setCookie, removeCookie]);
-
-  useEffect(() => {
-    setCookie(ACTIVE_ENVIRONMENT_COOKIE, environment, {
+  const cookieOpts = useMemo(
+    () => ({
       path: "/",
       maxAge: 60 * 60 * 24 * 365,
-      sameSite: "lax",
-    });
-  }, [environment, setCookie]);
+      sameSite: "lax" as const,
+      ...(cookieDomain && { domain: cookieDomain }),
+    }),
+    [cookieDomain],
+  );
+
+  // Update cookie when active entity changes (store only ID)
+  useEffect(() => {
+    if (activeEntityState) {
+      setCookie(ACTIVE_ENTITY_COOKIE, activeEntityState.id, cookieOpts);
+    } else {
+      removeCookie(ACTIVE_ENTITY_COOKIE, cookieOpts);
+    }
+  }, [activeEntityState, setCookie, removeCookie, cookieOpts]);
+
+  useEffect(() => {
+    setCookie(ACTIVE_ENVIRONMENT_COOKIE, environment, cookieOpts);
+  }, [environment, setCookie, cookieOpts]);
 
   const refetchEntities = useCallback(async () => {
     await refetch();

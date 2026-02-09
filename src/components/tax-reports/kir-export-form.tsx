@@ -76,7 +76,6 @@ export function KirExportForm({ sdk, entityId, t, onSuccess, onError, onLoadingC
 
       onSuccess?.(fileName);
     } catch (error) {
-      console.error("KIR export error:", error);
       onError?.(error instanceof Error ? error : new Error("Unknown error"));
     } finally {
       setIsExporting(false);

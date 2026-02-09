@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
 export type WhiteLabelConfig = {
   slug: string;
@@ -62,7 +62,10 @@ export function WhiteLabelProvider({ children, apiBaseUrl = "" }: WhiteLabelProv
     fetchConfig();
   }, [apiBaseUrl]);
 
-  const isFeatureVisible = (feature: string) => !config.hiddenFeatures.includes(feature);
+  const isFeatureVisible = useCallback(
+    (feature: string) => !config.hiddenFeatures.includes(feature),
+    [config.hiddenFeatures],
+  );
 
   const value = useMemo(
     () => ({

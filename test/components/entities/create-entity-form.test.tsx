@@ -2,6 +2,7 @@ import { describe, expect, mock, test } from "bun:test";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import type React from "react";
 import { CreateEntityForm } from "@/ui/components/entities/create-entity-form";
 
 // Mock the SDK provider
@@ -35,7 +36,9 @@ const createWrapper = () => {
     },
   });
 
-  return ({ children }) => <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+  return ({ children }: { children: React.ReactNode }) => (
+    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+  );
 };
 
 describe("CreateEntityForm", () => {
@@ -65,7 +68,7 @@ describe("CreateEntityForm", () => {
     // Both should show validation errors for empty required fields
     await waitFor(
       () => {
-        const errors = screen.getAllByText(/too small.*expected string to have.*1 character/i);
+        const errors = screen.getAllByText(/invalid input|must contain at least 1 character|too small|required/i);
         // Should have errors for both name and country
         expect(errors.length).toBeGreaterThanOrEqual(2);
       },

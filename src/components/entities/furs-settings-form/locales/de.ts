@@ -1,98 +1,61 @@
 export default {
-  "Automatically fiscalize invoices with FURS (Financial Administration of Slovenia)":
-    "Rechnungen automatisch mit FURS (Finanzverwaltung Sloweniens) fiskalisieren",
-  "Business Premises": "Geschäftsräume",
-  "Business Premise": "Geschäftsraum",
-  Cancel: "Abbrechen",
-  "Centralized (C) - Sequential numbers across all premises":
-    "Zentralisiert (C) - Fortlaufende Nummern über alle Räume",
-  Certificate: "Zertifikat",
-  "Choose File": "Datei wählen",
-  "Choose how invoice numbers are assigned across your business premises":
-    "Wählen Sie, wie Rechnungsnummern in Ihren Geschäftsräumen vergeben werden",
-  "Configure FURS (Slovenia) fiscalization for this entity":
-    "FURS (Slowenien) Fiskalisierung für diese Entität konfigurieren",
-  "Configure FURS fiscalization behavior": "FURS-Fiskalisierungsverhalten konfigurieren",
-  "Device-Level (B) - Separate sequences per electronic device":
-    "Gerätebene (B) - Separate Sequenzen pro elektronischem Gerät",
-  "Digital Certificate": "Digitales Zertifikat",
-  "Enable FURS Fiscalization": "FURS-Fiskalisierung aktivieren",
-  "Enter passphrase": "Passwort eingeben",
-  "Expired on": "Abgelaufen am",
-  "Expires soon on": "Läuft bald ab am",
-  "FURS Fiscalization Settings": "FURS-Fiskalisierungseinstellungen",
-  "FURS fiscalization is only available for entities with country code SI (Slovenia)":
-    "FURS-Fiskalisierung ist nur für Entitäten mit Ländercode SI (Slowenien) verfügbar",
   "FURS is for Slovenian Entities": "FURS ist nur für slowenische Entitäten",
-  "FURS requires a digital certificate for fiscalization": "FURS erfordert ein digitales Zertifikat zur Fiskalisierung",
-  "General Settings": "Allgemeine Einstellungen",
-  "Invoice Number Pattern (Optional)": "Rechnungsnummernmuster (Optional)",
-  "Manage Premises & Devices": "Räume & Geräte verwalten",
-  "Manage registered premises and electronic devices": "Registrierte Räume und elektronische Geräte verwalten",
-  "Notification Email": "Benachrichtigungs-E-Mail",
-  "Numbering Strategy": "Nummerierungsstrategie",
-  "Premise Registration Required": "Raumregistrierung erforderlich",
-  "Receive alerts about certificate expiry and fiscalization issues":
-    "Erhalten Sie Benachrichtigungen über Zertifikatsablauf und Fiskalisierungsprobleme",
-  "Regex pattern to extract invoice number from full document number. First capture group will be used.":
-    "Regex-Muster zur Extraktion der Rechnungsnummer aus der vollständigen Dokumentnummer. Die erste Erfassungsgruppe wird verwendet.",
-  "Register First Premise": "Ersten Raum registrieren",
-  "Register at least one business premise before fiscalizing invoices":
-    "Registrieren Sie mindestens einen Geschäftsraum, bevor Sie Rechnungen fiskalisieren",
-  "Save Settings": "Einstellungen speichern",
-  "Saving...": "Wird gespeichert...",
-  "Select your .p12 or .pfx certificate file": "Wählen Sie Ihre .p12- oder .pfx-Zertifikatsdatei",
-  "Valid until": "Gültig bis",
-  "Will be encrypted before storage": "Wird vor der Speicherung verschlüsselt",
-  "You must register at least one business premise before fiscalizing invoices":
-    "Sie müssen mindestens einen Geschäftsraum registrieren, bevor Sie Rechnungen fiskalisieren können",
-  "You must upload a digital certificate before you can fiscalize invoices":
-    "Sie müssen ein digitales Zertifikat hochladen, bevor Sie Rechnungen fiskalisieren können",
-  "premise registered": "Raum registriert",
-  "premises registered": "Räume registriert",
-  "FURS Setup": "FURS-Einrichtung",
-  "Enable FURS to automatically fiscalize your invoices with the Slovenian tax authority. Choose centralized numbering for unified invoice sequences, or device-level for separate sequences per register.":
-    "Aktivieren Sie FURS, um Ihre Rechnungen automatisch bei der slowenischen Steuerbehörde zu fiskalisieren. Wählen Sie zentralisierte Nummerierung für einheitliche Rechnungssequenzen oder Gerätebene für separate Sequenzen pro Kasse.",
-  "Certificate Security": "Zertifikatssicherheit",
-  "Your digital certificate is used to sign all fiscalized invoices. The passphrase is encrypted before storage and never leaves your server. Certificates typically expire annually.":
-    "Ihr digitales Zertifikat wird zum Signieren aller fiskalisierten Rechnungen verwendet. Das Passwort wird vor der Speicherung verschlüsselt und verlässt niemals Ihren Server. Zertifikate laufen normalerweise jährlich ab.",
-  "About Premises": "Über Geschäftsräume",
-  "Business premises represent physical locations or movable units where you issue invoices. Each premise must be registered with FURS before you can fiscalize invoices from that location.":
-    "Geschäftsräume repräsentieren physische Standorte oder bewegliche Einheiten, an denen Sie Rechnungen ausstellen. Jeder Raum muss bei FURS registriert werden, bevor Sie Rechnungen von diesem Standort fiskalisieren können.",
-  "Operator Tax Number": "Steuernummer des Betreibers",
-  "Tax number of the operator for API key usage (optional)":
-    "Steuernummer des Betreibers für API-Schlüssel-Nutzung (optional)",
-  "Operator Label": "Betreiber-Bezeichnung",
-  "Descriptive label for the operator (optional)": "Beschreibende Bezeichnung für den Betreiber (optional)",
-  "Upload Failed": "Upload fehlgeschlagen",
-  "Please select a certificate file and enter the passphrase":
-    "Bitte wählen Sie eine Zertifikatsdatei und geben Sie das Passwort ein",
-  Selected: "Ausgewählt",
-  "Upload Certificate": "Zertifikat hochladen",
-  "Uploading...": "Wird hochgeladen...",
-  Error: "Fehler",
-  "Loading premises...": "Räume werden geladen...",
-  "Real Estate": "Immobilie",
-  Movable: "Bewegliche Einheit",
-  devices: "Geräte",
-  "Add Another Premise": "Weiteren Raum hinzufügen",
+  "FURS fiscalization is only available for entities with country code SI":
+    "FURS-Fiskalisierung ist nur für Entitäten mit Ländercode SI verfügbar",
   "Test Mode (Sandbox)": "Testmodus (Sandbox)",
   "This entity is in test mode. FURS invoices will be sent to the test/demo environment. No real fiscalization will occur.":
     "Diese Entität befindet sich im Testmodus. FURS-Rechnungen werden an die Test-/Demo-Umgebung gesendet. Es erfolgt keine echte Fiskalisierung.",
+  "General Settings": "Allgemeine Einstellungen",
+  Certificate: "Zertifikat",
+  "Business Premises": "Geschäftsräume",
+  "Business Premise": "Geschäftsraum",
   "Enable FURS fiscalization in General Settings first":
     "Aktivieren Sie zuerst die FURS-Fiskalisierung in den Allgemeinen Einstellungen",
   "Upload and validate digital certificate first":
     "Laden Sie zuerst ein digitales Zertifikat hoch und validieren Sie es",
   "Certificate Required": "Zertifikat erforderlich",
+  "You must upload a digital certificate before you can fiscalize invoices":
+    "Sie müssen ein digitales Zertifikat hochladen, bevor Sie Rechnungen fiskalisieren können",
   "Business Premise Required": "Raumregistrierung erforderlich",
+  "Register at least one business premise before fiscalizing invoices":
+    "Registrieren Sie mindestens einen Geschäftsraum, bevor Sie Rechnungen fiskalisieren",
+  "Configure FURS fiscalization behavior": "FURS-Fiskalisierungsverhalten konfigurieren",
   "Configure how FURS fiscalization works for your entity. Enable fiscalization, choose your numbering strategy, and set operator information.":
     "Konfigurieren Sie, wie die FURS-Fiskalisierung für Ihre Entität funktioniert. Aktivieren Sie die Fiskalisierung, wählen Sie Ihre Nummerierungsstrategie und legen Sie Betreiberinformationen fest.",
+  "Enable FURS Fiscalization": "FURS-Fiskalisierung aktivieren",
+  "Automatically fiscalize invoices with FURS (Financial Administration of Slovenia)":
+    "Rechnungen automatisch mit FURS (Finanzverwaltung Sloweniens) fiskalisieren",
+  "Numbering Strategy": "Nummerierungsstrategie",
+  "Choose how invoice numbers are assigned across your business premises":
+    "Wählen Sie, wie Rechnungsnummern in Ihren Geschäftsräumen vergeben werden",
+  "Device-Level (B) - Separate sequences per electronic device":
+    "Gerätebene (B) - Separate Sequenzen pro elektronischem Gerät",
+  "Centralized (C) - Sequential numbers across all premises":
+    "Zentralisiert (C) - Fortlaufende Nummern über alle Räume",
+  Centralized: "Zentralisiert",
+  "Per Device": "Pro Gerät",
+  Recommended: "Empfohlen",
+  "One sequence across all premises. Simpler to manage and track.":
+    "Eine Sequenz über alle Räume. Einfacher zu verwalten und nachzuverfolgen.",
+  "Separate sequence per electronic device. For complex multi-location setups.":
+    "Separate Sequenz pro elektronischem Gerät. Für komplexe Multi-Standort-Setups.",
   "Operator Information": "Betreiberinformationen",
   "Configure default operator for API usage": "Konfigurieren Sie den Standardbetreiber für die API-Nutzung",
+  "Operator Tax Number": "Steuernummer des Betreibers",
+  "Tax number of the operator for API key usage (optional)":
+    "Steuernummer des Betreibers für API-Schlüssel-Nutzung (optional)",
+  "Operator Label": "Betreiber-Bezeichnung",
+  "Descriptive label for the operator (optional)": "Beschreibende Bezeichnung für den Betreiber (optional)",
+  "Digital Certificate": "Digitales Zertifikat",
+  "Upload your FURS digital certificate": "Laden Sie Ihr FURS-Digitalzertifikat hoch",
+  "Your certificate is required to digitally sign all fiscalized invoices. The certificate must be obtained from the Slovenian Financial Administration (FURS).":
+    "Ihr Zertifikat wird zum Signieren aller fiskalisierten Rechnungen verwendet. Das Zertifikat muss von der slowenischen Finanzverwaltung (FURS) bezogen werden.",
   "Once uploaded, your certificate will be validated and you'll be able to register business premises and start fiscalizing invoices.":
     "Nach dem Hochladen wird Ihr Zertifikat validiert und Sie können Geschäftsräume registrieren und mit der Fiskalisierung von Rechnungen beginnen.",
   "Invalid file type. Please upload a .p12 or .pfx certificate file.":
     "Ungültiger Dateityp. Bitte laden Sie eine .p12- oder .pfx-Zertifikatsdatei hoch.",
+  "Please select a certificate file and enter the passphrase":
+    "Bitte wählen Sie eine Zertifikatsdatei und geben Sie das Passwort ein",
   Valid: "Gültig",
   "Expiring Soon": "Läuft bald ab",
   Expired: "Abgelaufen",
@@ -102,8 +65,10 @@ export default {
   Subject: "Subjekt",
   "Change Certificate": "Zertifikat ändern",
   "P12/PFX Certificate File": "P12/PFX-Zertifikatsdatei",
+  Selected: "Ausgewählt",
   "Certificate Passphrase": "Zertifikatspasswort",
   "Enter certificate passphrase": "Zertifikatspasswort eingeben",
+  "Upload Certificate": "Zertifikat hochladen",
   "Upload New Certificate": "Neues Zertifikat hochladen",
   "Register your business premises with FURS": "Registrieren Sie Ihre Geschäftsräume bei FURS",
   "Each premise must be registered with FURS before you can issue fiscalized invoices from that location. You can register both real estate premises (physical locations) and movable premises (vehicles, market stalls, etc.).":
@@ -115,6 +80,8 @@ export default {
   "No premises registered yet": "Noch keine Räume registriert",
   Active: "Aktiv",
   Closed: "Geschlossen",
+  "Real Estate": "Immobilie",
+  Movable: "Bewegliche Einheit",
   "Close Premise": "Raum schließen",
   "Are you sure you want to close this premise? This action cannot be undone.":
     "Sind Sie sicher, dass Sie diesen Raum schließen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
@@ -136,6 +103,7 @@ export default {
   E1: "E1",
   "Enter a unique name for this device (e.g., E1, E2, POS1, DEVICE1)":
     "Geben Sie einen eindeutigen Namen für dieses Gerät ein (z.B. E1, E2, POS1, DEVICE1)",
+  Cancel: "Abbrechen",
   "Register Device": "Gerät registrieren",
   "Registering...": "Wird registriert...",
   "Register Real Estate Premise": "Immobilie registrieren",
@@ -156,12 +124,18 @@ export default {
   Additional: "Zusatz",
   City: "Stadt",
   "Postal Code": "Postleitzahl",
+  "Choose how invoice numbers are generated": "Wählen Sie, wie Rechnungsnummern generiert werden",
+  "Strategy B (Device-level)": "Strategie B (Gerätebene)",
+  "Strategy C (Centralized)": "Strategie C (Zentralisiert)",
   "Premise Type": "Raumtyp",
   "Type of movable business premise": "Art des beweglichen Geschäftsraums",
   "A - Vehicle": "A - Fahrzeug",
   "B - Object at Market/Fair": "B - Objekt am Markt/Messe",
   "C - Other Movable": "C - Sonstiges beweglich",
   "Register Premise": "Raum registrieren",
+  "Save Settings": "Einstellungen speichern",
+  "Saving...": "Wird gespeichert...",
+  "Loading...": "Wird geladen...",
   "FURS Fiscalization": "FURS Fiskalisierung",
   "Slovenian tax authority fiscalization details": "Details zur Fiskalisierung bei der slowenischen Steuerbehörde",
   Fiscalized: "Fiskalisiert",
@@ -177,7 +151,6 @@ export default {
   Iteration: "Iteration",
   "QR Code": "QR-Code",
   "Fiscalized at": "Fiskalisiert am",
-  // New flow translations
   "Enable Fiscalization": "Fiskalisierung aktivieren",
   "Turn on FURS fiscalization for invoices": "FURS-Fiskalisierung für Rechnungen einschalten",
   "Setup Checklist": "Einrichtungs-Checkliste",
@@ -200,16 +173,6 @@ export default {
     "Sie können die Fiskalisierung jederzeit deaktivieren, beachten Sie jedoch, dass Rechnungen, die während der Deaktivierung ausgestellt werden, nicht fiskalisiert werden.",
   "You must upload a digital certificate before you can register business premises":
     "Sie müssen ein digitales Zertifikat hochladen, bevor Sie Geschäftsräume registrieren können",
-  "Loading...": "Wird geladen...",
-  "FURS fiscalization is only available for entities with country code SI":
-    "FURS-Fiskalisierung ist nur für Entitäten mit Ländercode SI verfügbar",
-  "Upload your FURS digital certificate": "Laden Sie Ihr FURS-Digitalzertifikat hoch",
-  "Your certificate is required to digitally sign all fiscalized invoices. The certificate must be obtained from the Slovenian Financial Administration (FURS).":
-    "Ihr Zertifikat wird benötigt, um alle fiskalisierten Rechnungen digital zu signieren. Das Zertifikat muss von der slowenischen Finanzverwaltung (FURS) bezogen werden.",
-  "Choose how invoice numbers are generated": "Wählen Sie, wie Rechnungsnummern generiert werden",
-  "Strategy B (Device-level)": "Strategie B (Gerätebene)",
-  "Strategy C (Centralized)": "Strategie C (Zentralisiert)",
-  // User FURS settings
   "Your Operator Settings": "Ihre Betreibereinstellungen",
   "Your personal operator info for FURS invoices": "Ihre persönlichen Betreiberinformationen für FURS-Rechnungen",
   "Save Operator Settings": "Betreibereinstellungen speichern",
@@ -223,11 +186,12 @@ export default {
     "Standardbetreibereinstellungen für API-Schlüssel-Nutzung (ohne Benutzerkontext)",
   "Tax number for API key usage (optional)": "Steuernummer für API-Schlüssel-Nutzung (optional)",
   "Operator label for API key usage (optional)": "Betreiber-Bezeichnung für API-Schlüssel-Nutzung (optional)",
-  // Updated help text
   "Your personal tax number and label that appear on FURS invoices you issue. Each user can have their own operator info.":
     "Ihre persönliche Steuernummer und Bezeichnung, die auf den von Ihnen ausgestellten FURS-Rechnungen erscheinen. Jeder Benutzer kann seine eigenen Betreiberinformationen haben.",
   "Choose the numbering strategy for your invoices. Device-level creates separate sequences per device, centralized uses one sequence across all premises.":
     "Wählen Sie die Nummerierungsstrategie für Ihre Rechnungen. Gerätebene erstellt separate Sequenzen pro Gerät, zentralisiert verwendet eine Sequenz über alle Räume.",
   "Default operator info used when invoices are created via API without a logged-in user.":
     "Standard-Betreiberinformationen, die verwendet werden, wenn Rechnungen über die API ohne angemeldeten Benutzer erstellt werden.",
+  "Certificate uploaded successfully": "Zertifikat erfolgreich hochgeladen",
+  "Loading certificate details...": "Zertifikatsdetails werden geladen...",
 } as const;

@@ -30,8 +30,8 @@ type PrepareDocumentOptions = {
   wasCustomerFormShown?: boolean;
   /** For invoices/credit notes: whether to mark as paid */
   markAsPaid?: boolean;
-  /** For invoices/credit notes: payment type when markAsPaid is true */
-  paymentType?: string;
+  /** For invoices/credit notes: payment types when markAsPaid is true */
+  paymentTypes?: string[];
   /** Document type for specific date handling */
   documentType: "invoice" | "estimate" | "credit_note" | "advance_invoice";
   /** Secondary date field value (date_due for invoices, date_valid_till for estimates) */
@@ -167,16 +167,21 @@ export function prepareDocumentSubmission<T extends BaseDocumentValues>(
   // Credit notes don't have a secondary date field
 
   // Handle markAsPaid for invoices and credit notes
-  if (options.documentType !== "estimate" && options.markAsPaid) {
-    payload.payment = {
-      type: options.paymentType || "bank_transfer",
+  if (
+    options.documentType !== "estimate" &&
+    options.markAsPaid &&
+    options.paymentTypes &&
+    options.paymentTypes.length > 0
+  ) {
+    payload.payments = options.paymentTypes.map((type: string) => ({
+      type,
       date: payload.date ?? undefined,
-    };
+    }));
   }
 
   // Remove UI-only fields from payload
   delete payload.markAsPaid;
-  delete payload.paymentType;
+  delete payload.paymentTypes;
 
   // Add draft flag if requested
   if (options.isDraft) {

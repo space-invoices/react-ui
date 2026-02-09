@@ -33,9 +33,16 @@ import { createTranslation } from "@/ui/lib/translation";
 import { useEntities } from "@/ui/providers/entities-context";
 import { useSDK } from "@/ui/providers/sdk-provider";
 import de from "./locales/de";
+import es from "./locales/es";
+import fr from "./locales/fr";
+import hr from "./locales/hr";
+import it from "./locales/it";
+import nl from "./locales/nl";
+import pl from "./locales/pl";
+import pt from "./locales/pt";
 import sl from "./locales/sl";
 
-const translations = { de, sl } as const;
+const translations = { de, sl, it, fr, es, pt, nl, pl, hr } as const;
 
 type SendEmailDialogProps = {
   invoice: Invoice;
@@ -120,10 +127,11 @@ export function SendEmailDialog({
       }
 
       try {
-        const response = await sdk.customers.list(
-          { query: JSON.stringify({ id: invoice.customer_id }), limit: 1 },
-          { entity_id: activeEntity.id },
-        );
+        const response = await sdk.customers.list({
+          query: JSON.stringify({ id: invoice.customer_id }),
+          limit: 1,
+          entity_id: activeEntity.id,
+        });
 
         const customer = response.data[0];
         if (customer?.email) {

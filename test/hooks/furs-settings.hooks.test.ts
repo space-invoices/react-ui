@@ -3,18 +3,38 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 import { createElement } from "react";
 
+/**
+ * Mock SDK with correct typed method names matching the actual SDK.
+ * These correspond to the operationIds in the OpenAPI spec:
+ * - sdk.fursSettings.list (getFursSettings)
+ * - sdk.fursSettings.update (updateFursSettings)
+ * - sdk.fursCertificate.uploadFursCertificate (uploadFursCertificate)
+ * - sdk.fursFiscalization.listFursBusinessPremises (listFursBusinessPremises)
+ * - sdk.fursFiscalization.registerFursRealEstatePremise
+ * - sdk.fursFiscalization.registerFursMovablePremise
+ * - sdk.fursFiscalization.closeFursBusinessPremise
+ * - sdk.fursFiscalization.registerFursElectronicDevice
+ * - sdk.users.update (updateUser)
+ * - sdk.users.getMe (getMe)
+ */
 const mockSDK = {
   fursSettings: {
-    get: mock(async () => ({})),
+    list: mock(async () => ({})),
     update: mock(async () => ({})),
-    uploadCertificate: mock(async () => ({})),
+  },
+  fursCertificate: {
+    uploadFursCertificate: mock(async () => ({})),
   },
   fursFiscalization: {
-    listPremises: mock(async () => []),
-    registerRealEstatePremise: mock(async () => ({})),
-    registerMovablePremise: mock(async () => ({})),
-    closePremise: mock(async () => ({})),
-    registerDevice: mock(async () => ({})),
+    listFursBusinessPremises: mock(async () => []),
+    registerFursRealEstatePremise: mock(async () => ({})),
+    registerFursMovablePremise: mock(async () => ({})),
+    closeFursBusinessPremise: mock(async () => ({})),
+    registerFursElectronicDevice: mock(async () => ({})),
+  },
+  users: {
+    update: mock(async () => ({})),
+    getMe: mock(async () => ({})),
   },
 };
 
@@ -25,12 +45,14 @@ mock.module("@/ui/providers/sdk-provider", () => ({
 import {
   fursQueryKeys,
   useClosePremise,
+  useCurrentUser,
   useFursPremises,
   useFursSettings,
   useRegisterElectronicDevice,
   useRegisterMovablePremise,
   useRegisterRealEstatePremise,
   useUpdateFursSettings,
+  useUpdateUserFursSettings,
   useUploadFursCertificate,
 } from "@/ui/components/entities/furs-settings-form/furs-settings.hooks";
 
@@ -39,14 +61,16 @@ describe("FURS Settings Hooks", () => {
 
   beforeEach(() => {
     // Clear all SDK mocks
-    mockSDK.fursSettings.get.mockClear();
+    mockSDK.fursSettings.list.mockClear();
     mockSDK.fursSettings.update.mockClear();
-    mockSDK.fursSettings.uploadCertificate.mockClear();
-    mockSDK.fursFiscalization.listPremises.mockClear();
-    mockSDK.fursFiscalization.registerRealEstatePremise.mockClear();
-    mockSDK.fursFiscalization.registerMovablePremise.mockClear();
-    mockSDK.fursFiscalization.closePremise.mockClear();
-    mockSDK.fursFiscalization.registerDevice.mockClear();
+    mockSDK.fursCertificate.uploadFursCertificate.mockClear();
+    mockSDK.fursFiscalization.listFursBusinessPremises.mockClear();
+    mockSDK.fursFiscalization.registerFursRealEstatePremise.mockClear();
+    mockSDK.fursFiscalization.registerFursMovablePremise.mockClear();
+    mockSDK.fursFiscalization.closeFursBusinessPremise.mockClear();
+    mockSDK.fursFiscalization.registerFursElectronicDevice.mockClear();
+    mockSDK.users.update.mockClear();
+    mockSDK.users.getMe.mockClear();
 
     queryClient = new QueryClient({
       defaultOptions: {
@@ -66,18 +90,19 @@ describe("FURS Settings Hooks", () => {
       expect(fursQueryKeys.premises("ent_123")).toEqual(["furs", "premises", "ent_123"]);
       expect(fursQueryKeys.premise("prem_123")).toEqual(["furs", "premise", "prem_123"]);
       expect(fursQueryKeys.devices("prem_123")).toEqual(["furs", "devices", "prem_123"]);
+      expect(fursQueryKeys.currentUser()).toEqual(["user", "me"]);
     });
   });
 
   describe("useFursSettings", () => {
-    it("should fetch FURS settings successfully", async () => {
+    it("should call sdk.fursSettings.list with correct entity_id", async () => {
       const mockSettings = {
         enabled: true,
         has_certificate: true,
         tax_number: "12345678",
       };
 
-      mockSDK.fursSettings.get.mockResolvedValue(mockSettings);
+      mockSDK.fursSettings.list.mockResolvedValue(mockSettings);
 
       const { result } = renderHook(() => useFursSettings("ent_123"), { wrapper });
 
@@ -88,7 +113,7 @@ describe("FURS Settings Hooks", () => {
       });
 
       expect(result.current.data).toEqual(mockSettings);
-      expect(mockSDK.fursSettings.get).toHaveBeenCalledWith({
+      expect(mockSDK.fursSettings.list).toHaveBeenCalledWith({
         entity_id: "ent_123",
       });
     });
@@ -97,19 +122,19 @@ describe("FURS Settings Hooks", () => {
       const { result } = renderHook(() => useFursSettings(""), { wrapper });
 
       expect(result.current.isLoading).toBe(false);
-      expect(mockSDK.fursSettings.get).not.toHaveBeenCalled();
+      expect(mockSDK.fursSettings.list).not.toHaveBeenCalled();
     });
 
     it("should not fetch when entityId is empty", () => {
       const { result } = renderHook(() => useFursSettings(""), { wrapper });
 
       expect(result.current.isLoading).toBe(false);
-      expect(mockSDK.fursSettings.get).not.toHaveBeenCalled();
+      expect(mockSDK.fursSettings.list).not.toHaveBeenCalled();
     });
   });
 
   describe("useUpdateFursSettings", () => {
-    it("should update FURS settings successfully", async () => {
+    it("should call sdk.fursSettings.update with correct args", async () => {
       const mockUpdatedSettings = {
         enabled: true,
         has_certificate: false,
@@ -174,13 +199,13 @@ describe("FURS Settings Hooks", () => {
   });
 
   describe("useUploadFursCertificate", () => {
-    it("should upload certificate successfully", async () => {
+    it("should call sdk.fursCertificate.uploadFursCertificate with { file, passphrase } body", async () => {
       const mockResponse = {
         has_certificate: true,
         certificate_valid_until: "2025-12-31",
       };
 
-      mockSDK.fursSettings.uploadCertificate.mockResolvedValue(mockResponse);
+      mockSDK.fursCertificate.uploadFursCertificate.mockResolvedValue(mockResponse);
 
       const mockFile = new Blob(["certificate data"], { type: "application/x-pkcs12" });
 
@@ -196,16 +221,17 @@ describe("FURS Settings Hooks", () => {
         expect(result.current.isSuccess).toBe(true);
       });
 
-      // SDK signature: uploadCertificate(file, passphrase, { entity_id })
-      expect(mockSDK.fursSettings.uploadCertificate).toHaveBeenCalledWith(mockFile, "secret123", {
-        entity_id: "ent_123",
-      });
+      // SDK signature: uploadFursCertificate({ file, passphrase }, { entity_id })
+      expect(mockSDK.fursCertificate.uploadFursCertificate).toHaveBeenCalledWith(
+        { file: mockFile, passphrase: "secret123" },
+        { entity_id: "ent_123" },
+      );
 
-      expect(result.current.data).toEqual(mockResponse);
+      expect(result.current.data).toEqual(mockResponse as any);
     });
 
     it("should invalidate settings query after upload", async () => {
-      mockSDK.fursSettings.uploadCertificate.mockResolvedValue({});
+      mockSDK.fursCertificate.uploadFursCertificate.mockResolvedValue({});
 
       const invalidateQueriesSpy = spyOn(queryClient, "invalidateQueries");
 
@@ -229,7 +255,7 @@ describe("FURS Settings Hooks", () => {
     });
 
     it("should handle upload error", async () => {
-      mockSDK.fursSettings.uploadCertificate.mockRejectedValue(new Error("Invalid certificate or passphrase"));
+      mockSDK.fursCertificate.uploadFursCertificate.mockRejectedValue(new Error("Invalid certificate or passphrase"));
 
       const mockFile = new Blob(["bad cert"], { type: "application/x-pkcs12" });
 
@@ -250,13 +276,13 @@ describe("FURS Settings Hooks", () => {
   });
 
   describe("useFursPremises", () => {
-    it("should fetch premises list successfully", async () => {
+    it("should call sdk.fursFiscalization.listFursBusinessPremises with correct entity_id", async () => {
       const mockPremises = [
         { id: "prem_1", name: "Main Office", type: "real_estate" },
         { id: "prem_2", name: "Mobile Unit", type: "movable" },
-      ];
+      ] as any;
 
-      mockSDK.fursFiscalization.listPremises.mockResolvedValue(mockPremises);
+      mockSDK.fursFiscalization.listFursBusinessPremises.mockResolvedValue(mockPremises);
 
       const { result } = renderHook(() => useFursPremises("ent_123"), { wrapper });
 
@@ -264,14 +290,14 @@ describe("FURS Settings Hooks", () => {
         expect(result.current.isSuccess).toBe(true);
       });
 
-      expect(result.current.data).toEqual(mockPremises);
-      expect(mockSDK.fursFiscalization.listPremises).toHaveBeenCalledWith({
+      expect(result.current.data).toEqual(mockPremises as any);
+      expect(mockSDK.fursFiscalization.listFursBusinessPremises).toHaveBeenCalledWith({
         entity_id: "ent_123",
       });
     });
 
     it("should handle empty premises list", async () => {
-      mockSDK.fursFiscalization.listPremises.mockResolvedValue([]);
+      mockSDK.fursFiscalization.listFursBusinessPremises.mockResolvedValue([]);
 
       const { result } = renderHook(() => useFursPremises("ent_123"), { wrapper });
 
@@ -284,13 +310,13 @@ describe("FURS Settings Hooks", () => {
   });
 
   describe("useRegisterRealEstatePremise", () => {
-    it("should register real estate premise successfully", async () => {
+    it("should call sdk.fursFiscalization.registerFursRealEstatePremise", async () => {
       const mockResponse = {
         id: "prem_123",
         type: "real_estate",
       };
 
-      mockSDK.fursFiscalization.registerRealEstatePremise.mockResolvedValue(mockResponse);
+      mockSDK.fursFiscalization.registerFursRealEstatePremise.mockResolvedValue(mockResponse);
 
       const { result } = renderHook(() => useRegisterRealEstatePremise(), { wrapper });
 
@@ -298,7 +324,7 @@ describe("FURS Settings Hooks", () => {
         business_premise_id: "BP01",
         address: "Main Street 123",
         cadastral_number: 1234,
-      };
+      } as any;
 
       result.current.mutate({
         entityId: "ent_123",
@@ -309,14 +335,14 @@ describe("FURS Settings Hooks", () => {
         expect(result.current.isSuccess).toBe(true);
       });
 
-      // SDK signature: registerRealEstatePremise(data, { entity_id })
-      expect(mockSDK.fursFiscalization.registerRealEstatePremise).toHaveBeenCalledWith(premiseData, {
+      // SDK signature: registerFursRealEstatePremise(data, { entity_id })
+      expect(mockSDK.fursFiscalization.registerFursRealEstatePremise).toHaveBeenCalledWith(premiseData, {
         entity_id: "ent_123",
       });
     });
 
     it("should invalidate premises list after registration", async () => {
-      mockSDK.fursFiscalization.registerRealEstatePremise.mockResolvedValue({});
+      mockSDK.fursFiscalization.registerFursRealEstatePremise.mockResolvedValue({});
 
       const invalidateQueriesSpy = spyOn(queryClient, "invalidateQueries");
 
@@ -324,7 +350,7 @@ describe("FURS Settings Hooks", () => {
 
       result.current.mutate({
         entityId: "ent_123",
-        data: { business_premise_id: "BP01" },
+        data: { business_premise_id: "BP01" } as any,
       });
 
       await waitFor(() => {
@@ -338,8 +364,8 @@ describe("FURS Settings Hooks", () => {
   });
 
   describe("useRegisterMovablePremise", () => {
-    it("should register movable premise successfully", async () => {
-      mockSDK.fursFiscalization.registerMovablePremise.mockResolvedValue({
+    it("should call sdk.fursFiscalization.registerFursMovablePremise", async () => {
+      mockSDK.fursFiscalization.registerFursMovablePremise.mockResolvedValue({
         id: "prem_456",
       });
 
@@ -347,22 +373,22 @@ describe("FURS Settings Hooks", () => {
 
       result.current.mutate({
         entityId: "ent_123",
-        data: { business_premise_id: "BP02" },
+        data: { business_premise_id: "BP02" } as any,
       });
 
       await waitFor(() => {
         expect(result.current.isSuccess).toBe(true);
       });
 
-      // SDK signature: registerMovablePremise(data, { entity_id })
-      expect(mockSDK.fursFiscalization.registerMovablePremise).toHaveBeenCalledWith(
+      // SDK signature: registerFursMovablePremise(data, { entity_id })
+      expect(mockSDK.fursFiscalization.registerFursMovablePremise).toHaveBeenCalledWith(
         { business_premise_id: "BP02" },
         { entity_id: "ent_123" },
       );
     });
 
     it("should invalidate premises list after registration", async () => {
-      mockSDK.fursFiscalization.registerMovablePremise.mockResolvedValue({});
+      mockSDK.fursFiscalization.registerFursMovablePremise.mockResolvedValue({});
 
       const invalidateQueriesSpy = spyOn(queryClient, "invalidateQueries");
 
@@ -370,7 +396,7 @@ describe("FURS Settings Hooks", () => {
 
       result.current.mutate({
         entityId: "ent_123",
-        data: { business_premise_id: "BP02" },
+        data: { business_premise_id: "BP02" } as any,
       });
 
       await waitFor(() => {
@@ -384,8 +410,8 @@ describe("FURS Settings Hooks", () => {
   });
 
   describe("useClosePremise", () => {
-    it("should close premise successfully", async () => {
-      mockSDK.fursFiscalization.closePremise.mockResolvedValue({
+    it("should call sdk.fursFiscalization.closeFursBusinessPremise", async () => {
+      mockSDK.fursFiscalization.closeFursBusinessPremise.mockResolvedValue({
         success: true,
       });
 
@@ -400,12 +426,14 @@ describe("FURS Settings Hooks", () => {
         expect(result.current.isSuccess).toBe(true);
       });
 
-      // SDK signature: closePremise(premiseId, { entity_id })
-      expect(mockSDK.fursFiscalization.closePremise).toHaveBeenCalledWith("prem_123", { entity_id: "ent_123" });
+      // SDK signature: closeFursBusinessPremise(premiseId, { entity_id })
+      expect(mockSDK.fursFiscalization.closeFursBusinessPremise).toHaveBeenCalledWith("prem_123", {
+        entity_id: "ent_123",
+      });
     });
 
     it("should invalidate premises list after closing", async () => {
-      mockSDK.fursFiscalization.closePremise.mockResolvedValue({});
+      mockSDK.fursFiscalization.closeFursBusinessPremise.mockResolvedValue({});
 
       const invalidateQueriesSpy = spyOn(queryClient, "invalidateQueries");
 
@@ -426,7 +454,7 @@ describe("FURS Settings Hooks", () => {
     });
 
     it("should handle close error", async () => {
-      mockSDK.fursFiscalization.closePremise.mockRejectedValue(new Error("Premise has active devices"));
+      mockSDK.fursFiscalization.closeFursBusinessPremise.mockRejectedValue(new Error("Premise has active devices"));
 
       const { result } = renderHook(() => useClosePremise(), { wrapper });
 
@@ -444,13 +472,13 @@ describe("FURS Settings Hooks", () => {
   });
 
   describe("useRegisterElectronicDevice", () => {
-    it("should register electronic device successfully", async () => {
+    it("should call sdk.fursFiscalization.registerFursElectronicDevice", async () => {
       const mockResponse = {
         id: "dev_123",
         name: "Cash Register 1",
       };
 
-      mockSDK.fursFiscalization.registerDevice.mockResolvedValue(mockResponse);
+      mockSDK.fursFiscalization.registerFursElectronicDevice.mockResolvedValue(mockResponse);
 
       const { result } = renderHook(() => useRegisterElectronicDevice(), { wrapper });
 
@@ -464,18 +492,18 @@ describe("FURS Settings Hooks", () => {
         expect(result.current.isSuccess).toBe(true);
       });
 
-      // SDK signature: registerDevice(premiseId, data, { entity_id })
-      expect(mockSDK.fursFiscalization.registerDevice).toHaveBeenCalledWith(
+      // SDK signature: registerFursElectronicDevice(premiseId, data, { entity_id })
+      expect(mockSDK.fursFiscalization.registerFursElectronicDevice).toHaveBeenCalledWith(
         "prem_123",
         { name: "Cash Register 1" },
         { entity_id: "ent_123" },
       );
 
-      expect(result.current.data).toEqual(mockResponse);
+      expect(result.current.data).toEqual(mockResponse as any);
     });
 
     it("should invalidate both premises and devices queries", async () => {
-      mockSDK.fursFiscalization.registerDevice.mockResolvedValue({});
+      mockSDK.fursFiscalization.registerFursElectronicDevice.mockResolvedValue({});
 
       const invalidateQueriesSpy = spyOn(queryClient, "invalidateQueries");
 
@@ -501,7 +529,7 @@ describe("FURS Settings Hooks", () => {
     });
 
     it("should handle device registration error", async () => {
-      mockSDK.fursFiscalization.registerDevice.mockRejectedValue(new Error("Device name already exists"));
+      mockSDK.fursFiscalization.registerFursElectronicDevice.mockRejectedValue(new Error("Device name already exists"));
 
       const { result } = renderHook(() => useRegisterElectronicDevice(), { wrapper });
 
@@ -516,6 +544,107 @@ describe("FURS Settings Hooks", () => {
       });
 
       expect((result.current.error as Error).message).toBe("Device name already exists");
+    });
+  });
+
+  describe("useCurrentUser", () => {
+    it("should call sdk.users.getMe", async () => {
+      const mockUser = {
+        id: "user_123",
+        email: "test@example.com",
+        settings: {},
+      };
+
+      mockSDK.users.getMe.mockResolvedValue(mockUser);
+
+      const { result } = renderHook(() => useCurrentUser(), { wrapper });
+
+      await waitFor(() => {
+        expect(result.current.isSuccess).toBe(true);
+      });
+
+      expect(result.current.data).toEqual(mockUser as any);
+      expect(mockSDK.users.getMe).toHaveBeenCalled();
+    });
+  });
+
+  describe("useUpdateUserFursSettings", () => {
+    it("should call sdk.users.update with correct args", async () => {
+      const mockUpdatedUser = {
+        id: "user_123",
+        email: "test@example.com",
+        settings: {
+          furs_ent_123: {
+            operator_tax_number: "12345678",
+            operator_label: "OP1",
+          },
+        },
+      };
+
+      mockSDK.users.update.mockResolvedValue(mockUpdatedUser);
+
+      const { result } = renderHook(() => useUpdateUserFursSettings(), { wrapper });
+
+      result.current.mutate({
+        entityId: "ent_123",
+        data: {
+          operator_tax_number: "12345678",
+          operator_label: "OP1",
+        } as any,
+      });
+
+      await waitFor(() => {
+        expect(result.current.isSuccess).toBe(true);
+      });
+
+      // SDK signature: update(data, { entity_id })
+      expect(mockSDK.users.update).toHaveBeenCalledWith(
+        {
+          operator_tax_number: "12345678",
+          operator_label: "OP1",
+        },
+        { entity_id: "ent_123" },
+      );
+
+      expect(result.current.data).toEqual(mockUpdatedUser as any);
+    });
+
+    it("should invalidate currentUser query on success", async () => {
+      mockSDK.users.update.mockResolvedValue({});
+
+      const invalidateQueriesSpy = spyOn(queryClient, "invalidateQueries");
+
+      const { result } = renderHook(() => useUpdateUserFursSettings(), { wrapper });
+
+      result.current.mutate({
+        entityId: "ent_123",
+        data: { operator_tax_number: "12345678" } as any,
+      });
+
+      await waitFor(() => {
+        expect(result.current.isSuccess).toBe(true);
+      });
+
+      expect(invalidateQueriesSpy).toHaveBeenCalledWith({
+        queryKey: ["user", "me"],
+      });
+    });
+
+    it("should handle update error", async () => {
+      mockSDK.users.update.mockRejectedValue(new Error("Update failed"));
+
+      const { result } = renderHook(() => useUpdateUserFursSettings(), { wrapper });
+
+      result.current.mutate({
+        entityId: "ent_123",
+        data: { operator_tax_number: "invalid" } as any,
+      });
+
+      await waitFor(() => {
+        expect(result.current.isError).toBe(true);
+      });
+
+      expect((result.current.error as Error).message).toBe("Update failed");
     });
   });
 });

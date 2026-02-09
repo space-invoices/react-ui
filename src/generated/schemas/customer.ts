@@ -19,6 +19,7 @@ const createCustomerSchemaDefinition = z.object({
   country: z.union([z.string(), z.null()]).optional(),
   country_code: z.union([z.string(), z.null()]).optional(),
   tax_number: z.union([z.string(), z.null()]).optional(),
+  company_number: z.union([z.string(), z.null()]).optional(),
   email: z.union([z.string(), z.null()]).optional(),
   metadata: z.union([z.record(z.string(), z.any()), z.null()]).optional(),
 });
@@ -26,4 +27,26 @@ const createCustomerSchemaDefinition = z.object({
 // Type for create customer operation
 export type CreateCustomerSchema = z.infer<typeof createCustomerSchemaDefinition>;
 
+
+// Schema for update customer operation
+const updateCustomerSchemaDefinition = z
+  .object({
+    name: z.string().min(1),
+    address: z.union([z.string(), z.null()]),
+    address_2: z.union([z.string(), z.null()]),
+    post_code: z.union([z.string(), z.null()]),
+    city: z.union([z.string(), z.null()]),
+    state: z.union([z.string(), z.null()]),
+    country: z.union([z.string(), z.null()]),
+    country_code: z.union([z.string(), z.null()]),
+    tax_number: z.union([z.string(), z.null()]),
+    email: z.union([z.string(), z.null()]),
+    metadata: z.union([z.record(z.string(), z.any()), z.null()]),
+  })
+  .partial();
+
+// Type for update customer operation
+export type UpdateCustomerSchema = z.infer<typeof updateCustomerSchemaDefinition>;
+
 export const createCustomerSchema = createCustomerSchemaDefinition;
+export const updateCustomerSchema = updateCustomerSchemaDefinition;

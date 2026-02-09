@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, mock, test } from "bun:test";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { DataTable } from "@/ui/components/table/data-table";
-import type { TableQueryParams } from "@/ui/components/table/types";
+import type { TableQueryParams, TableQueryResponse } from "@/ui/components/table/types";
 
 type TestItem = {
   id: string;
@@ -29,7 +29,7 @@ const page3Items: TestItem[] = Array.from({ length: 10 }, (_, i) => ({
 
 describe("DataTable Pagination", () => {
   let queryClient: QueryClient;
-  let mockFetch: ReturnType<typeof mock<(params: TableQueryParams) => Promise<any>>>;
+  let mockFetch: ReturnType<typeof mock<(params: TableQueryParams) => Promise<TableQueryResponse<TestItem>>>>;
   let onChangeParams: ReturnType<typeof mock<(params: TableQueryParams) => void>>;
 
   beforeEach(() => {
@@ -43,7 +43,7 @@ describe("DataTable Pagination", () => {
       },
     });
 
-    mockFetch = mock<(params: TableQueryParams) => Promise<any>>();
+    mockFetch = mock<(params: TableQueryParams) => Promise<TableQueryResponse<TestItem>>>();
     onChangeParams = mock<(params: TableQueryParams) => void>();
 
     // Default: return page 1

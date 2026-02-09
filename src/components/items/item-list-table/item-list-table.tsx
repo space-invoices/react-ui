@@ -9,11 +9,27 @@ import { ITEMS_CACHE_KEY } from "../items.hooks";
 import ItemListHeader from "./item-list-header";
 import ItemListRow from "./item-list-row";
 import de from "./locales/de";
+import en from "./locales/en";
+import es from "./locales/es";
+import fr from "./locales/fr";
+import hr from "./locales/hr";
+import it from "./locales/it";
+import nl from "./locales/nl";
+import pl from "./locales/pl";
+import pt from "./locales/pt";
 import sl from "./locales/sl";
 
 const translations = {
+  en,
   sl,
   de,
+  it,
+  fr,
+  es,
+  pt,
+  nl,
+  pl,
+  hr,
 } as const;
 
 type ItemListTableProps = {
@@ -37,20 +53,9 @@ export default function ItemListTable({
   });
   const { sdk } = useSDK();
 
-  const handleFetch = useTableFetch(async (params: TableQueryParams) => {
+  const handleFetch = useTableFetch((params: TableQueryParams) => {
     if (!sdk) throw new Error("SDK not initialized");
-    if (!params.entity_id) throw new Error("Entity ID required");
-
-    const response = await sdk.items.list({
-      entity_id: params.entity_id,
-      limit: params.limit,
-      next_cursor: params.next_cursor,
-      prev_cursor: params.prev_cursor,
-      order_by: params.order_by,
-      search: params.search,
-      query: params.query,
-    });
-    return response as unknown;
+    return sdk.items.list(params as any);
   }, entityId);
 
   return (
@@ -71,6 +76,8 @@ export default function ItemListTable({
       onFetch={handleFetch}
       onChangeParams={onChangeParams}
       entityId={entityId}
+      t={t}
+      locale={i18nProps.locale}
     />
   );
 }

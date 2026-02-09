@@ -15,6 +15,8 @@ export type CreateEntityFormProps = {
   namespace?: string;
   accountId?: string;
   environment?: string;
+  defaultName?: string;
+  defaultValues?: Partial<CreateEntitySchema>;
   onSuccess?: (data: Entity) => void;
   onError?: (error: unknown) => void;
 };
@@ -26,6 +28,8 @@ export function CreateEntityForm({
   namespace = "",
   accountId,
   environment,
+  defaultName,
+  defaultValues: extraDefaults,
   onSuccess,
   onError,
 }: CreateEntityFormProps) {
@@ -34,7 +38,7 @@ export function CreateEntityForm({
   const form = useForm<CreateEntitySchema>({
     resolver: zodResolver(createEntitySchema) as Resolver<CreateEntitySchema>,
     defaultValues: {
-      name: "",
+      name: defaultName || "",
       address: "",
       address_2: "",
       post_code: "",
@@ -42,7 +46,11 @@ export function CreateEntityForm({
       state: "",
       country: "",
       tax_number: "",
+      company_number: "",
       environment,
+      ...extraDefaults,
+      // defaultName takes priority over extraDefaults.name if provided
+      ...(defaultName ? { name: defaultName } : {}),
     },
   });
 
@@ -78,7 +86,7 @@ export function CreateEntityForm({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={form.handleSubmit(onSubmit as any)} className="space-y-4">
         <FormInput control={form.control} name="name" label={translate("Name")} placeholder="Name" required />
 
         <FormInput control={form.control} name="country" label="Country" placeholder="Country" required />
@@ -95,6 +103,8 @@ export function CreateEntityForm({
         <FormInput control={form.control} name="state" label="State" placeholder="State" />
 
         <FormInput control={form.control} name="tax_number" label="Tax number" placeholder="Tax number" />
+
+        <FormInput control={form.control} name="company_number" label="Company number" placeholder="Company number" />
 
         <Button type="submit" className="w-full cursor-pointer" disabled={isPending} aria-busy={isPending}>
           {isPending ? <ButtonLoader /> : "Create"}

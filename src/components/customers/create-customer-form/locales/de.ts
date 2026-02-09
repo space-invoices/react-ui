@@ -12,6 +12,7 @@ export default {
   Country: "Land",
   "Enter country": "Land eingeben",
   "Tax Number": "Steuernummer",
+  "Company Number": "Registernummer",
   "Enter tax number": "Steuernummer eingeben",
   "Create Customer": "Kunde erstellen",
   Cancel: "Abbrechen",

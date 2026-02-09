@@ -170,6 +170,7 @@ function PlanIcon({ slug }: { slug: string }) {
 function getFeatureDisplayName(feature: GatedFeature): string {
   const names: Record<GatedFeature, string> = {
     furs: "FURS Fiscalization",
+    fina: "FINA Fiscalization",
     eslog: "eSlog Export",
     recurring: "Recurring Invoices",
     email_sending: "Email Sending",

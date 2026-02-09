@@ -2,6 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import type { Payment } from "@spaceinvoices/js-sdk";
 import { CalendarIcon } from "lucide-react";
 import { useForm } from "react-hook-form";
+import type { z } from "zod";
 import { Button } from "@/ui/components/ui/button";
 import { Calendar } from "@/ui/components/ui/calendar";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/ui/components/ui/form";
@@ -16,11 +17,25 @@ import { cn } from "@/ui/lib/utils";
 
 import { useUpdatePayment } from "../payments.hooks";
 import de from "./locales/de";
+import es from "./locales/es";
+import fr from "./locales/fr";
+import hr from "./locales/hr";
+import it from "./locales/it";
+import nl from "./locales/nl";
+import pl from "./locales/pl";
+import pt from "./locales/pt";
 import sl from "./locales/sl";
 
 const translations = {
   sl,
   de,
+  it,
+  fr,
+  es,
+  pt,
+  nl,
+  pl,
+  hr,
 } as const;
 
 // Labels for payment types (used for translations)
@@ -40,7 +55,7 @@ const editFormSchema = updatePaymentSchema.required({
   type: true,
   date: true,
 });
-type EditFormSchema = typeof editFormSchema._type;
+type EditFormSchema = z.infer<typeof editFormSchema>;
 
 type EditPaymentFormProps = {
   entityId: string;
@@ -64,7 +79,8 @@ export default function EditPaymentForm({
   });
 
   // SDK converts date strings to Date objects, so we need to convert back to string
-  const dateString = payment.date instanceof Date ? payment.date.toISOString() : (payment.date as string);
+  const dateString =
+    (payment.date as unknown) instanceof Date ? (payment.date as unknown as Date).toISOString() : String(payment.date);
 
   const form = useForm<EditFormSchema>({
     resolver: zodResolver(editFormSchema),

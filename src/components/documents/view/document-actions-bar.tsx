@@ -28,10 +28,17 @@ import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
 import type { Entity } from "@/ui/providers/entities-context";
 import de from "./locales/de";
+import es from "./locales/es";
+import fr from "./locales/fr";
+import hr from "./locales/hr";
+import it from "./locales/it";
+import nl from "./locales/nl";
+import pl from "./locales/pl";
+import pt from "./locales/pt";
 import sl from "./locales/sl";
 import { useDocumentDownload } from "./use-document-download";
 
-const translations = { de, sl } as const;
+const translations = { sl, de, it, fr, es, pt, nl, pl, hr } as const;
 
 type Document = Invoice | Estimate | CreditNote | AdvanceInvoice;
 

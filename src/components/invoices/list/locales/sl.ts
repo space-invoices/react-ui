@@ -30,4 +30,13 @@ export default {
   Overdue: "Zapadlo",
   Voided: "Stornirano",
   "Created At": "Ustvarjeno",
+  Unshare: "Odstrani deljenje",
+  // Empty state translations
+  "Your list is empty": "Vaš seznam računov je prazen",
+  "Get started by creating your first entry": "Začnite z ustvarjanjem prvega računa",
+  "Create new": "Ustvari račun",
+  // No results translations
+  "No results found": "Ni najdenih računov",
+  "Try adjusting your search criteria": "Poskusite prilagoditi iskalne kriterije",
+  "Clear search": "Počisti iskanje",
 } as const;

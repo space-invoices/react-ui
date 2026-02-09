@@ -1,0 +1,27 @@
+export default {
+  Save: "Spremi",
+  "Save as Draft": "Spremi kao skicu",
+  "Create Advance Invoice": "Kreiraj avansni racun",
+  "e-SLOG": "e-SLOG",
+  "Fiscally verify": "Fiskalno potvrdi",
+  "Click to skip e-SLOG validation for this advance invoice":
+    "Kliknite za preskakanje e-SLOG validacije za ovaj avansni racun",
+  "Click to enable e-SLOG validation": "Kliknite za ukljucivanje e-SLOG validacije",
+  "Click to skip fiscalization for this advance invoice": "Kliknite za preskakanje fiskalizacije za ovaj avansni racun",
+  "Click to enable fiscalization": "Kliknite za ukljucivanje fiskalizacije",
+  "Cannot skip fiscalization for cash payments": "Za gotovinska placanja nije moguce preskociti fiskalizaciju",
+  "e-SLOG Validation Failed": "e-SLOG validacija nije uspjela",
+  "The following entity settings need to be updated:": "Sljedece postavke entiteta trebaju biti azurirane:",
+  "Reverse charge - tax exempt EU B2B sale": "Obrnuto porezno opterecenje - porezno oslobodena EU B2B prodaja",
+  "Mark as Paid": "Oznaci kao placeno",
+  Paid: "Placeno",
+  "Advance invoice will be marked as fully paid upon creation":
+    "Avansni racun ce biti oznacen kao u potpunosti placen pri kreiranju",
+  "Payment Type": "Vrsta placanja",
+  "Select payment type": "Odaberite vrstu placanja",
+  Cash: "Gotovina",
+  "Bank Transfer": "Bankovni prijenos",
+  Card: "Kartica",
+  Check: "Cek",
+  Other: "Ostalo",
+} as const;

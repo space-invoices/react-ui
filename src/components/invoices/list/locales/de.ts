@@ -30,4 +30,13 @@ export default {
   Overdue: "Überfällig",
   Voided: "Storniert",
   "Created At": "Erstellt am",
+  Unshare: "Freigabe aufheben",
+  // Empty state translations
+  "Your list is empty": "Ihre Rechnungsliste ist leer",
+  "Get started by creating your first entry": "Erstellen Sie Ihre erste Rechnung",
+  "Create new": "Rechnung erstellen",
+  // No results translations
+  "No results found": "Keine Rechnungen gefunden",
+  "Try adjusting your search criteria": "Versuchen Sie, Ihre Suchkriterien anzupassen",
+  "Clear search": "Suche zurücksetzen",
 } as const;

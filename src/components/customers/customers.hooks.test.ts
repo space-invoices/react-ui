@@ -21,7 +21,7 @@ describe("customers.hooks", () => {
         data: [
           { id: "customer-1", name: "John Doe", email: "john@example.com" },
           { id: "customer-2", name: "John Smith", email: "johnsmith@example.com" },
-        ],
+        ] as any,
         pagination: { total: 2 },
       });
 
@@ -88,7 +88,7 @@ describe("customers.hooks", () => {
           id: `customer-${i}`,
           name: `Test Customer ${i}`,
           email: `test${i}@example.com`,
-        })),
+        })) as any,
         pagination: { total: 10 },
       });
 
@@ -110,7 +110,7 @@ describe("customers.hooks", () => {
       const entityId = "entity-123";
 
       sdk.customers.list.mockResolvedValue({
-        data: [{ id: "customer-1", name: "Test", email: "test@example.com" }],
+        data: [{ id: "customer-1", name: "Test", email: "test@example.com" }] as any,
         pagination: { total: 1 },
       });
 
@@ -162,13 +162,13 @@ describe("customers.hooks", () => {
       const { wrapper } = createTestSetup({ sdk });
       const entityId = "entity-123";
 
-      const mockCustomers = [
+      const mockCustomers: any[] = [
         { id: "customer-1", name: "Recent Customer 1", email: "recent1@example.com", created_at: "2024-01-15" },
         { id: "customer-2", name: "Recent Customer 2", email: "recent2@example.com", created_at: "2024-01-14" },
       ];
 
       sdk.customers.list.mockResolvedValueOnce({
-        data: mockCustomers,
+        data: mockCustomers as any,
         pagination: { total: 2 },
       });
 
@@ -198,7 +198,7 @@ describe("customers.hooks", () => {
           name: `Customer ${i}`,
           email: `customer${i}@example.com`,
           created_at: new Date(Date.now() - i * 1000).toISOString(),
-        })),
+        })) as any,
         pagination: { total: 5 },
       });
 
@@ -255,7 +255,7 @@ describe("customers.hooks", () => {
       const entityId = "entity-123";
 
       sdk.customers.list.mockResolvedValue({
-        data: [{ id: "customer-1", name: "Test", email: "test@example.com", created_at: "" }],
+        data: [{ id: "customer-1", name: "Test", email: "test@example.com", created_at: "" }] as any,
         pagination: { total: 1 },
       });
 
@@ -281,7 +281,7 @@ describe("customers.hooks", () => {
       const { wrapper, queryClient } = createTestSetup({ sdk });
 
       sdk.customers.list.mockResolvedValue({
-        data: [{ id: "customer-1", name: "Test", email: "test@example.com", created_at: "" }],
+        data: [{ id: "customer-1", name: "Test", email: "test@example.com", created_at: "" }] as any,
         pagination: { total: 1 },
       });
 

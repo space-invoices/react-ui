@@ -29,12 +29,26 @@ import { useFursPremises, useFursSettings } from "../../entities/furs-settings-f
 import { getEntityErrors, getFormFieldErrors, validateEslogForm } from "../../invoices/create/eslog-validation";
 import { getLastUsedFursCombo, setLastUsedFursCombo, useCreateAdvanceInvoice } from "../advance-invoices.hooks";
 import de from "./locales/de";
+import es from "./locales/es";
+import fr from "./locales/fr";
+import hr from "./locales/hr";
+import it from "./locales/it";
+import nl from "./locales/nl";
+import pl from "./locales/pl";
+import pt from "./locales/pt";
 import sl from "./locales/sl";
 import { prepareAdvanceInvoiceSubmission } from "./prepare-advance-invoice-submission";
 
 const translations = {
   sl,
   de,
+  it,
+  fr,
+  es,
+  pt,
+  nl,
+  pl,
+  hr,
 } as const;
 
 // Form values: extend schema with local-only fields (number is for display, not sent to API)
@@ -106,7 +120,7 @@ export default function CreateAdvanceInvoiceForm({
 
   // UI-only state (not part of API schema)
   const [markAsPaid, setMarkAsPaid] = useState(false);
-  const [paymentType, setPaymentType] = useState("bank_transfer");
+  const [paymentTypes, setPaymentTypes] = useState<string[]>(["bank_transfer"]);
   const [isDraftPending, setIsDraftPending] = useState(false);
 
   // Price modes per item (gross vs net) - collected from component state at submit
@@ -228,7 +242,7 @@ export default function CreateAdvanceInvoiceForm({
   });
 
   // Skip fiscalization is only allowed for bank transfers or unpaid invoices
-  const canSkipFiscalization = !markAsPaid || paymentType === "bank_transfer";
+  const canSkipFiscalization = !markAsPaid || paymentTypes.every((type) => type === "bank_transfer");
 
   // Auto-disable skip when it becomes invalid (e.g., user changes payment type to cash)
   useEffect(() => {
@@ -418,7 +432,7 @@ export default function CreateAdvanceInvoiceForm({
     (values: CreateAdvanceInvoiceFormValues, isDraft: boolean) => {
       // Skip e-SLOG and FURS validation for drafts
       if (!isDraft && eslogValidationEnabled) {
-        const validationErrors = validateEslogForm(values, activeEntity);
+        const validationErrors = validateEslogForm(values as any, activeEntity);
 
         if (validationErrors.length > 0) {
           const entityErrors = getEntityErrors(validationErrors);
@@ -453,7 +467,7 @@ export default function CreateAdvanceInvoiceForm({
         originalCustomer,
         wasCustomerFormShown: showCustomerForm,
         markAsPaid: isDraft ? false : markAsPaid,
-        paymentType,
+        paymentTypes,
         furs: fursOptions,
         eslog: eslogOptions,
         priceModes: priceModesRef.current,
@@ -471,7 +485,7 @@ export default function CreateAdvanceInvoiceForm({
       isFursEnabled,
       markAsPaid,
       originalCustomer,
-      paymentType,
+      paymentTypes,
       selectedDeviceName,
       selectedPremiseName,
       showCustomerForm,
@@ -659,8 +673,8 @@ export default function CreateAdvanceInvoiceForm({
             <MarkAsPaidSection
               checked={markAsPaid}
               onCheckedChange={setMarkAsPaid}
-              paymentType={paymentType}
-              onPaymentTypeChange={setPaymentType}
+              paymentTypes={paymentTypes}
+              onPaymentTypesChange={setPaymentTypes}
               t={t}
             />
           </DocumentDetailsSection>

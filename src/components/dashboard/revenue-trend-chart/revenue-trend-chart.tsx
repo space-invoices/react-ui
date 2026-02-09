@@ -6,10 +6,18 @@ import { type ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } f
 import { createTranslation } from "@/ui/lib/translation";
 import { ChartEmptyState } from "../chart-empty-state";
 import { LoadingCard } from "../loading-card";
+import de from "./locales/de";
+import es from "./locales/es";
+import fr from "./locales/fr";
+import hr from "./locales/hr";
+import it from "./locales/it";
+import nl from "./locales/nl";
+import pl from "./locales/pl";
+import pt from "./locales/pt";
 import sl from "./locales/sl";
 import { useRevenueTrendData } from "./use-revenue-trend";
 
-const translations = { sl } as const;
+const translations = { sl, de, it, fr, es, pt, nl, pl, hr } as const;
 
 export type RevenueTrendChartData = { month: string; revenue: number }[];
 
@@ -113,7 +121,7 @@ export function RevenueTrendChart(props: RevenueTrendChartProps) {
           cursor={false}
           content={
             <ChartTooltipContent
-              labelFormatter={(label) => formatMonth(label, locale)}
+              labelFormatter={(label) => formatMonth(String(label), locale)}
               formatter={(value) => formatCurrency(Number(value), currency, locale)}
             />
           }

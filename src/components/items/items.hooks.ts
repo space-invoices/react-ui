@@ -13,9 +13,14 @@ const {
   useCreateResource: useCreateItem,
   useUpdateResource: useUpdateItem,
   useDeleteResource: useDeleteItem,
-} = createResourceHooks<Item, CreateItemRequest>("items", ITEMS_CACHE_KEY);
+  useRestoreResource: useRestoreItem,
+  usePermanentDeleteResource: usePermanentDeleteItem,
+} = createResourceHooks<Item, CreateItemRequest>("items", ITEMS_CACHE_KEY, {
+  restoreMethodName: "restoreItem",
+  permanentDeleteMethodName: "permanentDeleteItem",
+});
 
-export { useCreateItem, useDeleteItem, useUpdateItem };
+export { useCreateItem, useDeleteItem, useUpdateItem, useRestoreItem, usePermanentDeleteItem };
 
 /**
  * Hook to search items by name

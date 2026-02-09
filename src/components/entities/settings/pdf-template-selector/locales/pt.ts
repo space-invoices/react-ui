@@ -1,0 +1,18 @@
+export default {
+  "PDF Template": "Modelo PDF",
+  "Choose the design template for your invoices and documents":
+    "Escolha o modelo de design para as suas faturas e documentos",
+  Preview: "Pré-visualização",
+  Template: "Modelo",
+  Modern: "Moderno",
+  "Modern template description": "Design limpo e profissional adequado para a maioria das empresas",
+  Classic: "Clássico",
+  "Classic template description": "Layout tradicional de fatura com fontes serifadas e bordas",
+  Minimal: "Minimalista",
+  "Minimal template description": "Design focado na tipografia com uma estética limpa",
+  Fashion: "Fashion",
+  "Fashion template description": "Estilo editorial com títulos elegantes para empresas criativas",
+  "Save Template": "Guardar modelo",
+  "Template saved successfully": "Modelo guardado com sucesso",
+  "Failed to save template": "Falha ao guardar o modelo",
+} as const;

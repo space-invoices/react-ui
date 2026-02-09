@@ -12,11 +12,27 @@ import { useSDK } from "@/ui/providers/sdk-provider";
 
 import PaymentListRowActions from "./list-row-actions";
 import de from "./locales/de";
+import en from "./locales/en";
+import es from "./locales/es";
+import fr from "./locales/fr";
+import hr from "./locales/hr";
+import it from "./locales/it";
+import nl from "./locales/nl";
+import pl from "./locales/pl";
+import pt from "./locales/pt";
 import sl from "./locales/sl";
 
 const translations = {
+  en,
   sl,
   de,
+  it,
+  fr,
+  es,
+  pt,
+  nl,
+  pl,
+  hr,
 } as const;
 
 // Extended payment type that includes Invoice relation from API
@@ -139,12 +155,13 @@ export default function PaymentListTable({
             onEditPayment={onEditPayment}
             onDeleteSuccess={onDeleteSuccess}
             onDeleteError={onDeleteError}
-            {...i18nProps}
+            t={t}
+            locale={i18nProps.locale}
           />
         ),
       },
     ],
-    [t, typeLabels, entityId, onViewInvoice, onEditPayment, onDeleteSuccess, onDeleteError, i18nProps],
+    [t, typeLabels, entityId, onViewInvoice, onEditPayment, onDeleteSuccess, onDeleteError, i18nProps.locale],
   );
 
   return (
@@ -156,6 +173,8 @@ export default function PaymentListTable({
       onFetch={handleFetch}
       onChangeParams={onChangeParams}
       entityId={entityId}
+      t={t}
+      locale={i18nProps.locale}
     />
   );
 }

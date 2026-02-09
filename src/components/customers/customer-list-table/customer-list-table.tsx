@@ -10,11 +10,27 @@ import type { Column, ListTableProps, TableQueryParams, TableQueryResponse } fro
 import { CUSTOMERS_CACHE_KEY } from "../customers.hooks";
 import CustomerListRowActions from "./customer-list-row-actions";
 import de from "./locales/de";
+import en from "./locales/en";
+import es from "./locales/es";
+import fr from "./locales/fr";
+import hr from "./locales/hr";
+import it from "./locales/it";
+import nl from "./locales/nl";
+import pl from "./locales/pl";
+import pt from "./locales/pt";
 import sl from "./locales/sl";
 
 const translations = {
+  en,
   sl,
   de,
+  it,
+  fr,
+  es,
+  pt,
+  nl,
+  pl,
+  hr,
 } as const;
 
 type CustomerListTableProps = {
@@ -22,6 +38,9 @@ type CustomerListTableProps = {
   namespace?: string;
   locale?: string;
   entityId?: string;
+  onEditCustomer?: (customer: Customer) => void;
+  onDeleteSuccess?: () => void;
+  onDeleteError?: (error: string) => void;
 } & ListTableProps<Customer>;
 
 export default function CustomerListTable({
@@ -30,6 +49,9 @@ export default function CustomerListTable({
   onRowClick,
   onChangeParams,
   entityId,
+  onEditCustomer,
+  onDeleteSuccess,
+  onDeleteError,
   ...i18nProps
 }: CustomerListTableProps) {
   const t = createTranslation({
@@ -103,10 +125,19 @@ export default function CustomerListTable({
         id: "actions",
         header: "",
         align: "right",
-        cell: (customer) => <CustomerListRowActions customer={customer} t={t} />,
+        cell: (customer) => (
+          <CustomerListRowActions
+            customer={customer}
+            entityId={entityId}
+            onEditCustomer={onEditCustomer}
+            onDeleteSuccess={onDeleteSuccess}
+            onDeleteError={onDeleteError}
+            t={t}
+          />
+        ),
       },
     ],
-    [t, onRowClick],
+    [t, onRowClick, entityId, onEditCustomer, onDeleteSuccess, onDeleteError],
   );
 
   return (
@@ -119,6 +150,8 @@ export default function CustomerListTable({
       onFetch={handleFetch}
       onChangeParams={onChangeParams}
       entityId={entityId}
+      t={t}
+      locale={i18nProps.locale}
     />
   );
 }

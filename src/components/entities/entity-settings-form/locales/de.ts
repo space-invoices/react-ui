@@ -1,5 +1,7 @@
 export default {
   // Company settings
+  "Tax ID 2": "Steuernummer",
+  "Secondary tax identification number (optional)": "Sekundäre Steueridentifikationsnummer (optional)",
   "Company Information": "Unternehmensinformationen",
   "Basic information about your company": "Grundlegende Informationen über Ihr Unternehmen",
   // Branding settings
@@ -24,7 +26,7 @@ export default {
   "Adjust the crop area or upload the full image":
     "Passen Sie den Zuschneidebereich an oder laden Sie das vollständige Bild hoch",
   "Upload failed. Please try again.": "Upload fehlgeschlagen. Bitte versuchen Sie es erneut.",
-  Uploading: "Hochladen...",
+  "Uploading...": "Hochladen...",
   "Upload & Save": "Hochladen & Speichern",
   Cancel: "Abbrechen",
   Localization: "Lokalisierung",

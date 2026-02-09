@@ -26,11 +26,25 @@ import { useDocumentCustomerForm } from "../../documents/create/use-document-cus
 import type { DocumentTypes } from "../../documents/types";
 import { useCreateCreditNote } from "../credit-notes.hooks";
 import de from "./locales/de";
+import es from "./locales/es";
+import fr from "./locales/fr";
+import hr from "./locales/hr";
+import it from "./locales/it";
+import nl from "./locales/nl";
+import pl from "./locales/pl";
+import pt from "./locales/pt";
 import sl from "./locales/sl";
 
 const translations = {
   sl,
   de,
+  it,
+  fr,
+  es,
+  pt,
+  nl,
+  pl,
+  hr,
 } as const;
 
 // Form values: extend schema with local-only fields (number is for display, not sent to API)
@@ -81,7 +95,7 @@ export default function CreateCreditNoteForm({
 
   // UI-only state (not part of API schema)
   const [markAsPaid, setMarkAsPaid] = useState(false);
-  const [paymentType, setPaymentType] = useState("bank_transfer");
+  const [paymentTypes, setPaymentTypes] = useState<string[]>(["bank_transfer"]);
   const [isDraftPending, setIsDraftPending] = useState(false);
 
   // Price modes per item (gross vs net) - collected from component state at submit
@@ -171,14 +185,14 @@ export default function CreateCreditNoteForm({
         originalCustomer,
         wasCustomerFormShown: showCustomerForm,
         markAsPaid: isDraft ? false : markAsPaid,
-        paymentType,
+        paymentTypes,
         documentType: "credit_note",
         priceModes: priceModesRef.current,
         isDraft,
       });
       createCreditNote(payload as CreateCreditNoteRequest);
     },
-    [createCreditNote, markAsPaid, originalCustomer, paymentType, showCustomerForm],
+    [createCreditNote, markAsPaid, originalCustomer, paymentTypes, showCustomerForm],
   );
 
   // Handle save as draft
@@ -282,8 +296,8 @@ export default function CreateCreditNoteForm({
             <MarkAsPaidSection
               checked={markAsPaid}
               onCheckedChange={setMarkAsPaid}
-              paymentType={paymentType}
-              onPaymentTypeChange={setPaymentType}
+              paymentTypes={paymentTypes}
+              onPaymentTypesChange={setPaymentTypes}
               t={t}
             />
           </DocumentDetailsSection>

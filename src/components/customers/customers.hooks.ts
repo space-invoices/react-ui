@@ -54,4 +54,9 @@ export const {
   useCreateResource: useCreateCustomer,
   useUpdateResource: useUpdateCustomer,
   useDeleteResource: useDeleteCustomer,
-} = createResourceHooks<Customer, CreateCustomerBody>("customers", CUSTOMERS_CACHE_KEY);
+  useRestoreResource: useRestoreCustomer,
+  usePermanentDeleteResource: usePermanentDeleteCustomer,
+} = createResourceHooks<Customer, CreateCustomerBody>("customers", CUSTOMERS_CACHE_KEY, {
+  restoreMethodName: "restoreCustomer",
+  permanentDeleteMethodName: "permanentDeleteCustomer",
+});

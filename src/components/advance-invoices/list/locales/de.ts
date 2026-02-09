@@ -29,4 +29,13 @@ export default {
   Overdue: "Überfällig",
   Voided: "Storniert",
   "Created At": "Erstellt am",
+  Unshare: "Freigabe aufheben",
+  // Empty state translations
+  "Your list is empty": "Ihre Liste der Vorauszahlungsrechnungen ist leer",
+  "Get started by creating your first entry": "Erstellen Sie Ihre erste Vorauszahlungsrechnung",
+  "Create new": "Vorauszahlungsrechnung erstellen",
+  // No results translations
+  "No results found": "Keine Vorauszahlungsrechnungen gefunden",
+  "Try adjusting your search criteria": "Versuchen Sie, Ihre Suchkriterien anzupassen",
+  "Clear search": "Suche zurücksetzen",
 } as const;

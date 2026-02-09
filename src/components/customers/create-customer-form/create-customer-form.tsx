@@ -11,11 +11,25 @@ import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
 import { useCreateCustomer } from "../customers.hooks";
 import de from "./locales/de";
+import es from "./locales/es";
+import fr from "./locales/fr";
+import hr from "./locales/hr";
+import it from "./locales/it";
+import nl from "./locales/nl";
+import pl from "./locales/pl";
+import pt from "./locales/pt";
 import sl from "./locales/sl";
 
 const translations = {
   sl,
   de,
+  it,
+  fr,
+  es,
+  pt,
+  nl,
+  pl,
+  hr,
 } as const;
 
 type CreateCustomerFormProps = {
@@ -53,6 +67,7 @@ export default function CreateCustomerForm({
     if (company.post_code) form.setValue("post_code", company.post_code);
     if (company.city) form.setValue("city", company.city);
     if (company.tax_number) form.setValue("tax_number", company.tax_number);
+    if (company.registration_number) form.setValue("company_number", company.registration_number);
     // Note: country is intentionally not set - keep entity's country or let user choose
   };
 
@@ -66,6 +81,7 @@ export default function CreateCustomerForm({
       state: "",
       country: "",
       tax_number: "",
+      company_number: "",
     },
   });
 
@@ -84,19 +100,19 @@ export default function CreateCustomerForm({
     },
   });
 
-  const onSubmit = async (values: z.infer<typeof createCustomerSchema>) => {
+  const onSubmit = async (values: CreateCustomerSchema) => {
     // Zod validation ensures required fields are present before this is called
     // The type cast is safe because React Hook Form's DeepPartial doesn't reflect runtime validation
     createCustomer(values as CreateCustomerRequest);
   };
 
   const handleSubmitClick = () => {
-    form.handleSubmit(onSubmit)();
+    form.handleSubmit(onSubmit as any)();
   };
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={form.handleSubmit(onSubmit as any)} className="space-y-4">
         {/* Company Registry Autocomplete - only shown for supported countries */}
         {entityCountryCode && (
           <div className="mb-4 rounded-lg border bg-muted/30 p-4">
@@ -123,6 +139,8 @@ export default function CreateCustomerForm({
         </div>
 
         <FormInput control={form.control} name="tax_number" label={t("Tax Number")} />
+
+        <FormInput control={form.control} name="company_number" label={t("Company Number")} />
 
         {renderSubmitButton?.({
           isSubmitting: isPending || form.formState.isSubmitting,

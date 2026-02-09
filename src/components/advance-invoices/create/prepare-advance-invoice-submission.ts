@@ -19,7 +19,7 @@ type PrepareOptions = {
   originalCustomer: any;
   wasCustomerFormShown?: boolean;
   markAsPaid?: boolean;
-  paymentType?: string;
+  paymentTypes?: string[];
   /** FURS fiscalization data (for Slovenia) */
   furs?: FursData;
   /** e-SLOG validation data (for Slovenia) */
@@ -42,9 +42,9 @@ export function prepareAdvanceInvoiceSubmission(
     originalCustomer: options.originalCustomer,
     wasCustomerFormShown: options.wasCustomerFormShown,
     markAsPaid: options.markAsPaid,
-    paymentType: options.paymentType,
+    paymentTypes: options.paymentTypes,
     documentType: "advance_invoice",
-    secondaryDate: values.date_due,
+    secondaryDate: values.date_due ?? undefined,
     priceModes: options.priceModes,
     isDraft: options.isDraft,
   }) as CreateAdvanceInvoiceRequest;

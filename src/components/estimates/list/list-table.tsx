@@ -17,11 +17,27 @@ import { useSDK } from "@/ui/providers/sdk-provider";
 
 import EstimateListRowActions from "./list-row-actions";
 import de from "./locales/de";
+import en from "./locales/en";
+import es from "./locales/es";
+import fr from "./locales/fr";
+import hr from "./locales/hr";
+import it from "./locales/it";
+import nl from "./locales/nl";
+import pl from "./locales/pl";
+import pt from "./locales/pt";
 import sl from "./locales/sl";
 
 const translations = {
+  en,
   sl,
   de,
+  it,
+  fr,
+  es,
+  pt,
+  nl,
+  pl,
+  hr,
 } as const;
 
 type EstimateListTableProps = {
@@ -145,12 +161,13 @@ export default function EstimateListTable({
             onDownloadStart={onDownloadStart}
             onDownloadSuccess={onDownloadSuccess}
             onDownloadError={onDownloadError}
-            {...i18nProps}
+            t={t}
+            locale={i18nProps.locale}
           />
         ),
       },
     ],
-    [t, onRowClick, onDuplicate, onDownloadStart, onDownloadSuccess, onDownloadError, i18nProps],
+    [t, onRowClick, onDuplicate, onDownloadStart, onDownloadSuccess, onDownloadError, i18nProps.locale],
   );
 
   return (
@@ -161,7 +178,7 @@ export default function EstimateListTable({
       onFetch={handleFetch}
       cacheKey="estimates"
       resourceName="estimate"
-      createNewLink="/app/documents/add/estimate"
+      createNewLink={entityId ? `/app/${entityId}/documents/add/estimate` : undefined}
       entityId={entityId}
       filterConfig={filterConfig}
       t={t}

@@ -12,5 +12,14 @@ export default {
   "Create new customer": "Neuen Kunden erstellen",
   "Copy customer ID": "Kunden-ID kopieren",
   "View customer": "Kunde anzeigen",
+  "Edit customer": "Kunde bearbeiten",
+  "Delete customer": "Kunde löschen",
+  "Deleting...": "Wird gelöscht...",
   "Open menu": "Menü öffnen",
+  // Empty state translations
+  "Your list is empty": "Ihre Kundenliste ist leer",
+  "Get started by creating your first entry": "Erstellen Sie Ihren ersten Kunden",
+  "No results found": "Keine Kunden gefunden",
+  "Try adjusting your search criteria": "Versuchen Sie, Ihre Suchkriterien anzupassen",
+  "Clear search": "Suche zurücksetzen",
 } as const;

@@ -65,7 +65,11 @@ export function createResourceHooks<
   TResource extends { id: string },
   TCreateData = unknown,
   TUpdateData = Partial<Omit<TResource, "id">>,
->(resourceName: keyof SDK, cacheKey: string) {
+>(
+  resourceName: keyof SDK,
+  cacheKey: string,
+  options?: { restoreMethodName?: string; permanentDeleteMethodName?: string },
+) {
   /**
    * Hook for creating a new resource
    */
@@ -292,9 +296,89 @@ export function createResourceHooks<
     });
   }
 
+  /**
+   * Hook for restoring a soft-deleted resource
+   */
+  function useRestoreResource<TError = Error>(
+    hookOptions: ResourceMutationHookOptions<TResource, TError, { id: string }> = {},
+  ) {
+    const queryClient = useQueryClient();
+    const methodName = options?.restoreMethodName;
+    if (!methodName) {
+      throw new Error(`restoreMethodName not configured for ${String(resourceName)}`);
+    }
+
+    return useResourceMutation<TResource, TError, { id: string }>({
+      resourceName,
+      methodName,
+      cacheKey,
+      entityId: hookOptions.entityId,
+      accountId: hookOptions.accountId,
+      mutationOptions: {
+        onSuccess: (data, variables, context) => {
+          invalidateResourceQueries(queryClient, cacheKey, variables.id, {
+            entityId: hookOptions.entityId,
+            accountId: hookOptions.accountId,
+          });
+          hookOptions.onSuccess?.(data, variables, context);
+        },
+        onError: hookOptions.onError,
+        ...hookOptions.mutationOptions,
+      },
+    });
+  }
+
+  /**
+   * Hook for permanently deleting a soft-deleted resource
+   */
+  function usePermanentDeleteResource<TError = Error>(
+    hookOptions: ResourceMutationHookOptions<void, TError, { id: string }> = {},
+  ) {
+    const queryClient = useQueryClient();
+    const methodName = options?.permanentDeleteMethodName;
+    if (!methodName) {
+      throw new Error(`permanentDeleteMethodName not configured for ${String(resourceName)}`);
+    }
+
+    return useResourceMutation<void, TError, { id: string }>({
+      resourceName,
+      methodName,
+      cacheKey,
+      entityId: hookOptions.entityId,
+      accountId: hookOptions.accountId,
+      mutationOptions: {
+        onSuccess: (data, variables, context) => {
+          invalidateResourceQueries(queryClient, cacheKey, variables.id, {
+            entityId: hookOptions.entityId,
+            accountId: hookOptions.accountId,
+          });
+
+          const listQueryKey = buildQueryKey(cacheKey, {
+            entityId: hookOptions.entityId,
+            accountId: hookOptions.accountId,
+          });
+
+          queryClient.setQueriesData({ queryKey: listQueryKey }, (oldData: any) => {
+            if (!oldData?.data) return oldData;
+            return {
+              ...oldData,
+              data: oldData.data.filter((resource: TResource) => resource.id !== variables.id),
+            };
+          });
+
+          hookOptions.onSuccess?.(data, variables, context);
+        },
+        onError: hookOptions.onError,
+        ...hookOptions.mutationOptions,
+      },
+    });
+  }
+
   return {
     useCreateResource,
     useUpdateResource,
     useDeleteResource,
+    useRestoreResource,
+    usePermanentDeleteResource,
   };
 }

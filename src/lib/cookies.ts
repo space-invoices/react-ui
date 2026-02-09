@@ -6,8 +6,8 @@
 export function getCookie(cookiesString: string, name: string) {
   const value = `; ${cookiesString}`;
   const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) {
-    return decodeURIComponent(parts.pop()?.split(";").shift() ?? "");
+  if (parts.length >= 2) {
+    return decodeURIComponent(parts[1]?.split(";").shift() ?? "");
   }
   return undefined;
 }

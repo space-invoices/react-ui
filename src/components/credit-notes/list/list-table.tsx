@@ -17,11 +17,27 @@ import { useSDK } from "@/ui/providers/sdk-provider";
 
 import CreditNoteListRowActions from "./list-row-actions";
 import de from "./locales/de";
+import en from "./locales/en";
+import es from "./locales/es";
+import fr from "./locales/fr";
+import hr from "./locales/hr";
+import it from "./locales/it";
+import nl from "./locales/nl";
+import pl from "./locales/pl";
+import pt from "./locales/pt";
 import sl from "./locales/sl";
 
 const translations = {
+  en,
   sl,
   de,
+  it,
+  fr,
+  es,
+  pt,
+  nl,
+  pl,
+  hr,
 } as const;
 
 type CreditNoteListTableProps = {
@@ -132,7 +148,7 @@ export default function CreditNoteListTable({
       {
         id: "status",
         header: t("Status"),
-        cell: (creditNote) => <PaymentStatusBadge creditNote={creditNote} />,
+        cell: (creditNote) => <PaymentStatusBadge creditNote={creditNote} t={t} />,
       },
       {
         id: "actions",
@@ -146,12 +162,13 @@ export default function CreditNoteListTable({
             onDownloadStart={onDownloadStart}
             onDownloadSuccess={onDownloadSuccess}
             onDownloadError={onDownloadError}
-            {...i18nProps}
+            t={t}
+            locale={i18nProps.locale}
           />
         ),
       },
     ],
-    [t, onRowClick, onAddPayment, onDuplicate, onDownloadStart, onDownloadSuccess, onDownloadError, i18nProps],
+    [t, onRowClick, onAddPayment, onDuplicate, onDownloadStart, onDownloadSuccess, onDownloadError, i18nProps.locale],
   );
 
   return (
@@ -160,7 +177,7 @@ export default function CreditNoteListTable({
       queryParams={queryParams}
       resourceName="credit_note"
       cacheKey="credit-notes"
-      createNewLink="/app/documents/add/credit_note"
+      createNewLink={entityId ? `/app/${entityId}/documents/add/credit_note` : undefined}
       onFetch={handleFetch}
       onChangeParams={onChangeParams}
       entityId={entityId}
@@ -172,12 +189,12 @@ export default function CreditNoteListTable({
 }
 
 /** Payment status badge for credit notes */
-function PaymentStatusBadge({ creditNote }: { creditNote: CreditNote }) {
+function PaymentStatusBadge({ creditNote, t }: { creditNote: CreditNote; t: (key: string) => string }) {
   if (creditNote.paid_in_full) {
-    return <span className="rounded-full bg-green-100 px-2 py-1 text-green-800 text-xs">Paid</span>;
+    return <span className="rounded-full bg-green-100 px-2 py-1 text-green-800 text-xs">{t("Paid")}</span>;
   }
   if (creditNote.total_paid > 0) {
-    return <span className="rounded-full bg-yellow-100 px-2 py-1 text-xs text-yellow-800">Partial</span>;
+    return <span className="rounded-full bg-yellow-100 px-2 py-1 text-xs text-yellow-800">{t("Partial")}</span>;
   }
-  return <span className="rounded-full bg-gray-100 px-2 py-1 text-gray-800 text-xs">Unpaid</span>;
+  return <span className="rounded-full bg-gray-100 px-2 py-1 text-gray-800 text-xs">{t("Unpaid")}</span>;
 }

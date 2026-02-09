@@ -18,13 +18,20 @@ import { useFursPremises, useFursSettings, useUpdateFursSettings } from "./furs-
 // Import locale files
 import de from "./locales/de";
 import en from "./locales/en";
+import es from "./locales/es";
+import fr from "./locales/fr";
+import hr from "./locales/hr";
+import it from "./locales/it";
+import nl from "./locales/nl";
+import pl from "./locales/pl";
+import pt from "./locales/pt";
 import sl from "./locales/sl";
 import { CertificateSettingsSection } from "./sections/certificate-settings-section";
 import { EnableFiscalizationSection } from "./sections/enable-fiscalization-section";
 import { GeneralSettingsSection } from "./sections/general-settings-section";
 import { PremisesManagementSection } from "./sections/premises-management-section";
 
-const translations = { de, sl, en } as const;
+const translations = { sl, de, en, it, fr, es, pt, nl, pl, hr } as const;
 
 /**
  * FURS Settings Form Schema
@@ -245,7 +252,7 @@ export const FursSettingsForm: FC<FursSettingsFormProps> = ({
   };
 
   if (settingsLoading || premisesLoading) {
-    return <PageLoadingSpinner text={translate("Loading...")} />;
+    return <PageLoadingSpinner />;
   }
 
   // Check if entity is in sandbox (test) mode

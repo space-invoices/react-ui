@@ -1,0 +1,17 @@
+export default {
+  "PDF Template": "PDF-sjabloon",
+  "Choose the design template for your invoices and documents": "Kies het ontwerp voor uw facturen en documenten",
+  Preview: "Voorbeeld",
+  Template: "Sjabloon",
+  Modern: "Modern",
+  "Modern template description": "Strak, professioneel ontwerp geschikt voor de meeste bedrijven",
+  Classic: "Klassiek",
+  "Classic template description": "Traditionele factuurindeling met schreeflettertypen en kaders",
+  Minimal: "Minimalistisch",
+  "Minimal template description": "Typografisch gericht ontwerp met een strakke esthetiek",
+  Fashion: "Fashion",
+  "Fashion template description": "Redactionele stijl met elegante koppen voor creatieve bedrijven",
+  "Save Template": "Sjabloon opslaan",
+  "Template saved successfully": "Sjabloon succesvol opgeslagen",
+  "Failed to save template": "Sjabloon opslaan mislukt",
+} as const;

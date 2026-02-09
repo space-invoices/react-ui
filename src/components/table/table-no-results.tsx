@@ -8,6 +8,8 @@ type TableNoResultsProps = {
   search?: (value: null) => void;
   /** Number of rows to calculate height (default: 10) */
   rows?: number;
+  /** Translation function */
+  t?: (key: string) => string;
 };
 
 // Approximate row height in pixels (including padding/border)
@@ -16,7 +18,7 @@ const ROW_HEIGHT = 53;
 /**
  * No results message shown when search returns empty
  */
-export function TableNoResults({ resource, search, rows = 10 }: TableNoResultsProps) {
+export function TableNoResults({ search, rows = 10, t = (key) => key }: TableNoResultsProps) {
   // Calculate height based on row count (min 150px)
   const height = Math.max(rows * ROW_HEIGHT, 150);
 
@@ -26,12 +28,12 @@ export function TableNoResults({ resource, search, rows = 10 }: TableNoResultsPr
         <div className="flex flex-col items-center gap-3">
           <FileX size={32} strokeWidth={1.5} className="text-muted-foreground" />
           <div className="space-y-1">
-            <p className="font-medium text-muted-foreground">No {resource} found</p>
-            {search && <p className="text-muted-foreground text-sm">Try adjusting your search criteria</p>}
+            <p className="font-medium text-muted-foreground">{t("No results found")}</p>
+            {search && <p className="text-muted-foreground text-sm">{t("Try adjusting your search criteria")}</p>}
           </div>
           {search && (
             <Button variant="link" size="sm" onClick={() => search(null)} className="underline">
-              Clear search
+              {t("Clear search")}
             </Button>
           )}
         </div>

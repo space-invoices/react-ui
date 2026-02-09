@@ -23,4 +23,13 @@ export default {
   To: "Bis",
   "Clear filters": "Filter löschen",
   "Created At": "Erstellt am",
+  Unshare: "Freigabe aufheben",
+  // Empty state translations
+  "Your list is empty": "Ihre Angebotsliste ist leer",
+  "Get started by creating your first entry": "Erstellen Sie Ihr erstes Angebot",
+  "Create new": "Angebot erstellen",
+  // No results translations
+  "No results found": "Keine Angebote gefunden",
+  "Try adjusting your search criteria": "Versuchen Sie, Ihre Suchkriterien anzupassen",
+  "Clear search": "Suche zurücksetzen",
 } as const;

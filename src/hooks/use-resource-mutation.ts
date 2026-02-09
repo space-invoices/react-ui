@@ -62,7 +62,8 @@ export function useResourceMutation<TData, TError = Error, TVariables = unknown,
 
       // SDK API: method(data, options) or method(id, data, options)
       const isUpdateMethod = methodName === "update";
-      const isDeleteMethod = methodName === "delete";
+      const isIdOnlyMethod =
+        methodName === "delete" || methodName.startsWith("restore") || methodName.startsWith("permanentDelete");
 
       if (isUpdateMethod) {
         // Update: method(id, data, options)
@@ -70,8 +71,8 @@ export function useResourceMutation<TData, TError = Error, TVariables = unknown,
         return (await resource[methodName](id, data, options)) as TData;
       }
 
-      if (isDeleteMethod) {
-        // Delete: method(id, options)
+      if (isIdOnlyMethod) {
+        // Delete/Restore/PermanentDelete: method(id, options)
         const { id } = variables as { id: string };
         return (await resource[methodName](id, options)) as TData;
       }

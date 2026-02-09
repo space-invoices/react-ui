@@ -32,11 +32,25 @@ import { EmailTemplateVariablesInfo } from "./email-template-variables-info";
 import { ImageUploadWithCrop } from "./image-upload-with-crop";
 import { InputWithPreview } from "./input-with-preview";
 import de from "./locales/de";
+import es from "./locales/es";
+import fr from "./locales/fr";
+import hr from "./locales/hr";
+import it from "./locales/it";
+import nl from "./locales/nl";
+import pl from "./locales/pl";
+import pt from "./locales/pt";
 import sl from "./locales/sl";
 
 const translations = {
   sl,
   de,
+  it,
+  fr,
+  es,
+  pt,
+  nl,
+  pl,
+  hr,
 } as const;
 
 // Supported locales (matching backend)
@@ -46,6 +60,10 @@ const SUPPORTED_LOCALES = [
   { value: "it-IT", label: "Italiano (IT)" },
   { value: "fr-FR", label: "Français (FR)" },
   { value: "es-ES", label: "Español (ES)" },
+  { value: "pt-PT", label: "Português (Portugal)" },
+  { value: "nl-NL", label: "Nederlands" },
+  { value: "pl-PL", label: "Polski" },
+  { value: "hr-HR", label: "Hrvatski" },
   { value: "sl-SI", label: "Slovenščina (SI)" },
 ] as const;
 

@@ -24,6 +24,7 @@ const translations = { sl, de } as const;
 const companySettingsSchema = z.object({
   name: z.string().min(1, "Name is required"),
   tax_number: z.union([z.string(), z.null()]).optional(),
+  tax_number_2: z.union([z.string(), z.null()]).optional(),
   address: z.union([z.string(), z.null()]).optional(),
   address_2: z.union([z.string(), z.null()]).optional(),
   post_code: z.union([z.string(), z.null()]).optional(),
@@ -54,6 +55,7 @@ export function CompanySettingsForm({
     defaultValues: {
       name: entity.name || "",
       tax_number: (entity as any).tax_number || null,
+      tax_number_2: (entity as any).tax_number_2 || null,
       address: (entity as any).address || null,
       address_2: (entity as any).address_2 || null,
       post_code: (entity as any).post_code || null,
@@ -83,6 +85,7 @@ export function CompanySettingsForm({
 
     if (values.name !== entity.name) updatePayload.name = values.name;
     if (values.tax_number !== (entity as any).tax_number) updatePayload.tax_number = values.tax_number;
+    if (values.tax_number_2 !== (entity as any).tax_number_2) updatePayload.tax_number_2 = values.tax_number_2;
     if (values.address !== (entity as any).address) updatePayload.address = values.address;
     if (values.address_2 !== (entity as any).address_2) updatePayload.address_2 = values.address_2;
     if (values.post_code !== (entity as any).post_code) updatePayload.post_code = values.post_code;
@@ -134,6 +137,31 @@ export function CompanySettingsForm({
             </FormItem>
           )}
         />
+
+        {(entity as any).country_rules?.features?.includes("tax_number_2") && (
+          <FormField
+            control={form.control}
+            name="tax_number_2"
+            render={({ field }) => (
+              <FormItem className="max-w-xs">
+                <FormLabel className="font-medium text-base">{t("Tax ID 2")}</FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    value={field.value || ""}
+                    onChange={(e) => field.onChange(e.target.value || null)}
+                    placeholder="12/345/67890"
+                    className="h-10"
+                  />
+                </FormControl>
+                <FormDescription className="text-xs">
+                  {t("Secondary tax identification number (optional)")}
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
 
         <div className="border-t pt-6">
           <FormField

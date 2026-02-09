@@ -26,6 +26,13 @@ import { DocumentRecipientSection } from "../../documents/create/document-recipi
 import type { DocumentTypes } from "../../documents/types";
 import { useCreateEstimate } from "../estimates.hooks";
 import de from "./locales/de";
+import es from "./locales/es";
+import fr from "./locales/fr";
+import hr from "./locales/hr";
+import it from "./locales/it";
+import nl from "./locales/nl";
+import pl from "./locales/pl";
+import pt from "./locales/pt";
 import sl from "./locales/sl";
 import { prepareEstimateSubmission } from "./prepare-estimate-submission";
 import { useEstimateCustomerForm } from "./use-estimate-customer-form";
@@ -33,6 +40,13 @@ import { useEstimateCustomerForm } from "./use-estimate-customer-form";
 const translations = {
   sl,
   de,
+  it,
+  fr,
+  es,
+  pt,
+  nl,
+  pl,
+  hr,
 } as const;
 
 // Form values: extend schema with local-only fields (number is for display, not sent to API)

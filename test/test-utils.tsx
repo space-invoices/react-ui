@@ -19,19 +19,11 @@ export function createTestQueryClient() {
     defaultOptions: {
       queries: {
         retry: false,
-        cacheTime: 0,
+        gcTime: 0,
       },
       mutations: {
         retry: false,
       },
-    },
-    logger: {
-      // biome-ignore lint/suspicious/noEmptyBlockStatements: Intentionally empty for mock logger
-      log: () => {},
-      // biome-ignore lint/suspicious/noEmptyBlockStatements: Intentionally empty for mock logger
-      warn: () => {},
-      // biome-ignore lint/suspicious/noEmptyBlockStatements: Intentionally empty for mock logger
-      error: () => {},
     },
   });
 }

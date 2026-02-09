@@ -16,4 +16,10 @@ export default {
   "type.card": "Kartica",
   "type.check": "Ček",
   "type.other": "Drugo",
+  // Empty state translations
+  "Your list is empty": "Vaš seznam plačil je prazen",
+  "Get started by creating your first entry": "Začnite z dodajanjem prvega plačila",
+  "No results found": "Ni najdenih plačil",
+  "Try adjusting your search criteria": "Poskusite prilagoditi iskalne kriterije",
+  "Clear search": "Počisti iskanje",
 } as const;

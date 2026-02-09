@@ -39,6 +39,13 @@ import {
 } from "../invoices.hooks";
 import { getEntityErrors, getFormFieldErrors, validateEslogForm } from "./eslog-validation";
 import de from "./locales/de";
+import es from "./locales/es";
+import fr from "./locales/fr";
+import hr from "./locales/hr";
+import it from "./locales/it";
+import nl from "./locales/nl";
+import pl from "./locales/pl";
+import pt from "./locales/pt";
 import sl from "./locales/sl";
 import { prepareInvoiceSubmission } from "./prepare-invoice-submission";
 import { useInvoiceCustomerForm } from "./use-invoice-customer-form";
@@ -46,6 +53,13 @@ import { useInvoiceCustomerForm } from "./use-invoice-customer-form";
 const translations = {
   sl,
   de,
+  it,
+  fr,
+  es,
+  pt,
+  nl,
+  pl,
+  hr,
 } as const;
 
 // Form values: extend schema with local-only fields (number is for display, not sent to API)
@@ -65,7 +79,7 @@ type DocumentAddFormProps = {
   onAddNewTax?: () => void;
   onHeaderActionChange?: (action: ReactNode) => void;
   /** Initial values for form fields (used for document duplication or editing) */
-  initialValues?: Partial<CreateInvoiceRequest>;
+  initialValues?: Partial<CreateInvoiceRequest> & { number?: string };
   /** Mode: create (default) or edit */
   mode?: "create" | "edit";
   /** Document ID for edit mode */
@@ -125,7 +139,7 @@ export default function CreateInvoiceForm({
 
   // UI-only state (not part of API schema)
   const [markAsPaid, setMarkAsPaid] = useState(false);
-  const [paymentType, setPaymentType] = useState("bank_transfer");
+  const [paymentTypes, setPaymentTypes] = useState<string[]>(["bank_transfer"]);
   const [isDraftPending, setIsDraftPending] = useState(false);
 
   // Service date type state (single date or range)
@@ -253,7 +267,7 @@ export default function CreateInvoiceForm({
   });
 
   // Skip fiscalization is only allowed for bank transfers or unpaid invoices
-  const canSkipFiscalization = !markAsPaid || paymentType === "bank_transfer";
+  const canSkipFiscalization = !markAsPaid || paymentTypes.every((type) => type === "bank_transfer");
 
   // Auto-disable skip when it becomes invalid (e.g., user changes payment type to cash)
   useEffect(() => {
@@ -486,7 +500,7 @@ export default function CreateInvoiceForm({
     (values: CreateInvoiceFormValues, isDraft: boolean) => {
       // Skip e-SLOG validation for drafts and edit mode
       if (!isDraft && !isEditMode && eslogValidationEnabled) {
-        const validationErrors = validateEslogForm(values, activeEntity);
+        const validationErrors = validateEslogForm(values as any, activeEntity);
 
         if (validationErrors.length > 0) {
           const entityErrors = getEntityErrors(validationErrors);
@@ -519,11 +533,11 @@ export default function CreateInvoiceForm({
           ? { validation_enabled: eslogValidationEnabled === true }
           : undefined;
 
-      const payload = prepareInvoiceSubmission(values, {
+      const payload = prepareInvoiceSubmission(values as any, {
         originalCustomer,
         wasCustomerFormShown: showCustomerForm,
         markAsPaid: isDraft || isEditMode ? false : markAsPaid,
-        paymentType,
+        paymentTypes,
         furs: fursOptions,
         eslog: eslogOptions,
         priceModes: priceModesRef.current,
@@ -533,7 +547,7 @@ export default function CreateInvoiceForm({
       if (isEditMode && documentId) {
         // In edit mode, use updateInvoice
         // Remove number from payload as it's not editable
-        const { number, ...updatePayload } = payload;
+        const { number: _number, ...updatePayload } = payload as any;
         updateInvoice({ id: documentId, data: updatePayload });
       } else {
         createInvoice(payload);
@@ -551,7 +565,7 @@ export default function CreateInvoiceForm({
       isFursEnabled,
       markAsPaid,
       originalCustomer,
-      paymentType,
+      paymentTypes,
       selectedDeviceName,
       selectedPremiseName,
       showCustomerForm,
@@ -795,8 +809,8 @@ export default function CreateInvoiceForm({
               <MarkAsPaidSection
                 checked={markAsPaid}
                 onCheckedChange={setMarkAsPaid}
-                paymentType={paymentType}
-                onPaymentTypeChange={setPaymentType}
+                paymentTypes={paymentTypes}
+                onPaymentTypesChange={setPaymentTypes}
                 t={t}
               />
             )}

@@ -12,6 +12,7 @@ export default {
   Country: "Država",
   "Enter country": "Vnesite državo",
   "Tax Number": "Davčna številka",
+  "Company Number": "Matična številka",
   "Enter tax number": "Vnesite davčno številko",
   "Create Customer": "Ustvari stranko",
   Cancel: "Prekliči",

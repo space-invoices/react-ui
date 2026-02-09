@@ -6,10 +6,18 @@ import { type ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } f
 import { createTranslation } from "@/ui/lib/translation";
 import { ChartEmptyState } from "../chart-empty-state";
 import { LoadingCard } from "../loading-card";
+import de from "./locales/de";
+import es from "./locales/es";
+import fr from "./locales/fr";
+import hr from "./locales/hr";
+import it from "./locales/it";
+import nl from "./locales/nl";
+import pl from "./locales/pl";
+import pt from "./locales/pt";
 import sl from "./locales/sl";
 import { useTopCustomersData } from "./use-top-customers";
 
-const translations = { sl } as const;
+const translations = { sl, de, it, fr, es, pt, nl, pl, hr } as const;
 
 export type TopCustomersChartData = { name: string; revenue: number }[];
 
@@ -106,7 +114,7 @@ export function TopCustomersChart(props: TopCustomersChartProps) {
           cursor={false}
           content={
             <ChartTooltipContent
-              labelFormatter={(_, payload) => payload?.[0]?.payload?.name || ""}
+              labelFormatter={(_, payload): React.ReactNode => String(payload?.[0]?.payload?.name || "")}
               formatter={(value) => formatCurrency(Number(value), currency, locale)}
             />
           }

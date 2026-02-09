@@ -132,7 +132,12 @@ export function DataTable<T extends { id: string }>({
   // (this means truly empty collection, not filtered to zero results)
   if (data.length === 0 && !hasActiveFilters) {
     return (
-      <TableEmptyState resource={resourceName} createNewLink={createNewLink} createNewTrigger={createNewTrigger} />
+      <TableEmptyState
+        resource={resourceName}
+        createNewLink={createNewLink}
+        createNewTrigger={createNewTrigger}
+        t={t}
+      />
     );
   }
 
@@ -170,7 +175,7 @@ export function DataTable<T extends { id: string }>({
                 return <DefaultTableRow key={item.id} item={item} columns={columns} onRowClick={onRowClick} />;
               })
             ) : (
-              <TableNoResults resource={resourceName} search={handleSearch} />
+              <TableNoResults resource={resourceName} search={handleSearch} t={t} />
             )}
           </TableBody>
         </Table>
@@ -239,7 +244,7 @@ const DefaultTableRow = memo(function DefaultTableRow<T extends { id: string }>(
     <TableRow className={onRowClick ? "cursor-pointer" : undefined} onClick={() => onRowClick?.(item)}>
       {columns.map((column) => (
         <TableCell key={column.id} className={column.className} style={{ textAlign: column.align }}>
-          {column.cell(item)}
+          {column.cell?.(item)}
         </TableCell>
       ))}
     </TableRow>

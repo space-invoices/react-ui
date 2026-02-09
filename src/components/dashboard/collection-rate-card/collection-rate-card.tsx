@@ -3,10 +3,18 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/ui/components/ui/card";
 import { createTranslation } from "@/ui/lib/translation";
 import { LoadingCard } from "../loading-card";
+import de from "./locales/de";
+import es from "./locales/es";
+import fr from "./locales/fr";
+import hr from "./locales/hr";
+import it from "./locales/it";
+import nl from "./locales/nl";
+import pl from "./locales/pl";
+import pt from "./locales/pt";
 import sl from "./locales/sl";
 import { useCollectionRateData } from "./use-collection-rate";
 
-const translations = { sl } as const;
+const translations = { de, es, fr, hr, it, nl, pl, pt, sl } as const;
 
 type BaseProps = {
   locale?: string;

@@ -49,7 +49,7 @@ export function getCookie(name: string): string | undefined {
 }
 
 /**
- * Removes a cookie by name
+ * Removes a cookie by name, clearing both host-only and domain-scoped versions
  */
 export function deleteCookie(name: string, path = "/") {
   if (typeof window === "undefined") {
@@ -57,10 +57,21 @@ export function deleteCookie(name: string, path = "/") {
     return;
   }
 
+  // Delete host-only cookie (e.g. app.spaceinvoices.com)
   setCookie(name, "", {
     path,
     expires: new Date(0),
   });
+
+  // Also delete domain cookie (e.g. .spaceinvoices.com) if on spaceinvoices.com
+  const hostname = window.location.hostname;
+  if (hostname === "spaceinvoices.com" || hostname.endsWith(".spaceinvoices.com")) {
+    setCookie(name, "", {
+      path,
+      expires: new Date(0),
+      domain: ".spaceinvoices.com",
+    });
+  }
 }
 
 export function flushCookies() {

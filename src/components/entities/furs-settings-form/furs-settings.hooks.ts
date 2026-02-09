@@ -5,12 +5,12 @@
 
 import type {
   FursBusinessPremise,
-  GetFursCertificate200,
   GetFursSettings200,
   RegisterFursMovablePremiseBody,
   RegisterFursRealEstatePremiseBody,
   UpdateFursSettingsBody,
   UpdateUserFursSettingsBody,
+  UploadFursCertificate200,
   User,
 } from "@spaceinvoices/js-sdk";
 import {
@@ -48,7 +48,7 @@ export function useFursSettings(
     queryFn: async () => {
       if (!sdk) throw new Error("SDK not initialized");
       if (!entityId) throw new Error("Entity ID required");
-      return (sdk.fursSettings as any).get({ entity_id: entityId });
+      return sdk.fursSettings.list({ entity_id: entityId });
     },
     enabled: !!sdk && !!entityId,
     staleTime: 0, // Always fetch fresh data
@@ -69,7 +69,7 @@ export function useUpdateFursSettings(
     ...options,
     mutationFn: async ({ entityId, data }) => {
       if (!sdk) throw new Error("SDK not initialized");
-      return (sdk.fursSettings as any).update(data, { entity_id: entityId });
+      return sdk.fursSettings.update(data, { entity_id: entityId });
     },
     onSuccess: (data, variables, context) => {
       // Invalidate settings query
@@ -88,7 +88,7 @@ export function useUpdateFursSettings(
  * Hook: Upload FURS certificate
  */
 export function useUploadFursCertificate(
-  options?: UseMutationOptions<GetFursCertificate200, Error, { entityId: string; file: Blob; passphrase: string }>,
+  options?: UseMutationOptions<UploadFursCertificate200, Error, { entityId: string; file: Blob; passphrase: string }>,
 ) {
   const { sdk } = useSDK();
   const queryClient = useQueryClient();
@@ -97,7 +97,7 @@ export function useUploadFursCertificate(
     ...options,
     mutationFn: async ({ entityId, file, passphrase }) => {
       if (!sdk) throw new Error("SDK not initialized");
-      return (sdk.fursSettings as any).uploadCertificate(file, passphrase, { entity_id: entityId });
+      return sdk.fursCertificate.uploadFursCertificate({ file, passphrase }, { entity_id: entityId });
     },
     onSuccess: (data, variables, context) => {
       // Invalidate settings query to refresh certificate status
@@ -125,7 +125,7 @@ export function useFursPremises(
     queryKey: fursQueryKeys.premises(entityId),
     queryFn: async () => {
       if (!sdk) throw new Error("SDK not initialized");
-      return (sdk.fursFiscalization as any).listPremises({ entity_id: entityId });
+      return sdk.fursFiscalization.listFursBusinessPremises({ entity_id: entityId });
     },
     enabled: !!sdk,
     staleTime: 0, // Always fetch fresh data to reflect device changes
@@ -146,7 +146,7 @@ export function useRegisterRealEstatePremise(
     ...options,
     mutationFn: async ({ entityId, data }) => {
       if (!sdk) throw new Error("SDK not initialized");
-      return (sdk.fursFiscalization as any).registerRealEstatePremise(data, { entity_id: entityId });
+      return sdk.fursFiscalization.registerFursRealEstatePremise(data, { entity_id: entityId });
     },
     onSuccess: (data, variables, context) => {
       // Invalidate premises list
@@ -174,7 +174,7 @@ export function useRegisterMovablePremise(
     ...options,
     mutationFn: async ({ entityId, data }) => {
       if (!sdk) throw new Error("SDK not initialized");
-      return (sdk.fursFiscalization as any).registerMovablePremise(data, { entity_id: entityId });
+      return sdk.fursFiscalization.registerFursMovablePremise(data, { entity_id: entityId });
     },
     onSuccess: (data, variables, context) => {
       // Invalidate premises list
@@ -200,7 +200,7 @@ export function useClosePremise(options?: UseMutationOptions<any, Error, { entit
     ...options,
     mutationFn: async ({ entityId, premiseId }) => {
       if (!sdk) throw new Error("SDK not initialized");
-      return (sdk.fursFiscalization as any).closePremise(premiseId, { entity_id: entityId });
+      return sdk.fursFiscalization.closeFursBusinessPremise(premiseId, { entity_id: entityId });
     },
     onSuccess: (data, variables, context) => {
       // Invalidate premises list
@@ -228,7 +228,11 @@ export function useRegisterElectronicDevice(
     ...options,
     mutationFn: async ({ entityId, premiseId, deviceName }) => {
       if (!sdk) throw new Error("SDK not initialized");
-      return (sdk.fursFiscalization as any).registerDevice(premiseId, { name: deviceName }, { entity_id: entityId });
+      return sdk.fursFiscalization.registerFursElectronicDevice(
+        premiseId,
+        { name: deviceName },
+        { entity_id: entityId },
+      );
     },
     onSuccess: (data, variables, context) => {
       // Invalidate premises list to refresh devices
@@ -304,7 +308,7 @@ export function useUpdateUserFursSettings(
     ...options,
     mutationFn: async ({ entityId, data }) => {
       if (!sdk) throw new Error("SDK not initialized");
-      return (sdk.users as any).updateFursSettings(data, { entity_id: entityId });
+      return sdk.users.update(data, { entity_id: entityId });
     },
     onSuccess: (data, variables, context) => {
       // Invalidate current user query to refresh settings

@@ -75,7 +75,7 @@ describe("createTranslation", () => {
     expect(mockTranslate).toHaveBeenCalledWith("Hello");
   });
 
-  test("should return original text for English locale even if translations exist", () => {
+  test("should use English locale translations when provided", () => {
     const translations = {
       en: {
         Hello: "Hello (EN)",
@@ -87,7 +87,20 @@ describe("createTranslation", () => {
 
     const { result } = renderHook(() => createTranslation({ locale: "en", translations }));
 
-    // Should return original text, not the English translation
-    expect(result.current("Hello")).toBe("Hello");
+    // English locale translations should be used (e.g. for resource-specific empty state messages)
+    expect(result.current("Hello")).toBe("Hello (EN)");
+  });
+
+  test("should fall back to key when English locale has no translation for it", () => {
+    const translations = {
+      en: {
+        Hello: "Hello (EN)",
+      },
+    };
+
+    const { result } = renderHook(() => createTranslation({ locale: "en", translations }));
+
+    // Key without English translation falls back to the key itself
+    expect(result.current("Missing")).toBe("Missing");
   });
 });

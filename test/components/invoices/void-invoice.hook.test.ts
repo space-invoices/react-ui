@@ -61,7 +61,7 @@ describe("useVoidInvoice Hook", () => {
       { entity_id: "ent_123" },
     );
 
-    expect(result.current.data).toEqual(mockVoidedInvoice);
+    expect(result.current.data).toEqual(mockVoidedInvoice as any);
   });
 
   it("should void invoice without reason", async () => {

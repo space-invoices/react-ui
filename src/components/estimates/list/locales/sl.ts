@@ -23,4 +23,13 @@ export default {
   To: "Do",
   "Clear filters": "Počisti filtre",
   "Created At": "Ustvarjeno",
+  Unshare: "Odstrani deljenje",
+  // Empty state translations
+  "Your list is empty": "Vaš seznam predračunov je prazen",
+  "Get started by creating your first entry": "Začnite z ustvarjanjem prvega predračuna",
+  "Create new": "Ustvari predračun",
+  // No results translations
+  "No results found": "Ni najdenih predračunov",
+  "Try adjusting your search criteria": "Poskusite prilagoditi iskalne kriterije",
+  "Clear search": "Počisti iskanje",
 } as const;

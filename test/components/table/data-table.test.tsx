@@ -120,9 +120,9 @@ describe("DataTable", () => {
     customRender(
       <DataTable
         columns={[
-          { field: "name", header: "Name", sortable: true },
-          { field: "description", header: "Description", sortable: true },
-          { field: "created_at", header: "Created At", sortable: true },
+          { id: "name", header: "Name", sortable: true },
+          { id: "description", header: "Description", sortable: true },
+          { id: "created_at", header: "Created At", sortable: true },
         ]}
         renderRow={(item) => <TestRow key={item.id} item={item} />}
         renderHeader={(props) => <TestHeader {...props} />}
@@ -142,9 +142,9 @@ describe("DataTable", () => {
     customRender(
       <DataTable
         columns={[
-          { field: "name", header: "Name", sortable: true },
-          { field: "description", header: "Description", sortable: true },
-          { field: "created_at", header: "Created At", sortable: true },
+          { id: "name", header: "Name", sortable: true },
+          { id: "description", header: "Description", sortable: true },
+          { id: "created_at", header: "Created At", sortable: true },
         ]}
         renderRow={(item) => <TestRow key={item.id} item={item} />}
         renderHeader={(props) => <TestHeader {...props} />}
@@ -173,9 +173,9 @@ describe("DataTable", () => {
     customRender(
       <DataTable
         columns={[
-          { field: "name", header: "Name", sortable: true },
-          { field: "description", header: "Description", sortable: true },
-          { field: "created_at", header: "Created At", sortable: true },
+          { id: "name", header: "Name", sortable: true },
+          { id: "description", header: "Description", sortable: true },
+          { id: "created_at", header: "Created At", sortable: true },
         ]}
         renderRow={(item) => <TestRow key={item.id} item={item} onRowClick={onRowClick} />}
         renderHeader={(props) => <TestHeader {...props} />}
@@ -196,9 +196,9 @@ describe("DataTable", () => {
     customRender(
       <DataTable
         columns={[
-          { field: "name", header: "Name", sortable: true },
-          { field: "description", header: "Description", sortable: true },
-          { field: "created_at", header: "Created At", sortable: true },
+          { id: "name", header: "Name", sortable: true },
+          { id: "description", header: "Description", sortable: true },
+          { id: "created_at", header: "Created At", sortable: true },
         ]}
         renderRow={(item) => <TestRow key={item.id} item={item} />}
         renderHeader={(props) => <TestHeader {...props} />}
@@ -241,9 +241,9 @@ describe("DataTable", () => {
     customRender(
       <DataTable
         columns={[
-          { field: "name", header: "Name", sortable: true },
-          { field: "description", header: "Description", sortable: true },
-          { field: "created_at", header: "Created At", sortable: true },
+          { id: "name", header: "Name", sortable: true },
+          { id: "description", header: "Description", sortable: true },
+          { id: "created_at", header: "Created At", sortable: true },
         ]}
         renderRow={(item) => <TestRow key={item.id} item={item} />}
         renderHeader={(props) => <TestHeader {...props} />}
@@ -253,7 +253,7 @@ describe("DataTable", () => {
       />,
     );
 
-    expect(await screen.findByText(/item list is empty/i)).toBeInTheDocument();
+    expect(await screen.findByText(/your list is empty/i)).toBeInTheDocument();
   });
 
   test("handles query params changes", async () => {
@@ -262,9 +262,9 @@ describe("DataTable", () => {
     customRender(
       <DataTable
         columns={[
-          { field: "name", header: "Name", sortable: true },
-          { field: "description", header: "Description", sortable: true },
-          { field: "created_at", header: "Created At", sortable: true },
+          { id: "name", header: "Name", sortable: true },
+          { id: "description", header: "Description", sortable: true },
+          { id: "created_at", header: "Created At", sortable: true },
         ]}
         renderRow={(item) => <TestRow key={item.id} item={item} />}
         renderHeader={(props) => <TestHeader {...props} />}
@@ -307,9 +307,9 @@ describe("DataTable", () => {
     customRender(
       <DataTable
         columns={[
-          { field: "name", header: "Name", sortable: true },
-          { field: "description", header: "Description", sortable: true },
-          { field: "created_at", header: "Created At", sortable: true },
+          { id: "name", header: "Name", sortable: true },
+          { id: "description", header: "Description", sortable: true },
+          { id: "created_at", header: "Created At", sortable: true },
         ]}
         renderRow={(item) => <TestRow key={item.id} item={item} />}
         renderHeader={(props) => <TestHeader {...props} />}
@@ -327,9 +327,9 @@ describe("DataTable", () => {
     customRender(
       <DataTable
         columns={[
-          { field: "name", header: "Name", sortable: true },
-          { field: "description", header: "Description", sortable: true },
-          { field: "created_at", header: "Created At", sortable: true },
+          { id: "name", header: "Name", sortable: true },
+          { id: "description", header: "Description", sortable: true },
+          { id: "created_at", header: "Created At", sortable: true },
         ]}
         renderRow={(item) => <TestRow key={item.id} item={item} />}
         renderHeader={(props) => <TestHeader {...props} />}

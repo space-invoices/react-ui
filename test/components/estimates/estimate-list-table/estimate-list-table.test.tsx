@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, mock, test } from "bun:test";
-import type { Estimate, GetEstimates200Response } from "@spaceinvoices/js-sdk";
+import type { Estimate } from "@spaceinvoices/js-sdk";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -9,7 +9,7 @@ import EstimateListTable from "@/ui/components/estimates/list/list-table";
 // Mock the SDK provider
 const mockSDK = {
   estimates: {
-    list: mock<(params: any) => Promise<GetEstimates200Response>>(),
+    list: mock<(params: any) => Promise<any>>(),
   },
 };
 
@@ -25,19 +25,35 @@ mock.module("@/ui/providers/sdk-provider", () => ({
 // Mock the translation function
 mock.module("@/ui/lib/translation", () => ({
   createTranslation:
-    ({ t, _translations }: { t?: (key: string) => string; translations?: Record<string, Record<string, string>> }) =>
-    (key: string) =>
-      t?.(key) || key,
+    ({
+      t,
+      namespace,
+      locale = "en",
+      translations = {},
+    }: {
+      t?: (key: string) => string;
+      namespace?: string;
+      locale?: string;
+      translations?: Record<string, Record<string, string>>;
+    }) =>
+    (key: string) => {
+      if (t) {
+        const k = namespace ? `${namespace}.${key}` : key;
+        const r = t(k);
+        if (r !== k && r !== key) return r;
+      }
+      return translations[locale]?.[key] || key;
+    },
 }));
 
 describe("EstimateListTable", () => {
   let queryClient: QueryClient;
-  const mockEstimates: Estimate[] = [
+  const mockEstimates = [
     {
       id: "est-1",
       number: "EST-001",
-      date: new Date("2023-01-01"),
-      date_valid_till: new Date("2023-02-01"),
+      date: "2023-01-01",
+      date_valid_till: "2023-02-01",
       total: 1000,
       total_with_tax: 1200,
       currency_code: "EUR",
@@ -48,14 +64,14 @@ describe("EstimateListTable", () => {
         name: "Customer 1",
       },
       items: [],
-      created_at: new Date("2023-01-01T00:00:00Z"),
-      updated_at: new Date("2023-01-01T00:00:00Z"),
+      created_at: new Date("2023-01-01T00:00:00Z").toISOString(),
+      updated_at: new Date("2023-01-01T00:00:00Z").toISOString(),
     },
     {
       id: "est-2",
       number: "EST-002",
-      date: new Date("2023-01-02"),
-      date_valid_till: new Date("2023-02-02"),
+      date: "2023-01-02",
+      date_valid_till: "2023-02-02",
       total: 2000,
       total_with_tax: 2400,
       currency_code: "EUR",
@@ -66,10 +82,10 @@ describe("EstimateListTable", () => {
         name: "Customer 2",
       },
       items: [],
-      created_at: new Date("2023-01-02T00:00:00Z"),
-      updated_at: new Date("2023-01-02T00:00:00Z"),
+      created_at: new Date("2023-01-02T00:00:00Z").toISOString(),
+      updated_at: new Date("2023-01-02T00:00:00Z").toISOString(),
     },
-  ];
+  ] as any as Estimate[];
 
   beforeEach(() => {
     queryClient = new QueryClient({

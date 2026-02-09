@@ -27,7 +27,7 @@ export function prepareEstimateSubmission(
   const baseSubmission = prepareDocumentSubmission(values, {
     originalCustomer: options.originalCustomer,
     documentType: "estimate",
-    secondaryDate: values.date_valid_till,
+    secondaryDate: values.date_valid_till ?? undefined,
     priceModes: options.priceModes,
     isDraft: options.isDraft,
   }) as CreateEstimateRequest;

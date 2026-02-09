@@ -17,11 +17,27 @@ import { useSDK } from "@/ui/providers/sdk-provider";
 
 import AdvanceInvoiceListRowActions from "./list-row-actions";
 import de from "./locales/de";
+import en from "./locales/en";
+import es from "./locales/es";
+import fr from "./locales/fr";
+import hr from "./locales/hr";
+import it from "./locales/it";
+import nl from "./locales/nl";
+import pl from "./locales/pl";
+import pt from "./locales/pt";
 import sl from "./locales/sl";
 
 const translations = {
+  en,
   sl,
   de,
+  it,
+  fr,
+  es,
+  pt,
+  nl,
+  pl,
+  hr,
 } as const;
 
 type AdvanceInvoiceListTableProps = {
@@ -152,12 +168,13 @@ export default function AdvanceInvoiceListTable({
             onDownloadStart={onDownloadStart}
             onDownloadSuccess={onDownloadSuccess}
             onDownloadError={onDownloadError}
-            {...i18nProps}
+            t={t}
+            locale={i18nProps.locale}
           />
         ),
       },
     ],
-    [t, onRowClick, onAddPayment, onDuplicate, onDownloadStart, onDownloadSuccess, onDownloadError, i18nProps],
+    [t, onRowClick, onAddPayment, onDuplicate, onDownloadStart, onDownloadSuccess, onDownloadError, i18nProps.locale],
   );
 
   return (
@@ -166,7 +183,7 @@ export default function AdvanceInvoiceListTable({
       queryParams={queryParams}
       resourceName="advance_invoice"
       cacheKey="advance-invoices"
-      createNewLink="/app/documents/add/advance_invoice"
+      createNewLink={entityId ? `/app/${entityId}/documents/add/advance_invoice` : undefined}
       onFetch={handleFetch}
       onChangeParams={onChangeParams}
       entityId={entityId}

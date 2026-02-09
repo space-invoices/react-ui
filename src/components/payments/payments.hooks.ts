@@ -10,6 +10,11 @@ const {
   useCreateResource: useCreatePayment,
   useUpdateResource: useUpdatePayment,
   useDeleteResource: useDeletePayment,
-} = createResourceHooks<Payment, CreatePaymentRequest>("payments", PAYMENTS_CACHE_KEY);
+  useRestoreResource: useRestorePayment,
+  usePermanentDeleteResource: usePermanentDeletePayment,
+} = createResourceHooks<Payment, CreatePaymentRequest>("payments", PAYMENTS_CACHE_KEY, {
+  restoreMethodName: "restorePayment",
+  permanentDeleteMethodName: "permanentDeletePayment",
+});
 
-export { useCreatePayment, useUpdatePayment, useDeletePayment };
+export { useCreatePayment, useUpdatePayment, useDeletePayment, useRestorePayment, usePermanentDeletePayment };

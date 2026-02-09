@@ -1,11 +1,10 @@
 import { describe, expect, test } from "bun:test";
-import type { CreateInvoiceSchema } from "@/ui/generated/schemas";
 import { prepareInvoiceSubmission } from "./prepare-invoice-submission";
 
 describe("prepareInvoiceSubmission", () => {
   describe("customer data transformation", () => {
     test("sends only customer_id when customer not editable", () => {
-      const values: CreateInvoiceSchema = {
+      const values: any = {
         customer_id: "cust-123",
         customer: {} as any,
         number: "INV-001",
@@ -29,7 +28,7 @@ describe("prepareInvoiceSubmission", () => {
         address: "123 Test St",
       };
 
-      const values: CreateInvoiceSchema = {
+      const values: any = {
         customer_id: "cust-123",
         customer: originalCustomer as any,
         number: "INV-001",
@@ -58,7 +57,7 @@ describe("prepareInvoiceSubmission", () => {
         address: "456 New St",
       };
 
-      const values: CreateInvoiceSchema = {
+      const values: any = {
         customer_id: "cust-123",
         customer: modifiedCustomer as any,
         number: "INV-001",
@@ -86,7 +85,7 @@ describe("prepareInvoiceSubmission", () => {
         city: "New City",
       };
 
-      const values: CreateInvoiceSchema = {
+      const values: any = {
         customer: newCustomer as any,
         number: "INV-001",
         date: "2024-01-01",
@@ -115,7 +114,7 @@ describe("prepareInvoiceSubmission", () => {
         post_code: "12345",
       };
 
-      const values: CreateInvoiceSchema = {
+      const values: any = {
         customer: customerWithEmpty as any,
         number: "INV-001",
         date: "2024-01-01",
@@ -143,7 +142,7 @@ describe("prepareInvoiceSubmission", () => {
         state: undefined,
       };
 
-      const values: CreateInvoiceSchema = {
+      const values: any = {
         customer: emptyCustomer as any,
         number: "INV-001",
         date: "2024-01-01",
@@ -160,7 +159,7 @@ describe("prepareInvoiceSubmission", () => {
     });
 
     test("removes customer_id when empty", () => {
-      const values: CreateInvoiceSchema = {
+      const values: any = {
         customer_id: "",
         number: "INV-001",
         date: "2024-01-01",
@@ -179,14 +178,14 @@ describe("prepareInvoiceSubmission", () => {
 
   describe("date conversion", () => {
     test("converts date string to Date object", () => {
-      const values: CreateInvoiceSchema = {
+      const values: any = {
         number: "INV-001",
         date: "2024-01-15",
         date_due: "2024-02-15",
         items: [],
       };
 
-      const result = prepareInvoiceSubmission(values, {
+      const result: any = prepareInvoiceSubmission(values, {
         wasCustomerFormShown: false,
         originalCustomer: null,
       });
@@ -196,14 +195,14 @@ describe("prepareInvoiceSubmission", () => {
     });
 
     test("converts date_due string to Date object", () => {
-      const values: CreateInvoiceSchema = {
+      const values: any = {
         number: "INV-001",
         date: "2024-01-15",
         date_due: "2024-02-15",
         items: [],
       };
 
-      const result = prepareInvoiceSubmission(values, {
+      const result: any = prepareInvoiceSubmission(values, {
         wasCustomerFormShown: false,
         originalCustomer: null,
       });
@@ -213,7 +212,7 @@ describe("prepareInvoiceSubmission", () => {
     });
 
     test("handles undefined dates", () => {
-      const values: CreateInvoiceSchema = {
+      const values: any = {
         number: "INV-001",
         items: [],
       } as any;
@@ -230,79 +229,79 @@ describe("prepareInvoiceSubmission", () => {
 
   describe("payment data", () => {
     test("adds payment data when markAsPaid is true", () => {
-      const values: CreateInvoiceSchema = {
+      const values: any = {
         number: "INV-001",
         date: "2024-01-15",
         date_due: "2024-02-15",
         items: [],
       };
 
-      const result = prepareInvoiceSubmission(values, {
+      const result: any = prepareInvoiceSubmission(values, {
         wasCustomerFormShown: false,
         originalCustomer: null,
         markAsPaid: true,
-        paymentType: "bank_transfer",
+        paymentTypes: ["bank_transfer"],
       });
 
-      expect(result.payment).toBeDefined();
-      expect(result.payment?.type).toBe("bank_transfer");
-      expect(result.payment?.date).toBeInstanceOf(Date);
+      expect(result.payments).toBeDefined();
+      expect(result.payments?.[0]?.type).toBe("bank_transfer");
+      expect(result.payments?.[0]?.date).toBeInstanceOf(Date);
     });
 
     test("uses correct payment type", () => {
-      const values: CreateInvoiceSchema = {
+      const values: any = {
         number: "INV-001",
         date: "2024-01-15",
         date_due: "2024-02-15",
         items: [],
       };
 
-      const result = prepareInvoiceSubmission(values, {
+      const result: any = prepareInvoiceSubmission(values, {
         wasCustomerFormShown: false,
         originalCustomer: null,
         markAsPaid: true,
-        paymentType: "cash",
+        paymentTypes: ["cash"],
       });
 
-      expect(result.payment?.type).toBe("cash");
+      expect(result.payments?.[0]?.type).toBe("cash");
     });
 
     test("uses default payment type when not specified", () => {
-      const values: CreateInvoiceSchema = {
+      const values: any = {
         number: "INV-001",
         date: "2024-01-15",
         date_due: "2024-02-15",
         items: [],
       };
 
-      const result = prepareInvoiceSubmission(values, {
+      const result: any = prepareInvoiceSubmission(values, {
         wasCustomerFormShown: false,
         originalCustomer: null,
         markAsPaid: true,
       });
 
-      expect(result.payment?.type).toBe("bank_transfer");
+      expect(result.payments).toBeUndefined();
     });
 
     test("does not add payment data when markAsPaid is false", () => {
-      const values: CreateInvoiceSchema = {
+      const values: any = {
         number: "INV-001",
         date: "2024-01-15",
         date_due: "2024-02-15",
         items: [],
       };
 
-      const result = prepareInvoiceSubmission(values, {
+      const result: any = prepareInvoiceSubmission(values, {
         wasCustomerFormShown: false,
         originalCustomer: null,
         markAsPaid: false,
       });
 
-      expect(result.payment).toBeUndefined();
+      expect(result.payments).toBeUndefined();
     });
 
     test("does not add payment data when markAsPaid not provided", () => {
-      const values: CreateInvoiceSchema = {
+      const values: any = {
         number: "INV-001",
         date: "2024-01-15",
         date_due: "2024-02-15",
@@ -314,7 +313,7 @@ describe("prepareInvoiceSubmission", () => {
         originalCustomer: null,
       });
 
-      expect(result.payment).toBeUndefined();
+      expect(result.payments).toBeUndefined();
     });
   });
 
@@ -326,7 +325,7 @@ describe("prepareInvoiceSubmission", () => {
         // Missing other fields
       };
 
-      const values: CreateInvoiceSchema = {
+      const values: any = {
         customer: customer as any,
         number: "INV-001",
         date: "2024-01-15",
@@ -347,7 +346,7 @@ describe("prepareInvoiceSubmission", () => {
     });
 
     test("preserves other invoice fields", () => {
-      const values: CreateInvoiceSchema = {
+      const values: any = {
         number: "INV-001",
         date: "2024-01-15",
         date_due: "2024-02-15",
@@ -373,14 +372,14 @@ describe("prepareInvoiceSubmission", () => {
     });
 
     test("never includes number in payload (server auto-generates)", () => {
-      const values: CreateInvoiceSchema = {
+      const values: any = {
         number: "INV-001", // Even if form has a preview number
         date: "2024-01-15",
         date_due: "2024-02-15",
         items: [],
       };
 
-      const result = prepareInvoiceSubmission(values, {
+      const result: any = prepareInvoiceSubmission(values, {
         wasCustomerFormShown: false,
         originalCustomer: null,
       });
@@ -392,7 +391,7 @@ describe("prepareInvoiceSubmission", () => {
 
   describe("gross price transformation", () => {
     test("transforms items with priceModes[index]=true to send gross_price", () => {
-      const values: CreateInvoiceSchema = {
+      const values: any = {
         number: "INV-001",
         date: "2024-01-15",
         date_due: "2024-02-15",
@@ -417,7 +416,7 @@ describe("prepareInvoiceSubmission", () => {
     });
 
     test("transforms items with priceModes[index]=false to send price", () => {
-      const values: CreateInvoiceSchema = {
+      const values: any = {
         number: "INV-001",
         date: "2024-01-15",
         date_due: "2024-02-15",
@@ -442,7 +441,7 @@ describe("prepareInvoiceSubmission", () => {
     });
 
     test("defaults to net price when priceModes not provided", () => {
-      const values: CreateInvoiceSchema = {
+      const values: any = {
         number: "INV-001",
         date: "2024-01-15",
         date_due: "2024-02-15",
@@ -466,7 +465,7 @@ describe("prepareInvoiceSubmission", () => {
     });
 
     test("handles mixed net and gross price items via priceModes", () => {
-      const values: CreateInvoiceSchema = {
+      const values: any = {
         number: "INV-001",
         date: "2024-01-15",
         date_due: "2024-02-15",
@@ -501,7 +500,7 @@ describe("prepareInvoiceSubmission", () => {
 
   describe("FURS fiscalization data", () => {
     test("adds FURS data when premise and device provided", () => {
-      const values: CreateInvoiceSchema = {
+      const values: any = {
         number: "INV-001",
         date: "2024-01-15",
         date_due: "2024-02-15",
@@ -524,7 +523,7 @@ describe("prepareInvoiceSubmission", () => {
     });
 
     test("does not add FURS data when no options provided", () => {
-      const values: CreateInvoiceSchema = {
+      const values: any = {
         number: "INV-001",
         date: "2024-01-15",
         date_due: "2024-02-15",
@@ -540,7 +539,7 @@ describe("prepareInvoiceSubmission", () => {
     });
 
     test("does not add FURS data when only premise provided", () => {
-      const values: CreateInvoiceSchema = {
+      const values: any = {
         number: "INV-001",
         date: "2024-01-15",
         date_due: "2024-02-15",
@@ -559,7 +558,7 @@ describe("prepareInvoiceSubmission", () => {
     });
 
     test("does not add FURS data when only device provided", () => {
-      const values: CreateInvoiceSchema = {
+      const values: any = {
         number: "INV-001",
         date: "2024-01-15",
         date_due: "2024-02-15",
@@ -578,7 +577,7 @@ describe("prepareInvoiceSubmission", () => {
     });
 
     test("adds skip flag when skip fiscalization is true", () => {
-      const values: CreateInvoiceSchema = {
+      const values: any = {
         number: "INV-001",
         date: "2024-01-15",
         date_due: "2024-02-15",
@@ -597,7 +596,7 @@ describe("prepareInvoiceSubmission", () => {
     });
 
     test("skip flag takes precedence over premise/device", () => {
-      const values: CreateInvoiceSchema = {
+      const values: any = {
         number: "INV-001",
         date: "2024-01-15",
         date_due: "2024-02-15",
@@ -619,7 +618,7 @@ describe("prepareInvoiceSubmission", () => {
     });
 
     test("FURS data works with payment data", () => {
-      const values: CreateInvoiceSchema = {
+      const values: any = {
         number: "INV-001",
         date: "2024-01-15",
         date_due: "2024-02-15",
@@ -630,7 +629,7 @@ describe("prepareInvoiceSubmission", () => {
         wasCustomerFormShown: false,
         originalCustomer: null,
         markAsPaid: true,
-        paymentType: "cash",
+        paymentTypes: ["cash"],
         furs: {
           business_premise_name: "P1",
           electronic_device_name: "E1",
@@ -641,14 +640,14 @@ describe("prepareInvoiceSubmission", () => {
         business_premise_name: "P1",
         electronic_device_name: "E1",
       });
-      expect(result.payment).toBeDefined();
-      expect(result.payment?.type).toBe("cash");
+      expect(result.payments).toBeDefined();
+      expect(result.payments?.[0]?.type).toBe("cash");
     });
   });
 
   describe("draft invoices", () => {
     test("sets is_draft to true when isDraft option is true", () => {
-      const values: CreateInvoiceSchema = {
+      const values: any = {
         number: "INV-001",
         date: "2024-01-15",
         date_due: "2024-02-15",
@@ -665,7 +664,7 @@ describe("prepareInvoiceSubmission", () => {
     });
 
     test("does not set is_draft when isDraft is false", () => {
-      const values: CreateInvoiceSchema = {
+      const values: any = {
         number: "INV-001",
         date: "2024-01-15",
         date_due: "2024-02-15",
@@ -682,7 +681,7 @@ describe("prepareInvoiceSubmission", () => {
     });
 
     test("draft invoice without FURS data (form skips FURS for drafts)", () => {
-      const values: CreateInvoiceSchema = {
+      const values: any = {
         number: "INV-001",
         date: "2024-01-15",
         date_due: "2024-02-15",
@@ -702,7 +701,7 @@ describe("prepareInvoiceSubmission", () => {
     });
 
     test("draft invoice without e-SLOG validation (form skips e-SLOG for drafts)", () => {
-      const values: CreateInvoiceSchema = {
+      const values: any = {
         number: "INV-001",
         date: "2024-01-15",
         date_due: "2024-02-15",
@@ -722,7 +721,7 @@ describe("prepareInvoiceSubmission", () => {
     });
 
     test("draft invoice without payment data (form skips markAsPaid for drafts)", () => {
-      const values: CreateInvoiceSchema = {
+      const values: any = {
         number: "INV-001",
         date: "2024-01-15",
         date_due: "2024-02-15",
@@ -742,7 +741,7 @@ describe("prepareInvoiceSubmission", () => {
     });
 
     test("draft invoice preserves all other invoice data", () => {
-      const values: CreateInvoiceSchema = {
+      const values: any = {
         number: "DRAFT-123",
         date: "2024-01-15",
         date_due: "2024-02-15",

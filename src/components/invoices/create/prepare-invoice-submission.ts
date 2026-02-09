@@ -19,7 +19,7 @@ type PrepareOptions = {
   originalCustomer: any;
   wasCustomerFormShown?: boolean;
   markAsPaid?: boolean;
-  paymentType?: string;
+  paymentTypes?: string[];
   /** FURS fiscalization data (for Slovenia) */
   furs?: FursData;
   /** e-SLOG validation data (for Slovenia) */
@@ -39,9 +39,9 @@ export function prepareInvoiceSubmission(values: CreateInvoiceSchema, options: P
     originalCustomer: options.originalCustomer,
     wasCustomerFormShown: options.wasCustomerFormShown,
     markAsPaid: options.markAsPaid,
-    paymentType: options.paymentType,
+    paymentTypes: options.paymentTypes,
     documentType: "invoice",
-    secondaryDate: values.date_due,
+    secondaryDate: values.date_due ?? undefined,
     priceModes: options.priceModes,
     isDraft: options.isDraft,
   }) as CreateInvoiceRequest;

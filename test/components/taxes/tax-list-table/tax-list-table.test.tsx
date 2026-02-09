@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, mock, test } from "bun:test";
-import type { GetTaxes200Response, Tax } from "@spaceinvoices/js-sdk";
+import type { Tax } from "@spaceinvoices/js-sdk";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -9,7 +9,7 @@ import TaxListTable from "@/ui/components/taxes/tax-list-table/tax-list-table";
 // Mock the SDK provider
 const mockSDK = {
   taxes: {
-    list: mock<(params: any) => Promise<GetTaxes200Response>>(),
+    list: mock<(params: any) => Promise<any>>(),
   },
 };
 
@@ -25,31 +25,47 @@ mock.module("@/ui/providers/sdk-provider", () => ({
 // Mock the translation function
 mock.module("@/ui/lib/translation", () => ({
   createTranslation:
-    ({ t, _translations }: { t?: (key: string) => string; translations?: Record<string, Record<string, string>> }) =>
-    (key: string) =>
-      t?.(key) || key,
+    ({
+      t,
+      namespace,
+      locale = "en",
+      translations = {},
+    }: {
+      t?: (key: string) => string;
+      namespace?: string;
+      locale?: string;
+      translations?: Record<string, Record<string, string>>;
+    }) =>
+    (key: string) => {
+      if (t) {
+        const k = namespace ? `${namespace}.${key}` : key;
+        const r = t(k);
+        if (r !== k && r !== key) return r;
+      }
+      return translations[locale]?.[key] || key;
+    },
 }));
 
 describe("TaxListTable", () => {
   let queryClient: QueryClient;
-  const mockTaxes: Tax[] = [
+  const mockTaxes = [
     {
       id: "tax-1",
       name: "VAT Standard",
       tax_rates: [{ rate: 20, valid_from: "2023-01-01" }],
       entity_id: "entity1",
-      created_at: new Date("2023-01-01T00:00:00Z"),
-      updated_at: new Date("2023-01-01T00:00:00Z"),
+      created_at: new Date("2023-01-01T00:00:00Z").toISOString(),
+      updated_at: new Date("2023-01-01T00:00:00Z").toISOString(),
     },
     {
       id: "tax-2",
       name: "VAT Reduced",
       tax_rates: [{ rate: 9.5, valid_from: "2023-01-01" }],
       entity_id: "entity1",
-      created_at: new Date("2023-01-02T00:00:00Z"),
-      updated_at: new Date("2023-01-02T00:00:00Z"),
+      created_at: new Date("2023-01-02T00:00:00Z").toISOString(),
+      updated_at: new Date("2023-01-02T00:00:00Z").toISOString(),
     },
-  ];
+  ] as any as Tax[];
 
   beforeEach(() => {
     queryClient = new QueryClient({

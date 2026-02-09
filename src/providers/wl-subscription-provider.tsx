@@ -42,6 +42,7 @@ export type CurrentSubscription = {
 // Known gated features for Apollo
 export type GatedFeature =
   | "furs"
+  | "fina"
   | "eslog"
   | "recurring"
   | "email_sending"

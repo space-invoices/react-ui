@@ -122,6 +122,7 @@ export function EslogInfoDisplay({
               <AlertDescription>
                 <ul className="mt-2 list-disc space-y-1 pl-4">
                   {effectiveEslog.validation_errors.map((error, index) => (
+                    // biome-ignore lint/suspicious/noArrayIndexKey: validation errors are plain strings without stable IDs
                     <li key={index} className="text-sm">
                       {error}
                     </li>

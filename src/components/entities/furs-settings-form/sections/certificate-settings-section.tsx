@@ -41,11 +41,15 @@ export const CertificateSettingsSection: FC<CertificateSettingsSectionProps> = (
     }
   }, [fursSettings, hasCertificate]);
 
-  const { mutate: uploadCertificate, isPending } = useUploadFursCertificate({
+  const {
+    mutate: uploadCertificate,
+    isPending,
+    isSuccess: uploadSuccess,
+  } = useUploadFursCertificate({
     onSuccess: () => {
       setCertificateFile(null);
       setPassphrase("");
-      setShowUploadForm(false); // Hide form after successful upload
+      setShowUploadForm(false);
       onSuccess?.();
     },
     onError: (error) => {
@@ -84,8 +88,8 @@ export const CertificateSettingsSection: FC<CertificateSettingsSectionProps> = (
 
   const certificateStatus = fursSettings?.certificate_status || "missing";
 
-  // Show upload form if: no certificate exists OR user clicked "Change Certificate"
-  const shouldShowUploadForm = !hasCertificate || showUploadForm;
+  // Show upload form if: no certificate exists (and didn't just upload) OR user clicked "Change Certificate"
+  const shouldShowUploadForm = (!hasCertificate && !uploadSuccess) || showUploadForm;
 
   // Status display configuration with dark mode support
   const statusConfig = {
@@ -131,6 +135,17 @@ export const CertificateSettingsSection: FC<CertificateSettingsSectionProps> = (
       </div>
 
       <div className="space-y-6">
+        {/* Upload success - Show briefly while settings refetch */}
+        {!hasCertificate && uploadSuccess && (
+          <div className="space-y-4">
+            <Alert>
+              <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
+              <AlertTitle>{t("Certificate uploaded successfully")}</AlertTitle>
+              <AlertDescription>{t("Loading certificate details...")}</AlertDescription>
+            </Alert>
+          </div>
+        )}
+
         {/* Certificate Status - Show when certificate exists */}
         {hasCertificate && (
           <div className="space-y-4">

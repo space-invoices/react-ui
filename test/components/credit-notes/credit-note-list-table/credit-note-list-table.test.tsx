@@ -1,45 +1,10 @@
 import { beforeEach, describe, expect, mock, test } from "bun:test";
+import type { CreditNote } from "@spaceinvoices/js-sdk";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import CreditNoteListTable from "@/ui/components/credit-notes/list/list-table";
 import type { TableQueryParams, TableQueryResponse } from "@/ui/components/table/hooks/use-table-query";
-
-// Type for credit note until SDK is regenerated
-type CreditNote = {
-  id: string;
-  number: string;
-  customer_id: string;
-  customer: {
-    name: string;
-    address: string | null;
-    address_2: string | null;
-    post_code: string | null;
-    city: string | null;
-    state: string | null;
-    country: string | null;
-    tax_number: string | null;
-  };
-  date: string;
-  total: number;
-  total_with_tax: number;
-  total_paid: number;
-  total_due: number;
-  paid_in_full: boolean;
-  type: string;
-  issuer: {
-    name: string;
-    address: string;
-  };
-  taxes: any[];
-  entity_id: string;
-  date_year: number;
-  metadata: Record<string, unknown>;
-  created_at: Date;
-  updated_at: Date;
-  items: any[];
-  note: string | null;
-};
 
 // Mock the SDK provider
 const mockCreditNotesApi = {
@@ -60,9 +25,25 @@ mock.module("@/ui/providers/sdk-provider", () => ({
 // Mock the translation function
 mock.module("@/ui/lib/translation", () => ({
   createTranslation:
-    ({ t, _translations }: { t?: (key: string) => string; translations?: Record<string, Record<string, string>> }) =>
-    (key: string) =>
-      t?.(key) || key,
+    ({
+      t,
+      namespace,
+      locale = "en",
+      translations = {},
+    }: {
+      t?: (key: string) => string;
+      namespace?: string;
+      locale?: string;
+      translations?: Record<string, Record<string, string>>;
+    }) =>
+    (key: string) => {
+      if (t) {
+        const k = namespace ? `${namespace}.${key}` : key;
+        const r = t(k);
+        if (r !== k && r !== key) return r;
+      }
+      return translations[locale]?.[key] || key;
+    },
 }));
 
 // Mock the entities provider
@@ -96,7 +77,7 @@ mock.module("@/ui/providers/entities-context", () => ({
 
 describe("CreditNoteListTable", () => {
   let queryClient: QueryClient;
-  const mockCreditNotes: CreditNote[] = [
+  const mockCreditNotes = [
     {
       id: "cn_1",
       number: "CN-001",
@@ -126,8 +107,8 @@ describe("CreditNoteListTable", () => {
       entity_id: "entity-1",
       date_year: 2023,
       metadata: {},
-      created_at: new Date("2023-01-01"),
-      updated_at: new Date("2023-01-01"),
+      created_at: new Date("2023-01-01").toISOString(),
+      updated_at: new Date("2023-01-01").toISOString(),
       items: [],
       note: null,
     },
@@ -160,12 +141,12 @@ describe("CreditNoteListTable", () => {
       entity_id: "entity-1",
       date_year: 2023,
       metadata: {},
-      created_at: new Date("2023-02-01"),
-      updated_at: new Date("2023-02-01"),
+      created_at: new Date("2023-02-01").toISOString(),
+      updated_at: new Date("2023-02-01").toISOString(),
       items: [],
       note: null,
     },
-  ];
+  ] as any as CreditNote[];
 
   beforeEach(() => {
     queryClient = new QueryClient({

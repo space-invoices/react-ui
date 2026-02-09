@@ -193,4 +193,6 @@ export default {
     "Izberite strategijo številčenja za vaše račune. Na ravni naprave ustvari ločene sekvence za vsako napravo, centralizirano pa uporablja eno sekvenco preko vseh prostorov.",
   "Default operator info used when invoices are created via API without a logged-in user.":
     "Privzeti podatki operaterja, ki se uporabljajo, ko so računi ustvarjeni preko API-ja brez prijavljenega uporabnika.",
+  "Certificate uploaded successfully": "Certifikat uspešno naložen",
+  "Loading certificate details...": "Nalaganje podrobnosti certifikata...",
 } as const;

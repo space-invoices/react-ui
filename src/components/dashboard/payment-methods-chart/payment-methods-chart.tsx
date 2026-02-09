@@ -13,10 +13,18 @@ import {
 import { createTranslation } from "@/ui/lib/translation";
 import { ChartEmptyState } from "../chart-empty-state";
 import { LoadingCard } from "../loading-card";
+import de from "./locales/de";
+import es from "./locales/es";
+import fr from "./locales/fr";
+import hr from "./locales/hr";
+import it from "./locales/it";
+import nl from "./locales/nl";
+import pl from "./locales/pl";
+import pt from "./locales/pt";
 import sl from "./locales/sl";
 import { usePaymentMethodsData } from "./use-payment-methods";
 
-const translations = { sl } as const;
+const translations = { de, es, fr, hr, it, nl, pl, pt, sl } as const;
 
 export type PaymentMethodsChartData = { type: string; count: number; amount: number }[];
 

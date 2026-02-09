@@ -16,8 +16,6 @@ export default {
   Duplicate: "Duplizieren",
   "Failed to download PDF": "PDF-Download fehlgeschlagen",
   "Credit Note": "Gutschrift",
-  "No credit notes found": "Keine Gutschriften gefunden",
-  "Create Credit Note": "Gutschrift erstellen",
   // Filter translations
   "Search...": "Suchen...",
   Filters: "Filter",
@@ -30,4 +28,14 @@ export default {
   Overdue: "Überfällig",
   Voided: "Storniert",
   "Created At": "Erstellt am",
+  Partial: "Teilweise bezahlt",
+  Unshare: "Freigabe aufheben",
+  // Empty state translations
+  "Your list is empty": "Ihre Gutschriftenliste ist leer",
+  "Get started by creating your first entry": "Erstellen Sie Ihre erste Gutschrift",
+  "Create new": "Gutschrift erstellen",
+  // No results translations
+  "No results found": "Keine Gutschriften gefunden",
+  "Try adjusting your search criteria": "Versuchen Sie, Ihre Suchkriterien anzupassen",
+  "Clear search": "Suche zurücksetzen",
 } as const;

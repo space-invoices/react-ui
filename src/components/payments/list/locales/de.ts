@@ -16,4 +16,10 @@ export default {
   "type.card": "Karte",
   "type.check": "Scheck",
   "type.other": "Andere",
+  // Empty state translations
+  "Your list is empty": "Ihre Zahlungsliste ist leer",
+  "Get started by creating your first entry": "Erstellen Sie Ihre erste Zahlung",
+  "No results found": "Keine Zahlungen gefunden",
+  "Try adjusting your search criteria": "Versuchen Sie, Ihre Suchkriterien anzupassen",
+  "Clear search": "Suche zurücksetzen",
 } as const;

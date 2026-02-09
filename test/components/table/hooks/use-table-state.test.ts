@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, mock, test } from "bun:test";
+import { describe, expect, mock, test } from "bun:test";
 import { act, renderHook } from "@testing-library/react";
 
 import { useTableState } from "@/ui/components/table/hooks/use-table-state";

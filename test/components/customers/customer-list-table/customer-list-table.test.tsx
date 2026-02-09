@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, mock, test } from "bun:test";
-import type { Customer, GetCustomers200Response } from "@spaceinvoices/js-sdk";
+import type { Customer } from "@spaceinvoices/js-sdk";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -9,7 +9,7 @@ import CustomerListTable from "@/ui/components/customers/customer-list-table/cus
 // Mock the SDK provider
 const mockSDK = {
   customers: {
-    list: mock<(params: any) => Promise<GetCustomers200Response>>(),
+    list: mock<(params: any) => Promise<any>>(),
   },
 };
 
@@ -25,19 +25,35 @@ mock.module("@/ui/providers/sdk-provider", () => ({
 // Mock the translation function
 mock.module("@/ui/lib/translation", () => ({
   createTranslation:
-    ({ t, _translations }: { t?: (key: string) => string; translations?: Record<string, Record<string, string>> }) =>
-    (key: string) =>
-      t?.(key) || key,
+    ({
+      t,
+      namespace,
+      locale = "en",
+      translations = {},
+    }: {
+      t?: (key: string) => string;
+      namespace?: string;
+      locale?: string;
+      translations?: Record<string, Record<string, string>>;
+    }) =>
+    (key: string) => {
+      if (t) {
+        const k = namespace ? `${namespace}.${key}` : key;
+        const r = t(k);
+        if (r !== k && r !== key) return r;
+      }
+      return translations[locale]?.[key] || key;
+    },
 }));
 
 describe("CustomerListTable", () => {
   let queryClient: QueryClient;
-  const mockCustomers: Customer[] = [
+  const mockCustomers = [
     {
       id: "1",
       name: "Customer 1",
-      created_at: new Date("2023-01-01T00:00:00Z"),
-      updated_at: new Date("2023-01-01T00:00:00Z"),
+      created_at: new Date("2023-01-01T00:00:00Z").toISOString(),
+      updated_at: new Date("2023-01-01T00:00:00Z").toISOString(),
       address: "123 Main St",
       address_2: null,
       post_code: "12345",
@@ -51,8 +67,8 @@ describe("CustomerListTable", () => {
     {
       id: "2",
       name: "Customer 2",
-      created_at: new Date("2023-01-02T00:00:00Z"),
-      updated_at: new Date("2023-01-02T00:00:00Z"),
+      created_at: new Date("2023-01-02T00:00:00Z").toISOString(),
+      updated_at: new Date("2023-01-02T00:00:00Z").toISOString(),
       address: "456 Oak St",
       address_2: null,
       post_code: "67890",
@@ -63,7 +79,7 @@ describe("CustomerListTable", () => {
       entity_id: "entity1",
       metadata: {},
     },
-  ];
+  ] as any as Customer[];
 
   beforeEach(() => {
     queryClient = new QueryClient({

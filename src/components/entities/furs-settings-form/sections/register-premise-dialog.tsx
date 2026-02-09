@@ -1,6 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Entity } from "@spaceinvoices/js-sdk";
 import type { FC } from "react";
+import type { Resolver } from "react-hook-form";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
 import { Button } from "@/ui/components/ui/button";
@@ -57,7 +58,7 @@ export const RegisterPremiseDialog: FC<RegisterPremiseDialogProps> = ({
 
   // Real Estate Form
   const realEstateForm = useForm<RealEstatePremiseForm>({
-    resolver: zodResolver(realEstatePremiseSchema),
+    resolver: zodResolver(realEstatePremiseSchema) as Resolver<RealEstatePremiseForm>,
     defaultValues: {
       business_premise_name: "",
       real_estate: {
@@ -71,19 +72,17 @@ export const RegisterPremiseDialog: FC<RegisterPremiseDialogProps> = ({
         house_number_additional: "",
         postal_code: "",
       },
-      numbering_strategy: "C",
     },
   });
 
   // Movable Form
   const movableForm = useForm<MovablePremiseForm>({
-    resolver: zodResolver(movablePremiseSchema),
+    resolver: zodResolver(movablePremiseSchema) as Resolver<MovablePremiseForm>,
     defaultValues: {
       business_premise_name: "",
       movable_premise: {
         premise_type: "A",
       },
-      numbering_strategy: "C",
     },
   });
 
@@ -133,10 +132,10 @@ export const RegisterPremiseDialog: FC<RegisterPremiseDialogProps> = ({
 
         {isRealEstate ? (
           <Form {...realEstateForm}>
-            <form onSubmit={realEstateForm.handleSubmit(handleRealEstateSubmit)} className="space-y-4">
+            <form onSubmit={realEstateForm.handleSubmit(handleRealEstateSubmit as any)} className="space-y-4">
               {/* Premise Name */}
               <FormField
-                control={realEstateForm.control}
+                control={realEstateForm.control as any}
                 name="business_premise_name"
                 render={({ field }) => (
                   <FormItem>
@@ -152,7 +151,7 @@ export const RegisterPremiseDialog: FC<RegisterPremiseDialogProps> = ({
 
               {/* Property Information */}
               <FormField
-                control={realEstateForm.control}
+                control={realEstateForm.control as any}
                 name="real_estate.cadastral_number"
                 render={({ field }) => (
                   <FormItem>
@@ -169,7 +168,7 @@ export const RegisterPremiseDialog: FC<RegisterPremiseDialogProps> = ({
               {/* Building Information */}
               <div className="grid grid-cols-2 gap-4">
                 <FormField
-                  control={realEstateForm.control}
+                  control={realEstateForm.control as any}
                   name="real_estate.building_number"
                   render={({ field }) => (
                     <FormItem>
@@ -190,7 +189,7 @@ export const RegisterPremiseDialog: FC<RegisterPremiseDialogProps> = ({
                   )}
                 />
                 <FormField
-                  control={realEstateForm.control}
+                  control={realEstateForm.control as any}
                   name="real_estate.building_section"
                   render={({ field }) => (
                     <FormItem>
@@ -214,7 +213,7 @@ export const RegisterPremiseDialog: FC<RegisterPremiseDialogProps> = ({
 
               {/* Community */}
               <FormField
-                control={realEstateForm.control}
+                control={realEstateForm.control as any}
                 name="real_estate.community"
                 render={({ field }) => (
                   <FormItem>
@@ -230,7 +229,7 @@ export const RegisterPremiseDialog: FC<RegisterPremiseDialogProps> = ({
 
               {/* Address */}
               <FormField
-                control={realEstateForm.control}
+                control={realEstateForm.control as any}
                 name="real_estate.street"
                 render={({ field }) => (
                   <FormItem>
@@ -245,7 +244,7 @@ export const RegisterPremiseDialog: FC<RegisterPremiseDialogProps> = ({
 
               <div className="grid grid-cols-2 gap-4">
                 <FormField
-                  control={realEstateForm.control}
+                  control={realEstateForm.control as any}
                   name="real_estate.house_number"
                   render={({ field }) => (
                     <FormItem>
@@ -258,7 +257,7 @@ export const RegisterPremiseDialog: FC<RegisterPremiseDialogProps> = ({
                   )}
                 />
                 <FormField
-                  control={realEstateForm.control}
+                  control={realEstateForm.control as any}
                   name="real_estate.house_number_additional"
                   render={({ field }) => (
                     <FormItem>
@@ -274,7 +273,7 @@ export const RegisterPremiseDialog: FC<RegisterPremiseDialogProps> = ({
 
               <div className="grid grid-cols-2 gap-4">
                 <FormField
-                  control={realEstateForm.control}
+                  control={realEstateForm.control as any}
                   name="real_estate.city"
                   render={({ field }) => (
                     <FormItem>
@@ -287,7 +286,7 @@ export const RegisterPremiseDialog: FC<RegisterPremiseDialogProps> = ({
                   )}
                 />
                 <FormField
-                  control={realEstateForm.control}
+                  control={realEstateForm.control as any}
                   name="real_estate.postal_code"
                   render={({ field }) => (
                     <FormItem>
@@ -301,30 +300,6 @@ export const RegisterPremiseDialog: FC<RegisterPremiseDialogProps> = ({
                 />
               </div>
 
-              {/* Numbering Strategy */}
-              <FormField
-                control={realEstateForm.control}
-                name="numbering_strategy"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t("Numbering Strategy")}</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select strategy" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="B">{t("Strategy B (Device-level)")}</SelectItem>
-                        <SelectItem value="C">{t("Strategy C (Centralized)")}</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormDescription>{t("Choose how invoice numbers are generated")}</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>
                   {t("Cancel")}
@@ -337,10 +312,10 @@ export const RegisterPremiseDialog: FC<RegisterPremiseDialogProps> = ({
           </Form>
         ) : (
           <Form {...movableForm}>
-            <form onSubmit={movableForm.handleSubmit(handleMovableSubmit)} className="space-y-4">
+            <form onSubmit={movableForm.handleSubmit(handleMovableSubmit as any)} className="space-y-4">
               {/* Premise Name */}
               <FormField
-                control={movableForm.control}
+                control={movableForm.control as any}
                 name="business_premise_name"
                 render={({ field }) => (
                   <FormItem>
@@ -356,7 +331,7 @@ export const RegisterPremiseDialog: FC<RegisterPremiseDialogProps> = ({
 
               {/* Premise Type */}
               <FormField
-                control={movableForm.control}
+                control={movableForm.control as any}
                 name="movable_premise.premise_type"
                 render={({ field }) => (
                   <FormItem>
@@ -374,30 +349,6 @@ export const RegisterPremiseDialog: FC<RegisterPremiseDialogProps> = ({
                       </SelectContent>
                     </Select>
                     <FormDescription>{t("Type of movable business premise")}</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Numbering Strategy */}
-              <FormField
-                control={movableForm.control}
-                name="numbering_strategy"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t("Numbering Strategy")}</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select strategy" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="B">{t("Strategy B (Device-level)")}</SelectItem>
-                        <SelectItem value="C">{t("Strategy C (Centralized)")}</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormDescription>{t("Choose how invoice numbers are generated")}</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}

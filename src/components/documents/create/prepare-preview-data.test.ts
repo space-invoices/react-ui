@@ -150,6 +150,6 @@ describe("filterUnresolvedTaxes", () => {
     ];
     const result = filterUnresolvedTaxes(items as any);
 
-    expect(result[0].taxes).toEqual([{ tax_id: "tax-123", rate: 22, name: "VAT" }]);
+    expect(result[0].taxes).toEqual([{ tax_id: "tax-123", rate: 22, name: "VAT" }] as any);
   });
 });

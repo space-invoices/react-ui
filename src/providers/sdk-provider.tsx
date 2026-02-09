@@ -10,7 +10,7 @@ import { flushCookies, getCookie } from "@/ui/lib/browser-cookies";
  * Note: SDK is guaranteed to be non-null when accessing this context
  * The provider blocks rendering until SDK is initialized
  */
-type SDKContextType = {
+export type SDKContextType = {
   sdk: SDK; // Non-null - guaranteed by provider
   isInitialized: boolean;
   isLoading: boolean;
@@ -23,7 +23,7 @@ type SDKContextType = {
  * Note: These defaults are never actually used because the provider
  * blocks rendering until SDK is initialized
  */
-const SDKContext = createContext<SDKContextType | undefined>(undefined);
+export const SDKContext = createContext<SDKContextType | undefined>(undefined);
 
 // Add a name to help with debugging
 SDKContext.displayName = "SDKContext";
@@ -43,7 +43,11 @@ type SDKProviderProps = {
 export function SDKProvider({
   children,
   onUnauthorized,
-  fallbackLoading = <div className="p-4">Initializing SDK...</div>,
+  fallbackLoading = (
+    <div className="fixed inset-0 flex items-center justify-center bg-background/50">
+      <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+    </div>
+  ),
   fallbackError = (error) => <div className="p-4 text-red-500">Error initializing SDK: {error.message}</div>,
   fallbackUnauthorized = <div className="p-4 text-amber-500">No SDK available. Please log in first.</div>,
 }: SDKProviderProps) {

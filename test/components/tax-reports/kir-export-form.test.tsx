@@ -70,8 +70,8 @@ describe("KirExportForm", () => {
       await user.click(trigger);
 
       const currentYear = new Date().getFullYear();
-      // Check first and last year options
-      expect(screen.getByText(currentYear.toString())).toBeInTheDocument();
+      // Current year appears in both trigger and dropdown option
+      expect(screen.getAllByText(currentYear.toString()).length).toBeGreaterThanOrEqual(1);
       expect(screen.getByText((currentYear - 5).toString())).toBeInTheDocument();
     });
   });

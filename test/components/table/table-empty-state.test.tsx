@@ -26,18 +26,24 @@ describe("TableEmptyState", () => {
     expect(emptyState?.getAttribute("style")).toContain("height: 200px"); // min 200px
   });
 
-  it("should display resource name in message", () => {
+  it("should display default empty state message", () => {
     render(<TableEmptyState resource="customers" />);
 
-    expect(screen.getByText(/customers/i)).toBeInTheDocument();
-    expect(screen.getByText(/list is empty/i)).toBeInTheDocument();
+    expect(screen.getByText(/your list is empty/i)).toBeInTheDocument();
+  });
+
+  it("should display translated empty state message", () => {
+    const t = (key: string) => ({ "Your list is empty": "Your customer list is empty" })[key] ?? key;
+    render(<TableEmptyState resource="customers" t={t} />);
+
+    expect(screen.getByText(/your customer list is empty/i)).toBeInTheDocument();
   });
 
   it("should render create link when provided", () => {
     render(<TableEmptyState resource="items" createNewLink="/items/new" />);
 
     // Button component renders links with role="button"
-    const link = screen.getByRole("button", { name: /create items/i });
+    const link = screen.getByRole("button", { name: /create new/i });
     expect(link).toHaveAttribute("href", "/items/new");
   });
 
@@ -78,10 +84,17 @@ describe("TableNoResults", () => {
     expect(cell?.getAttribute("style")).toContain("height: 150px"); // min 150px
   });
 
-  it("should display no results message", () => {
+  it("should display default no results message", () => {
     renderInTable(<TableNoResults resource="customers" />);
 
-    expect(screen.getByText(/No customers found/i)).toBeInTheDocument();
+    expect(screen.getByText(/no results found/i)).toBeInTheDocument();
+  });
+
+  it("should display translated no results message", () => {
+    const t = (key: string) => ({ "No results found": "No customers found" })[key] ?? key;
+    renderInTable(<TableNoResults resource="customers" t={t} />);
+
+    expect(screen.getByText(/no customers found/i)).toBeInTheDocument();
   });
 
   it("should render search callback button when provided", () => {

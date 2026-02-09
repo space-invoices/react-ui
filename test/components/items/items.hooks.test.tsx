@@ -81,7 +81,7 @@ describe("Items Hooks", () => {
         limit: 10,
       });
 
-      expect(result.current.data).toEqual(mockItems);
+      expect(result.current.data).toEqual(mockItems as any);
     });
 
     test("should return empty data when search is empty string", async () => {
@@ -117,7 +117,7 @@ describe("Items Hooks", () => {
         order_by: "-created_at",
       });
 
-      expect(result.current.data).toEqual(mockItems);
+      expect(result.current.data).toEqual(mockItems as any);
     });
 
     test("should not fetch when entityId is empty", async () => {

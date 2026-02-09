@@ -8,6 +8,7 @@ export default {
   "General Settings": "General Settings",
   Certificate: "Certificate",
   "Business Premises": "Business Premises",
+  "Business Premise": "Business Premise",
   "Enable FURS fiscalization in General Settings first": "Enable FURS fiscalization in General Settings first",
   "Upload and validate digital certificate first": "Upload and validate digital certificate first",
   "Certificate Required": "Certificate Required",
@@ -191,4 +192,6 @@ export default {
     "Choose the numbering strategy for your invoices. Device-level creates separate sequences per device, centralized uses one sequence across all premises.",
   "Default operator info used when invoices are created via API without a logged-in user.":
     "Default operator info used when invoices are created via API without a logged-in user.",
+  "Certificate uploaded successfully": "Certificate uploaded successfully",
+  "Loading certificate details...": "Loading certificate details...",
 } as const;

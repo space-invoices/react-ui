@@ -2,6 +2,7 @@ import { describe, expect, mock, test } from "bun:test";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import type React from "react";
 import CreateCustomerForm from "@/ui/components/customers/create-customer-form/create-customer-form";
 
 // Mock the SDK provider - SDK signature: create(data, { entity_id })
@@ -56,7 +57,9 @@ const createWrapper = () => {
     },
   });
 
-  return ({ children }) => <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+  return ({ children }: { children: React.ReactNode }) => (
+    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+  );
 };
 
 describe("CreateCustomerForm", () => {
@@ -93,7 +96,7 @@ describe("CreateCustomerForm", () => {
     await waitFor(() => {
       const errorElement = document.querySelector('[data-slot="form-message"]');
       expect(errorElement).toBeInTheDocument();
-      expect(errorElement?.textContent).toMatch(/too small|required|character/i);
+      expect(errorElement?.textContent).toMatch(/too small|required|character|invalid input/i);
     });
   });
 

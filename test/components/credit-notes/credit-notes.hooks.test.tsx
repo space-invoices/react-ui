@@ -104,7 +104,7 @@ describe("Credit Notes Hooks (Factory-based)", () => {
         { wrapper },
       );
 
-      result.current.mutate({ number: "CN-001", date: "2024-01-01", items: [] });
+      result.current.mutate({ date: "2024-01-01", items: [] } as any);
 
       await waitFor(() => {
         expect(result.current.isError).toBe(true);

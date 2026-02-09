@@ -323,8 +323,8 @@ type HttpMethodFilterSectionProps = {
 
 function HttpMethodFilterSection({ value, onChange, t }: HttpMethodFilterSectionProps) {
   const handleChange = useCallback(
-    (method: string) => {
-      if (method === "" || method === "all") {
+    (method: string | null) => {
+      if (!method || method === "all") {
         onChange(undefined);
       } else {
         onChange(method as HttpMethodFilter);
@@ -361,8 +361,8 @@ type HttpStatusCodeFilterSectionProps = {
 
 function HttpStatusCodeFilterSection({ value, onChange, t }: HttpStatusCodeFilterSectionProps) {
   const handleChange = useCallback(
-    (status: string) => {
-      if (status === "" || status === "all") {
+    (status: string | null) => {
+      if (!status || status === "all") {
         onChange(undefined);
       } else {
         onChange(status as HttpStatusCodeFilter);

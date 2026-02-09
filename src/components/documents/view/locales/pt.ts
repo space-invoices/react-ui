@@ -1,0 +1,83 @@
+export default {
+  // Actions
+  PDF: "PDF",
+  Send: "Enviar",
+  Payment: "Pagamento",
+  Share: "Partilhar",
+  Unshare: "Remover partilha",
+  Copied: "Copiado",
+  "Copy shareable link": "Copiar link de partilha",
+  "Unshare document": "Remover partilha do documento",
+  "Unshare document confirmation": "Tem a certeza de que deseja remover o acesso público a este documento?",
+  "Document unshared": "Documento já não partilhado",
+  "Unshare failed": "Falha ao remover partilha",
+  "Download failed": "Falha no download",
+  "e-SLOG download failed": "Falha no download e-SLOG",
+  Duplicate: "Duplicar",
+  "Duplicate invoice": "Duplicar fatura",
+  "Duplicate estimate": "Duplicar orçamento",
+  "Duplicate credit_note": "Duplicar nota de crédito",
+  "Duplicate advance_invoice": "Duplicar fatura antecipada",
+  "Create invoice": "Criar fatura",
+  "Create estimate": "Criar orçamento",
+  "Create credit_note": "Criar nota de crédito",
+  "Create advance_invoice": "Criar fatura antecipada",
+
+  // Details card
+  Details: "Detalhes",
+  Number: "Número",
+  Date: "Data",
+  "Due date": "Data de vencimento",
+  "Service date": "Data do serviço",
+  "Service period": "Período de serviço",
+  "Valid until": "Válido até",
+  Customer: "Cliente",
+  Subtotal: "Subtotal",
+  Tax: "Imposto",
+  Total: "Total",
+  Paid: "Pago",
+  Due: "Em dívida",
+  Status: "Estado",
+
+  // Payment status
+  "Paid in full": "Pago na totalidade",
+  "Partially paid": "Parcialmente pago",
+  Unpaid: "Não pago",
+  Voided: "Anulado",
+
+  // Payments list
+  Payments: "Pagamentos",
+  "No payments": "Sem pagamentos",
+  "Add payment": "Adicionar pagamento",
+  Edit: "Editar",
+  Delete: "Eliminar",
+  "Delete payment": "Eliminar pagamento",
+  "Delete payment confirmation": "Tem a certeza de que deseja eliminar este pagamento?",
+  Cancel: "Cancelar",
+
+  // Payment types
+  cash: "Dinheiro",
+  bank_transfer: "Transferência bancária",
+  card: "Cartão",
+  check: "Cheque",
+  credit_note: "Nota de crédito",
+  other: "Outro",
+  advance_invoice: "Fatura antecipada",
+
+  // Errors
+  "Delete failed": "Falha na eliminação",
+
+  // Draft actions
+  Finalize: "Finalizar",
+  "Delete Draft": "Eliminar rascunho",
+  "Finalize document": "Finalizar documento",
+  "Finalize document confirmation":
+    "Isto atribuirá um número definitivo ao documento. Após a finalização, o documento não pode ser eliminado. Deseja continuar?",
+  "Delete draft document": "Eliminar rascunho do documento",
+  "Delete draft confirmation": "Tem a certeza de que deseja eliminar este rascunho? Esta ação não pode ser revertida.",
+  "Document finalized": "Documento finalizado",
+  "Finalize failed": "Falha na finalização",
+  "Draft deleted": "Rascunho eliminado",
+  "Delete draft failed": "Falha ao eliminar rascunho",
+  Draft: "Rascunho",
+} as const;

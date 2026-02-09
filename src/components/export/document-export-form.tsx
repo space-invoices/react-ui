@@ -107,7 +107,6 @@ export function DocumentExportForm({
 
         onPdfExportStarted?.();
       } catch (error) {
-        console.error("PDF export error:", error);
         onError?.(error instanceof Error ? error : new Error("Unknown error"));
       } finally {
         setIsExporting(false);
@@ -166,7 +165,6 @@ export function DocumentExportForm({
 
       onSuccess?.(fileName);
     } catch (error) {
-      console.error("Export error:", error);
       onError?.(error instanceof Error ? error : new Error("Unknown error"));
     } finally {
       setIsExporting(false);

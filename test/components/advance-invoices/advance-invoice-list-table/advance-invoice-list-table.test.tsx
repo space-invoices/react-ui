@@ -25,9 +25,25 @@ mock.module("@/ui/providers/sdk-provider", () => ({
 // Mock the translation function
 mock.module("@/ui/lib/translation", () => ({
   createTranslation:
-    ({ t, _translations }: { t?: (key: string) => string; translations?: Record<string, Record<string, string>> }) =>
-    (key: string) =>
-      t?.(key) || key,
+    ({
+      t,
+      namespace,
+      locale = "en",
+      translations = {},
+    }: {
+      t?: (key: string) => string;
+      namespace?: string;
+      locale?: string;
+      translations?: Record<string, Record<string, string>>;
+    }) =>
+    (key: string) => {
+      if (t) {
+        const k = namespace ? `${namespace}.${key}` : key;
+        const r = t(k);
+        if (r !== k && r !== key) return r;
+      }
+      return translations[locale]?.[key] || key;
+    },
 }));
 
 // Mock the entities provider
@@ -61,7 +77,7 @@ mock.module("@/ui/providers/entities-context", () => ({
 
 describe("AdvanceInvoiceListTable", () => {
   let queryClient: QueryClient;
-  const mockAdvanceInvoices: AdvanceInvoice[] = [
+  const mockAdvanceInvoices = [
     {
       id: "adv_1",
       number: "ADV-001",
@@ -92,8 +108,8 @@ describe("AdvanceInvoiceListTable", () => {
       entity_id: "entity-1",
       date_year: 2023,
       metadata: {},
-      created_at: new Date("2023-01-01"),
-      updated_at: new Date("2023-01-01"),
+      created_at: new Date("2023-01-01").toISOString(),
+      updated_at: new Date("2023-01-01").toISOString(),
       items: [],
       note: null,
     },
@@ -127,12 +143,12 @@ describe("AdvanceInvoiceListTable", () => {
       entity_id: "entity-1",
       date_year: 2023,
       metadata: {},
-      created_at: new Date("2023-02-01"),
-      updated_at: new Date("2023-02-01"),
+      created_at: new Date("2023-02-01").toISOString(),
+      updated_at: new Date("2023-02-01").toISOString(),
       items: [],
       note: null,
     },
-  ];
+  ] as any as AdvanceInvoice[];
 
   beforeEach(() => {
     queryClient = new QueryClient({

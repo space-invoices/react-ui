@@ -1,5 +1,5 @@
-import { beforeEach, describe, expect, it, mock, spyOn } from "bun:test";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { beforeEach, describe, expect, it, mock } from "bun:test";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { DocumentExportForm } from "@/ui/components/export/document-export-form";
 
@@ -23,7 +23,7 @@ describe("DocumentExportForm", () => {
         headers: new Headers({ "content-disposition": 'filename="test_export.xlsx"' }),
         blob: () => Promise.resolve(new Blob()),
       }),
-    ) as typeof fetch;
+    ) as unknown as typeof fetch;
 
     // Mock URL.createObjectURL and revokeObjectURL
     global.URL.createObjectURL = mock(() => "blob:test-url");
@@ -223,7 +223,7 @@ describe("DocumentExportForm", () => {
           ok: false,
           statusText: "Internal Server Error",
         }),
-      ) as typeof fetch;
+      ) as unknown as typeof fetch;
 
       const onError = mock();
       const user = userEvent.setup();
@@ -296,7 +296,7 @@ describe("DocumentExportForm", () => {
           ok: true,
           json: () => Promise.resolve({}),
         }),
-      ) as typeof fetch;
+      ) as unknown as typeof fetch;
 
       const onPdfExportStarted = mock();
       const user = userEvent.setup();
@@ -322,7 +322,7 @@ describe("DocumentExportForm", () => {
           ok: true,
           json: () => Promise.resolve({}),
         }),
-      ) as typeof fetch;
+      ) as unknown as typeof fetch;
 
       const user = userEvent.setup();
       render(<DocumentExportForm {...defaultProps} />);

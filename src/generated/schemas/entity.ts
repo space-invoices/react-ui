@@ -21,6 +21,7 @@ const createEntitySchemaDefinition = z.object({
   currency_code: z.union([z.string(), z.null()]).optional(),
   locale: z.string().max(20).optional(),
   tax_number: z.union([z.string(), z.null()]).optional(),
+  company_number: z.union([z.string(), z.null()]).optional(),
   email: z.union([z.string(), z.null()]).optional(),
   environment: z.string().max(20).optional(),
   is_tax_subject: z.boolean().optional(),

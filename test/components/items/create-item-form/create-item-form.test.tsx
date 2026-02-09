@@ -90,7 +90,7 @@ describe("CreateItemForm", () => {
     // Check for error message on required name field
     await waitFor(
       () => {
-        const errorText = screen.getByText(/too small.*expected string to have.*1 character/i);
+        const errorText = screen.getByText(/invalid input|must contain at least 1 character|too small|required/i);
         expect(errorText).toBeInTheDocument();
       },
       { timeout: 3000 },

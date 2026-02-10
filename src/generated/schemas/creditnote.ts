@@ -154,3 +154,6 @@ const updateCreditNoteSchemaDefinition = z
 export type UpdateCreditNoteSchema = z.infer<typeof updateCreditNoteSchemaDefinition>;
 
 export const updateCreditNoteSchema = updateCreditNoteSchemaDefinition;
+
+// Re-export invoice create schema as credit note create schema (same body structure)
+export { createInvoiceSchema as createCreditNoteSchema, type CreateInvoiceSchema as CreateCreditNoteSchema } from './invoice';

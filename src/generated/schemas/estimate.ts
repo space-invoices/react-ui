@@ -34,6 +34,8 @@ const createEstimateSchemaDefinition = z.object({
       country: z.union([z.string(), z.null()]),
       country_code: z.union([z.string(), z.null()]),
       tax_number: z.union([z.string(), z.null()]),
+      tax_number_2: z.union([z.string(), z.null()]),
+      company_number: z.union([z.string(), z.null()]),
       bank_account: z.union([
         z
           .object({
@@ -71,6 +73,8 @@ const createEstimateSchemaDefinition = z.object({
           country: z.union([z.string(), z.null()]),
           country_code: z.union([z.string(), z.null()]),
           tax_number: z.union([z.string(), z.null()]),
+          tax_number_2: z.union([z.string(), z.null()]),
+          company_number: z.union([z.string(), z.null()]),
           bank_account: z.union([
             z
               .object({
@@ -98,6 +102,7 @@ const createEstimateSchemaDefinition = z.object({
     .optional(),
   note: z.union([z.string(), z.null()]).optional(),
   payment_terms: z.union([z.string(), z.null()]).optional(),
+  tax_clause: z.union([z.string(), z.null()]).optional(),
   currency_code: z.string().max(3).optional(),
   metadata: z.union([z.record(z.string(), z.any()), z.null()]).optional(),
   date_valid_till: z.union([z.string(), z.null()]).optional(),
@@ -108,7 +113,7 @@ const createEstimateSchemaDefinition = z.object({
   items: z
     .array(
       z.object({
-        name: z.string().min(1),
+        name: z.string().min(1).optional(),
         description: z.union([z.string().max(4000, "Description must not exceed 4000 characters"), z.null()]).optional(),
         price: z.number().optional(),
         gross_price: z.number().optional(),
@@ -139,6 +144,7 @@ const createEstimateSchemaDefinition = z.object({
             z.null(),
           ])
           .optional(),
+        item_id: z.string().optional(),
       })
     )
     .min(1),
@@ -151,9 +157,151 @@ const createEstimateSchemaDefinition = z.object({
       z.null(),
     ])
     .optional(),
+  expected_total_with_tax: z.number().gt(0).optional(),
 });
 
 // Type for create estimate operation
 export type CreateEstimateSchema = z.infer<typeof createEstimateSchemaDefinition>;
 
+
+// Schema for update estimate operation
+const updateEstimateSchemaDefinition = z
+  .object({
+    date: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d{3})?Z?)?$/),
+    issuer: z
+      .object({
+        name: z.union([z.string(), z.null()]),
+        email: z.union([z.string(), z.null()]),
+        address: z.union([z.string(), z.null()]),
+        address_2: z.union([z.string(), z.null()]),
+        post_code: z.union([z.string(), z.null()]),
+        city: z.union([z.string(), z.null()]),
+        state: z.union([z.string(), z.null()]),
+        country: z.union([z.string(), z.null()]),
+        country_code: z.union([z.string(), z.null()]),
+        tax_number: z.union([z.string(), z.null()]),
+        tax_number_2: z.union([z.string(), z.null()]),
+        company_number: z.union([z.string(), z.null()]),
+        bank_account: z.union([
+          z
+            .object({
+              type: z
+                .enum(["iban", "us_domestic", "uk_domestic", "other"])
+                .default("iban"),
+              name: z.string(),
+              bank_name: z.string(),
+              iban: z.string(),
+              account_number: z.string(),
+              bic: z.string(),
+              routing_number: z.string(),
+              sort_code: z.string(),
+            })
+            .partial()
+            .passthrough(),
+          z.null(),
+        ]),
+      })
+      .partial()
+      .passthrough(),
+    customer_id: z.union([z.string(), z.null()]),
+    customer: z.union([
+      z
+        .object({
+          name: z.union([z.string(), z.null()]),
+          email: z.union([z.string(), z.null()]),
+          address: z.union([z.string(), z.null()]),
+          address_2: z.union([z.string(), z.null()]),
+          post_code: z.union([z.string(), z.null()]),
+          city: z.union([z.string(), z.null()]),
+          state: z.union([z.string(), z.null()]),
+          country: z.union([z.string(), z.null()]),
+          country_code: z.union([z.string(), z.null()]),
+          tax_number: z.union([z.string(), z.null()]),
+          tax_number_2: z.union([z.string(), z.null()]),
+          company_number: z.union([z.string(), z.null()]),
+          bank_account: z.union([
+            z
+              .object({
+                type: z
+                  .enum(["iban", "us_domestic", "uk_domestic", "other"])
+                  .default("iban"),
+                name: z.string(),
+                bank_name: z.string(),
+                iban: z.string(),
+                account_number: z.string(),
+                bic: z.string(),
+                routing_number: z.string(),
+                sort_code: z.string(),
+              })
+              .partial()
+              .passthrough(),
+            z.null(),
+          ]),
+          save_customer: z.boolean().default(true),
+        })
+        .partial()
+        .passthrough(),
+      z.null(),
+    ]),
+    items: z
+      .array(
+        z.object({
+          name: z.string().min(1).optional(),
+          description: z.union([z.string().max(4000, "Description must not exceed 4000 characters"), z.null()]).optional(),
+          price: z.number().optional(),
+          gross_price: z.number().optional(),
+          quantity: z.number().gte(-140737488355328).lte(140737488355327),
+          unit: z.union([z.string(), z.null()]).optional(),
+          taxes: z
+            .array(
+              z
+                .object({
+                  rate: z.number(),
+                  tax_id: z.string(),
+                  classification: z.string(),
+                  reverse_charge: z.boolean(),
+                  amount: z.number(),
+                })
+                .partial()
+            )
+            .optional(),
+          discounts: z.array(LineDiscount).max(5).optional(),
+          metadata: z
+            .union([
+              z.string(),
+              z.number(),
+              z.boolean(),
+              z.null(),
+              z.object({}).partial().passthrough(),
+              z.array(z.unknown()),
+              z.null(),
+            ])
+            .optional(),
+          item_id: z.string().optional(),
+        })
+      )
+      .min(1),
+    note: z.union([z.string(), z.null()]),
+    payment_terms: z.union([z.string(), z.null()]),
+    currency_code: z.string(),
+    metadata: z.union([z.object({}).partial().passthrough(), z.null()]),
+    change_reason: z.string().max(500),
+    date_valid_till: z.union([z.string(), z.null()]),
+    title_type: z.enum(["estimate", "quote"]),
+    eslog: z.union([
+      z
+        .object({ validation_enabled: z.union([z.boolean(), z.null()]) })
+        .partial()
+        .passthrough(),
+      z.null(),
+    ]),
+  })
+  .partial();
+
+// Type for update estimate operation
+export type UpdateEstimateSchema = z.infer<typeof updateEstimateSchemaDefinition>;
+
 export const createEstimateSchema = createEstimateSchemaDefinition;
+export const updateEstimateSchema = updateEstimateSchemaDefinition;

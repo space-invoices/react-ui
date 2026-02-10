@@ -21,10 +21,12 @@ const createEntitySchemaDefinition = z.object({
   currency_code: z.union([z.string(), z.null()]).optional(),
   locale: z.string().max(20).optional(),
   tax_number: z.union([z.string(), z.null()]).optional(),
+  tax_number_2: z.union([z.string(), z.null()]).optional(),
   company_number: z.union([z.string(), z.null()]).optional(),
   email: z.union([z.string(), z.null()]).optional(),
   environment: z.string().max(20).optional(),
   is_tax_subject: z.boolean().optional(),
+  is_enabled: z.boolean().optional(),
   settings: z
     .object({
       pdf_template: z.union([
@@ -74,10 +76,21 @@ const createEntitySchemaDefinition = z.object({
             numbering_strategy: z.enum(["B", "C"]),
             operator_tax_number: z.string(),
             operator_label: z.string(),
-            certificate_file_id: z.string(),
-            certificate_expiry: z.string(),
-            certificate_passphrase: z.string(),
             foreign_operator: z.boolean(),
+          })
+          .partial()
+          .passthrough(),
+        z.null(),
+      ]),
+      fina: z.union([
+        z
+          .object({
+            enabled: z.boolean().default(false),
+            operator_oib: z.string().min(11).max(11),
+            operator_label: z.string(),
+            u_sust_pdv: z.boolean().default(true),
+            numbering_sequence: z.enum(["N", "P"]).default("N"),
+            certificate_expiry: z.string(),
           })
           .partial()
           .passthrough(),
@@ -117,8 +130,24 @@ const createEntitySchemaDefinition = z.object({
           .passthrough(),
         z.null(),
       ]),
+      epc_qr: z.union([
+        z.object({ enabled: z.boolean() }).passthrough(),
+        z.null(),
+      ]),
       bank_accounts: z.union([z.array(z.any()), z.null()]),
       eslog_validation_enabled: z.union([z.boolean(), z.null()]),
+      tax_clause_defaults: z.union([
+        z
+          .object({
+            domestic: z.union([z.string(), z.null()]),
+            intra_eu_b2b: z.union([z.string(), z.null()]),
+            intra_eu_b2c: z.union([z.string(), z.null()]),
+            export: z.union([z.string(), z.null()]),
+          })
+          .partial()
+          .passthrough(),
+        z.null(),
+      ]),
     })
     .partial()
     .passthrough()
@@ -142,9 +171,11 @@ const patchEntitySchemaDefinition = z
     currency_code: z.union([z.string(), z.null()]),
     locale: z.string().max(20),
     tax_number: z.union([z.string(), z.null()]),
+    tax_number_2: z.union([z.string(), z.null()]),
+    company_number: z.union([z.string(), z.null()]),
     email: z.union([z.string(), z.null()]),
-    environment: z.string().max(20),
     is_tax_subject: z.boolean(),
+    is_enabled: z.boolean(),
     settings: z
       .object({
         pdf_template: z.union([
@@ -194,10 +225,21 @@ const patchEntitySchemaDefinition = z
               numbering_strategy: z.enum(["B", "C"]),
               operator_tax_number: z.string(),
               operator_label: z.string(),
-              certificate_file_id: z.string(),
-              certificate_expiry: z.string(),
-              certificate_passphrase: z.string(),
               foreign_operator: z.boolean(),
+            })
+            .partial()
+            .passthrough(),
+          z.null(),
+        ]),
+        fina: z.union([
+          z
+            .object({
+              enabled: z.boolean().default(false),
+              operator_oib: z.string().min(11).max(11),
+              operator_label: z.string(),
+              u_sust_pdv: z.boolean().default(true),
+              numbering_sequence: z.enum(["N", "P"]).default("N"),
+              certificate_expiry: z.string(),
             })
             .partial()
             .passthrough(),
@@ -237,8 +279,24 @@ const patchEntitySchemaDefinition = z
             .passthrough(),
           z.null(),
         ]),
+        epc_qr: z.union([
+          z.object({ enabled: z.boolean() }).passthrough(),
+          z.null(),
+        ]),
         bank_accounts: z.union([z.array(z.any()), z.null()]),
         eslog_validation_enabled: z.union([z.boolean(), z.null()]),
+        tax_clause_defaults: z.union([
+          z
+            .object({
+              domestic: z.union([z.string(), z.null()]),
+              intra_eu_b2b: z.union([z.string(), z.null()]),
+              intra_eu_b2c: z.union([z.string(), z.null()]),
+              export: z.union([z.string(), z.null()]),
+            })
+            .partial()
+            .passthrough(),
+          z.null(),
+        ]),
       })
       .partial()
       .passthrough(),

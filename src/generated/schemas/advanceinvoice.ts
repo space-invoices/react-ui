@@ -34,6 +34,8 @@ const createAdvanceInvoiceSchemaDefinition = z.object({
       country: z.union([z.string(), z.null()]),
       country_code: z.union([z.string(), z.null()]),
       tax_number: z.union([z.string(), z.null()]),
+      tax_number_2: z.union([z.string(), z.null()]),
+      company_number: z.union([z.string(), z.null()]),
       bank_account: z.union([
         z
           .object({
@@ -71,6 +73,8 @@ const createAdvanceInvoiceSchemaDefinition = z.object({
           country: z.union([z.string(), z.null()]),
           country_code: z.union([z.string(), z.null()]),
           tax_number: z.union([z.string(), z.null()]),
+          tax_number_2: z.union([z.string(), z.null()]),
+          company_number: z.union([z.string(), z.null()]),
           bank_account: z.union([
             z
               .object({
@@ -97,7 +101,7 @@ const createAdvanceInvoiceSchemaDefinition = z.object({
     ])
     .optional(),
   note: z.union([z.string(), z.null()]).optional(),
-  payment_terms: z.union([z.string(), z.null()]).optional(),
+  tax_clause: z.union([z.string(), z.null()]).optional(),
   currency_code: z.string().max(3).optional(),
   metadata: z.union([z.record(z.string(), z.any()), z.null()]).optional(),
   date_due: z.union([z.string(), z.null()]).optional(),
@@ -106,7 +110,7 @@ const createAdvanceInvoiceSchemaDefinition = z.object({
   items: z
     .array(
       z.object({
-        name: z.string().min(1),
+        name: z.string().min(1).optional(),
         description: z.union([z.string().max(4000, "Description must not exceed 4000 characters"), z.null()]).optional(),
         price: z.number().optional(),
         gross_price: z.number().optional(),
@@ -137,21 +141,23 @@ const createAdvanceInvoiceSchemaDefinition = z.object({
             z.null(),
           ])
           .optional(),
+        item_id: z.string().optional(),
       })
     )
     .min(1),
   linked_documents: z.array(z.string().min(1)).optional(),
-  payment: z
+  payments: z
     .union([
-      z.object({
-        advance_invoice_id: z.union([z.string(), z.null()]).optional(),
-        amount: z.number().gt(0).optional(),
-        type: z.string().max(20),
-        date: z.string().optional(),
-        reference: z.union([z.string(), z.null()]).optional(),
-        note: z.union([z.string(), z.null()]).optional(),
-        metadata: z.union([z.record(z.string(), z.any()), z.null()]).optional(),
-      }),
+      z.array(
+        z.object({
+          amount: z.number().gt(0).optional(),
+          type: z.string().max(20),
+          date: z.string().optional(),
+          reference: z.union([z.string(), z.null()]).optional(),
+          note: z.union([z.string(), z.null()]).optional(),
+          metadata: z.union([z.record(z.string(), z.any()), z.null()]).optional(),
+        })
+      ),
       z.null(),
     ])
     .optional(),
@@ -169,9 +175,175 @@ const createAdvanceInvoiceSchemaDefinition = z.object({
       z.null(),
     ])
     .optional(),
+  fina: z
+    .union([
+      z
+        .object({
+          premise_id: z
+            .string()
+            .min(1)
+            .max(20)
+            .regex(/^[0-9a-zA-Z]{1,20}$/),
+          device_id: z
+            .string()
+            .min(1)
+            .max(20)
+            .regex(/^\d{1,20}$/),
+          operator_oib: z.string().min(11).max(11),
+          is_end_consumer: z.boolean(),
+          payment_type: z.enum([
+            "cash",
+            "card",
+            "online",
+            "bank_transfer",
+            "paypal",
+            "crypto",
+            "coupon",
+            "other",
+          ]),
+          subsequent_submit: z.boolean(),
+        })
+        .partial(),
+      z.null(),
+    ])
+    .optional(),
+  expected_total_with_tax: z.number().gt(0).optional(),
 });
 
 // Type for create advanceinvoice operation
 export type CreateAdvanceInvoiceSchema = z.infer<typeof createAdvanceInvoiceSchemaDefinition>;
 
+
+// Schema for update advanceinvoice operation
+const updateAdvanceInvoiceSchemaDefinition = z
+  .object({
+    date: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d{3})?Z?)?$/),
+    issuer: z
+      .object({
+        name: z.union([z.string(), z.null()]),
+        email: z.union([z.string(), z.null()]),
+        address: z.union([z.string(), z.null()]),
+        address_2: z.union([z.string(), z.null()]),
+        post_code: z.union([z.string(), z.null()]),
+        city: z.union([z.string(), z.null()]),
+        state: z.union([z.string(), z.null()]),
+        country: z.union([z.string(), z.null()]),
+        country_code: z.union([z.string(), z.null()]),
+        tax_number: z.union([z.string(), z.null()]),
+        tax_number_2: z.union([z.string(), z.null()]),
+        company_number: z.union([z.string(), z.null()]),
+        bank_account: z.union([
+          z
+            .object({
+              type: z
+                .enum(["iban", "us_domestic", "uk_domestic", "other"])
+                .default("iban"),
+              name: z.string(),
+              bank_name: z.string(),
+              iban: z.string(),
+              account_number: z.string(),
+              bic: z.string(),
+              routing_number: z.string(),
+              sort_code: z.string(),
+            })
+            .partial()
+            .passthrough(),
+          z.null(),
+        ]),
+      })
+      .partial()
+      .passthrough(),
+    customer_id: z.union([z.string(), z.null()]),
+    customer: z.union([
+      z
+        .object({
+          name: z.union([z.string(), z.null()]),
+          email: z.union([z.string(), z.null()]),
+          address: z.union([z.string(), z.null()]),
+          address_2: z.union([z.string(), z.null()]),
+          post_code: z.union([z.string(), z.null()]),
+          city: z.union([z.string(), z.null()]),
+          state: z.union([z.string(), z.null()]),
+          country: z.union([z.string(), z.null()]),
+          country_code: z.union([z.string(), z.null()]),
+          tax_number: z.union([z.string(), z.null()]),
+          tax_number_2: z.union([z.string(), z.null()]),
+          company_number: z.union([z.string(), z.null()]),
+          bank_account: z.union([
+            z
+              .object({
+                type: z
+                  .enum(["iban", "us_domestic", "uk_domestic", "other"])
+                  .default("iban"),
+                name: z.string(),
+                bank_name: z.string(),
+                iban: z.string(),
+                account_number: z.string(),
+                bic: z.string(),
+                routing_number: z.string(),
+                sort_code: z.string(),
+              })
+              .partial()
+              .passthrough(),
+            z.null(),
+          ]),
+          save_customer: z.boolean().default(true),
+        })
+        .partial()
+        .passthrough(),
+      z.null(),
+    ]),
+    items: z
+      .array(
+        z.object({
+          name: z.string().min(1).optional(),
+          description: z.union([z.string().max(4000, "Description must not exceed 4000 characters"), z.null()]).optional(),
+          price: z.number().optional(),
+          gross_price: z.number().optional(),
+          quantity: z.number().gte(-140737488355328).lte(140737488355327),
+          unit: z.union([z.string(), z.null()]).optional(),
+          taxes: z
+            .array(
+              z
+                .object({
+                  rate: z.number(),
+                  tax_id: z.string(),
+                  classification: z.string(),
+                  reverse_charge: z.boolean(),
+                  amount: z.number(),
+                })
+                .partial()
+            )
+            .optional(),
+          discounts: z.array(LineDiscount).max(5).optional(),
+          metadata: z
+            .union([
+              z.string(),
+              z.number(),
+              z.boolean(),
+              z.null(),
+              z.object({}).partial().passthrough(),
+              z.array(z.unknown()),
+              z.null(),
+            ])
+            .optional(),
+          item_id: z.string().optional(),
+        })
+      )
+      .min(1),
+    note: z.union([z.string(), z.null()]),
+    currency_code: z.string(),
+    metadata: z.union([z.object({}).partial().passthrough(), z.null()]),
+    change_reason: z.string().max(500),
+    date_due: z.union([z.string(), z.null()]),
+    linked_documents: z.array(z.string().min(1)),
+  })
+  .partial();
+
+// Type for update advanceinvoice operation
+export type UpdateAdvanceInvoiceSchema = z.infer<typeof updateAdvanceInvoiceSchemaDefinition>;
+
 export const createAdvanceInvoiceSchema = createAdvanceInvoiceSchemaDefinition;
+export const updateAdvanceInvoiceSchema = updateAdvanceInvoiceSchemaDefinition;

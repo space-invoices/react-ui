@@ -11,7 +11,7 @@ const program = new Command();
 program
   .name("spaceinvoices-ui")
   .description("CLI for adding Space Invoices React UI components to your project")
-  .version("0.2.0");
+  .version("0.3.0");
 
 program
   .option("--local <path>", "Use local registry from specified path (for development)")

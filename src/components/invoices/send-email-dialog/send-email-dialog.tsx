@@ -103,8 +103,8 @@ export function SendEmailDialog({
     defaultValues: {
       to: defaultEmail,
       subject: finalSubject,
-      bodyText: finalBody,
-      attachPdf: false,
+      body_text: finalBody,
+      attach_pdf: false,
     },
   });
 
@@ -116,8 +116,8 @@ export function SendEmailDialog({
     form.reset({
       to: defaultEmail,
       subject: finalSubject,
-      bodyText: finalBody,
-      attachPdf: false,
+      body_text: finalBody,
+      attach_pdf: false,
     });
 
     // Fetch customer email from linked customer if not in invoice snapshot
@@ -158,8 +158,8 @@ export function SendEmailDialog({
         {
           to: values.to,
           subject: values.subject,
-          bodyText: values.bodyText,
-          documentId: invoice.id,
+          body_text: values.body_text,
+          document_id: invoice.id,
         },
         { entity_id: activeEntity.id },
       );
@@ -253,7 +253,7 @@ export function SendEmailDialog({
 
             <FormField
               control={form.control}
-              name="bodyText"
+              name="body_text"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>{t("Message (Optional)")}</FormLabel>

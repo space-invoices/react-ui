@@ -15,50 +15,49 @@ const LineDiscount = z.object({
 });
 
 
-// Schema for create creditnote operation
-const createCreditNoteSchemaDefinition = z.object({
-  is_draft: z.boolean().optional(),
-  date: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d{3})?Z?)?$/)
-    .optional(),
-  issuer: z
-    .object({
-      name: z.union([z.string(), z.null()]),
-      email: z.union([z.string(), z.null()]),
-      address: z.union([z.string(), z.null()]),
-      address_2: z.union([z.string(), z.null()]),
-      post_code: z.union([z.string(), z.null()]),
-      city: z.union([z.string(), z.null()]),
-      state: z.union([z.string(), z.null()]),
-      country: z.union([z.string(), z.null()]),
-      country_code: z.union([z.string(), z.null()]),
-      tax_number: z.union([z.string(), z.null()]),
-      bank_account: z.union([
-        z
-          .object({
-            type: z
-              .enum(["iban", "us_domestic", "uk_domestic", "other"])
-              .default("iban"),
-            name: z.string(),
-            bank_name: z.string(),
-            iban: z.string(),
-            account_number: z.string(),
-            bic: z.string(),
-            routing_number: z.string(),
-            sort_code: z.string(),
-          })
-          .partial()
-          .passthrough(),
-        z.null(),
-      ]),
-    })
-    .partial()
-    .passthrough()
-    .optional(),
-  customer_id: z.union([z.string(), z.null()]).optional(),
-  customer: z
-    .union([
+// Schema for update creditnote operation
+const updateCreditNoteSchemaDefinition = z
+  .object({
+    date: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d{3})?Z?)?$/),
+    issuer: z
+      .object({
+        name: z.union([z.string(), z.null()]),
+        email: z.union([z.string(), z.null()]),
+        address: z.union([z.string(), z.null()]),
+        address_2: z.union([z.string(), z.null()]),
+        post_code: z.union([z.string(), z.null()]),
+        city: z.union([z.string(), z.null()]),
+        state: z.union([z.string(), z.null()]),
+        country: z.union([z.string(), z.null()]),
+        country_code: z.union([z.string(), z.null()]),
+        tax_number: z.union([z.string(), z.null()]),
+        tax_number_2: z.union([z.string(), z.null()]),
+        company_number: z.union([z.string(), z.null()]),
+        bank_account: z.union([
+          z
+            .object({
+              type: z
+                .enum(["iban", "us_domestic", "uk_domestic", "other"])
+                .default("iban"),
+              name: z.string(),
+              bank_name: z.string(),
+              iban: z.string(),
+              account_number: z.string(),
+              bic: z.string(),
+              routing_number: z.string(),
+              sort_code: z.string(),
+            })
+            .partial()
+            .passthrough(),
+          z.null(),
+        ]),
+      })
+      .partial()
+      .passthrough(),
+    customer_id: z.union([z.string(), z.null()]),
+    customer: z.union([
       z
         .object({
           name: z.union([z.string(), z.null()]),
@@ -71,6 +70,8 @@ const createCreditNoteSchemaDefinition = z.object({
           country: z.union([z.string(), z.null()]),
           country_code: z.union([z.string(), z.null()]),
           tax_number: z.union([z.string(), z.null()]),
+          tax_number_2: z.union([z.string(), z.null()]),
+          company_number: z.union([z.string(), z.null()]),
           bank_account: z.union([
             z
               .object({
@@ -94,94 +95,62 @@ const createCreditNoteSchemaDefinition = z.object({
         .partial()
         .passthrough(),
       z.null(),
-    ])
-    .optional(),
-  note: z.union([z.string(), z.null()]).optional(),
-  payment_terms: z.union([z.string(), z.null()]).optional(),
-  currency_code: z.string().max(3).optional(),
-  metadata: z.union([z.record(z.string(), z.any()), z.null()]).optional(),
-  date_due: z.union([z.string(), z.null()]).optional(),
-  date_service: z.union([z.string(), z.null()]).optional(),
-  date_service_to: z.union([z.string(), z.null()]).optional(),
-  items: z
-    .array(
-      z.object({
-        name: z.string().min(1),
-        description: z.union([z.string().max(4000, "Description must not exceed 4000 characters"), z.null()]).optional(),
-        price: z.number().optional(),
-        gross_price: z.number().optional(),
-        quantity: z.number().gte(-140737488355328).lte(140737488355327),
-        unit: z.union([z.string(), z.null()]).optional(),
-        taxes: z
-          .array(
-            z
-              .object({
-                rate: z.number(),
-                tax_id: z.string(),
-                classification: z.string(),
-                reverse_charge: z.boolean(),
-                amount: z.number(),
-              })
-              .partial()
-          )
-          .optional(),
-        discounts: z.array(LineDiscount).max(5).optional(),
-        metadata: z
-          .union([
-            z.string(),
-            z.number(),
-            z.boolean(),
-            z.null(),
-            z.object({}).partial().passthrough(),
-            z.array(z.unknown()),
-            z.null(),
-          ])
-          .optional(),
-      })
-    )
-    .min(1),
-  linked_documents: z.array(z.string().min(1)).optional(),
-  payment: z
-    .union([
-      z.object({
-        credit_note_id: z.union([z.string(), z.null()]).optional(),
-        advance_invoice_id: z.union([z.string(), z.null()]).optional(),
-        amount: z.number().gt(0).optional(),
-        type: z.string().max(20),
-        date: z.string().optional(),
-        reference: z.union([z.string(), z.null()]).optional(),
-        note: z.union([z.string(), z.null()]).optional(),
-        metadata: z.union([z.record(z.string(), z.any()), z.null()]).optional(),
-      }),
-      z.null(),
-    ])
-    .optional(),
-  furs: z
-    .union([
-      z
-        .object({
-          business_premise_name: z.string().min(1),
-          electronic_device_name: z.string().min(1),
-          operator_tax_number: z.string(),
-          operator_label: z.string(),
-          skip: z.boolean(),
+    ]),
+    items: z
+      .array(
+        z.object({
+          name: z.string().min(1).optional(),
+          description: z.union([z.string().max(4000, "Description must not exceed 4000 characters"), z.null()]).optional(),
+          price: z.number().optional(),
+          gross_price: z.number().optional(),
+          quantity: z.number().gte(-140737488355328).lte(140737488355327),
+          unit: z.union([z.string(), z.null()]).optional(),
+          taxes: z
+            .array(
+              z
+                .object({
+                  rate: z.number(),
+                  tax_id: z.string(),
+                  classification: z.string(),
+                  reverse_charge: z.boolean(),
+                  amount: z.number(),
+                })
+                .partial()
+            )
+            .optional(),
+          discounts: z.array(LineDiscount).max(5).optional(),
+          metadata: z
+            .union([
+              z.string(),
+              z.number(),
+              z.boolean(),
+              z.null(),
+              z.object({}).partial().passthrough(),
+              z.array(z.unknown()),
+              z.null(),
+            ])
+            .optional(),
+          item_id: z.string().optional(),
         })
-        .partial(),
-      z.null(),
-    ])
-    .optional(),
-  eslog: z
-    .union([
+      )
+      .min(1),
+    note: z.union([z.string(), z.null()]),
+    payment_terms: z.union([z.string(), z.null()]),
+    currency_code: z.string(),
+    metadata: z.union([z.object({}).partial().passthrough(), z.null()]),
+    change_reason: z.string().max(500),
+    linked_documents: z.array(z.string().min(1)),
+    eslog: z.union([
       z
         .object({ validation_enabled: z.union([z.boolean(), z.null()]) })
         .partial()
         .passthrough(),
       z.null(),
-    ])
-    .optional(),
-});
+    ]),
+  })
+  .partial();
 
-// Type for create creditnote operation
-export type CreateCreditNoteSchema = z.infer<typeof createCreditNoteSchemaDefinition>;
+// Type for update creditnote operation
+export type UpdateCreditNoteSchema = z.infer<typeof updateCreditNoteSchemaDefinition>;
 
-export const createCreditNoteSchema = createCreditNoteSchemaDefinition;
+export const updateCreditNoteSchema = updateCreditNoteSchemaDefinition;

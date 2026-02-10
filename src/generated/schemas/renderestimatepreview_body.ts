@@ -6,17 +6,17 @@
 
 import { z } from 'zod';
 
-// Schemas for invoice endpoints
+// Schemas for renderestimatepreview_body endpoints
 
-// Dependency schema for invoice
+// Dependency schema for renderestimatepreview_body
 const LineDiscount = z.object({
   value: z.number().gte(0),
   type: z.enum(["percent", "amount"]).optional().default("percent"),
 });
 
 
-// Schema for create invoice operation
-const createInvoiceSchemaDefinition = z.object({
+// Dependency schema for renderestimatepreview_body
+const CompleteEstimatePreview = z.object({
   is_draft: z.boolean().optional(),
   date: z
     .string()
@@ -105,6 +105,8 @@ const createInvoiceSchemaDefinition = z.object({
   tax_clause: z.union([z.string(), z.null()]).optional(),
   currency_code: z.string().max(3).optional(),
   metadata: z.union([z.record(z.string(), z.any()), z.null()]).optional(),
+  date_valid_till: z.union([z.string(), z.null()]).optional(),
+  title_type: z.union([z.enum(["estimate", "quote"]), z.null()]).optional(),
   date_due: z.union([z.string(), z.null()]).optional(),
   date_service: z.union([z.string(), z.null()]).optional(),
   date_service_to: z.union([z.string(), z.null()]).optional(),
@@ -112,7 +114,7 @@ const createInvoiceSchemaDefinition = z.object({
     .array(
       z.object({
         name: z.string().min(1).optional(),
-        description: z.union([z.string().max(4000, "Description must not exceed 4000 characters"), z.null()]).optional(),
+        description: z.union([z.string(), z.null()]).optional(),
         price: z.number().optional(),
         gross_price: z.number().optional(),
         quantity: z.number().gte(-140737488355328).lte(140737488355327),
@@ -146,127 +148,56 @@ const createInvoiceSchemaDefinition = z.object({
       })
     )
     .min(1),
-  linked_documents: z.array(z.string().min(1)).optional(),
-  payments: z
-    .union([
-      z.array(
-        z.object({
-          amount: z.number().gt(0).optional(),
-          type: z.string().max(20),
-          date: z.string().optional(),
-          reference: z.union([z.string(), z.null()]).optional(),
-          note: z.union([z.string(), z.null()]).optional(),
-          metadata: z.union([z.record(z.string(), z.any()), z.null()]).optional(),
-        })
-      ),
-      z.null(),
-    ])
-    .optional(),
-  furs: z
-    .union([
-      z
-        .object({
-          business_premise_name: z.string().min(1),
-          electronic_device_name: z.string().min(1),
-          operator_tax_number: z.string(),
-          operator_label: z.string(),
-          skip: z.boolean(),
-        })
-        .partial(),
-      z.null(),
-    ])
-    .optional(),
-  fina: z
-    .union([
-      z
-        .object({
-          premise_id: z
-            .string()
-            .min(1)
-            .max(20)
-            .regex(/^[0-9a-zA-Z]{1,20}$/),
-          device_id: z
-            .string()
-            .min(1)
-            .max(20)
-            .regex(/^\d{1,20}$/),
-          operator_oib: z.string().min(11).max(11),
-          is_end_consumer: z.boolean(),
-          payment_type: z.enum([
-            "cash",
-            "card",
-            "online",
-            "bank_transfer",
-            "paypal",
-            "crypto",
-            "coupon",
-            "other",
-          ]),
-          subsequent_submit: z.boolean(),
-        })
-        .partial(),
-      z.null(),
-    ])
-    .optional(),
-  eslog: z
-    .union([
-      z
-        .object({ validation_enabled: z.union([z.boolean(), z.null()]) })
-        .partial()
-        .passthrough(),
-      z.null(),
-    ])
-    .optional(),
   expected_total_with_tax: z.number().gt(0).optional(),
 });
 
-// Type for create invoice operation
-export type CreateInvoiceSchema = z.infer<typeof createInvoiceSchemaDefinition>;
 
-
-// Schema for update invoice operation
-const updateInvoiceSchemaDefinition = z
-  .object({
-    date: z
-      .string()
-      .regex(/^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d{3})?Z?)?$/),
-    issuer: z
-      .object({
-        name: z.union([z.string(), z.null()]),
-        email: z.union([z.string(), z.null()]),
-        address: z.union([z.string(), z.null()]),
-        address_2: z.union([z.string(), z.null()]),
-        post_code: z.union([z.string(), z.null()]),
-        city: z.union([z.string(), z.null()]),
-        state: z.union([z.string(), z.null()]),
-        country: z.union([z.string(), z.null()]),
-        country_code: z.union([z.string(), z.null()]),
-        tax_number: z.union([z.string(), z.null()]),
-        tax_number_2: z.union([z.string(), z.null()]),
-        company_number: z.union([z.string(), z.null()]),
-        bank_account: z.union([
-          z
-            .object({
-              type: z
-                .enum(["iban", "us_domestic", "uk_domestic", "other"])
-                .default("iban"),
-              name: z.string(),
-              bank_name: z.string(),
-              iban: z.string(),
-              account_number: z.string(),
-              bic: z.string(),
-              routing_number: z.string(),
-              sort_code: z.string(),
-            })
-            .partial()
-            .passthrough(),
-          z.null(),
-        ]),
-      })
-      .partial()
-      .passthrough(),
-    customer_id: z.union([z.string(), z.null()]),
-    customer: z.union([
+// Dependency schema for renderestimatepreview_body
+const PartialEstimatePreview = z.object({
+  is_draft: z.boolean().optional(),
+  date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d{3})?Z?)?$/)
+    .optional(),
+  issuer: z
+    .object({
+      name: z.union([z.string(), z.null()]),
+      email: z.union([z.string(), z.null()]),
+      address: z.union([z.string(), z.null()]),
+      address_2: z.union([z.string(), z.null()]),
+      post_code: z.union([z.string(), z.null()]),
+      city: z.union([z.string(), z.null()]),
+      state: z.union([z.string(), z.null()]),
+      country: z.union([z.string(), z.null()]),
+      country_code: z.union([z.string(), z.null()]),
+      tax_number: z.union([z.string(), z.null()]),
+      tax_number_2: z.union([z.string(), z.null()]),
+      company_number: z.union([z.string(), z.null()]),
+      bank_account: z.union([
+        z
+          .object({
+            type: z
+              .enum(["iban", "us_domestic", "uk_domestic", "other"])
+              .default("iban"),
+            name: z.string(),
+            bank_name: z.string(),
+            iban: z.string(),
+            account_number: z.string(),
+            bic: z.string(),
+            routing_number: z.string(),
+            sort_code: z.string(),
+          })
+          .partial()
+          .passthrough(),
+        z.null(),
+      ]),
+    })
+    .partial()
+    .passthrough()
+    .optional(),
+  customer_id: z.union([z.string(), z.null()]).optional(),
+  customer: z
+    .union([
       z
         .object({
           name: z.union([z.string(), z.null()]),
@@ -304,66 +235,50 @@ const updateInvoiceSchemaDefinition = z
         .partial()
         .passthrough(),
       z.null(),
-    ]),
-    items: z
-      .array(
-        z.object({
-          name: z.string().min(1).optional(),
-          description: z.union([z.string().max(4000, "Description must not exceed 4000 characters"), z.null()]).optional(),
-          price: z.number().optional(),
-          gross_price: z.number().optional(),
-          quantity: z.number().gte(-140737488355328).lte(140737488355327),
-          unit: z.union([z.string(), z.null()]).optional(),
-          taxes: z
-            .array(
-              z
-                .object({
-                  rate: z.number(),
-                  tax_id: z.string(),
-                  classification: z.string(),
-                  reverse_charge: z.boolean(),
-                  amount: z.number(),
-                })
-                .partial()
-            )
-            .optional(),
-          discounts: z.array(LineDiscount).max(5).optional(),
-          metadata: z
-            .union([
-              z.string(),
-              z.number(),
-              z.boolean(),
-              z.null(),
-              z.object({}).partial().passthrough(),
-              z.array(z.unknown()),
-              z.null(),
-            ])
-            .optional(),
-          item_id: z.string().optional(),
-        })
-      )
-      .min(1),
-    note: z.union([z.string(), z.null()]),
-    payment_terms: z.union([z.string(), z.null()]),
-    currency_code: z.string(),
-    metadata: z.union([z.object({}).partial().passthrough(), z.null()]),
-    change_reason: z.string().max(500),
-    date_due: z.union([z.string(), z.null()]),
-    date_service: z.union([z.string(), z.null()]),
-    date_service_to: z.union([z.string(), z.null()]),
-    linked_documents: z.array(z.string().min(1)),
-    eslog: z.union([
+    ])
+    .optional(),
+  note: z.union([z.string(), z.null()]).optional(),
+  payment_terms: z.union([z.string(), z.null()]).optional(),
+  tax_clause: z.union([z.string(), z.null()]).optional(),
+  currency_code: z.string().max(3).optional(),
+  metadata: z.union([z.record(z.string(), z.any()), z.null()]).optional(),
+  date_valid_till: z.union([z.string(), z.null()]).optional(),
+  title_type: z.union([z.enum(["estimate", "quote"]), z.null()]).optional(),
+  date_due: z.union([z.string(), z.null()]).optional(),
+  date_service: z.union([z.string(), z.null()]).optional(),
+  date_service_to: z.union([z.string(), z.null()]).optional(),
+  items: z
+    .array(
       z
-        .object({ validation_enabled: z.union([z.boolean(), z.null()]) })
+        .object({
+          name: z.string(),
+          quantity: z.number(),
+          price: z.number(),
+          gross_price: z.number(),
+          description: z.string(),
+          taxes: z.array(
+            z
+              .object({ rate: z.number(), tax_id: z.string() })
+              .partial()
+              .passthrough()
+          ),
+          metadata: z.record(z.string(), z.any()),
+        })
         .partial()
-        .passthrough(),
-      z.null(),
-    ]),
-  })
-  .partial();
+        .passthrough()
+    )
+    .min(1),
+  expected_total_with_tax: z.number().gt(0).optional(),
+});
 
-// Type for update invoice operation
-export type UpdateInvoiceSchema = z.infer<typeof updateInvoiceSchemaDefinition>;
 
-export const createInvoiceSchema = createInvoiceSchemaDefinition;
-export const updateInvoiceSchema = updateInvoiceSchemaDefinition;
+// Schema for render estimatepreview operation
+const renderEstimatePreviewSchemaDefinition = z.union([
+  PartialEstimatePreview,
+  CompleteEstimatePreview,
+]);
+
+// Type for render estimatepreview operation
+export type RenderEstimatePreviewSchema = z.infer<typeof renderEstimatePreviewSchemaDefinition>;
+
+export const renderEstimatePreviewSchema = renderEstimatePreviewSchemaDefinition;

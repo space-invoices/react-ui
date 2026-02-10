@@ -6,19 +6,18 @@
 
 import { z } from 'zod';
 
-// Schemas for sendemail_body endpoints
+// Schemas for senddocument_body endpoints
 
-// Schema for send email operation
-const sendEmailSchemaDefinition = z.object({
+// Schema for send document operation
+const sendDocumentSchemaDefinition = z.object({
   to: z.string().email(),
   subject: z.string().min(1).max(255).optional(),
   body_text: z.string().min(1).optional(),
-  document_id: z.string().optional(),
   attach_pdf: z.boolean().optional().default(false),
   attach_eslog: z.boolean().optional().default(false),
 });
 
-// Type for send email operation
-export type SendEmailSchema = z.infer<typeof sendEmailSchemaDefinition>;
+// Type for send document operation
+export type SendDocumentSchema = z.infer<typeof sendDocumentSchemaDefinition>;
 
-export const sendEmailSchema = sendEmailSchemaDefinition;
+export const sendDocumentSchema = sendDocumentSchemaDefinition;

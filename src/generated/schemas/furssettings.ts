@@ -16,8 +16,7 @@ const updateFursSettingsSchemaDefinition = z
     operator_tax_number: z.string(),
     operator_label: z.string(),
   })
-  .partial()
-  .passthrough();
+  .partial();
 
 // Type for update furssettings operation
 export type UpdateFursSettingsSchema = z.infer<typeof updateFursSettingsSchemaDefinition>;

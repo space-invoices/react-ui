@@ -1,12 +1,12 @@
 import type {
-  AdvanceInvoiceWithItems,
+  AdvanceInvoice,
   CreateAdvanceInvoiceRequest,
   CreateCreditNoteRequest,
   CreateEstimateRequest,
   CreateInvoiceRequest,
-  CreditNoteWithItems,
-  EstimateWithItems,
-  InvoiceWithItems,
+  CreditNote,
+  Estimate,
+  Invoice,
 } from "@spaceinvoices/js-sdk";
 import { useQuery } from "@tanstack/react-query";
 
@@ -14,7 +14,7 @@ import { useEntities } from "@/ui/providers/entities-context";
 import { useSDK } from "@/ui/providers/sdk-provider";
 
 export type DocumentType = "invoice" | "estimate" | "credit_note" | "advance_invoice";
-type Document = InvoiceWithItems | EstimateWithItems | CreditNoteWithItems | AdvanceInvoiceWithItems;
+type Document = Invoice | Estimate | CreditNote | AdvanceInvoice;
 type CreateRequest =
   | CreateInvoiceRequest
   | CreateEstimateRequest
@@ -56,16 +56,25 @@ export function getAllowedDuplicateTargets(sourceType: DocumentType): DocumentTy
  */
 function transformDocumentForDuplication(source: Document, _targetType: DocumentType): Partial<CreateRequest> {
   // Transform items - copy only the fields needed for creation
-  const items = source.items?.map((item: (typeof source.items)[number]) => ({
+  // Use type assertion for items since all document item types share the same shape
+  const sourceItems = source.items as Array<{
+    name: string;
+    description: string | null;
+    quantity: number;
+    price: number;
+    gross_price?: number | null;
+    taxes: Array<{ tax_id?: string }>;
+  }>;
+  const items = sourceItems?.map((item) => ({
     name: item.name,
     description: item.description,
     quantity: item.quantity,
     // Use gross_price if set, otherwise use price. The form uses is_gross_price as a UI toggle.
-    price: (item as { gross_price?: number }).gross_price ?? item.price,
+    price: item.gross_price ?? item.price,
     // Copy tax references (tax_id), not computed tax data
-    taxes: item.taxes?.map((tax: { tax_id?: string }) => ({ tax_id: tax.tax_id })),
+    taxes: item.taxes?.map((tax) => ({ tax_id: tax.tax_id })),
     // Derive is_gross_price from whether gross_price is set
-    gross_price: (item as { gross_price?: number }).gross_price,
+    gross_price: item.gross_price ?? undefined,
   }));
 
   // Build customer data - always copy if available (form needs this for display)
@@ -158,8 +167,7 @@ export function useDuplicateDocument({
       if (sourceType === "invoice") {
         source = await sdk.invoices.get(sourceId, undefined, { entity_id: activeEntity.id });
       } else if (sourceType === "estimate") {
-        // estimates.get only takes 2 args (no params)
-        source = await sdk.estimates.get(sourceId, { entity_id: activeEntity.id });
+        source = await sdk.estimates.get(sourceId, undefined, { entity_id: activeEntity.id });
       } else if (sourceType === "advance_invoice") {
         source = await sdk.advanceInvoices.get(sourceId, undefined, { entity_id: activeEntity.id });
       } else {

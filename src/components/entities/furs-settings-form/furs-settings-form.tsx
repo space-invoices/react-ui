@@ -45,6 +45,7 @@ export type FursSettingsFormSchema = z.infer<typeof fursSettingsFormSchema>;
 
 export type StepType = "settings" | "certificate" | "premises" | "enable";
 export type SectionType =
+  | "entity-info"
   | "operator"
   | "fiscalization"
   | "advanced"
@@ -154,19 +155,20 @@ export const FursSettingsForm: FC<FursSettingsFormProps> = ({
 
   // Step unlocking logic (new flow: settings -> certificate -> premises -> enable)
   // - Step 1 (Settings): Always accessible
-  // - Step 2 (Certificate): Always accessible
+  // - Step 2 (Certificate): Requires entity tax number
   // - Step 3 (Premises): Requires valid certificate
   // - Step 4 (Enable): Requires certificate + premise + device
+  const hasEntityTaxNumber = !!entity.tax_number;
   const fursEnabled = fursSettings?.enabled || false;
-  const canAccessCertificate = true; // Always accessible
-  const canAccessPremises = hasCertificate && certificateValid;
-  const canAccessEnable = certificateValid && hasPremises && hasPremiseWithDevice;
+  const canAccessCertificate = hasEntityTaxNumber;
+  const canAccessPremises = hasEntityTaxNumber && hasCertificate && certificateValid;
+  const canAccessEnable = hasEntityTaxNumber && certificateValid && hasPremises && hasPremiseWithDevice;
 
   const steps = [
     {
       id: "settings" as const,
       title: translate("General Settings"),
-      complete: true, // Settings are always "complete" - just configuration
+      complete: hasEntityTaxNumber,
       unlocked: true,
     },
     {
@@ -272,8 +274,14 @@ export const FursSettingsForm: FC<FursSettingsFormProps> = ({
             let tooltipText = "";
 
             if (isLocked) {
-              if (step.id === "premises") {
-                tooltipText = translate("Upload and validate digital certificate first");
+              if (step.id === "certificate") {
+                tooltipText = translate("Set entity tax number in General Settings first");
+              } else if (step.id === "premises") {
+                if (!hasEntityTaxNumber) {
+                  tooltipText = translate("Set entity tax number in General Settings first");
+                } else {
+                  tooltipText = translate("Upload and validate digital certificate first");
+                }
               } else if (step.id === "enable") {
                 if (!certificateValid) {
                   tooltipText = translate("Upload and validate digital certificate first");

@@ -82,4 +82,36 @@ export default {
   "Draft deleted": "Entwurf wurde gelöscht",
   "Delete draft failed": "Entwurf löschen fehlgeschlagen",
   Draft: "Entwurf",
+
+  // Activity list
+  Activity: "Aktivität",
+  "No activity": "Keine Aktivität",
+  Created: "Erstellt",
+  Updated: "Aktualisiert",
+  Sent: "Gesendet",
+  Deleted: "Gelöscht",
+  by: "von",
+  me: "mir",
+  System: "System",
+  Scheduled: "Geplant",
+
+  // Fiscalization
+  Fiscalization: "Fiskalisierung",
+  Fiscalized: "Fiskalisiert",
+  Pending: "Ausstehend",
+  Failed: "Fehlgeschlagen",
+  Skipped: "Übersprungen",
+  "Retry fiscalization": "Fiskalisierung wiederholen",
+
+  // PDF language names
+  English: "Englisch",
+  German: "Deutsch",
+  Slovenian: "Slowenisch",
+  Italian: "Italienisch",
+  French: "Französisch",
+  Spanish: "Spanisch",
+  Portuguese: "Portugiesisch",
+  Dutch: "Niederländisch",
+  Polish: "Polnisch",
+  Croatian: "Kroatisch",
 } as const;

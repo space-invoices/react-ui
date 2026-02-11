@@ -148,6 +148,8 @@ export default {
   "Invoice Number": "Factuurnummer",
   Iteration: "Iteratie",
   "QR Code": "QR-code",
+  "Issuer Tax Number": "Belastingnummer van de uitgever",
+  Operator: "Operator",
   "Fiscalized at": "Gefiscaliseerd op",
   "Enable Fiscalization": "Fiscalisatie inschakelen",
   "Turn on FURS fiscalization for invoices": "Schakel FURS-fiscalisatie in voor facturen",

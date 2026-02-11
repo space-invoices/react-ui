@@ -80,4 +80,36 @@ export default {
   "Draft deleted": "Nacrt obrisan",
   "Delete draft failed": "Brisanje nacrta nije uspjelo",
   Draft: "Nacrt",
+
+  // Activity list
+  Activity: "Aktivnost",
+  "No activity": "Nema aktivnosti",
+  Created: "Stvoreno",
+  Updated: "Ažurirano",
+  Sent: "Poslano",
+  Deleted: "Obrisano",
+  by: "od",
+  me: "ja",
+  System: "Sustav",
+  Scheduled: "Zakazano",
+
+  // Fiscalization
+  Fiscalization: "Fiskalizacija",
+  Fiscalized: "Fiskalizirano",
+  Pending: "Na čekanju",
+  Failed: "Neuspjelo",
+  Skipped: "Preskočeno",
+  "Retry fiscalization": "Ponovi fiskalizaciju",
+
+  // PDF language names
+  English: "Engleski",
+  German: "Njemački",
+  Slovenian: "Slovenski",
+  Italian: "Talijanski",
+  French: "Francuski",
+  Spanish: "Španjolski",
+  Portuguese: "Portugalski",
+  Dutch: "Nizozemski",
+  Polish: "Poljski",
+  Croatian: "Hrvatski",
 } as const;

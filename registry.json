@@ -518,6 +518,35 @@
       "providers": ["sdk-provider"],
       "utils": ["translation"]
     },
+    "invoices/fiscalization-status-card": {
+      "name": "Fiscalization Status Card",
+      "category": "feature",
+      "files": [
+        "components/invoices/view/fiscalization-status-card.tsx"
+      ],
+      "dependencies": ["ui/card", "ui/badge", "ui/button"],
+      "providers": ["sdk-provider"],
+      "utils": ["translation"]
+    },
+    "documents/document-activities-list": {
+      "name": "Document Activities List",
+      "category": "feature",
+      "files": [
+        "components/documents/view/document-activities-list.tsx",
+        "components/documents/view/locales/de.ts",
+        "components/documents/view/locales/es.ts",
+        "components/documents/view/locales/fr.ts",
+        "components/documents/view/locales/hr.ts",
+        "components/documents/view/locales/it.ts",
+        "components/documents/view/locales/nl.ts",
+        "components/documents/view/locales/pl.ts",
+        "components/documents/view/locales/pt.ts",
+        "components/documents/view/locales/sl.ts"
+      ],
+      "dependencies": ["ui/card", "ui/badge", "ui/button"],
+      "providers": ["sdk-provider"],
+      "utils": ["translation"]
+    },
     "dashboard/collection-rate-card": {
       "name": "Collection Rate Card",
       "category": "feature",
@@ -530,236 +559,6 @@
       "dependencies": ["ui/card", "dashboard/loading-card"],
       "providers": ["sdk-provider"],
       "utils": ["translation"]
-    },
-    "dashboard/tax-collected-card": {
-      "name": "Tax Collected Card",
-      "category": "feature",
-      "files": [
-        "components/dashboard/tax-collected-card/tax-collected-card.tsx",
-        "components/dashboard/tax-collected-card/use-tax-collected.ts",
-        "components/dashboard/tax-collected-card/index.ts"
-      ],
-      "dependencies": ["ui/card", "dashboard/loading-card"],
-      "providers": ["sdk-provider"]
-    },
-    "advance-invoices/create-advance-invoice-form": {
-      "name": "Create Advance Invoice Form",
-      "category": "feature",
-      "files": [
-        "components/advance-invoices/create/create-advance-invoice-form.tsx",
-        "components/advance-invoices/create/prepare-advance-invoice-submission.ts",
-        "components/advance-invoices/create/locales/de.ts",
-        "components/advance-invoices/create/locales/sl.ts",
-        "components/advance-invoices/advance-invoices.hooks.ts"
-      ],
-      "dependencies": [
-        "form/form-input",
-        "ui/form",
-        "ui/card",
-        "ui/button",
-        "ui/calendar",
-        "ui/popover",
-        "customers/customer-combobox"
-      ],
-      "providers": ["sdk-provider", "entities-provider"],
-      "utils": ["translation", "hooks"],
-      "schemas": ["createAdvanceInvoiceSchema"]
-    },
-    "advance-invoices/advance-invoice-list-table": {
-      "name": "Advance Invoice List Table",
-      "category": "feature",
-      "files": [
-        "components/advance-invoices/list/list-table.tsx",
-        "components/advance-invoices/list/list-row-actions.tsx",
-        "components/advance-invoices/list/use-advance-invoice-download.ts",
-        "components/advance-invoices/list/index.ts",
-        "components/advance-invoices/advance-invoices.hooks.ts"
-      ],
-      "dependencies": ["table/data-table", "ui/dropdown-menu", "ui/button", "ui/badge"],
-      "providers": ["sdk-provider"],
-      "utils": ["translation", "hooks"]
-    },
-    "activities/activity-timeline": {
-      "name": "Activity Timeline",
-      "category": "feature",
-      "files": [
-        "components/activities/activity-timeline.tsx",
-        "components/activities/locales/de.ts",
-        "components/activities/locales/sl.ts",
-        "components/activities/index.ts"
-      ],
-      "dependencies": ["ui/badge"],
-      "providers": ["sdk-provider"],
-      "utils": ["translation"]
-    },
-    "export/document-export-form": {
-      "name": "Document Export Form",
-      "category": "feature",
-      "files": [
-        "components/export/document-export-form.tsx",
-        "components/export/index.ts"
-      ],
-      "dependencies": ["ui/form", "ui/button", "ui/select", "ui/calendar", "ui/popover"],
-      "providers": ["sdk-provider", "entities-provider"],
-      "utils": ["translation"]
-    },
-    "tax-reports/kir-export-form": {
-      "name": "KIR Export Form",
-      "category": "feature",
-      "files": [
-        "components/tax-reports/kir-export-form.tsx",
-        "components/tax-reports/index.ts"
-      ],
-      "dependencies": ["ui/form", "ui/button", "ui/select", "ui/calendar", "ui/popover"],
-      "providers": ["sdk-provider", "entities-provider"],
-      "utils": ["translation"]
-    },
-    "company-registry/company-registry-autocomplete": {
-      "name": "Company Registry Autocomplete",
-      "category": "feature",
-      "files": [
-        "components/company-registry/company-registry-autocomplete.tsx",
-        "components/company-registry/company-registry.hooks.ts",
-        "components/company-registry/index.ts"
-      ],
-      "dependencies": ["ui/command", "ui/popover", "ui/button"],
-      "providers": ["sdk-provider"],
-      "utils": ["translation"]
-    },
-    "request-logs/request-logs-page": {
-      "name": "Request Logs Page",
-      "category": "feature",
-      "files": [
-        "components/request-logs/request-logs-page.tsx",
-        "components/request-logs/request-log-list-table.tsx",
-        "components/request-logs/request-log-detail.tsx",
-        "components/request-logs/index.ts"
-      ],
-      "dependencies": ["table/data-table", "ui/card", "ui/badge"],
-      "providers": ["sdk-provider"]
-    },
-    "customers/edit-customer-form": {
-      "name": "Edit Customer Form",
-      "category": "feature",
-      "files": [
-        "components/customers/edit-customer-form/edit-customer-form.tsx",
-        "components/customers/edit-customer-form/locales/de.ts",
-        "components/customers/edit-customer-form/locales/sl.ts",
-        "components/customers/customers.hooks.ts"
-      ],
-      "dependencies": ["form/form-input", "ui/form"],
-      "providers": ["sdk-provider"],
-      "utils": ["translation", "hooks"]
-    },
-    "items/edit-item-form": {
-      "name": "Edit Item Form",
-      "category": "feature",
-      "files": [
-        "components/items/edit-item-form/edit-item-form.tsx",
-        "components/items/edit-item-form/locales/de.ts",
-        "components/items/edit-item-form/locales/sl.ts",
-        "components/items/items.hooks.ts"
-      ],
-      "dependencies": ["form/form-input", "ui/form"],
-      "providers": ["sdk-provider"],
-      "utils": ["translation", "hooks"]
-    },
-    "taxes/edit-tax-form": {
-      "name": "Edit Tax Form",
-      "category": "feature",
-      "files": [
-        "components/taxes/edit-tax-form/edit-tax-form.tsx",
-        "components/taxes/edit-tax-form/locales/de.ts",
-        "components/taxes/edit-tax-form/locales/sl.ts",
-        "components/taxes/taxes.hooks.ts"
-      ],
-      "dependencies": ["form/form-input", "ui/form"],
-      "providers": ["sdk-provider"],
-      "utils": ["translation", "hooks"]
-    },
-    "payments/edit-payment-form": {
-      "name": "Edit Payment Form",
-      "category": "feature",
-      "files": [
-        "components/payments/edit-payment-form/edit-payment-form.tsx",
-        "components/payments/edit-payment-form/locales/de.ts",
-        "components/payments/edit-payment-form/locales/sl.ts",
-        "components/payments/edit-payment-form/index.ts",
-        "components/payments/payments.hooks.ts"
-      ],
-      "dependencies": ["form/form-input", "ui/form", "ui/select"],
-      "providers": ["sdk-provider"],
-      "utils": ["translation", "hooks"]
-    },
-    "payments/payment-list-table": {
-      "name": "Payment List Table",
-      "category": "feature",
-      "files": [
-        "components/payments/list/list-table.tsx",
-        "components/payments/list/list-row-actions.tsx",
-        "components/payments/list/index.ts",
-        "components/payments/payments.hooks.ts"
-      ],
-      "dependencies": ["table/data-table", "ui/dropdown-menu", "ui/button"],
-      "providers": ["sdk-provider"],
-      "utils": ["translation", "hooks"]
-    },
-    "entities/furs-settings-form": {
-      "name": "FURS Settings Form",
-      "category": "feature",
-      "files": [
-        "components/entities/furs-settings-form/furs-settings-form.tsx",
-        "components/entities/furs-settings-form/furs-settings.hooks.ts",
-        "components/entities/furs-settings-form/sections/general-settings-section.tsx",
-        "components/entities/furs-settings-form/sections/certificate-settings-section.tsx",
-        "components/entities/furs-settings-form/sections/enable-fiscalization-section.tsx",
-        "components/entities/furs-settings-form/sections/premises-management-section.tsx",
-        "components/entities/furs-settings-form/sections/register-premise-dialog.tsx",
-        "components/entities/furs-settings-form/locales/de.ts",
-        "components/entities/furs-settings-form/locales/sl.ts",
-        "components/entities/furs-settings-form/index.ts"
-      ],
-      "dependencies": ["ui/form", "ui/button", "ui/card", "ui/switch", "ui/alert", "form/form-input"],
-      "providers": ["sdk-provider", "entities-provider"],
-      "utils": ["translation", "hooks"]
-    },
-    "entities/fina-settings-form": {
-      "name": "FINA Settings Form",
-      "category": "feature",
-      "files": [
-        "components/entities/fina-settings-form/fina-settings-form.tsx",
-        "components/entities/fina-settings-form/fina-settings.hooks.ts",
-        "components/entities/fina-settings-form/sections/certificate-settings-section.tsx",
-        "components/entities/fina-settings-form/sections/premises-management-section.tsx",
-        "components/entities/fina-settings-form/sections/register-premise-dialog.tsx",
-        "components/entities/fina-settings-form/locales/de.ts",
-        "components/entities/fina-settings-form/locales/sl.ts",
-        "components/entities/fina-settings-form/index.ts"
-      ],
-      "dependencies": ["ui/form", "ui/button", "ui/card", "ui/switch", "ui/alert", "form/form-input"],
-      "providers": ["sdk-provider", "entities-provider"],
-      "utils": ["translation", "hooks"]
-    },
-    "entities/entity-settings": {
-      "name": "Entity Settings",
-      "category": "feature",
-      "files": [
-        "components/entities/settings/company-settings-form.tsx",
-        "components/entities/settings/email-settings-form.tsx",
-        "components/entities/settings/branding-settings-form.tsx",
-        "components/entities/settings/defaults-settings-form.tsx",
-        "components/entities/settings/number-format-settings-form.tsx",
-        "components/entities/settings/tax-rules-settings-form.tsx",
-        "components/entities/settings/eslog-settings-form.tsx",
-        "components/entities/settings/settings-footer.tsx",
-        "components/entities/settings/index.ts",
-        "components/entities/settings/pdf-template-selector/pdf-template-cards.tsx",
-        "components/entities/settings/pdf-template-selector/demo-invoice-data.ts",
-        "components/entities/settings/pdf-template-selector/index.ts"
-      ],
-      "dependencies": ["ui/form", "ui/button", "ui/card", "ui/select", "ui/switch", "ui/tabs", "form/form-input"],
-      "providers": ["sdk-provider", "entities-provider"],
-      "utils": ["translation", "hooks"]
     }
   }
 }

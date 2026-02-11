@@ -1,7 +1,9 @@
 import type { Entity } from "@spaceinvoices/js-sdk";
-import { ChevronRight, Settings, User } from "lucide-react";
+import { AlertTriangle, Building2, ChevronRight, Settings, User } from "lucide-react";
 import { type FC, type ReactNode, useEffect, useState } from "react";
 import type { UseFormReturn } from "react-hook-form";
+import { useUpdateEntity } from "@/ui/components/entities/entities.hooks";
+import { Alert, AlertDescription } from "@/ui/components/ui/alert";
 import { Button } from "@/ui/components/ui/button";
 import { FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/ui/components/ui/form";
 import { Input } from "@/ui/components/ui/input";
@@ -30,6 +32,37 @@ export const GeneralSettingsSection: FC<GeneralSettingsSectionProps> = ({
   const wrap = (section: SectionType, content: ReactNode) => (wrapSection ? wrapSection(section, content) : content);
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
 
+  // Entity info (local state for form)
+  const [entityTaxNumber, setEntityTaxNumber] = useState("");
+  const [entityAddress, setEntityAddress] = useState("");
+  const [entityCity, setEntityCity] = useState("");
+  const [entityPostCode, setEntityPostCode] = useState("");
+
+  // Initialize entity fields from entity prop
+  useEffect(() => {
+    setEntityTaxNumber(entity.tax_number || "");
+    setEntityAddress(entity.address || "");
+    setEntityCity(entity.city || "");
+    setEntityPostCode(entity.post_code || "");
+  }, [entity.tax_number, entity.address, entity.city, entity.post_code]);
+
+  const { mutate: updateEntity, isPending: isEntityUpdatePending } = useUpdateEntity({
+    onSuccess: () => onSuccess?.(),
+    onError: (error) => onError?.(error),
+  });
+
+  const handleSaveEntityInfo = () => {
+    updateEntity({
+      id: entity.id,
+      data: {
+        tax_number: entityTaxNumber || null,
+        address: entityAddress || null,
+        city: entityCity || null,
+        post_code: entityPostCode || null,
+      },
+    });
+  };
+
   // User operator settings (local state for form)
   const { data: userFursSettings, isLoading: userSettingsLoading } = useUserFursSettings(entity.id);
   const [operatorTaxNumber, setOperatorTaxNumber] = useState("");
@@ -57,6 +90,92 @@ export const GeneralSettingsSection: FC<GeneralSettingsSectionProps> = ({
       },
     });
   };
+
+  // Entity Information content
+  const entityInfoContent = (
+    <div className="space-y-4">
+      <div className="flex items-center gap-3">
+        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-500/10">
+          <Building2 className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+        </div>
+        <div>
+          <h3 className="font-semibold text-lg">{t("Entity Information")}</h3>
+          <p className="text-muted-foreground text-sm">{t("Required company details for FURS fiscalization")}</p>
+        </div>
+      </div>
+
+      {!entity.tax_number && (
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>{t("Tax number is required for FURS fiscalization")}</AlertDescription>
+        </Alert>
+      )}
+
+      <div className="space-y-4">
+        <div>
+          <label htmlFor="entity-tax-number" className="font-medium text-sm">
+            {t("Entity Tax Number")}
+          </label>
+          <Input
+            id="entity-tax-number"
+            placeholder="12345678"
+            value={entityTaxNumber}
+            onChange={(e) => setEntityTaxNumber(e.target.value)}
+            className={cn("mt-2 h-10", !entity.tax_number && "border-destructive")}
+          />
+          <p className="mt-1 text-muted-foreground text-xs">
+            {t("Your company's tax number (must match FURS certificate)")}
+          </p>
+        </div>
+
+        <div>
+          <label htmlFor="entity-address" className="font-medium text-sm">
+            {t("Address")}
+          </label>
+          <Input
+            id="entity-address"
+            value={entityAddress}
+            onChange={(e) => setEntityAddress(e.target.value)}
+            className="mt-2 h-10"
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label htmlFor="entity-post-code" className="font-medium text-sm">
+              {t("Post Code")}
+            </label>
+            <Input
+              id="entity-post-code"
+              value={entityPostCode}
+              onChange={(e) => setEntityPostCode(e.target.value)}
+              className="mt-2 h-10"
+            />
+          </div>
+          <div>
+            <label htmlFor="entity-city" className="font-medium text-sm">
+              {t("City")}
+            </label>
+            <Input
+              id="entity-city"
+              value={entityCity}
+              onChange={(e) => setEntityCity(e.target.value)}
+              className="mt-2 h-10"
+            />
+          </div>
+        </div>
+
+        <Button
+          type="button"
+          onClick={handleSaveEntityInfo}
+          disabled={isEntityUpdatePending}
+          className="cursor-pointer"
+        >
+          {isEntityUpdatePending ? t("Saving...") : t("Save Entity Info")}
+        </Button>
+      </div>
+    </div>
+  );
 
   // Operator Settings content
   const operatorContent = (
@@ -244,6 +363,7 @@ export const GeneralSettingsSection: FC<GeneralSettingsSectionProps> = ({
 
   return (
     <div className="space-y-6">
+      {wrap("entity-info", entityInfoContent)}
       {wrap("operator", operatorContent)}
       {wrap("fiscalization", fiscalizationContent)}
       {wrap("advanced", advancedContent)}

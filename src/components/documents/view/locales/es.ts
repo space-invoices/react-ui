@@ -80,4 +80,36 @@ export default {
   "Draft deleted": "Borrador eliminado",
   "Delete draft failed": "Error al eliminar el borrador",
   Draft: "Borrador",
+
+  // Activity list
+  Activity: "Actividad",
+  "No activity": "Sin actividad",
+  Created: "Creado",
+  Updated: "Actualizado",
+  Sent: "Enviado",
+  Deleted: "Eliminado",
+  by: "por",
+  me: "mí",
+  System: "Sistema",
+  Scheduled: "Programado",
+
+  // Fiscalization
+  Fiscalization: "Fiscalización",
+  Fiscalized: "Fiscalizado",
+  Pending: "Pendiente",
+  Failed: "Fallido",
+  Skipped: "Omitido",
+  "Retry fiscalization": "Reintentar fiscalización",
+
+  // PDF language names
+  English: "Inglés",
+  German: "Alemán",
+  Slovenian: "Esloveno",
+  Italian: "Italiano",
+  French: "Francés",
+  Spanish: "Español",
+  Portuguese: "Portugués",
+  Dutch: "Neerlandés",
+  Polish: "Polaco",
+  Croatian: "Croata",
 } as const;

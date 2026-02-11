@@ -195,7 +195,7 @@ export function SendEmailDialog({
           </Button>
         </DialogTrigger>
       )}
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>{t("Send Invoice by Email")}</DialogTitle>
           <DialogDescription>
@@ -266,7 +266,7 @@ export function SendEmailDialog({
                       document={invoice}
                       disabled={isLoading}
                       multiline
-                      rows={4}
+                      rows={8}
                     />
                   </FormControl>
                   <FormDescription>{t("Leave empty to use default")}</FormDescription>

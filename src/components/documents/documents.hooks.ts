@@ -1,6 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { AUTH_COOKIES } from "@/ui/lib/auth";
-import { getCookie } from "@/ui/lib/browser-cookies";
+import { useSDK } from "@/ui/providers/sdk-provider";
 
 // Document type union for API calls
 export type DocumentType = "invoice" | "estimate" | "credit_note" | "advance_invoice";
@@ -12,44 +11,6 @@ const CACHE_KEYS: Record<DocumentType, string> = {
   credit_note: "credit-notes",
   advance_invoice: "advance-invoices",
 };
-
-/**
- * Get API base URL from environment
- */
-function getApiBaseUrl(): string {
-  if (typeof window === "undefined") return "";
-  return (import.meta.env?.VITE_API_URL || import.meta.env?.BUN_PUBLIC_API_URL || "") as string;
-}
-
-/**
- * Make authenticated API request
- */
-async function apiRequest<T>(path: string, options: RequestInit & { entityId: string }): Promise<T> {
-  const token = getCookie(AUTH_COOKIES.TOKEN);
-  const baseUrl = getApiBaseUrl();
-
-  const response = await fetch(`${baseUrl}${path}`, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-      "x-entity-id": options.entityId,
-      ...options.headers,
-    },
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.message || `Request failed with status ${response.status}`);
-  }
-
-  // DELETE returns 204 No Content
-  if (response.status === 204) {
-    return undefined as T;
-  }
-
-  return response.json();
-}
 
 // ============================================================================
 // Finalize Document Hook
@@ -71,14 +32,12 @@ type FinalizeDocumentVariables = {
  * Assigns a document number and runs fiscalization (if applicable)
  */
 export function useFinalizeDocument(options: FinalizeDocumentOptions) {
+  const { sdk } = useSDK();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async ({ documentId, documentType }: FinalizeDocumentVariables) => {
-      return apiRequest(`/documents/${documentId}/finalize?type=${documentType}`, {
-        method: "POST",
-        entityId: options.entityId,
-      });
+      return sdk.documents.finalizeDocument(documentId, { type: documentType });
     },
     onSuccess: (data, variables) => {
       // Invalidate list cache
@@ -118,14 +77,12 @@ type DeleteDraftDocumentVariables = {
  * Only draft documents can be deleted
  */
 export function useDeleteDraftDocument(options: DeleteDraftDocumentOptions) {
+  const { sdk } = useSDK();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async ({ documentId, documentType }: DeleteDraftDocumentVariables) => {
-      return apiRequest(`/documents/${documentId}?type=${documentType}`, {
-        method: "DELETE",
-        entityId: options.entityId,
-      });
+      return sdk.documents.delete(documentId, { type: documentType });
     },
     onSuccess: (_, variables) => {
       // Invalidate list cache

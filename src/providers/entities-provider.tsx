@@ -180,6 +180,27 @@ export function EntitiesProvider({
     }
   }, [memoizedEntities, urlEntityId]); // Re-run when URL entity changes
 
+  // When urlEntityId is provided but not found in current environment, auto-switch
+  const urlEntityFallbackAttempted = useRef<string | null>(null);
+  useEffect(() => {
+    if (!urlEntityId || isLoading) return;
+    if (memoizedEntities.length === 0) return;
+
+    const found = memoizedEntities.some((e) => e.id === urlEntityId);
+    if (found) {
+      urlEntityFallbackAttempted.current = null;
+      return;
+    }
+
+    // Prevent infinite switching between environments
+    if (urlEntityFallbackAttempted.current === urlEntityId) return;
+    urlEntityFallbackAttempted.current = urlEntityId;
+
+    // URL entity not in current environment — try the other
+    const altEnv: EntityEnvironment = environment === "live" ? "sandbox" : "live";
+    setEnvironmentState(altEnv);
+  }, [urlEntityId, memoizedEntities, isLoading, environment]);
+
   const cookieOpts = useMemo(
     () => ({
       path: "/",

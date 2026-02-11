@@ -81,4 +81,36 @@ export default {
   "Draft deleted": "Concept verwijderd",
   "Delete draft failed": "Verwijderen van concept mislukt",
   Draft: "Concept",
+
+  // Activity list
+  Activity: "Activiteit",
+  "No activity": "Geen activiteit",
+  Created: "Aangemaakt",
+  Updated: "Bijgewerkt",
+  Sent: "Verzonden",
+  Deleted: "Verwijderd",
+  by: "door",
+  me: "mij",
+  System: "Systeem",
+  Scheduled: "Gepland",
+
+  // Fiscalization
+  Fiscalization: "Fiscalisatie",
+  Fiscalized: "Gefiscaliseerd",
+  Pending: "In behandeling",
+  Failed: "Mislukt",
+  Skipped: "Overgeslagen",
+  "Retry fiscalization": "Fiscalisatie opnieuw proberen",
+
+  // PDF language names
+  English: "Engels",
+  German: "Duits",
+  Slovenian: "Sloveens",
+  Italian: "Italiaans",
+  French: "Frans",
+  Spanish: "Spaans",
+  Portuguese: "Portugees",
+  Dutch: "Nederlands",
+  Polish: "Pools",
+  Croatian: "Kroatisch",
 } as const;

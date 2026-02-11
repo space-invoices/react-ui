@@ -112,15 +112,15 @@ export function DocumentDetailsCard({ document, documentType, locale = "en", ...
         {/* Document info */}
         <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
           <div className="text-muted-foreground">{t("Number")}</div>
-          <div className="font-medium">{document.number}</div>
+          <div className="text-right font-medium">{document.number}</div>
 
           <div className="text-muted-foreground">{t("Date")}</div>
-          <div>{fmtDate(document.date)}</div>
+          <div className="text-right">{fmtDate(document.date)}</div>
 
           {isInvoiceOrAdvance && (
             <>
               <div className="text-muted-foreground">{t("Due date")}</div>
-              <div>{fmtDate(invoiceDoc.date_due)}</div>
+              <div className="text-right">{fmtDate(invoiceDoc.date_due)}</div>
             </>
           )}
 
@@ -129,7 +129,7 @@ export function DocumentDetailsCard({ document, documentType, locale = "en", ...
               <div className="text-muted-foreground">
                 {(invoiceDoc as any).date_service_to ? t("Service period") : t("Service date")}
               </div>
-              <div>
+              <div className="text-right">
                 {(invoiceDoc as any).date_service_to
                   ? `${fmtDate((invoiceDoc as any).date_service)} - ${fmtDate((invoiceDoc as any).date_service_to)}`
                   : fmtDate((invoiceDoc as any).date_service)}
@@ -140,12 +140,12 @@ export function DocumentDetailsCard({ document, documentType, locale = "en", ...
           {isEstimate && estimateDoc.date_valid_till && (
             <>
               <div className="text-muted-foreground">{t("Valid until")}</div>
-              <div>{fmtDate(estimateDoc.date_valid_till)}</div>
+              <div className="text-right">{fmtDate(estimateDoc.date_valid_till)}</div>
             </>
           )}
 
           <div className="text-muted-foreground">{t("Customer")}</div>
-          <div>{customerName}</div>
+          <div className="text-right">{customerName}</div>
         </div>
 
         <Separator />

@@ -150,6 +150,8 @@ export default {
   "Invoice Number": "Rechnungsnummer",
   Iteration: "Iteration",
   "QR Code": "QR-Code",
+  "Issuer Tax Number": "Steuernummer des Ausstellers",
+  Operator: "Bediener",
   "Fiscalized at": "Fiskalisiert am",
   "Enable Fiscalization": "Fiskalisierung aktivieren",
   "Turn on FURS fiscalization for invoices": "FURS-Fiskalisierung für Rechnungen einschalten",

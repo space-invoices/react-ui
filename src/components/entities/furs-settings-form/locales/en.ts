@@ -147,6 +147,8 @@ export default {
   "Invoice Number": "Invoice Number",
   Iteration: "Iteration",
   "QR Code": "QR Code",
+  "Issuer Tax Number": "Issuer Tax Number",
+  Operator: "Operator",
   "Fiscalized at": "Fiscalized at",
   // New flow translations
   "Enable Fiscalization": "Enable Fiscalization",
@@ -194,4 +196,14 @@ export default {
     "Default operator info used when invoices are created via API without a logged-in user.",
   "Certificate uploaded successfully": "Certificate uploaded successfully",
   "Loading certificate details...": "Loading certificate details...",
+  // Entity info section
+  "Entity Information": "Entity Information",
+  "Required company details for FURS fiscalization": "Required company details for FURS fiscalization",
+  "Entity Tax Number": "Entity Tax Number",
+  "Your company's tax number (must match FURS certificate)": "Your company's tax number (must match FURS certificate)",
+  Address: "Address",
+  "Post Code": "Post Code",
+  "Save Entity Info": "Save Entity Info",
+  "Tax number is required for FURS fiscalization": "Tax number is required for FURS fiscalization",
+  "Set entity tax number in General Settings first": "Set entity tax number in General Settings first",
 } as const;

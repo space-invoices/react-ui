@@ -308,7 +308,7 @@ export function useUpdateUserFursSettings(
     ...options,
     mutationFn: async ({ entityId, data }) => {
       if (!sdk) throw new Error("SDK not initialized");
-      return sdk.users.update(data, { entity_id: entityId });
+      return sdk.users.updateFursSettings(data, { entity_id: entityId });
     },
     onSuccess: (data, variables, context) => {
       // Invalidate current user query to refresh settings

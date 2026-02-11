@@ -63,6 +63,7 @@ export function DocumentPreviewDisplay({
 
   const { containerRef, contentRef, scale, contentHeight, A4_WIDTH_PX } = useA4Scaling(previewHtml);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: document.updated_at intentionally triggers re-fetch when document changes server-side (e.g. after payment)
   useEffect(() => {
     const fetchPreview = async () => {
       // For public view, use per-type shareable HTML endpoint
@@ -113,7 +114,17 @@ export function DocumentPreviewDisplay({
     };
 
     fetchPreview();
-  }, [document?.id, activeEntity?.id, template, apiBaseUrl, locale, isPublicView, shareableId, sdk]);
+  }, [
+    document?.id,
+    document?.updated_at,
+    activeEntity?.id,
+    template,
+    apiBaseUrl,
+    locale,
+    isPublicView,
+    shareableId,
+    sdk,
+  ]);
 
   return (
     <div ref={containerRef} className={cn("relative h-full", className)}>

@@ -1,4 +1,4 @@
-import type { CreateAdvanceInvoice201, CreateAdvanceInvoiceBody } from "@spaceinvoices/js-sdk";
+import type { AdvanceInvoice, CreateAdvanceInvoiceBody } from "@spaceinvoices/js-sdk";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { NEXT_DOCUMENT_NUMBER_CACHE_KEY } from "@/ui/hooks/use-next-document-number";
 import { useSDK } from "@/ui/providers/sdk-provider";
@@ -12,7 +12,7 @@ export const ADVANCE_INVOICES_CACHE_KEY = "advance-invoices";
 
 type UseCreateAdvanceInvoiceOptions = {
   entityId: string;
-  onSuccess?: (data: CreateAdvanceInvoice201) => void;
+  onSuccess?: (data: AdvanceInvoice) => void;
   onError?: (error: unknown) => void;
 };
 

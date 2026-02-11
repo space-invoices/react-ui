@@ -42,13 +42,17 @@ const translations = { sl, de, it, fr, es, pt, nl, pl, hr } as const;
 
 type Document = Invoice | Estimate | CreditNote | AdvanceInvoice;
 
-const PDF_LOCALES = [
-  { code: "en-US", label: "English" },
-  { code: "de-DE", label: "Deutsch" },
-  { code: "es-ES", label: "Español" },
-  { code: "fr-FR", label: "Français" },
-  { code: "it-IT", label: "Italiano" },
-  { code: "sl-SI", label: "Slovenščina" },
+const PDF_LOCALE_CODES = [
+  { label: "English", code: "en-US" },
+  { label: "German", code: "de-DE" },
+  { label: "Slovenian", code: "sl-SI" },
+  { label: "Italian", code: "it-IT" },
+  { label: "French", code: "fr-FR" },
+  { label: "Spanish", code: "es-ES" },
+  { label: "Portuguese", code: "pt-PT" },
+  { label: "Dutch", code: "nl-NL" },
+  { label: "Polish", code: "pl-PL" },
+  { label: "Croatian", code: "hr-HR" },
 ] as const;
 
 interface DocumentActionsBarProps extends ComponentTranslationProps {
@@ -89,11 +93,15 @@ interface DocumentActionsBarProps extends ComponentTranslationProps {
 function getApiLocale(uiLanguage: string): string {
   const localeMap: Record<string, string> = {
     en: "en-US",
-    sl: "sl-SI",
     de: "de-DE",
-    es: "es-ES",
-    fr: "fr-FR",
+    sl: "sl-SI",
     it: "it-IT",
+    fr: "fr-FR",
+    es: "es-ES",
+    pt: "pt-PT",
+    nl: "nl-NL",
+    pl: "pl-PL",
+    hr: "hr-HR",
   };
   return localeMap[uiLanguage] || "en-US";
 }
@@ -185,13 +193,13 @@ export function DocumentActionsBar({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            {PDF_LOCALES.map((locale) => (
+            {PDF_LOCALE_CODES.map((locale) => (
               <DropdownMenuItem
                 key={locale.code}
                 onClick={() => handleDownloadPdf(locale.code)}
                 className="cursor-pointer"
               >
-                {locale.label}
+                {t(locale.label)}
               </DropdownMenuItem>
             ))}
           </DropdownMenuContent>

@@ -148,6 +148,8 @@ export default {
   "Invoice Number": "Številka računa",
   Iteration: "Iteracija",
   "QR Code": "QR koda",
+  "Issuer Tax Number": "Davčna številka izdajatelja",
+  Operator: "Operater",
   "Fiscalized at": "Fiskalizirano dne",
   // New flow translations
   "Enable Fiscalization": "Omogoči fiskalizacijo",
@@ -195,4 +197,16 @@ export default {
     "Privzeti podatki operaterja, ki se uporabljajo, ko so računi ustvarjeni preko API-ja brez prijavljenega uporabnika.",
   "Certificate uploaded successfully": "Certifikat uspešno naložen",
   "Loading certificate details...": "Nalaganje podrobnosti certifikata...",
+  // Entity info section
+  "Entity Information": "Podatki podjetja",
+  "Required company details for FURS fiscalization": "Obvezni podatki podjetja za fiskalizacijo FURS",
+  "Entity Tax Number": "Davčna številka podjetja",
+  "Your company's tax number (must match FURS certificate)":
+    "Davčna številka vašega podjetja (mora se ujemati s certifikatom FURS)",
+  Address: "Naslov",
+  "Post Code": "Poštna številka",
+  "Save Entity Info": "Shrani podatke podjetja",
+  "Tax number is required for FURS fiscalization": "Davčna številka je obvezna za fiskalizacijo FURS",
+  "Set entity tax number in General Settings first":
+    "Najprej nastavite davčno številko podjetja v splošnih nastavitvah",
 } as const;

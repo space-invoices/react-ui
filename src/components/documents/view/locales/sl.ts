@@ -81,4 +81,36 @@ export default {
   "Draft deleted": "Osnutek je bil izbrisan",
   "Delete draft failed": "Brisanje osnutka ni uspelo",
   Draft: "Osnutek",
+
+  // Activity list
+  Activity: "Aktivnost",
+  "No activity": "Ni aktivnosti",
+  Created: "Ustvarjeno",
+  Updated: "Posodobljeno",
+  Sent: "Poslano",
+  Deleted: "Izbrisano",
+  by: "od",
+  me: "jaz",
+  System: "Sistem",
+  Scheduled: "Načrtovano",
+
+  // Fiscalization
+  Fiscalization: "Fiskalizacija",
+  Fiscalized: "Fiskalizirano",
+  Pending: "V čakanju",
+  Failed: "Neuspešno",
+  Skipped: "Preskočeno",
+  "Retry fiscalization": "Ponovi fiskalizacijo",
+
+  // PDF language names
+  English: "Angleščina",
+  German: "Nemščina",
+  Slovenian: "Slovenščina",
+  Italian: "Italijanščina",
+  French: "Francoščina",
+  Spanish: "Španščina",
+  Portuguese: "Portugalščina",
+  Dutch: "Nizozemščina",
+  Polish: "Poljščina",
+  Croatian: "Hrvaščina",
 } as const;

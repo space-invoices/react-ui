@@ -80,4 +80,36 @@ export default {
   "Draft deleted": "Brouillon supprimé",
   "Delete draft failed": "Échec de la suppression du brouillon",
   Draft: "Brouillon",
+
+  // Activity list
+  Activity: "Activité",
+  "No activity": "Aucune activité",
+  Created: "Créé",
+  Updated: "Mis à jour",
+  Sent: "Envoyé",
+  Deleted: "Supprimé",
+  by: "par",
+  me: "moi",
+  System: "Système",
+  Scheduled: "Planifié",
+
+  // Fiscalization
+  Fiscalization: "Fiscalisation",
+  Fiscalized: "Fiscalisé",
+  Pending: "En attente",
+  Failed: "Échoué",
+  Skipped: "Ignoré",
+  "Retry fiscalization": "Réessayer la fiscalisation",
+
+  // PDF language names
+  English: "Anglais",
+  German: "Allemand",
+  Slovenian: "Slovène",
+  Italian: "Italien",
+  French: "Français",
+  Spanish: "Espagnol",
+  Portuguese: "Portugais",
+  Dutch: "Néerlandais",
+  Polish: "Polonais",
+  Croatian: "Croate",
 } as const;

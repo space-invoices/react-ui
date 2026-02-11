@@ -148,6 +148,8 @@ export default {
   "Invoice Number": "Broj računa",
   Iteration: "Iteracija",
   "QR Code": "QR kod",
+  "Issuer Tax Number": "Porezni broj izdavatelja",
+  Operator: "Operater",
   "Fiscalized at": "Fiskalizirano dana",
   "Enable Fiscalization": "Omogući fiskalizaciju",
   "Turn on FURS fiscalization for invoices": "Uključite fiskalizaciju FURS za račune",

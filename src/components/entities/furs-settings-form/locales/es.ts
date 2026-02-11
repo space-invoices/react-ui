@@ -149,6 +149,8 @@ export default {
   "Invoice Number": "Número de factura",
   Iteration: "Iteración",
   "QR Code": "Código QR",
+  "Issuer Tax Number": "Número fiscal del emisor",
+  Operator: "Operador",
   "Fiscalized at": "Fiscalizado el",
   "Enable Fiscalization": "Activar fiscalización",
   "Turn on FURS fiscalization for invoices": "Active la fiscalización FURS para facturas",

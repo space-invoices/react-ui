@@ -80,4 +80,36 @@ export default {
   "Draft deleted": "Szkic usunięty",
   "Delete draft failed": "Usunięcie szkicu nie powiodło się",
   Draft: "Szkic",
+
+  // Activity list
+  Activity: "Aktywność",
+  "No activity": "Brak aktywności",
+  Created: "Utworzono",
+  Updated: "Zaktualizowano",
+  Sent: "Wysłano",
+  Deleted: "Usunięto",
+  by: "przez",
+  me: "mnie",
+  System: "System",
+  Scheduled: "Zaplanowano",
+
+  // Fiscalization
+  Fiscalization: "Fiskalizacja",
+  Fiscalized: "Zfiskalizowano",
+  Pending: "Oczekuje",
+  Failed: "Niepowodzenie",
+  Skipped: "Pominięto",
+  "Retry fiscalization": "Ponów fiskalizację",
+
+  // PDF language names
+  English: "Angielski",
+  German: "Niemiecki",
+  Slovenian: "Słoweński",
+  Italian: "Włoski",
+  French: "Francuski",
+  Spanish: "Hiszpański",
+  Portuguese: "Portugalski",
+  Dutch: "Niderlandzki",
+  Polish: "Polski",
+  Croatian: "Chorwacki",
 } as const;

@@ -307,6 +307,7 @@ export const PremisesManagementSection: FC<PremisesManagementSectionProps> = ({
           entity={entity}
           type={registerType}
           t={t}
+          existingPremiseNames={premises.map((p) => p.business_premise_name)}
           onSuccess={() => {
             setRegisterDialogOpen(false);
             onSuccess?.();

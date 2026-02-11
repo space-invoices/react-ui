@@ -86,7 +86,8 @@ async function main() {
         for (const ref of constRefs) {
           const cleanRef = ref.replace(/\.(optional|nullable)\(\)/, "");
           // Check if it's actually a schema definition in the file
-          if (fullContent.includes(`const ${cleanRef} = z.`)) {
+          // Handle both `const Foo = z.object(...)` and `const Foo = z\n  .object(...)`
+          if (fullContent.includes(`const ${cleanRef} = z.`) || fullContent.includes(`const ${cleanRef} = z\n`)) {
             dependencies.push(cleanRef);
           }
         }
@@ -242,6 +243,17 @@ ${exports}
 `;
 
     await fs.writeFile(path.join(SCHEMAS_DIR, `${groupName}.ts`), schemaContent);
+  }
+
+  // Add manual re-exports that can't be auto-generated
+  // Credit note create uses the same body as invoice create
+  const creditNoteFile = path.join(SCHEMAS_DIR, "creditnote.ts");
+  const creditNoteContent = await fs.readFile(creditNoteFile, "utf-8");
+  if (!creditNoteContent.includes("createCreditNoteSchema")) {
+    await fs.appendFile(
+      creditNoteFile,
+      "\n// Re-export invoice create schema as credit note create schema (same body structure)\nexport { createInvoiceSchema as createCreditNoteSchema, type CreateInvoiceSchema as CreateCreditNoteSchema } from './invoice';\n",
+    );
   }
 
   // Create index file

@@ -41,6 +41,7 @@ interface RegisterPremiseDialogProps {
   entity: Entity;
   type: "real-estate" | "movable";
   t: (key: string) => string;
+  existingPremiseNames?: string[];
   onSuccess?: () => void;
   onError?: (error: unknown) => void;
 }
@@ -51,6 +52,7 @@ export const RegisterPremiseDialog: FC<RegisterPremiseDialogProps> = ({
   entity,
   type,
   t,
+  existingPremiseNames = [],
   onSuccess,
   onError,
 }) => {
@@ -63,8 +65,8 @@ export const RegisterPremiseDialog: FC<RegisterPremiseDialogProps> = ({
       business_premise_name: "",
       real_estate: {
         cadastral_number: "",
-        building_number: "",
-        building_section: "",
+        building_number: "0",
+        building_section: "0",
         community: "",
         city: "",
         street: "",
@@ -86,12 +88,21 @@ export const RegisterPremiseDialog: FC<RegisterPremiseDialogProps> = ({
     },
   });
 
+  const handleMutationError = (error: unknown, form: typeof realEstateForm | typeof movableForm) => {
+    const err = error as { status?: number; data?: { message?: string } };
+    if (err?.status === 409 && err?.data?.message) {
+      form.setError("business_premise_name", { message: err.data.message });
+    } else {
+      onError?.(error);
+    }
+  };
+
   const { mutate: registerRealEstate, isPending: isRealEstatePending } = useRegisterRealEstatePremise({
     onSuccess: () => {
       realEstateForm.reset();
       onSuccess?.();
     },
-    onError,
+    onError: (error) => handleMutationError(error, realEstateForm),
   });
 
   const { mutate: registerMovable, isPending: isMovablePending } = useRegisterMovablePremise({
@@ -99,10 +110,18 @@ export const RegisterPremiseDialog: FC<RegisterPremiseDialogProps> = ({
       movableForm.reset();
       onSuccess?.();
     },
-    onError,
+    onError: (error) => handleMutationError(error, movableForm),
   });
 
+  const isDuplicateName = (name: string) => existingPremiseNames.some((n) => n.toUpperCase() === name.toUpperCase());
+
   const handleRealEstateSubmit = (data: RealEstatePremiseForm) => {
+    if (isDuplicateName(data.business_premise_name)) {
+      realEstateForm.setError("business_premise_name", {
+        message: t("A premise with this name already exists"),
+      });
+      return;
+    }
     registerRealEstate({
       entityId: entity.id,
       data,
@@ -110,6 +129,12 @@ export const RegisterPremiseDialog: FC<RegisterPremiseDialogProps> = ({
   };
 
   const handleMovableSubmit = (data: MovablePremiseForm) => {
+    if (isDuplicateName(data.business_premise_name)) {
+      movableForm.setError("business_premise_name", {
+        message: t("A premise with this name already exists"),
+      });
+      return;
+    }
     registerMovable({
       entityId: entity.id,
       data,
@@ -172,18 +197,11 @@ export const RegisterPremiseDialog: FC<RegisterPremiseDialogProps> = ({
                   name="real_estate.building_number"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t("Building Number")}</FormLabel>
+                      <FormLabel>{t("Building Number")} *</FormLabel>
                       <FormControl>
-                        <Input
-                          type="text"
-                          inputMode="numeric"
-                          pattern="[0-9]*"
-                          placeholder="456"
-                          {...field}
-                          value={field.value || ""}
-                        />
+                        <Input type="text" inputMode="numeric" pattern="[0-9]*" placeholder="456" {...field} />
                       </FormControl>
-                      <FormDescription className="text-xs">{t("Must be numeric (optional)")}</FormDescription>
+                      <FormDescription className="text-xs">{t("Numeric, use 0 if not applicable")}</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -193,18 +211,11 @@ export const RegisterPremiseDialog: FC<RegisterPremiseDialogProps> = ({
                   name="real_estate.building_section"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t("Building Section")}</FormLabel>
+                      <FormLabel>{t("Building Section")} *</FormLabel>
                       <FormControl>
-                        <Input
-                          type="text"
-                          inputMode="numeric"
-                          pattern="[0-9]*"
-                          placeholder="1"
-                          {...field}
-                          value={field.value || ""}
-                        />
+                        <Input type="text" inputMode="numeric" pattern="[0-9]*" placeholder="1" {...field} />
                       </FormControl>
-                      <FormDescription className="text-xs">{t("Must be numeric (optional)")}</FormDescription>
+                      <FormDescription className="text-xs">{t("Numeric, use 0 if not applicable")}</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -233,9 +244,9 @@ export const RegisterPremiseDialog: FC<RegisterPremiseDialogProps> = ({
                 name="real_estate.street"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t("Street")}</FormLabel>
+                    <FormLabel>{t("Street")} *</FormLabel>
                     <FormControl>
-                      <Input placeholder="Dunajska cesta" {...field} value={field.value || ""} />
+                      <Input placeholder="Dunajska cesta" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -248,9 +259,9 @@ export const RegisterPremiseDialog: FC<RegisterPremiseDialogProps> = ({
                   name="real_estate.house_number"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t("House Number")}</FormLabel>
+                      <FormLabel>{t("House Number")} *</FormLabel>
                       <FormControl>
-                        <Input placeholder="22" {...field} value={field.value || ""} />
+                        <Input placeholder="22" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -277,9 +288,9 @@ export const RegisterPremiseDialog: FC<RegisterPremiseDialogProps> = ({
                   name="real_estate.city"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t("City")}</FormLabel>
+                      <FormLabel>{t("City")} *</FormLabel>
                       <FormControl>
-                        <Input placeholder="Ljubljana" {...field} value={field.value || ""} />
+                        <Input placeholder="Ljubljana" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -290,10 +301,11 @@ export const RegisterPremiseDialog: FC<RegisterPremiseDialogProps> = ({
                   name="real_estate.postal_code"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t("Postal Code")}</FormLabel>
+                      <FormLabel>{t("Postal Code")} *</FormLabel>
                       <FormControl>
-                        <Input placeholder="1000" {...field} value={field.value || ""} />
+                        <Input placeholder="1000" {...field} />
                       </FormControl>
+                      <FormDescription className="text-xs">{t("Exactly 4 digits")}</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}

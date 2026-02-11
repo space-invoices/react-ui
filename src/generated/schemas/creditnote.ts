@@ -15,87 +15,73 @@ const LineDiscount = z.object({
 });
 
 
+// Dependency schema for creditnote
+const DocumentItemTax = z
+  .object({
+    rate: z.number(),
+    tax_id: z.string(),
+    classification: z.string(),
+    reverse_charge: z.boolean(),
+    amount: z.number(),
+  })
+  .partial();
+
+
+// Dependency schema for creditnote
+const DocumentEntity = z
+  .object({
+    name: z.union([z.string(), z.null()]),
+    email: z.union([z.string(), z.null()]),
+    address: z.union([z.string(), z.null()]),
+    address_2: z.union([z.string(), z.null()]),
+    post_code: z.union([z.string(), z.null()]),
+    city: z.union([z.string(), z.null()]),
+    state: z.union([z.string(), z.null()]),
+    country: z.union([z.string(), z.null()]),
+    country_code: z.union([z.string(), z.null()]),
+    tax_number: z.union([z.string(), z.null()]),
+    tax_number_2: z.union([z.string(), z.null()]),
+    company_number: z.union([z.string(), z.null()]),
+    bank_account: z.union([
+      z
+        .object({
+          type: z
+            .enum(["iban", "us_domestic", "uk_domestic", "other"])
+            .default("iban"),
+          name: z.string(),
+          bank_name: z.string(),
+          iban: z.string(),
+          account_number: z.string(),
+          bic: z.string(),
+          routing_number: z.string(),
+          sort_code: z.string(),
+        })
+        .partial()
+        .passthrough(),
+      z.null(),
+    ]),
+  })
+  .partial()
+  .passthrough();
+
+
 // Schema for update creditnote operation
 const updateCreditNoteSchemaDefinition = z
   .object({
     date: z
       .string()
       .regex(/^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d{3})?Z?)?$/),
-    issuer: z
-      .object({
-        name: z.union([z.string(), z.null()]),
-        email: z.union([z.string(), z.null()]),
-        address: z.union([z.string(), z.null()]),
-        address_2: z.union([z.string(), z.null()]),
-        post_code: z.union([z.string(), z.null()]),
-        city: z.union([z.string(), z.null()]),
-        state: z.union([z.string(), z.null()]),
-        country: z.union([z.string(), z.null()]),
-        country_code: z.union([z.string(), z.null()]),
-        tax_number: z.union([z.string(), z.null()]),
-        tax_number_2: z.union([z.string(), z.null()]),
-        company_number: z.union([z.string(), z.null()]),
-        bank_account: z.union([
-          z
-            .object({
-              type: z
-                .enum(["iban", "us_domestic", "uk_domestic", "other"])
-                .default("iban"),
-              name: z.string(),
-              bank_name: z.string(),
-              iban: z.string(),
-              account_number: z.string(),
-              bic: z.string(),
-              routing_number: z.string(),
-              sort_code: z.string(),
-            })
-            .partial()
-            .passthrough(),
-          z.null(),
-        ]),
-      })
-      .partial()
-      .passthrough(),
+    issuer: DocumentEntity.and(z.unknown()),
     customer_id: z.union([z.string(), z.null()]),
-    customer: z.union([
-      z
-        .object({
-          name: z.union([z.string(), z.null()]),
-          email: z.union([z.string(), z.null()]),
-          address: z.union([z.string(), z.null()]),
-          address_2: z.union([z.string(), z.null()]),
-          post_code: z.union([z.string(), z.null()]),
-          city: z.union([z.string(), z.null()]),
-          state: z.union([z.string(), z.null()]),
-          country: z.union([z.string(), z.null()]),
-          country_code: z.union([z.string(), z.null()]),
-          tax_number: z.union([z.string(), z.null()]),
-          tax_number_2: z.union([z.string(), z.null()]),
-          company_number: z.union([z.string(), z.null()]),
-          bank_account: z.union([
-            z
-              .object({
-                type: z
-                  .enum(["iban", "us_domestic", "uk_domestic", "other"])
-                  .default("iban"),
-                name: z.string(),
-                bank_name: z.string(),
-                iban: z.string(),
-                account_number: z.string(),
-                bic: z.string(),
-                routing_number: z.string(),
-                sort_code: z.string(),
-              })
-              .partial()
-              .passthrough(),
-            z.null(),
-          ]),
-          save_customer: z.boolean().default(true),
-        })
-        .partial()
-        .passthrough(),
-      z.null(),
-    ]),
+    customer: DocumentEntity.and(
+      z.union([
+        z
+          .object({ save_customer: z.boolean().default(true) })
+          .partial()
+          .passthrough(),
+        z.null(),
+      ])
+    ),
     items: z
       .array(
         z.object({
@@ -105,19 +91,7 @@ const updateCreditNoteSchemaDefinition = z
           gross_price: z.number().optional(),
           quantity: z.number().gte(-140737488355328).lte(140737488355327),
           unit: z.union([z.string(), z.null()]).optional(),
-          taxes: z
-            .array(
-              z
-                .object({
-                  rate: z.number(),
-                  tax_id: z.string(),
-                  classification: z.string(),
-                  reverse_charge: z.boolean(),
-                  amount: z.number(),
-                })
-                .partial()
-            )
-            .optional(),
+          taxes: z.array(DocumentItemTax).optional(),
           discounts: z.array(LineDiscount).max(5).optional(),
           metadata: z
             .union([

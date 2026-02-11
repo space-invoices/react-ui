@@ -14,14 +14,18 @@ const registerFursRealEstatePremiseSchemaDefinition = z.object({
   real_estate: z
     .object({
       cadastral_number: z.string().min(1).regex(/^\d+$/),
-      building_number: z.union([z.string(), z.null()]).optional(),
-      building_section: z.union([z.string(), z.null()]).optional(),
-      community: z.string().min(1),
-      city: z.union([z.string(), z.null()]).optional(),
-      street: z.union([z.string(), z.null()]).optional(),
-      house_number: z.union([z.string(), z.null()]).optional(),
+      building_number: z.string().min(1).regex(/^\d+$/),
+      building_section: z.string().min(1).regex(/^\d+$/),
+      street: z.string().min(1).max(100),
+      house_number: z.string().min(1).max(10),
       house_number_additional: z.union([z.string(), z.null()]).optional(),
-      postal_code: z.union([z.string(), z.null()]).optional(),
+      community: z.string().min(1).max(100),
+      city: z.string().min(1).max(100),
+      postal_code: z
+        .string()
+        .min(4)
+        .max(4)
+        .regex(/^\d{4}$/),
     })
     .passthrough(),
 });

@@ -518,35 +518,6 @@
       "providers": ["sdk-provider"],
       "utils": ["translation"]
     },
-    "invoices/fiscalization-status-card": {
-      "name": "Fiscalization Status Card",
-      "category": "feature",
-      "files": [
-        "components/invoices/view/fiscalization-status-card.tsx"
-      ],
-      "dependencies": ["ui/card", "ui/badge", "ui/button"],
-      "providers": ["sdk-provider"],
-      "utils": ["translation"]
-    },
-    "documents/document-activities-list": {
-      "name": "Document Activities List",
-      "category": "feature",
-      "files": [
-        "components/documents/view/document-activities-list.tsx",
-        "components/documents/view/locales/de.ts",
-        "components/documents/view/locales/es.ts",
-        "components/documents/view/locales/fr.ts",
-        "components/documents/view/locales/hr.ts",
-        "components/documents/view/locales/it.ts",
-        "components/documents/view/locales/nl.ts",
-        "components/documents/view/locales/pl.ts",
-        "components/documents/view/locales/pt.ts",
-        "components/documents/view/locales/sl.ts"
-      ],
-      "dependencies": ["ui/card", "ui/badge", "ui/button"],
-      "providers": ["sdk-provider"],
-      "utils": ["translation"]
-    },
     "dashboard/collection-rate-card": {
       "name": "Collection Rate Card",
       "category": "feature",

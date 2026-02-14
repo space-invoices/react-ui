@@ -17,6 +17,7 @@ import { useEstimateDownload } from "./use-estimate-download";
 
 type EstimateListRowActionsProps = {
   estimate: Estimate;
+  onView?: (estimate: Estimate) => void;
   onDuplicate?: (estimate: Estimate) => void;
   onDownloadStart?: () => void;
   onDownloadSuccess?: (fileName: string) => void;
@@ -27,6 +28,7 @@ type EstimateListRowActionsProps = {
 
 export default function EstimateListRowActions({
   estimate,
+  onView,
   onDuplicate,
   onDownloadStart,
   onDownloadSuccess,
@@ -61,13 +63,7 @@ export default function EstimateListRowActions({
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          <DropdownMenuItem
-            className="cursor-pointer"
-            onClick={() => {
-              // TODO: Use router
-              window.location.href = `/app/estimates/view/${estimate.id}`;
-            }}
-          >
+          <DropdownMenuItem className="cursor-pointer" onClick={() => onView?.(estimate)}>
             <Eye className="h-4 w-4" />
             {t("View estimate")}
           </DropdownMenuItem>

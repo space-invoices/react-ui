@@ -9,9 +9,10 @@ import ItemListRowActions from "./item-list-row-actions";
 type ItemListRowProps = {
   item: Item;
   onRowClick?: (item: Item) => void;
+  onView?: (item: Item) => void;
 } & ComponentTranslationProps;
 
-export default function ItemListRow({ item, onRowClick, ...i18nProps }: ItemListRowProps) {
+export default function ItemListRow({ item, onRowClick, onView, ...i18nProps }: ItemListRowProps) {
   const t = createTranslation(i18nProps);
 
   return (
@@ -25,7 +26,7 @@ export default function ItemListRow({ item, onRowClick, ...i18nProps }: ItemList
       <TableCell>{item.description}</TableCell>
       <TableCell className="text-right">{item.price}</TableCell>
       <TableCell className="text-right">
-        <ItemListRowActions item={item} t={t} />
+        <ItemListRowActions item={item} onView={onView} t={t} />
       </TableCell>
     </TableRow>
   );

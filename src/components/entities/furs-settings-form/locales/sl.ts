@@ -43,7 +43,7 @@ export default {
   "Tax number of the operator for API key usage (optional)":
     "Davčna številka operaterja za uporabo z API ključem (opcijsko)",
   "Operator Label": "Oznaka operaterja",
-  "Descriptive label for the operator (optional)": "Opisna oznaka za operaterja (opcijsko)",
+
   "Digital Certificate": "Digitalni certifikat",
   "Upload your FURS digital certificate": "Naložite svoj digitalni certifikat FURS",
   "Your certificate is required to digitally sign all fiscalized invoices. The certificate must be obtained from the Slovenian Financial Administration (FURS).":
@@ -54,6 +54,10 @@ export default {
     "Neveljavna vrsta datoteke. Prosimo, naložite datoteko certifikata .p12 ali .pfx.",
   "Please select a certificate file and enter the passphrase":
     "Prosimo, izberite datoteko certifikata in vnesite geslo",
+  "Invalid certificate passphrase. Please check your passphrase and try again.":
+    "Neveljavno geslo certifikata. Preverite geslo in poskusite znova.",
+  "Certificate tax number does not match entity tax number. Please upload a certificate for this entity.":
+    "Davčna številka certifikata se ne ujema z davčno številko entitete. Naložite certifikat za to entiteto.",
   Valid: "Veljaven",
   "Expiring Soon": "Kmalu poteče",
   Expired: "Potekel",
@@ -179,8 +183,8 @@ export default {
   "Your personal operator info for FURS invoices": "Vaši osebni podatki operaterja za FURS račune",
   "Save Operator Settings": "Shrani nastavitve operaterja",
   "Your tax number for FURS fiscalization": "Vaša davčna številka za fiskalizacijo FURS",
-  "Your name or identifier for FURS invoices": "Vaše ime ali identifikator za FURS račune",
-  "Your Name": "Vaše ime",
+  "Descriptive label for the operator (e.g. Cashier 1)": "Opisna oznaka za operaterja (npr. Blagajnik 1)",
+  "e.g. Cashier 1": "npr. Blagajnik 1",
   "Fiscalization Settings": "Nastavitve fiskalizacije",
   "Advanced Settings": "Napredne nastavitve",
   "API Default Operator": "Privzeti operater za API",
@@ -209,4 +213,13 @@ export default {
   "Tax number is required for FURS fiscalization": "Davčna številka je obvezna za fiskalizacijo FURS",
   "Set entity tax number in General Settings first":
     "Najprej nastavite davčno številko podjetja v splošnih nastavitvah",
+  "Set operator tax number and label in General Settings first":
+    "Set operator tax number and label in General Settings first",
+  "Complete General Settings first": "Complete General Settings first",
+  "Operator tax number and label are required for FURS fiscalization":
+    "Operator tax number and label are required for FURS fiscalization",
+  "FURS Operator Settings Required": "FURS Operator Settings Required",
+  "Your FURS operator information is needed to fiscalize this document. Please enter your operator details.":
+    "Your FURS operator information is needed to fiscalize this document. Please enter your operator details.",
+  "Save & Retry": "Save & Retry",
 } as const;

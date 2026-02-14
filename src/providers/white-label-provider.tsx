@@ -5,6 +5,7 @@ export type WhiteLabelConfig = {
   slug: string;
   name: string;
   hiddenFeatures: string[]; // Features hidden from UI (still available via API)
+  halAppId: string | null; // Hal app ID for chat widget (null = no Hal integration)
 };
 
 // Default config until API responds (Space Invoices = all features visible)
@@ -12,6 +13,7 @@ const DEFAULT_CONFIG: WhiteLabelConfig = {
   slug: "space-invoices",
   name: "Space Invoices",
   hiddenFeatures: [],
+  halAppId: null,
 };
 
 type WhiteLabelContextType = WhiteLabelConfig & {
@@ -50,6 +52,7 @@ export function WhiteLabelProvider({ children, apiBaseUrl = "" }: WhiteLabelProv
             slug: data.slug,
             name: data.name,
             hiddenFeatures: data.hidden_features,
+            halAppId: data.hal_app_id ?? null,
           });
         }
       } catch {

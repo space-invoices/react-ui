@@ -39,4 +39,8 @@ export default {
   "No results found": "Geen facturen gevonden",
   "Try adjusting your search criteria": "Probeer uw zoekcriteria aan te passen",
   "Clear search": "Zoekopdracht wissen",
+  selected: "geselecteerd",
+  "Export PDFs": "PDFs exporteren",
+  "Deselect all": "Alles deselecteren",
+  Void: "Nietig verklaren",
 } as const;

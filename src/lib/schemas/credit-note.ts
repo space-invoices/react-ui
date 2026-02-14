@@ -3,7 +3,7 @@
  *
  * Requires: ./shared.ts
  */
-import type { CreateCreditNoteBody } from "@spaceinvoices/js-sdk";
+import type { CreateCreditNote } from "@spaceinvoices/js-sdk";
 import { z } from "zod";
 import { customerSchema, lineItemSchema, transformItemsForApi } from "./shared";
 
@@ -24,9 +24,9 @@ export const creditNoteFormSchema = z.object({
 export type CreditNoteFormValues = z.infer<typeof creditNoteFormSchema>;
 
 /** Convert form values to API request */
-export function toCreateCreditNoteRequest(values: CreditNoteFormValues): CreateCreditNoteBody {
+export function toCreateCreditNoteRequest(values: CreditNoteFormValues): CreateCreditNote {
   return {
     ...values,
     items: transformItemsForApi(values.items ?? []),
-  } as CreateCreditNoteBody;
+  } as CreateCreditNote;
 }

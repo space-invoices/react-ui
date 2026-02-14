@@ -8,6 +8,12 @@ type FursData = {
   skip?: boolean;
 };
 
+type FinaData = {
+  premise_id?: string;
+  device_id?: string;
+  payment_type?: string;
+};
+
 type EslogData = {
   validation_enabled?: boolean;
 };
@@ -22,6 +28,8 @@ type PrepareOptions = {
   paymentTypes?: string[];
   /** FURS fiscalization data (for Slovenia) */
   furs?: FursData;
+  /** FINA fiscalization data (for Croatia) */
+  fina?: FinaData;
   /** e-SLOG validation data (for Slovenia) */
   eslog?: EslogData;
   /** Map of item index to gross price mode (collected from component state) */
@@ -66,6 +74,15 @@ export function prepareInvoiceSubmission(values: CreateInvoiceSchema, options: P
         electronic_device_name: options.furs.electronic_device_name,
       };
     }
+  }
+
+  // Add FINA data if provided (FINA can't be skipped - all invoices must be fiscalized)
+  if (options.fina?.premise_id && options.fina.device_id) {
+    (payload as any).fina = {
+      premise_id: options.fina.premise_id,
+      device_id: options.fina.device_id,
+      ...(options.fina.payment_type && { payment_type: options.fina.payment_type }),
+    };
   }
 
   // Add e-SLOG data if provided

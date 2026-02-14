@@ -13,6 +13,7 @@ export default {
   "Unshare failed": "Cofnięcie udostępnienia nie powiodło się",
   "Download failed": "Pobieranie nie powiodło się",
   "e-SLOG download failed": "Pobieranie e-SLOG nie powiodło się",
+  Recurring: "Cykliczna",
   Duplicate: "Duplikuj",
   "Duplicate invoice": "Duplikuj fakturę",
   "Duplicate estimate": "Duplikuj kosztorys",
@@ -80,6 +81,10 @@ export default {
   "Draft deleted": "Szkic usunięty",
   "Delete draft failed": "Usunięcie szkicu nie powiodło się",
   Draft: "Szkic",
+
+  // Void
+  Void: "Anuluj",
+  "Voiding...": "Anulowanie...",
 
   // Activity list
   Activity: "Aktywność",

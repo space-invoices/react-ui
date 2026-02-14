@@ -17,6 +17,7 @@ import { useAdvanceInvoiceDownload } from "./use-advance-invoice-download";
 
 type AdvanceInvoiceListRowActionsProps = {
   advanceInvoice: AdvanceInvoice;
+  onView?: (advanceInvoice: AdvanceInvoice) => void;
   onAddPayment?: (advanceInvoice: AdvanceInvoice) => void;
   onDuplicate?: (advanceInvoice: AdvanceInvoice) => void;
   onDownloadStart?: () => void;
@@ -28,6 +29,7 @@ type AdvanceInvoiceListRowActionsProps = {
 
 export default function AdvanceInvoiceListRowActions({
   advanceInvoice,
+  onView,
   onAddPayment,
   onDuplicate,
   onDownloadStart,
@@ -63,12 +65,7 @@ export default function AdvanceInvoiceListRowActions({
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          <DropdownMenuItem
-            className="cursor-pointer"
-            onClick={() => {
-              window.location.href = `/app/documents/view/${advanceInvoice.id}`;
-            }}
-          >
+          <DropdownMenuItem className="cursor-pointer" onClick={() => onView?.(advanceInvoice)}>
             <Eye className="h-4 w-4" />
             {t("View advance invoice")}
           </DropdownMenuItem>

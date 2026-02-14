@@ -38,4 +38,7 @@ export default {
   "No results found": "Aucune facture d'acompte trouvee",
   "Try adjusting your search criteria": "Essayez de modifier vos criteres de recherche",
   "Clear search": "Effacer la recherche",
+  selected: "sélectionnés",
+  "Export PDFs": "Exporter les PDF",
+  "Deselect all": "Tout désélectionner",
 } as const;

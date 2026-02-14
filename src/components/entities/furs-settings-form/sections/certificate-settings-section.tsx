@@ -53,6 +53,28 @@ export const CertificateSettingsSection: FC<CertificateSettingsSectionProps> = (
       onSuccess?.();
     },
     onError: (error) => {
+      const apiMsg = (error as any)?.data?.message || (error as any)?.message;
+      if (typeof apiMsg === "string") {
+        if (apiMsg.includes("certificate") && apiMsg.includes("mode")) {
+          onError?.(new Error(t(apiMsg)));
+          return;
+        }
+        if (apiMsg.includes("Invalid certificate passphrase")) {
+          onError?.(new Error(t("Invalid certificate passphrase. Please check your passphrase and try again.")));
+          return;
+        }
+        const taxMatch = apiMsg.match(/Certificate tax number .+ does not match entity tax number/);
+        if (taxMatch) {
+          onError?.(
+            new Error(
+              t(
+                "Certificate tax number does not match entity tax number. Please upload a certificate for this entity.",
+              ),
+            ),
+          );
+          return;
+        }
+      }
       onError?.(error);
     },
   });

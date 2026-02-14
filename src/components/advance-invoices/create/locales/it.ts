@@ -26,4 +26,6 @@ export default {
   Card: "Carta",
   Check: "Assegno",
   Other: "Altro",
+  Premise: "Locale",
+  Device: "Dispositivo",
 } as const;

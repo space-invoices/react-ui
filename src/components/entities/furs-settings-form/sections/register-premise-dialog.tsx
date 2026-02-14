@@ -157,7 +157,13 @@ export const RegisterPremiseDialog: FC<RegisterPremiseDialogProps> = ({
 
         {isRealEstate ? (
           <Form {...realEstateForm}>
-            <form onSubmit={realEstateForm.handleSubmit(handleRealEstateSubmit as any)} className="space-y-4">
+            <form
+              onSubmit={(e) => {
+                e.stopPropagation();
+                realEstateForm.handleSubmit(handleRealEstateSubmit as any)(e);
+              }}
+              className="space-y-4"
+            >
               {/* Premise Name */}
               <FormField
                 control={realEstateForm.control as any}
@@ -324,7 +330,13 @@ export const RegisterPremiseDialog: FC<RegisterPremiseDialogProps> = ({
           </Form>
         ) : (
           <Form {...movableForm}>
-            <form onSubmit={movableForm.handleSubmit(handleMovableSubmit as any)} className="space-y-4">
+            <form
+              onSubmit={(e) => {
+                e.stopPropagation();
+                movableForm.handleSubmit(handleMovableSubmit as any)(e);
+              }}
+              className="space-y-4"
+            >
               {/* Premise Name */}
               <FormField
                 control={movableForm.control as any}

@@ -24,4 +24,6 @@ export default {
   Card: "Kartica",
   Check: "Cek",
   Other: "Ostalo",
+  Premise: "Prostor",
+  Device: "Uredaj",
 } as const;

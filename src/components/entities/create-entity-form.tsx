@@ -47,7 +47,7 @@ export function CreateEntityForm({
       country: "",
       tax_number: "",
       company_number: "",
-      environment,
+      environment: environment as "live" | "sandbox" | undefined,
       ...extraDefaults,
       // defaultName takes priority over extraDefaults.name if provided
       ...(defaultName ? { name: defaultName } : {}),

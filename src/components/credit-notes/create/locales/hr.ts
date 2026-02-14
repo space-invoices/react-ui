@@ -65,4 +65,11 @@ export default {
   "Net price": "Neto cijena",
   "Gross price (tax included)": "Bruto cijena (s porezom)",
   "Net price (before tax)": "Neto cijena (bez poreza)",
+  // FINA fiscalization
+  "Fiscally verify": "Fiskalno potvrdi",
+  "Click to skip fiscalization for this credit note": "Kliknite za preskakanje fiskalizacije za ovo odobrenje",
+  "Click to enable fiscalization": "Kliknite za ukljucivanje fiskalizacije",
+  "Cannot skip fiscalization for cash payments": "Za gotovinska placanja nije moguce preskociti fiskalizaciju",
+  Premise: "Prostor",
+  Device: "Uredaj",
 } as const;

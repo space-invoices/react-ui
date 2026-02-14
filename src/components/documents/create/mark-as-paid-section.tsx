@@ -29,6 +29,8 @@ type MarkAsPaidSectionProps = {
   onPaymentTypesChange: (values: string[]) => void;
   /** Translation function */
   t: (key: string) => string;
+  /** Always show payment type selector (e.g. for FINA fiscalization) */
+  alwaysShowPaymentType?: boolean;
 };
 
 export function MarkAsPaidSection({
@@ -37,9 +39,12 @@ export function MarkAsPaidSection({
   paymentTypes,
   onPaymentTypesChange,
   t,
+  alwaysShowPaymentType,
 }: MarkAsPaidSectionProps) {
+  const showPaymentTypes = checked || alwaysShowPaymentType;
+
   return (
-    <div className={cn("flex flex-col gap-4 rounded-md border p-4", checked && "gap-3")}>
+    <div className={cn("flex flex-col gap-4 rounded-md border p-4", showPaymentTypes && "gap-3")}>
       <div className="flex flex-row items-center space-x-3 space-y-0">
         <Checkbox checked={checked} onCheckedChange={(v) => onCheckedChange(v === true)} />
         <div className="flex items-center gap-1 leading-none">
@@ -61,9 +66,13 @@ export function MarkAsPaidSection({
         </div>
       </div>
 
-      {checked && (
+      {showPaymentTypes && (
         <div className="flex flex-col gap-2">
+          {alwaysShowPaymentType && !checked && (
+            <Label className="text-muted-foreground text-xs">{t("Payment Type")}</Label>
+          )}
           {paymentTypes.map((type, index) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: payment types list uses index key
             <div key={index} className="flex items-center gap-2">
               <Select
                 value={type}

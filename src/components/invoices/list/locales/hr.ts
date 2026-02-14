@@ -39,4 +39,8 @@ export default {
   "No results found": "Nisu pronađeni računi",
   "Try adjusting your search criteria": "Pokušajte prilagoditi kriterije pretrage",
   "Clear search": "Očisti pretragu",
+  selected: "odabranih",
+  "Export PDFs": "Izvezi PDF-ove",
+  "Deselect all": "Poništi odabir",
+  Void: "Storniraj",
 } as const;

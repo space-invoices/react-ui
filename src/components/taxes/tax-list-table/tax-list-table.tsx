@@ -34,6 +34,7 @@ const translations = {
 
 type TaxListTableProps = {
   entityId?: string;
+  onView?: (tax: Tax) => void;
 } & ListTableProps<Tax> &
   ComponentTranslationProps;
 
@@ -41,6 +42,7 @@ export default function TaxListTable({
   queryParams,
   createNewTrigger,
   onRowClick,
+  onView,
   onChangeParams,
   entityId,
   ...i18nProps
@@ -61,7 +63,9 @@ export default function TaxListTable({
         { id: "created_at", header: t("Created"), sortable: true },
         { id: "actions", header: "", align: "right" },
       ]}
-      renderRow={(tax) => <TaxListRow tax={tax} key={tax.id} onRowClick={(tax) => onRowClick?.(tax)} t={t} />}
+      renderRow={(tax) => (
+        <TaxListRow tax={tax} key={tax.id} onRowClick={(tax) => onRowClick?.(tax)} onView={onView} t={t} />
+      )}
       renderHeader={(headerProps) => <TaxListHeader orderBy={headerProps.orderBy} onSort={headerProps.onSort} t={t} />}
       queryParams={queryParams}
       resourceName="tax"

@@ -14,6 +14,7 @@ export default {
   "Unshare failed": "Freigabe aufheben fehlgeschlagen",
   "Download failed": "Download fehlgeschlagen",
   "e-SLOG download failed": "e-SLOG Download fehlgeschlagen",
+  Recurring: "Wiederkehrend",
   Duplicate: "Duplizieren",
   "Duplicate invoice": "Rechnung duplizieren",
   "Duplicate estimate": "Angebot duplizieren",
@@ -82,6 +83,10 @@ export default {
   "Draft deleted": "Entwurf wurde gelöscht",
   "Delete draft failed": "Entwurf löschen fehlgeschlagen",
   Draft: "Entwurf",
+
+  // Void
+  Void: "Stornieren",
+  "Voiding...": "Stornierung...",
 
   // Activity list
   Activity: "Aktivität",

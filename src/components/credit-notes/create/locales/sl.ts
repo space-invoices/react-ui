@@ -64,4 +64,11 @@ export default {
   "Net price": "Neto cena",
   "Gross price (tax included)": "Bruto cena (z davkom)",
   "Net price (before tax)": "Neto cena (brez davka)",
+  // FINA fiscalization
+  "Fiscally verify": "Davčno potrdi",
+  "Click to skip fiscalization for this credit note": "Klikni za preskok davčnega potrjevanja za ta dobropis",
+  "Click to enable fiscalization": "Klikni za vključitev davčnega potrjevanja",
+  "Cannot skip fiscalization for cash payments": "Za gotovinska plačila ni mogoče preskočiti davčnega potrjevanja",
+  Premise: "Poslovni prostor",
+  Device: "Naprava",
 } as const;

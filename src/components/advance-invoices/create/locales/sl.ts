@@ -22,4 +22,6 @@ export default {
   Card: "Kartica",
   Check: "Ček",
   Other: "Drugo",
+  Premise: "Poslovni prostor",
+  Device: "Naprava",
 } as const;

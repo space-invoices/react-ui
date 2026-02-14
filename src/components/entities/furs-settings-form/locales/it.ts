@@ -44,7 +44,7 @@ export default {
   "Tax number of the operator for API key usage (optional)":
     "Codice fiscale dell'operatore per l'utilizzo della chiave API (opzionale)",
   "Operator Label": "Etichetta operatore",
-  "Descriptive label for the operator (optional)": "Etichetta descrittiva per l'operatore (opzionale)",
+
   "Digital Certificate": "Certificato digitale",
   "Upload your FURS digital certificate": "Carica il tuo certificato digitale FURS",
   "Your certificate is required to digitally sign all fiscalized invoices. The certificate must be obtained from the Slovenian Financial Administration (FURS).":
@@ -55,6 +55,10 @@ export default {
     "Tipo di file non valido. Carica un file certificato .p12 o .pfx.",
   "Please select a certificate file and enter the passphrase":
     "Seleziona un file certificato e inserisci la passphrase",
+  "Invalid certificate passphrase. Please check your passphrase and try again.":
+    "Passphrase del certificato non valida. Controlla la passphrase e riprova.",
+  "Certificate tax number does not match entity tax number. Please upload a certificate for this entity.":
+    "Il codice fiscale del certificato non corrisponde al codice fiscale dell'entità. Carica un certificato per questa entità.",
   Valid: "Valido",
   "Expiring Soon": "In scadenza",
   Expired: "Scaduto",
@@ -178,8 +182,8 @@ export default {
   "Your personal operator info for FURS invoices": "Le tue informazioni personali di operatore per le fatture FURS",
   "Save Operator Settings": "Salva impostazioni operatore",
   "Your tax number for FURS fiscalization": "Il tuo codice fiscale per la fiscalizzazione FURS",
-  "Your name or identifier for FURS invoices": "Il tuo nome o identificatore per le fatture FURS",
-  "Your Name": "Il tuo nome",
+  "Descriptive label for the operator (e.g. Cashier 1)": "Etichetta descrittiva per l'operatore (es. Cassiere 1)",
+  "e.g. Cashier 1": "es. Cassiere 1",
   "Fiscalization Settings": "Impostazioni di fiscalizzazione",
   "Advanced Settings": "Impostazioni avanzate",
   "API Default Operator": "Operatore predefinito API",
@@ -195,4 +199,23 @@ export default {
     "Informazioni operatore predefinite utilizzate quando le fatture vengono create tramite API senza un utente connesso.",
   "Certificate uploaded successfully": "Certificato caricato con successo",
   "Loading certificate details...": "Caricamento dettagli certificato...",
+  // Entity info section
+  "Entity Information": "Entity Information",
+  "Required company details for FURS fiscalization": "Required company details for FURS fiscalization",
+  "Entity Tax Number": "Entity Tax Number",
+  "Your company's tax number (must match FURS certificate)": "Your company's tax number (must match FURS certificate)",
+  Address: "Address",
+  "Post Code": "Post Code",
+  "Save Entity Info": "Save Entity Info",
+  "Tax number is required for FURS fiscalization": "Tax number is required for FURS fiscalization",
+  "Set entity tax number in General Settings first": "Set entity tax number in General Settings first",
+  "Set operator tax number and label in General Settings first":
+    "Set operator tax number and label in General Settings first",
+  "Complete General Settings first": "Complete General Settings first",
+  "Operator tax number and label are required for FURS fiscalization":
+    "Operator tax number and label are required for FURS fiscalization",
+  "FURS Operator Settings Required": "FURS Operator Settings Required",
+  "Your FURS operator information is needed to fiscalize this document. Please enter your operator details.":
+    "Your FURS operator information is needed to fiscalize this document. Please enter your operator details.",
+  "Save & Retry": "Save & Retry",
 } as const;

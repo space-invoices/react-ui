@@ -66,4 +66,11 @@ export default {
   "Net price": "Nettoprijs",
   "Gross price (tax included)": "Brutoprijs (btw inbegrepen)",
   "Net price (before tax)": "Nettoprijs (exclusief btw)",
+  // FINA fiscalization
+  "Fiscally verify": "Fiscaal verifieren",
+  "Click to skip fiscalization for this credit note": "Klik om fiscalisatie voor deze creditnota over te slaan",
+  "Click to enable fiscalization": "Klik om fiscalisatie in te schakelen",
+  "Cannot skip fiscalization for cash payments": "Fiscalisatie kan niet worden overgeslagen voor contante betalingen",
+  Premise: "Bedrijfsruimte",
+  Device: "Apparaat",
 } as const;

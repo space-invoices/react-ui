@@ -9,25 +9,6 @@ import { z } from 'zod';
 // Schemas for rendercreditnotepreview_body endpoints
 
 // Dependency schema for rendercreditnotepreview_body
-const LineDiscount = z.object({
-  value: z.number().gte(0),
-  type: z.enum(["percent", "amount"]).optional().default("percent"),
-});
-
-
-// Dependency schema for rendercreditnotepreview_body
-const DocumentItemTax = z
-  .object({
-    rate: z.number(),
-    tax_id: z.string(),
-    classification: z.string(),
-    reverse_charge: z.boolean(),
-    amount: z.number(),
-  })
-  .partial();
-
-
-// Dependency schema for rendercreditnotepreview_body
 const DocumentEntity = z
   .object({
     name: z.union([z.string(), z.null()]),
@@ -66,91 +47,48 @@ const DocumentEntity = z
 
 
 // Dependency schema for rendercreditnotepreview_body
-const CompleteCreditNotePreview = z.object({
-  is_draft: z.boolean().optional(),
-  date: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d{3})?Z?)?$/)
-    .optional(),
-  issuer: DocumentEntity.optional(),
-  customer_id: z.union([z.string(), z.null()]).optional(),
-  customer: DocumentEntity.and(
-    z.union([
-      z
-        .object({ save_customer: z.boolean().default(true) })
-        .partial()
-        .passthrough(),
-      z.null(),
-    ])
-  ).optional(),
-  note: z.union([z.string(), z.null()]).optional(),
-  payment_terms: z.union([z.string(), z.null()]).optional(),
-  tax_clause: z.union([z.string(), z.null()]).optional(),
-  currency_code: z.string().max(3).optional(),
-  metadata: z.union([z.record(z.string(), z.any()), z.null()]).optional(),
-  date_due: z.union([z.string(), z.null()]).optional(),
-  date_service: z.union([z.string(), z.null()]).optional(),
-  date_service_to: z.union([z.string(), z.null()]).optional(),
-  items: z
-    .array(
-      z.object({
-        name: z.string().min(1).optional(),
-        description: z.union([z.string(), z.null()]).optional(),
-        price: z.number().optional(),
-        gross_price: z.number().optional(),
-        quantity: z.number().gte(-140737488355328).lte(140737488355327),
-        unit: z.union([z.string(), z.null()]).optional(),
-        taxes: z.array(DocumentItemTax).optional(),
-        discounts: z.array(LineDiscount).max(5).optional(),
-        metadata: z
-          .union([
-            z.string(),
-            z.number(),
-            z.boolean(),
-            z.null(),
-            z.object({}).partial().passthrough(),
-            z.array(z.unknown()),
-            z.null(),
-          ])
-          .optional(),
-        item_id: z.string().optional(),
-      })
-    )
-    .min(1),
-  fina: z
-    .union([
-      z
-        .object({
-          premise_id: z
-            .string()
-            .min(1)
-            .max(20)
-            .regex(/^[0-9a-zA-Z]{1,20}$/),
-          device_id: z
-            .string()
-            .min(1)
-            .max(20)
-            .regex(/^\d{1,20}$/),
-          operator_oib: z.string().min(11).max(11),
-          is_end_consumer: z.boolean(),
-          payment_type: z.enum([
-            "cash",
-            "card",
-            "online",
-            "bank_transfer",
-            "paypal",
-            "crypto",
-            "coupon",
-            "other",
-          ]),
-          subsequent_submit: z.boolean(),
-        })
-        .partial(),
-      z.null(),
-    ])
-    .optional(),
-  expected_total_with_tax: z.number().gt(0).optional(),
-});
+const CreateDocumentCustomer = DocumentEntity.and(
+  z.union([
+    z
+      .object({ save_customer: z.boolean().default(true) })
+      .partial()
+      .passthrough(),
+    z.null(),
+  ])
+);
+
+
+// Dependency schema for rendercreditnotepreview_body
+const CreateFinaInvoiceData = z.union([
+  z
+    .object({
+      premise_id: z
+        .string()
+        .min(1)
+        .max(20)
+        .regex(/^[0-9a-zA-Z]{1,20}$/),
+      device_id: z
+        .string()
+        .min(1)
+        .max(20)
+        .regex(/^\d{1,20}$/),
+      operator_oib: z.string().min(11).max(11),
+      is_end_consumer: z.boolean(),
+      payment_type: z.enum([
+        "cash",
+        "card",
+        "online",
+        "bank_transfer",
+        "paypal",
+        "crypto",
+        "coupon",
+        "other",
+      ]),
+      subsequent_submit: z.boolean(),
+    })
+    .partial(),
+  z.null(),
+]);
 
 
 // Dependency schema for rendercreditnotepreview_body
@@ -162,15 +100,7 @@ const PartialCreditNotePreview = z.object({
     .optional(),
   issuer: DocumentEntity.optional(),
   customer_id: z.union([z.string(), z.null()]).optional(),
-  customer: DocumentEntity.and(
-    z.union([
-      z
-        .object({ save_customer: z.boolean().default(true) })
-        .partial()
-        .passthrough(),
-      z.null(),
-    ])
-  ).optional(),
+  customer: CreateDocumentCustomer.optional(),
   note: z.union([z.string(), z.null()]).optional(),
   payment_terms: z.union([z.string(), z.null()]).optional(),
   tax_clause: z.union([z.string(), z.null()]).optional(),
@@ -200,38 +130,75 @@ const PartialCreditNotePreview = z.object({
         .passthrough()
     )
     .min(1),
-  fina: z
+  fina: CreateFinaInvoiceData.optional(),
+  expected_total_with_tax: z.number().gt(0).optional(),
+});
+
+
+// Dependency schema for rendercreditnotepreview_body
+const DocumentItemTax = z
+  .object({
+    rate: z.number(),
+    tax_id: z.string(),
+    classification: z.string(),
+    reverse_charge: z.boolean(),
+    amount: z.number(),
+  })
+  .partial();
+
+
+// Dependency schema for rendercreditnotepreview_body
+const LineDiscount = z.object({
+  value: z.number().gte(0),
+  type: z.enum(["percent", "amount"]).optional().default("percent"),
+});
+
+
+// Dependency schema for rendercreditnotepreview_body
+const CreateDocumentItem = z.object({
+  name: z.string().min(1).optional(),
+  description: z.union([z.string(), z.null()]).optional(),
+  price: z.number().optional(),
+  gross_price: z.number().optional(),
+  quantity: z.number().gte(-140737488355328).lte(140737488355327),
+  unit: z.union([z.string(), z.null()]).optional(),
+  taxes: z.array(DocumentItemTax).optional(),
+  discounts: z.array(LineDiscount).max(5).optional(),
+  metadata: z
     .union([
-      z
-        .object({
-          premise_id: z
-            .string()
-            .min(1)
-            .max(20)
-            .regex(/^[0-9a-zA-Z]{1,20}$/),
-          device_id: z
-            .string()
-            .min(1)
-            .max(20)
-            .regex(/^\d{1,20}$/),
-          operator_oib: z.string().min(11).max(11),
-          is_end_consumer: z.boolean(),
-          payment_type: z.enum([
-            "cash",
-            "card",
-            "online",
-            "bank_transfer",
-            "paypal",
-            "crypto",
-            "coupon",
-            "other",
-          ]),
-          subsequent_submit: z.boolean(),
-        })
-        .partial(),
+      z.string(),
+      z.number(),
+      z.boolean(),
+      z.null(),
+      z.object({}).partial().passthrough(),
+      z.array(z.unknown()),
       z.null(),
     ])
     .optional(),
+  item_id: z.string().optional(),
+});
+
+
+// Dependency schema for rendercreditnotepreview_body
+const CompleteCreditNotePreview = z.object({
+  is_draft: z.boolean().optional(),
+  date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d{3})?Z?)?$/)
+    .optional(),
+  issuer: DocumentEntity.optional(),
+  customer_id: z.union([z.string(), z.null()]).optional(),
+  customer: CreateDocumentCustomer.optional(),
+  note: z.union([z.string(), z.null()]).optional(),
+  payment_terms: z.union([z.string(), z.null()]).optional(),
+  tax_clause: z.union([z.string(), z.null()]).optional(),
+  currency_code: z.string().max(3).optional(),
+  metadata: z.union([z.record(z.string(), z.any()), z.null()]).optional(),
+  date_due: z.union([z.string(), z.null()]).optional(),
+  date_service: z.union([z.string(), z.null()]).optional(),
+  date_service_to: z.union([z.string(), z.null()]).optional(),
+  items: z.array(CreateDocumentItem).min(1),
+  fina: CreateFinaInvoiceData.optional(),
   expected_total_with_tax: z.number().gt(0).optional(),
 });
 

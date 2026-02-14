@@ -1,8 +1,9 @@
 import type { AdvanceInvoice } from "@spaceinvoices/js-sdk";
-import { useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { DataTable } from "@/ui/components/table/data-table";
 import { FormattedDate } from "@/ui/components/table/date-cell";
 import { useTableFetch } from "@/ui/components/table/hooks/use-table-fetch";
+import { SelectionToolbar } from "@/ui/components/table/selection-toolbar";
 import type {
   Column,
   FilterConfig,
@@ -45,16 +46,19 @@ type AdvanceInvoiceListTableProps = {
   namespace?: string;
   locale?: string;
   entityId?: string;
+  onView?: (advanceInvoice: AdvanceInvoice) => void;
   onAddPayment?: (advanceInvoice: AdvanceInvoice) => void;
   onDuplicate?: (advanceInvoice: AdvanceInvoice) => void;
   onDownloadStart?: () => void;
   onDownloadSuccess?: (fileName: string) => void;
   onDownloadError?: (error: string) => void;
+  onExportSelected?: (documentIds: string[]) => void;
 } & ListTableProps<AdvanceInvoice>;
 
 export default function AdvanceInvoiceListTable({
   queryParams,
   onRowClick,
+  onView,
   onAddPayment,
   onDuplicate,
   onChangeParams,
@@ -62,6 +66,7 @@ export default function AdvanceInvoiceListTable({
   onDownloadStart,
   onDownloadSuccess,
   onDownloadError,
+  onExportSelected,
   ...i18nProps
 }: AdvanceInvoiceListTableProps) {
   const t = createTranslation({
@@ -70,6 +75,7 @@ export default function AdvanceInvoiceListTable({
   });
 
   const { sdk } = useSDK();
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const handleFetch = useTableFetch(async (params: TableQueryParams) => {
     if (!sdk) throw new Error("SDK not initialized");
@@ -97,6 +103,28 @@ export default function AdvanceInvoiceListTable({
       statusFilter: true,
     }),
     [t],
+  );
+
+  const handleExportPdfs = useCallback(() => {
+    if (selectedIds.size > 0 && onExportSelected) {
+      onExportSelected(Array.from(selectedIds));
+    }
+  }, [selectedIds, onExportSelected]);
+
+  const handleDeselectAll = useCallback(() => {
+    setSelectedIds(new Set());
+  }, []);
+
+  const selectionToolbar = useCallback(
+    (count: number) => (
+      <SelectionToolbar
+        selectedCount={count}
+        onExportPdfs={onExportSelected ? handleExportPdfs : undefined}
+        onDeselectAll={handleDeselectAll}
+        t={t}
+      />
+    ),
+    [handleExportPdfs, handleDeselectAll, onExportSelected, t],
   );
 
   const columns: Column<AdvanceInvoice>[] = useMemo(
@@ -163,6 +191,7 @@ export default function AdvanceInvoiceListTable({
         cell: (advanceInvoice) => (
           <AdvanceInvoiceListRowActions
             advanceInvoice={advanceInvoice}
+            onView={onView}
             onAddPayment={onAddPayment}
             onDuplicate={onDuplicate}
             onDownloadStart={onDownloadStart}
@@ -174,7 +203,17 @@ export default function AdvanceInvoiceListTable({
         ),
       },
     ],
-    [t, onRowClick, onAddPayment, onDuplicate, onDownloadStart, onDownloadSuccess, onDownloadError, i18nProps.locale],
+    [
+      t,
+      onRowClick,
+      onView,
+      onAddPayment,
+      onDuplicate,
+      onDownloadStart,
+      onDownloadSuccess,
+      onDownloadError,
+      i18nProps.locale,
+    ],
   );
 
   return (
@@ -190,6 +229,10 @@ export default function AdvanceInvoiceListTable({
       filterConfig={filterConfig}
       t={t}
       locale={i18nProps.locale}
+      selectable={!!onExportSelected}
+      selectedIds={selectedIds}
+      onSelectionChange={setSelectedIds}
+      selectionToolbar={selectionToolbar}
     />
   );
 }

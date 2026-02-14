@@ -3,7 +3,7 @@
  *
  * Requires: ./shared.ts
  */
-import type { CreateEstimateBody } from "@spaceinvoices/js-sdk";
+import type { CreateEstimate } from "@spaceinvoices/js-sdk";
 import { z } from "zod";
 import { customerSchema, lineItemSchema, transformItemsForApi } from "./shared";
 
@@ -23,9 +23,9 @@ export const estimateFormSchema = z.object({
 export type EstimateFormValues = z.infer<typeof estimateFormSchema>;
 
 /** Convert form values to API request */
-export function toCreateEstimateRequest(values: EstimateFormValues): CreateEstimateBody {
+export function toCreateEstimateRequest(values: EstimateFormValues): CreateEstimate {
   return {
     ...values,
     items: transformItemsForApi(values.items ?? []),
-  } as CreateEstimateBody;
+  } as CreateEstimate;
 }

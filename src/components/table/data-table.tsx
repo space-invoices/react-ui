@@ -1,6 +1,7 @@
 import type { JSX, ReactNode } from "react";
-import { Fragment, memo, useState } from "react";
+import { Fragment, memo, useCallback, useMemo, useState } from "react";
 
+import { Checkbox } from "@/ui/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/ui/components/ui/table";
 import { FilterBar } from "./filter-bar";
 import { useTableQuery } from "./hooks/use-table-query";
@@ -47,6 +48,14 @@ export type DataTableProps<T> = {
   t?: (key: string) => string;
   /** Locale for date formatting */
   locale?: string;
+  /** Enable row selection with checkboxes */
+  selectable?: boolean;
+  /** Currently selected IDs (controlled) */
+  selectedIds?: Set<string>;
+  /** Callback when selection changes */
+  onSelectionChange?: (selectedIds: Set<string>) => void;
+  /** Content to render in selection toolbar (shown when items selected) */
+  selectionToolbar?: (selectedCount: number) => ReactNode;
 };
 
 /**
@@ -70,6 +79,10 @@ export function DataTable<T extends { id: string }>({
   filterConfig,
   t = (key) => key,
   locale,
+  selectable,
+  selectedIds,
+  onSelectionChange,
+  selectionToolbar,
 }: DataTableProps<T>) {
   // Filter panel open state - starts open if filters are active in URL
   const hasInitialFilters = Boolean(
@@ -108,6 +121,43 @@ export function DataTable<T extends { id: string }>({
       params.filter_http_status,
   );
 
+  // Selection helpers
+  const pageIds = useMemo(() => data.map((item) => item.id), [data]);
+  const selectedCount = selectedIds?.size ?? 0;
+  const allPageSelected = selectable && pageIds.length > 0 && pageIds.every((id) => selectedIds?.has(id));
+  const somePageSelected = selectable && pageIds.some((id) => selectedIds?.has(id));
+
+  const handleToggleAll = useCallback(() => {
+    if (!onSelectionChange || !selectedIds) return;
+    const next = new Set(selectedIds);
+    if (allPageSelected) {
+      // Deselect all on current page
+      for (const id of pageIds) {
+        next.delete(id);
+      }
+    } else {
+      // Select all on current page
+      for (const id of pageIds) {
+        next.add(id);
+      }
+    }
+    onSelectionChange(next);
+  }, [onSelectionChange, selectedIds, allPageSelected, pageIds]);
+
+  const handleToggleRow = useCallback(
+    (id: string) => {
+      if (!onSelectionChange || !selectedIds) return;
+      const next = new Set(selectedIds);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      onSelectionChange(next);
+    },
+    [onSelectionChange, selectedIds],
+  );
+
   // Show skeleton during initial load (with filter bar for consistency)
   if (isFetching && !queryResult) {
     return (
@@ -123,7 +173,7 @@ export function DataTable<T extends { id: string }>({
           isOpen={filterPanelOpen}
           onToggle={setFilterPanelOpen}
         />
-        <TableSkeleton columns={columns.length} rows={10} />
+        <TableSkeleton columns={columns.length + (selectable ? 1 : 0)} rows={10} />
       </div>
     );
   }
@@ -155,12 +205,26 @@ export function DataTable<T extends { id: string }>({
         onToggle={setFilterPanelOpen}
       />
 
+      {selectable && selectedCount > 0 && selectionToolbar && (
+        <div className="flex items-center gap-3 rounded-lg border bg-muted/50 px-4 py-2">
+          {selectionToolbar(selectedCount)}
+        </div>
+      )}
+
       <div className="rounded-lg border">
         <Table>
           {renderHeader ? (
             renderHeader({ orderBy: params.order_by, onSort: handleSort })
           ) : (
-            <DefaultTableHeader columns={columns} orderBy={params.order_by} onSort={handleSort} />
+            <DefaultTableHeader
+              columns={columns}
+              orderBy={params.order_by}
+              onSort={handleSort}
+              selectable={selectable}
+              allPageSelected={allPageSelected}
+              somePageSelected={somePageSelected}
+              onToggleAll={handleToggleAll}
+            />
           )}
 
           <TableBody>
@@ -172,7 +236,17 @@ export function DataTable<T extends { id: string }>({
                 }
 
                 // Default row renderer
-                return <DefaultTableRow key={item.id} item={item} columns={columns} onRowClick={onRowClick} />;
+                return (
+                  <DefaultTableRow
+                    key={item.id}
+                    item={item}
+                    columns={columns}
+                    onRowClick={onRowClick}
+                    selectable={selectable}
+                    isSelected={selectedIds?.has(item.id)}
+                    onToggleSelect={handleToggleRow}
+                  />
+                );
               })
             ) : (
               <TableNoResults resource={resourceName} search={handleSearch} t={t} />
@@ -199,14 +273,31 @@ const DefaultTableHeader = memo(function DefaultTableHeader<T>({
   columns,
   orderBy,
   onSort,
+  selectable,
+  allPageSelected,
+  somePageSelected,
+  onToggleAll,
 }: {
   columns: Column<T>[];
   orderBy?: string;
   onSort?: (order: string | null) => void;
+  selectable?: boolean;
+  allPageSelected?: boolean;
+  somePageSelected?: boolean;
+  onToggleAll?: () => void;
 }) {
   return (
     <TableHeader>
       <TableRow>
+        {selectable && (
+          <TableHead className="w-[40px]">
+            <Checkbox
+              checked={allPageSelected || false}
+              indeterminate={!allPageSelected && somePageSelected}
+              onCheckedChange={onToggleAll}
+            />
+          </TableHead>
+        )}
         {columns.map((column) => (
           <TableHead key={column.id} className={column.className} style={{ textAlign: column.align }}>
             {column.sortable ? (
@@ -226,7 +317,15 @@ const DefaultTableHeader = memo(function DefaultTableHeader<T>({
       </TableRow>
     </TableHeader>
   );
-}) as <T>(props: { columns: Column<T>[]; orderBy?: string; onSort?: (order: string | null) => void }) => JSX.Element;
+}) as <T>(props: {
+  columns: Column<T>[];
+  orderBy?: string;
+  onSort?: (order: string | null) => void;
+  selectable?: boolean;
+  allPageSelected?: boolean;
+  somePageSelected?: boolean;
+  onToggleAll?: () => void;
+}) => JSX.Element;
 
 /**
  * Default row renderer using column definitions
@@ -235,13 +334,28 @@ const DefaultTableRow = memo(function DefaultTableRow<T extends { id: string }>(
   item,
   columns,
   onRowClick,
+  selectable,
+  isSelected,
+  onToggleSelect,
 }: {
   item: T;
   columns: Column<T>[];
   onRowClick?: (item: T) => void;
+  selectable?: boolean;
+  isSelected?: boolean;
+  onToggleSelect?: (id: string) => void;
 }) {
   return (
     <TableRow className={onRowClick ? "cursor-pointer" : undefined} onClick={() => onRowClick?.(item)}>
+      {selectable && (
+        <TableCell className="w-[40px]">
+          <Checkbox
+            checked={isSelected || false}
+            onCheckedChange={() => onToggleSelect?.(item.id)}
+            onClick={(e) => e.stopPropagation()}
+          />
+        </TableCell>
+      )}
       {columns.map((column) => (
         <TableCell key={column.id} className={column.className} style={{ textAlign: column.align }}>
           {column.cell?.(item)}
@@ -253,4 +367,7 @@ const DefaultTableRow = memo(function DefaultTableRow<T extends { id: string }>(
   item: T;
   columns: Column<T>[];
   onRowClick?: (item: T) => void;
+  selectable?: boolean;
+  isSelected?: boolean;
+  onToggleSelect?: (id: string) => void;
 }) => JSX.Element;

@@ -18,7 +18,10 @@ import sl from "../../documents/view/locales/sl";
 
 const translations = { de, es, fr, hr, it, nl, pl, pt, sl } as const;
 
-type FiscalizationData = FursFiscalizationResponse | FinaFiscalizationResponse;
+type FiscalizationStatus = "pending" | "success" | "failed" | "skipped";
+type FiscalizationData = (Exclude<FursFiscalizationResponse, null> | Exclude<FinaFiscalizationResponse, null>) & {
+  status: FiscalizationStatus;
+};
 
 interface FiscalizationStatusCardProps extends ComponentTranslationProps {
   fiscalizationType: "furs" | "fina";

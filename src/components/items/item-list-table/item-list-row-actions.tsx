@@ -15,9 +15,10 @@ import { createTranslation } from "@/ui/lib/translation";
 
 type ItemListRowActionsProps = {
   item: Item;
+  onView?: (item: Item) => void;
 } & ComponentTranslationProps;
 
-export default function ItemListRowActions({ item, ...i18nProps }: ItemListRowActionsProps) {
+export default function ItemListRowActions({ item, onView, ...i18nProps }: ItemListRowActionsProps) {
   const t = createTranslation(i18nProps);
 
   return (
@@ -34,12 +35,7 @@ export default function ItemListRowActions({ item, ...i18nProps }: ItemListRowAc
           {t("Copy item ID")}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem
-          className="cursor-pointer"
-          onClick={() => {
-            window.location.href = `/app/items/${item.id}`;
-          }}
-        >
+        <DropdownMenuItem className="cursor-pointer" onClick={() => onView?.(item)}>
           {t("View item")}
         </DropdownMenuItem>
       </DropdownMenuContent>

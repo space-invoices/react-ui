@@ -3,7 +3,7 @@
  *
  * Requires: ./shared.ts
  */
-import type { CreateInvoiceBody } from "@spaceinvoices/js-sdk";
+import type { CreateInvoice } from "@spaceinvoices/js-sdk";
 import { z } from "zod";
 import { customerSchema, lineItemSchema, transformItemsForApi } from "./shared";
 
@@ -35,9 +35,9 @@ export const invoiceFormSchema = z.object({
 export type InvoiceFormValues = z.infer<typeof invoiceFormSchema>;
 
 /** Convert form values to API request */
-export function toCreateInvoiceRequest(values: InvoiceFormValues): CreateInvoiceBody {
+export function toCreateInvoiceRequest(values: InvoiceFormValues): CreateInvoice {
   return {
     ...values,
     items: transformItemsForApi(values.items ?? []),
-  } as CreateInvoiceBody;
+  } as CreateInvoice;
 }

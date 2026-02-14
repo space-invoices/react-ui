@@ -44,7 +44,7 @@ export type DocumentExportFormProps = {
   t: TFunction;
   onSuccess?: (fileName: string) => void;
   onError?: (error: Error) => void;
-  onPdfExportStarted?: () => void;
+  onPdfExportStarted?: (jobId: string) => void;
   onLoadingChange?: (isLoading: boolean, toastId: string | number | null) => void;
 };
 
@@ -105,7 +105,8 @@ export function DocumentExportForm({
           throw new Error(error.error || `Export failed: ${response.statusText}`);
         }
 
-        onPdfExportStarted?.();
+        const data = await response.json();
+        onPdfExportStarted?.(data.id);
       } catch (error) {
         onError?.(error instanceof Error ? error : new Error("Unknown error"));
       } finally {
@@ -175,40 +176,39 @@ export function DocumentExportForm({
 
   return (
     <div className="space-y-6">
-      <p className="text-muted-foreground">{t("export-page.description")}</p>
+      {/* Document Type + Export Format */}
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="document-type">{t("export-page.document-type")}</Label>
+          <Select value={documentType} onValueChange={(v) => setDocumentType(v as DocumentType)}>
+            <SelectTrigger id="document-type">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="invoice">{t("export-page.types.invoice")}</SelectItem>
+              <SelectItem value="estimate">{t("export-page.types.estimate")}</SelectItem>
+              <SelectItem value="credit_note">{t("export-page.types.credit_note")}</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
 
-      {/* Document Type */}
-      <div className="space-y-2">
-        <Label htmlFor="document-type">{t("export-page.document-type")}</Label>
-        <Select value={documentType} onValueChange={(v) => setDocumentType(v as DocumentType)}>
-          <SelectTrigger id="document-type">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="invoice">{t("export-page.types.invoice")}</SelectItem>
-            <SelectItem value="estimate">{t("export-page.types.estimate")}</SelectItem>
-            <SelectItem value="credit_note">{t("export-page.types.credit_note")}</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="space-y-2">
+          <Label htmlFor="export-format">{t("export-page.format")}</Label>
+          <Select value={exportFormat} onValueChange={(v) => setExportFormat(v as ExportFormat)}>
+            <SelectTrigger id="export-format">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="xlsx">{t("export-page.formats.xlsx")}</SelectItem>
+              <SelectItem value="csv">{t("export-page.formats.csv")}</SelectItem>
+              <SelectItem value="pdf_zip">{t("export-page.formats.pdf_zip")}</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
-
-      {/* Export Format */}
-      <div className="space-y-2">
-        <Label htmlFor="export-format">{t("export-page.format")}</Label>
-        <Select value={exportFormat} onValueChange={(v) => setExportFormat(v as ExportFormat)}>
-          <SelectTrigger id="export-format">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="xlsx">{t("export-page.formats.xlsx")}</SelectItem>
-            <SelectItem value="csv">{t("export-page.formats.csv")}</SelectItem>
-            <SelectItem value="pdf_zip">{t("export-page.formats.pdf_zip")}</SelectItem>
-          </SelectContent>
-        </Select>
-        {exportFormat === "pdf_zip" && (
-          <p className="text-muted-foreground text-sm">{t("export-page.pdf-export-info")}</p>
-        )}
-      </div>
+      {exportFormat === "pdf_zip" && (
+        <p className="text-muted-foreground text-sm">{t("export-page.pdf-export-info")}</p>
+      )}
 
       {/* Date Range */}
       <div className="grid grid-cols-2 gap-4">

@@ -206,6 +206,7 @@
         "components/table/types.ts",
         "components/table/hooks/use-table-fetch.ts",
         "components/table/hooks/use-table-state.ts",
+        "components/table/selection-toolbar.tsx",
         "components/table/index.ts"
       ],
       "dependencies": ["ui/table", "ui/skeleton", "ui/button", "ui/input"],
@@ -530,6 +531,30 @@
       "dependencies": ["ui/card", "dashboard/loading-card"],
       "providers": ["sdk-provider"],
       "utils": ["translation"]
+    },
+    "recurring-invoices/create-recurring-invoice-form": {
+      "name": "Create Recurring Invoice Form",
+      "category": "feature",
+      "files": [
+        "components/recurring-invoices/create-recurring-invoice-form/create-recurring-invoice-form.tsx",
+        "components/recurring-invoices/recurring-invoices.hooks.ts"
+      ],
+      "dependencies": ["form/form-input", "ui/form", "ui/card", "customers/customer-combobox"],
+      "providers": ["sdk-provider", "entities-provider"],
+      "utils": ["translation", "hooks"],
+      "schemas": ["createRecurringInvoiceSchema"]
+    },
+    "recurring-invoices/recurring-invoice-list-table": {
+      "name": "Recurring Invoice List Table",
+      "category": "feature",
+      "files": [
+        "components/recurring-invoices/list/list-table.tsx",
+        "components/recurring-invoices/list/list-row-actions.tsx",
+        "components/recurring-invoices/recurring-invoices.hooks.ts"
+      ],
+      "dependencies": ["table/data-table", "ui/dropdown-menu", "ui/button", "ui/badge"],
+      "providers": ["sdk-provider"],
+      "utils": ["translation", "hooks"]
     }
   }
 }

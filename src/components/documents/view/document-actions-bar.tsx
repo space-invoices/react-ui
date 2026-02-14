@@ -1,5 +1,6 @@
 import type { AdvanceInvoice, CreditNote, Estimate, Invoice } from "@spaceinvoices/js-sdk";
 import {
+  Ban,
   Check,
   CheckCircle,
   ChevronDown,
@@ -11,6 +12,7 @@ import {
   Mail,
   Pencil,
   Plus,
+  RefreshCw,
   Share2,
   Trash2,
 } from "lucide-react";
@@ -88,6 +90,14 @@ interface DocumentActionsBarProps extends ComponentTranslationProps {
   onDeleteDraft?: () => void;
   /** Whether draft deletion is in progress */
   isDeletingDraft?: boolean;
+  /** Called when user wants to create a recurring schedule from this document */
+  onCreateRecurring?: () => void;
+  /** Custom label for recurring button (e.g. "Edit Recurring" when one already exists) */
+  recurringLabel?: string;
+  /** Called when user wants to void the document */
+  onVoid?: () => void;
+  /** Whether voiding is in progress */
+  isVoiding?: boolean;
 }
 
 function getApiLocale(uiLanguage: string): string {
@@ -128,6 +138,10 @@ export function DocumentActionsBar({
   isFinalizing,
   onDeleteDraft,
   isDeletingDraft,
+  onCreateRecurring,
+  recurringLabel,
+  onVoid,
+  isVoiding,
   ...i18nProps
 }: DocumentActionsBarProps) {
   const t = createTranslation({ translations, locale: currentLocale, ...i18nProps });
@@ -298,6 +312,14 @@ export function DocumentActionsBar({
         </Button>
       ) : null}
 
+      {/* Recurring */}
+      {onCreateRecurring && (
+        <Button variant="outline" size="sm" onClick={onCreateRecurring} className="cursor-pointer">
+          <RefreshCw className="mr-2 h-4 w-4" />
+          {recurringLabel || t("Recurring")}
+        </Button>
+      )}
+
       {/* Duplicate/Convert */}
       {onDuplicate && (
         <DropdownMenu>
@@ -316,6 +338,14 @@ export function DocumentActionsBar({
             ))}
           </DropdownMenuContent>
         </DropdownMenu>
+      )}
+
+      {/* Void */}
+      {!isDraft && onVoid && (
+        <Button variant="destructive" size="sm" onClick={onVoid} disabled={isVoiding} className="cursor-pointer">
+          {isVoiding ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Ban className="mr-2 h-4 w-4" />}
+          {isVoiding ? t("Voiding...") : t("Void")}
+        </Button>
       )}
 
       {/* Draft Actions */}

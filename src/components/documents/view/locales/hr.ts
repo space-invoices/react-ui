@@ -13,6 +13,7 @@ export default {
   "Unshare failed": "Uklanjanje dijeljenja nije uspjelo",
   "Download failed": "Preuzimanje nije uspjelo",
   "e-SLOG download failed": "Preuzimanje e-SLOG nije uspjelo",
+  Recurring: "Ponavljajuće",
   Duplicate: "Dupliciraj",
   "Duplicate invoice": "Dupliciraj račun",
   "Duplicate estimate": "Dupliciraj ponudu",
@@ -80,6 +81,10 @@ export default {
   "Draft deleted": "Nacrt obrisan",
   "Delete draft failed": "Brisanje nacrta nije uspjelo",
   Draft: "Nacrt",
+
+  // Void
+  Void: "Storniraj",
+  "Voiding...": "Storniranje...",
 
   // Activity list
   Activity: "Aktivnost",

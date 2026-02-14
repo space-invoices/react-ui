@@ -38,4 +38,7 @@ export default {
   "No results found": "No se encontraron notas de credito",
   "Try adjusting your search criteria": "Intente ajustar sus criterios de busqueda",
   "Clear search": "Limpiar busqueda",
+  selected: "seleccionados",
+  "Export PDFs": "Exportar PDFs",
+  "Deselect all": "Deseleccionar todo",
 } as const;

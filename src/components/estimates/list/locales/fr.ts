@@ -29,4 +29,7 @@ export default {
   "No results found": "Aucun devis trouvé",
   "Try adjusting your search criteria": "Essayez d'ajuster vos critères de recherche",
   "Clear search": "Effacer la recherche",
+  selected: "sélectionnés",
+  "Export PDFs": "Exporter les PDF",
+  "Deselect all": "Tout désélectionner",
 } as const;

@@ -6,6 +6,7 @@ import type { Resolver } from "react-hook-form";
 import { useForm, useWatch } from "react-hook-form";
 import type { z } from "zod";
 import { Form } from "@/ui/components/ui/form";
+import { Skeleton } from "@/ui/components/ui/skeleton";
 import { createCreditNoteSchema } from "@/ui/generated/schemas";
 import { useNextDocumentNumber } from "@/ui/hooks/use-next-document-number";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
@@ -24,7 +25,8 @@ import { MarkAsPaidSection } from "../../documents/create/mark-as-paid-section";
 import { prepareDocumentSubmission } from "../../documents/create/prepare-document-submission";
 import { useDocumentCustomerForm } from "../../documents/create/use-document-customer-form";
 import type { DocumentTypes } from "../../documents/types";
-import { useCreateCreditNote } from "../credit-notes.hooks";
+import { useFinaPremises, useFinaSettings } from "../../entities/fina-settings-form/fina-settings.hooks";
+import { getLastUsedFinaCombo, setLastUsedFinaCombo, useCreateCreditNote } from "../credit-notes.hooks";
 import de from "./locales/de";
 import es from "./locales/es";
 import fr from "./locales/fr";
@@ -88,10 +90,22 @@ export default function CreateCreditNoteForm({
   const { activeEntity } = useEntities();
   const queryClient = useQueryClient();
 
-  // Fetch next credit note number
-  const { data: nextNumberData } = useNextDocumentNumber(entityId, "credit_note", {
-    enabled: !!entityId,
+  // ============================================================================
+  // FINA Settings & Premises
+  // ============================================================================
+  const { data: finaSettings, isLoading: isFinaSettingsLoading } = useFinaSettings(entityId);
+  const { data: finaPremises, isLoading: isFinaPremisesLoading } = useFinaPremises(entityId, {
+    enabled: finaSettings?.enabled === true,
   });
+
+  const isFinaLoading = isFinaSettingsLoading || (finaSettings?.enabled && isFinaPremisesLoading);
+  const isFinaEnabled = finaSettings?.enabled === true;
+  const activeFinaPremises = useMemo(() => finaPremises?.filter((p: any) => p.is_active) || [], [finaPremises]);
+  const hasFinaPremises = activeFinaPremises.length > 0;
+
+  // FINA premise/device selection state (no skip - all FINA credit notes must be fiscalized)
+  const [selectedFinaPremiseId, setSelectedFinaPremiseId] = useState<string | undefined>();
+  const [selectedFinaDeviceId, setSelectedFinaDeviceId] = useState<string | undefined>();
 
   // UI-only state (not part of API schema)
   const [markAsPaid, setMarkAsPaid] = useState(false);
@@ -107,6 +121,68 @@ export default function CreateCreditNoteForm({
     }, {} as PriceModesMap);
   }, [initialValues?.items]);
   const priceModesRef = useRef<PriceModesMap>(initialPriceModes);
+
+  // Get active FINA devices for selected premise
+  const activeFinaDevices = useMemo(() => {
+    if (!selectedFinaPremiseId) return [];
+    const premise = activeFinaPremises.find((p: any) => p.premise_id === selectedFinaPremiseId);
+    return premise?.Devices?.filter((d: any) => d.is_active) || [];
+  }, [activeFinaPremises, selectedFinaPremiseId]);
+
+  // Initialize FINA selection from localStorage or first active combo
+  useEffect(() => {
+    if (!isFinaEnabled || !hasFinaPremises || selectedFinaPremiseId) return;
+
+    const lastUsed = getLastUsedFinaCombo(entityId);
+    if (lastUsed) {
+      const premise = activeFinaPremises.find((p: any) => p.premise_id === lastUsed.premise_id);
+      const device = premise?.Devices?.find((d: any) => d.device_id === lastUsed.device_id && d.is_active);
+      if (premise && device) {
+        setSelectedFinaPremiseId(lastUsed.premise_id);
+        setSelectedFinaDeviceId(lastUsed.device_id);
+        return;
+      }
+    }
+
+    const firstPremise = activeFinaPremises[0];
+    const firstDevice = firstPremise?.Devices?.find((d: any) => d.is_active);
+    if (firstPremise && firstDevice) {
+      setSelectedFinaPremiseId(firstPremise.premise_id);
+      setSelectedFinaDeviceId(firstDevice.device_id);
+    }
+  }, [isFinaEnabled, hasFinaPremises, activeFinaPremises, entityId, selectedFinaPremiseId]);
+
+  // When FINA premise changes, select first active device
+  useEffect(() => {
+    if (!selectedFinaPremiseId) return;
+    const premise = activeFinaPremises.find((p: any) => p.premise_id === selectedFinaPremiseId);
+    const firstDevice = premise?.Devices?.find((d: any) => d.is_active);
+    if (firstDevice && selectedFinaDeviceId !== firstDevice.device_id) {
+      const currentDeviceInPremise = premise?.Devices?.find(
+        (d: any) => d.device_id === selectedFinaDeviceId && d.is_active,
+      );
+      if (!currentDeviceInPremise) {
+        setSelectedFinaDeviceId(firstDevice.device_id);
+      }
+    }
+  }, [selectedFinaPremiseId, activeFinaPremises, selectedFinaDeviceId]);
+
+  // FINA selection ready and active checks
+  const isFinaSelectionReady =
+    !isFinaEnabled || !hasFinaPremises || (!!selectedFinaPremiseId && !!selectedFinaDeviceId);
+  const isFinaActive = isFinaEnabled && hasFinaPremises && selectedFinaPremiseId && selectedFinaDeviceId;
+
+  // ============================================================================
+  // Next Credit Note Number Preview
+  // ============================================================================
+  const { data: nextNumberData, isLoading: isNextNumberLoading } = useNextDocumentNumber(entityId, "credit_note", {
+    enabled: !!entityId && !isFinaLoading && isFinaSelectionReady,
+  });
+
+  // Overall loading state
+  const isFormDataLoading = isFinaLoading || !isFinaSelectionReady || isNextNumberLoading;
+
+  // No header action for credit notes - FINA can't be skipped
 
   // Get default payment terms from entity settings
   const defaultPaymentTerms = (activeEntity?.settings as any)?.default_credit_note_payment_terms || "";
@@ -169,6 +245,13 @@ export default function CreateCreditNoteForm({
   const { mutate: createCreditNote, isPending } = useCreateCreditNote({
     entityId,
     onSuccess: (data) => {
+      // Save FINA combo to localStorage on successful creation
+      if (isFinaActive && selectedFinaPremiseId && selectedFinaDeviceId) {
+        setLastUsedFinaCombo(entityId, {
+          premise_id: selectedFinaPremiseId,
+          device_id: selectedFinaDeviceId,
+        });
+      }
       // Invalidate customers cache when a customer was created/linked
       if (data.customer_id) {
         queryClient.invalidateQueries({ queryKey: [CUSTOMERS_CACHE_KEY] });
@@ -181,6 +264,12 @@ export default function CreateCreditNoteForm({
   // Shared submit logic for both regular save and save as draft
   const submitCreditNote = useCallback(
     (values: CreateCreditNoteFormValues, isDraft: boolean) => {
+      // Build FINA options (skip for drafts; FINA can't be skipped)
+      const finaOptions =
+        !isDraft && isFinaEnabled && selectedFinaPremiseId && selectedFinaDeviceId
+          ? { premise_id: selectedFinaPremiseId, device_id: selectedFinaDeviceId, payment_type: paymentTypes[0] }
+          : undefined;
+
       const payload = prepareDocumentSubmission(values, {
         originalCustomer,
         wasCustomerFormShown: showCustomerForm,
@@ -190,9 +279,24 @@ export default function CreateCreditNoteForm({
         priceModes: priceModesRef.current,
         isDraft,
       });
+
+      // Add FINA data to payload
+      if (finaOptions) {
+        (payload as any).fina = finaOptions;
+      }
+
       createCreditNote(payload as CreateCreditNoteRequest);
     },
-    [createCreditNote, markAsPaid, originalCustomer, paymentTypes, showCustomerForm],
+    [
+      createCreditNote,
+      isFinaEnabled,
+      markAsPaid,
+      originalCustomer,
+      paymentTypes,
+      selectedFinaDeviceId,
+      selectedFinaPremiseId,
+      showCustomerForm,
+    ],
   );
 
   // Handle save as draft
@@ -276,6 +380,56 @@ export default function CreateCreditNoteForm({
     submitCreditNote(values, false);
   };
 
+  // Show skeleton while loading
+  if (isFormDataLoading) {
+    return (
+      <div className="space-y-8">
+        <div className="flex w-full flex-col md:flex-row md:gap-6">
+          <div className="flex-1 space-y-4">
+            <Skeleton className="h-7 w-24" />
+            <Skeleton className="h-10 w-full" />
+          </div>
+          <div className="flex-1 space-y-4">
+            <Skeleton className="h-7 w-20" />
+            <Skeleton className="h-5 w-16" />
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-5 w-12" />
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-5 w-16" />
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-5 w-20" />
+            <Skeleton className="h-10 w-full" />
+            <div className="space-y-3 rounded-md border p-4">
+              <div className="flex items-center gap-3">
+                <Skeleton className="h-4 w-4 rounded" />
+                <Skeleton className="h-5 w-28" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <Skeleton className="h-7 w-16" />
+          <div className="space-y-4 rounded-lg border p-4">
+            <Skeleton className="h-10 w-full" />
+            <div className="flex gap-4">
+              <Skeleton className="h-10 w-24" />
+              <Skeleton className="h-10 flex-1" />
+            </div>
+          </div>
+          <Skeleton className="h-9 w-24" />
+        </div>
+
+        <div className="space-y-2">
+          <Skeleton className="h-5 w-12" />
+          <Skeleton className="h-24 w-full" />
+        </div>
+
+        <Skeleton className="h-10 w-24" />
+      </div>
+    );
+  }
+
   return (
     <Form {...form}>
       <form id="create-credit-note-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
@@ -291,7 +445,23 @@ export default function CreateCreditNoteForm({
             initialCustomerName={initialCustomerName}
             t={t}
           />
-          <DocumentDetailsSection control={form.control} documentType={_type} t={t}>
+          <DocumentDetailsSection
+            control={form.control}
+            documentType={_type}
+            t={t}
+            finaInline={
+              isFinaEnabled && hasFinaPremises
+                ? {
+                    premises: activeFinaPremises.map((p: any) => ({ id: p.id, premise_id: p.premise_id })),
+                    devices: activeFinaDevices.map((d: any) => ({ id: d.id, device_id: d.device_id })),
+                    selectedPremise: selectedFinaPremiseId,
+                    selectedDevice: selectedFinaDeviceId,
+                    onPremiseChange: setSelectedFinaPremiseId,
+                    onDeviceChange: setSelectedFinaDeviceId,
+                  }
+                : undefined
+            }
+          >
             {/* Credit note specific: Mark as paid section (UI-only state, not in form schema) */}
             <MarkAsPaidSection
               checked={markAsPaid}
@@ -299,6 +469,7 @@ export default function CreateCreditNoteForm({
               paymentTypes={paymentTypes}
               onPaymentTypesChange={setPaymentTypes}
               t={t}
+              alwaysShowPaymentType={!!isFinaActive}
             />
           </DocumentDetailsSection>
         </div>

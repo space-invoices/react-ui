@@ -25,4 +25,6 @@ export default {
   Card: "Karta",
   Check: "Czek",
   Other: "Inne",
+  Premise: "Lokal",
+  Device: "Urządzenie",
 } as const;

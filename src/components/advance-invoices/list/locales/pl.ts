@@ -38,4 +38,7 @@ export default {
   "No results found": "Nie znaleziono faktur zaliczkowych",
   "Try adjusting your search criteria": "Sprobuj dostosowac kryteria wyszukiwania",
   "Clear search": "Wyczysc wyszukiwanie",
+  selected: "wybranych",
+  "Export PDFs": "Eksportuj PDF-y",
+  "Deselect all": "Odznacz wszystko",
 } as const;

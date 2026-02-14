@@ -13,6 +13,7 @@ export default {
   "Unshare failed": "Odstranitev deljenja ni uspela",
   "Download failed": "Prenos ni uspel",
   "e-SLOG download failed": "Prenos e-SLOG ni uspel",
+  Recurring: "Ponavljajoče",
   Duplicate: "Podvoji",
   "Duplicate invoice": "Podvoji račun",
   "Duplicate estimate": "Podvoji predračun",
@@ -81,6 +82,10 @@ export default {
   "Draft deleted": "Osnutek je bil izbrisan",
   "Delete draft failed": "Brisanje osnutka ni uspelo",
   Draft: "Osnutek",
+
+  // Void
+  Void: "Storniraj",
+  "Voiding...": "Storniranje...",
 
   // Activity list
   Activity: "Aktivnost",

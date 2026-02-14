@@ -65,4 +65,11 @@ export default {
   "Net price": "Preco liquido",
   "Gross price (tax included)": "Preco bruto (com imposto)",
   "Net price (before tax)": "Preco liquido (sem imposto)",
+  // FINA fiscalization
+  "Fiscally verify": "Verificar fiscalmente",
+  "Click to skip fiscalization for this credit note": "Clique para ignorar a fiscalizacao para esta nota de credito",
+  "Click to enable fiscalization": "Clique para ativar a fiscalizacao",
+  "Cannot skip fiscalization for cash payments": "Nao e possivel ignorar a fiscalizacao para pagamentos em dinheiro",
+  Premise: "Estabelecimento",
+  Device: "Dispositivo",
 } as const;

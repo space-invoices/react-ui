@@ -74,7 +74,6 @@ const entitySettingsFormSchema = patchEntitySchema
   .omit({
     settings: true, // Remove nested settings - we'll flatten them
     metadata: true, // Not used in this form
-    environment: true, // Not editable here
   })
   .extend({
     // Flattened settings fields for easier form handling
@@ -85,8 +84,8 @@ const entitySettingsFormSchema = patchEntitySchema
         message: "Must be a valid hex color (e.g., #5c6ac4)",
       })
       .optional(),
-    has_logo: z.union([z.boolean(), z.null()]).optional(),
-    has_signature: z.union([z.boolean(), z.null()]).optional(),
+    has_logo: z.boolean().nullable().optional(),
+    has_signature: z.boolean().nullable().optional(),
     email: z
       .union([z.string(), z.null()])
       .refine((val) => !val || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val), {

@@ -1,8 +1,9 @@
 import type { Invoice } from "@spaceinvoices/js-sdk";
-import { useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { DataTable } from "@/ui/components/table/data-table";
 import { FormattedDate } from "@/ui/components/table/date-cell";
 import { useTableFetch } from "@/ui/components/table/hooks/use-table-fetch";
+import { SelectionToolbar } from "@/ui/components/table/selection-toolbar";
 import type {
   Column,
   FilterConfig,
@@ -44,16 +45,21 @@ type InvoiceListTableProps = {
   namespace?: string;
   locale?: string;
   entityId?: string;
+  onView?: (invoice: Invoice) => void;
   onAddPayment?: (invoice: Invoice) => void;
   onDuplicate?: (invoice: Invoice) => void;
   onDownloadStart?: () => void;
   onDownloadSuccess?: (fileName: string) => void;
   onDownloadError?: (error: string) => void;
+  onExportSelected?: (documentIds: string[]) => void;
+  onVoid?: (invoice: Invoice) => void;
+  isVoiding?: boolean;
 } & ListTableProps<Invoice>;
 
 export default function InvoiceListTable({
   queryParams,
   onRowClick,
+  onView,
   onAddPayment,
   onDuplicate,
   onChangeParams,
@@ -62,6 +68,9 @@ export default function InvoiceListTable({
   onDownloadStart,
   onDownloadSuccess,
   onDownloadError,
+  onExportSelected,
+  onVoid,
+  isVoiding,
   ...i18nProps
 }: InvoiceListTableProps) {
   const t = createTranslation({
@@ -70,6 +79,7 @@ export default function InvoiceListTable({
   });
 
   const { sdk } = useSDK();
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const handleFetch = useTableFetch(async (params: TableQueryParams) => {
     if (!sdk) throw new Error("SDK not initialized");
@@ -97,6 +107,28 @@ export default function InvoiceListTable({
       statusFilter: true,
     }),
     [t],
+  );
+
+  const handleExportPdfs = useCallback(() => {
+    if (selectedIds.size > 0 && onExportSelected) {
+      onExportSelected(Array.from(selectedIds));
+    }
+  }, [selectedIds, onExportSelected]);
+
+  const handleDeselectAll = useCallback(() => {
+    setSelectedIds(new Set());
+  }, []);
+
+  const selectionToolbar = useCallback(
+    (count: number) => (
+      <SelectionToolbar
+        selectedCount={count}
+        onExportPdfs={onExportSelected ? handleExportPdfs : undefined}
+        onDeselectAll={handleDeselectAll}
+        t={t}
+      />
+    ),
+    [handleExportPdfs, handleDeselectAll, onExportSelected, t],
   );
 
   const columns: Column<Invoice>[] = useMemo(
@@ -149,18 +181,33 @@ export default function InvoiceListTable({
         cell: (invoice) => (
           <InvoiceListRowActions
             invoice={invoice}
+            onView={onView}
             onAddPayment={onAddPayment}
             onDuplicate={onDuplicate}
             onDownloadStart={onDownloadStart}
             onDownloadSuccess={onDownloadSuccess}
             onDownloadError={onDownloadError}
+            onVoid={onVoid}
+            isVoiding={isVoiding}
             t={t}
             locale={i18nProps.locale}
           />
         ),
       },
     ],
-    [t, onRowClick, onAddPayment, onDuplicate, onDownloadStart, onDownloadSuccess, onDownloadError, i18nProps.locale],
+    [
+      t,
+      onRowClick,
+      onView,
+      onAddPayment,
+      onDuplicate,
+      onDownloadStart,
+      onDownloadSuccess,
+      onDownloadError,
+      onVoid,
+      isVoiding,
+      i18nProps.locale,
+    ],
   );
 
   return (
@@ -177,6 +224,10 @@ export default function InvoiceListTable({
       filterConfig={filterConfig}
       t={t}
       locale={i18nProps.locale}
+      selectable={!!onExportSelected}
+      selectedIds={selectedIds}
+      onSelectionChange={setSelectedIds}
+      selectionToolbar={selectionToolbar}
     />
   );
 }

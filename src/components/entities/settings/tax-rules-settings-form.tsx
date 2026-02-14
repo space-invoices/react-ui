@@ -2,9 +2,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import type {
   Entity,
   EntitySettings,
-  EntitySettingsTaxClauseDefaultsAnyOf,
+  EntitySettingsTaxClauseDefaults,
   GetEntities200DataItem,
-  TaxRulesAnyOf,
+  TaxRules,
 } from "@spaceinvoices/js-sdk";
 import { ChevronDown, Globe, MessageSquareText } from "lucide-react";
 import type { ReactNode } from "react";
@@ -81,9 +81,9 @@ export function TaxRulesSettingsForm({
   const showTaxClauseDefaults = entity.country_rules?.features?.includes("tax_clause_defaults") ?? false;
 
   const currentSettings = (entity.settings as EntitySettings) || {};
-  const currentTaxRules = (currentSettings.tax_rules as TaxRulesAnyOf | null)?.eu || {};
+  const currentTaxRules = (currentSettings.tax_rules as TaxRules | null)?.eu || {};
   const currentTaxClauseDefaults =
-    (currentSettings.tax_clause_defaults as EntitySettingsTaxClauseDefaultsAnyOf | null) || {};
+    (currentSettings.tax_clause_defaults as EntitySettingsTaxClauseDefaults | null) || {};
 
   const form = useForm<TaxRulesSettingsSchema>({
     resolver: zodResolver(taxRulesSettingsSchema),

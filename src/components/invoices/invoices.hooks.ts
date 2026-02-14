@@ -1,4 +1,4 @@
-import type { CreateInvoice201, CreateInvoiceBody } from "@spaceinvoices/js-sdk";
+import type { CreateInvoice, Invoice } from "@spaceinvoices/js-sdk";
 import { useQuery } from "@tanstack/react-query";
 
 import { createResourceHooks } from "@/ui/hooks/create-resource-hooks";
@@ -13,7 +13,7 @@ const {
   useCreateResource: useCreateInvoice,
   useUpdateResource: useUpdateInvoice,
   useDeleteResource: useDeleteInvoice,
-} = createResourceHooks<CreateInvoice201, CreateInvoiceBody>("invoices", INVOICES_CACHE_KEY);
+} = createResourceHooks<Invoice, CreateInvoice>("invoices", INVOICES_CACHE_KEY);
 
 export { useCreateInvoice, useUpdateInvoice, useDeleteInvoice };
 
@@ -104,6 +104,36 @@ export function setLastUsedFursCombo(entityId: string, combo: FursCombo): void {
   if (typeof window === "undefined") return;
   try {
     localStorage.setItem(`${FURS_LAST_USED_KEY}:${entityId}`, JSON.stringify(combo));
+  } catch {
+    // Ignore localStorage errors (quota exceeded, etc.)
+  }
+}
+
+// ============================================================================
+// FINA Last-Used Combo (localStorage)
+// ============================================================================
+
+const FINA_LAST_USED_KEY = "hr:fina:last-used";
+
+export type FinaCombo = {
+  premise_id: string;
+  device_id: string;
+};
+
+export function getLastUsedFinaCombo(entityId: string): FinaCombo | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const stored = localStorage.getItem(`${FINA_LAST_USED_KEY}:${entityId}`);
+    return stored ? JSON.parse(stored) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function setLastUsedFinaCombo(entityId: string, combo: FinaCombo): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(`${FINA_LAST_USED_KEY}:${entityId}`, JSON.stringify(combo));
   } catch {
     // Ignore localStorage errors (quota exceeded, etc.)
   }

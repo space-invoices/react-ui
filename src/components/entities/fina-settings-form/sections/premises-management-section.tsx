@@ -1,4 +1,4 @@
-import { Building2, Cpu, MapPin, MoreVertical, Truck } from "lucide-react";
+import { Building2, Cpu, Info, MoreVertical, Trash2 } from "lucide-react";
 import { type FC, type ReactNode, useState } from "react";
 import type { FinaSectionType } from "../fina-settings-form";
 
@@ -7,21 +7,6 @@ type FinaBusinessPremise = {
   entity_id: string;
   premise_id: string;
   type: string;
-  real_estate?: {
-    cadastral_municipality?: string;
-    land_registry_number?: string;
-    building_number?: string;
-    sub_building_number?: string;
-    street?: string;
-    house_number?: string;
-    house_number_additional?: string | null;
-    settlement?: string;
-    city?: string;
-    postal_code?: string;
-  };
-  movable_premise?: {
-    type?: string;
-  };
   is_active: boolean;
   registered_at: Date | string | null;
   closed_at: Date | string | null;
@@ -53,7 +38,7 @@ import {
 import { Input } from "@/ui/components/ui/input";
 import { Label } from "@/ui/components/ui/label";
 import { cn } from "@/ui/lib/utils";
-import { useCloseFinaPremise, useRegisterFinaElectronicDevice } from "../fina-settings.hooks";
+import { useDeleteFinaDevice, useDeleteFinaPremise, useRegisterFinaElectronicDevice } from "../fina-settings.hooks";
 import { RegisterFinaPremiseDialog } from "./register-premise-dialog";
 
 interface PremisesManagementSectionProps {
@@ -76,12 +61,20 @@ export const PremisesManagementSection: FC<PremisesManagementSectionProps> = ({
   const wrap = (section: FinaSectionType, content: ReactNode) =>
     wrapSection ? wrapSection(section, content) : content;
   const [registerDialogOpen, setRegisterDialogOpen] = useState(false);
-  const [registerType, setRegisterType] = useState<"real-estate" | "movable">("real-estate");
   const [addDeviceDialogOpen, setAddDeviceDialogOpen] = useState(false);
   const [selectedPremiseId, setSelectedPremiseId] = useState<string | null>(null);
   const [deviceId, setDeviceId] = useState("");
 
-  const { mutate: closePremise } = useCloseFinaPremise({
+  const { mutate: deletePremise } = useDeleteFinaPremise({
+    onSuccess: () => {
+      onSuccess?.();
+    },
+    onError: (error) => {
+      onError?.(error);
+    },
+  });
+
+  const { mutate: deleteDevice } = useDeleteFinaDevice({
     onSuccess: () => {
       onSuccess?.();
     },
@@ -102,18 +95,22 @@ export const PremisesManagementSection: FC<PremisesManagementSectionProps> = ({
     },
   });
 
-  const handleClosePremise = (premiseId: string) => {
-    if (confirm(t("Are you sure you want to close this premise? This action cannot be undone."))) {
-      closePremise({
+  const handleDeletePremise = (premiseId: string) => {
+    if (confirm(t("Are you sure you want to delete this premise? This will also deactivate all its devices."))) {
+      deletePremise({
         entityId: entity.id,
         premiseId,
       });
     }
   };
 
-  const handleAddPremise = (type: "real-estate" | "movable") => {
-    setRegisterType(type);
-    setRegisterDialogOpen(true);
+  const handleDeleteDevice = (deviceId: string) => {
+    if (confirm(t("Are you sure you want to delete this device?"))) {
+      deleteDevice({
+        entityId: entity.id,
+        deviceId,
+      });
+    }
   };
 
   const handleAddDevice = (premiseId: string) => {
@@ -140,22 +137,24 @@ export const PremisesManagementSection: FC<PremisesManagementSectionProps> = ({
         </div>
         <div>
           <h3 className="font-semibold text-lg">{t("Business Premises")}</h3>
-          <p className="text-muted-foreground text-sm">{t("Register your business premises for FINA")}</p>
+          <p className="text-muted-foreground text-sm">{t("Manage your business premises for FINA")}</p>
         </div>
       </div>
 
       <div className="space-y-6">
-        {/* Add Premise Buttons */}
-        <div className="flex gap-3">
-          <Button onClick={() => handleAddPremise("real-estate")} variant="default" className="flex-1 cursor-pointer">
-            <Building2 className="mr-2 h-4 w-4" />
-            {t("Add Real Estate")}
-          </Button>
-          <Button onClick={() => handleAddPremise("movable")} variant="outline" className="flex-1 cursor-pointer">
-            <Truck className="mr-2 h-4 w-4" />
-            {t("Add Movable")}
-          </Button>
-        </div>
+        {/* Info banner */}
+        <Alert>
+          <Info className="h-4 w-4" />
+          <AlertDescription>
+            {t("Register your premises on ePorezna first, then add the premise ID here.")}
+          </AlertDescription>
+        </Alert>
+
+        {/* Add Premise Button */}
+        <Button onClick={() => setRegisterDialogOpen(true)} variant="default" className="cursor-pointer">
+          <Building2 className="mr-2 h-4 w-4" />
+          {t("Add Premise")}
+        </Button>
 
         {/* Premises List */}
         {premises.length === 0 ? (
@@ -177,10 +176,7 @@ export const PremisesManagementSection: FC<PremisesManagementSectionProps> = ({
                       <div className="flex items-center gap-2">
                         <CardTitle className="text-base">{premise.premise_id}</CardTitle>
                         <Badge variant={premise.is_active ? "default" : "secondary"}>
-                          {premise.is_active ? t("Active") : t("Closed")}
-                        </Badge>
-                        <Badge variant="outline">
-                          {premise.type === "real_estate" ? t("Real Estate") : t("Movable")}
+                          {premise.is_active ? t("Active") : t("Inactive")}
                         </Badge>
                       </div>
                       <CardDescription />
@@ -198,10 +194,11 @@ export const PremisesManagementSection: FC<PremisesManagementSectionProps> = ({
                             {t("Add Electronic Device")}
                           </DropdownMenuItem>
                           <DropdownMenuItem
-                            onClick={() => handleClosePremise(premise.id)}
+                            onClick={() => handleDeletePremise(premise.id)}
                             className="cursor-pointer text-destructive"
                           >
-                            {t("Close Premise")}
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            {t("Delete Premise")}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -210,53 +207,32 @@ export const PremisesManagementSection: FC<PremisesManagementSectionProps> = ({
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    {/* Real Estate Info */}
-                    {premise.real_estate && (
-                      <div className="flex items-start gap-2 text-sm">
-                        <MapPin className="mt-0.5 h-4 w-4 text-muted-foreground" />
-                        <div>
-                          <p className="font-medium">
-                            {premise.real_estate.street} {premise.real_estate.house_number}
-                            {premise.real_estate.house_number_additional &&
-                              ` ${premise.real_estate.house_number_additional}`}
-                          </p>
-                          <p className="text-muted-foreground">
-                            {premise.real_estate.postal_code} {premise.real_estate.city}
-                          </p>
-                          {premise.real_estate.cadastral_municipality && (
-                            <p className="text-muted-foreground text-xs">
-                              {t("Cadastral Municipality")}: {premise.real_estate.cadastral_municipality}
-                              {premise.real_estate.land_registry_number &&
-                                ` / ${t("Land Registry Number")}: ${premise.real_estate.land_registry_number}`}
-                              {premise.real_estate.building_number &&
-                                ` / ${t("Building Number")}: ${premise.real_estate.building_number}`}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Movable Info */}
-                    {premise.movable_premise && (
-                      <div className="flex items-start gap-2 text-sm">
-                        <Truck className="mt-0.5 h-4 w-4 text-muted-foreground" />
-                        <div>
-                          <p className="font-medium">
-                            {premise.movable_premise.type === "vehicle" && t("Vehicle")}
-                            {premise.movable_premise.type === "market_stall" && t("Market Stall")}
-                            {premise.movable_premise.type === "other" && t("Other")}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-
                     {/* Devices Count or Warning */}
                     {premise.Devices && premise.Devices.length > 0 ? (
-                      <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                        <Badge variant="secondary" className="text-xs">
-                          {premise.Devices.length} {premise.Devices.length === 1 ? t("Device") : t("Devices")}
-                        </Badge>
-                        <span className="text-xs">{premise.Devices.map((d) => d.device_id || "?").join(", ")}</span>
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                          <Badge variant="secondary" className="text-xs">
+                            {premise.Devices.length} {premise.Devices.length === 1 ? t("Device") : t("Devices")}
+                          </Badge>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {premise.Devices.map((d) => (
+                            <div key={d.id} className="flex items-center gap-1 rounded border px-2 py-1 text-xs">
+                              <Cpu className="h-3 w-3 text-muted-foreground" />
+                              <span>{d.device_id || "?"}</span>
+                              {premise.is_active && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteDevice(d.id)}
+                                  className="ml-1 cursor-pointer text-muted-foreground hover:text-destructive"
+                                  title={t("Delete Device")}
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </button>
+                              )}
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     ) : (
                       <Alert>
@@ -300,7 +276,6 @@ export const PremisesManagementSection: FC<PremisesManagementSectionProps> = ({
           open={registerDialogOpen}
           onOpenChange={setRegisterDialogOpen}
           entity={entity}
-          type={registerType}
           t={t}
           onSuccess={() => {
             setRegisterDialogOpen(false);

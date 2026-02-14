@@ -25,9 +25,16 @@ import { DocumentRecipientSection } from "../../documents/create/document-recipi
 import { MarkAsPaidSection } from "../../documents/create/mark-as-paid-section";
 import { useDocumentCustomerForm } from "../../documents/create/use-document-customer-form";
 import type { DocumentTypes } from "../../documents/types";
+import { useFinaPremises, useFinaSettings } from "../../entities/fina-settings-form/fina-settings.hooks";
 import { useFursPremises, useFursSettings } from "../../entities/furs-settings-form/furs-settings.hooks";
 import { getEntityErrors, getFormFieldErrors, validateEslogForm } from "../../invoices/create/eslog-validation";
-import { getLastUsedFursCombo, setLastUsedFursCombo, useCreateAdvanceInvoice } from "../advance-invoices.hooks";
+import {
+  getLastUsedFinaCombo,
+  getLastUsedFursCombo,
+  setLastUsedFinaCombo,
+  setLastUsedFursCombo,
+  useCreateAdvanceInvoice,
+} from "../advance-invoices.hooks";
 import de from "./locales/de";
 import es from "./locales/es";
 import fr from "./locales/fr";
@@ -117,6 +124,23 @@ export default function CreateAdvanceInvoiceForm({
   const [selectedPremiseName, setSelectedPremiseName] = useState<string | undefined>();
   const [selectedDeviceName, setSelectedDeviceName] = useState<string | undefined>();
   const [skipFiscalization, setSkipFiscalization] = useState(false);
+
+  // ============================================================================
+  // FINA Settings & Premises
+  // ============================================================================
+  const { data: finaSettings, isLoading: isFinaSettingsLoading } = useFinaSettings(entityId);
+  const { data: finaPremises, isLoading: isFinaPremisesLoading } = useFinaPremises(entityId, {
+    enabled: finaSettings?.enabled === true,
+  });
+
+  const isFinaLoading = isFinaSettingsLoading || (finaSettings?.enabled && isFinaPremisesLoading);
+  const isFinaEnabled = finaSettings?.enabled === true;
+  const activeFinaPremises = useMemo(() => finaPremises?.filter((p: any) => p.is_active) || [], [finaPremises]);
+  const hasFinaPremises = activeFinaPremises.length > 0;
+
+  // FINA premise/device selection state (no skip - all FINA invoices must be fiscalized)
+  const [selectedFinaPremiseId, setSelectedFinaPremiseId] = useState<string | undefined>();
+  const [selectedFinaDeviceId, setSelectedFinaDeviceId] = useState<string | undefined>();
 
   // UI-only state (not part of API schema)
   const [markAsPaid, setMarkAsPaid] = useState(false);
@@ -209,6 +233,51 @@ export default function CreateAdvanceInvoiceForm({
     }
   }, [selectedPremiseName, activePremises, selectedDeviceName]);
 
+  // Get active FINA devices for selected premise
+  const activeFinaDevices = useMemo(() => {
+    if (!selectedFinaPremiseId) return [];
+    const premise = activeFinaPremises.find((p: any) => p.premise_id === selectedFinaPremiseId);
+    return premise?.Devices?.filter((d: any) => d.is_active) || [];
+  }, [activeFinaPremises, selectedFinaPremiseId]);
+
+  // Initialize FINA selection from localStorage or first active combo
+  useEffect(() => {
+    if (!isFinaEnabled || !hasFinaPremises || selectedFinaPremiseId) return;
+
+    const lastUsed = getLastUsedFinaCombo(entityId);
+    if (lastUsed) {
+      const premise = activeFinaPremises.find((p: any) => p.premise_id === lastUsed.premise_id);
+      const device = premise?.Devices?.find((d: any) => d.device_id === lastUsed.device_id && d.is_active);
+      if (premise && device) {
+        setSelectedFinaPremiseId(lastUsed.premise_id);
+        setSelectedFinaDeviceId(lastUsed.device_id);
+        return;
+      }
+    }
+
+    const firstPremise = activeFinaPremises[0];
+    const firstDevice = firstPremise?.Devices?.find((d: any) => d.is_active);
+    if (firstPremise && firstDevice) {
+      setSelectedFinaPremiseId(firstPremise.premise_id);
+      setSelectedFinaDeviceId(firstDevice.device_id);
+    }
+  }, [isFinaEnabled, hasFinaPremises, activeFinaPremises, entityId, selectedFinaPremiseId]);
+
+  // When FINA premise changes, select first active device
+  useEffect(() => {
+    if (!selectedFinaPremiseId) return;
+    const premise = activeFinaPremises.find((p: any) => p.premise_id === selectedFinaPremiseId);
+    const firstDevice = premise?.Devices?.find((d: any) => d.is_active);
+    if (firstDevice && selectedFinaDeviceId !== firstDevice.device_id) {
+      const currentDeviceInPremise = premise?.Devices?.find(
+        (d: any) => d.device_id === selectedFinaDeviceId && d.is_active,
+      );
+      if (!currentDeviceInPremise) {
+        setSelectedFinaDeviceId(firstDevice.device_id);
+      }
+    }
+  }, [selectedFinaPremiseId, activeFinaPremises, selectedFinaDeviceId]);
+
   const form = useForm<CreateAdvanceInvoiceFormValues>({
     // Cast resolver to accept extended form type (includes UI-only fields)
     resolver: zodResolver(createAdvanceInvoiceSchema) as Resolver<CreateAdvanceInvoiceFormValues>,
@@ -258,23 +327,29 @@ export default function CreateAdvanceInvoiceForm({
   const isFursActive =
     isFursEnabled && hasFursPremises && selectedPremiseName && selectedDeviceName && !skipFiscalization;
 
+  // FINA selection ready and active checks
+  const isFinaSelectionReady =
+    !isFinaEnabled || !hasFinaPremises || (!!selectedFinaPremiseId && !!selectedFinaDeviceId);
+  const isFinaActive = isFinaEnabled && hasFinaPremises && selectedFinaPremiseId && selectedFinaDeviceId;
+
   // ============================================================================
   // Next Advance Invoice Number Preview
   // ============================================================================
   const { data: nextNumberData, isLoading: isNextNumberLoading } = useNextDocumentNumber(entityId, "advance_invoice", {
     businessPremiseName: isFursActive ? selectedPremiseName : undefined,
     electronicDeviceName: isFursActive ? selectedDeviceName : undefined,
-    enabled: !!entityId && !isFursLoading && isFursSelectionReady,
+    enabled: !!entityId && !isFursLoading && isFursSelectionReady && !isFinaLoading && isFinaSelectionReady,
   });
 
   // Overall loading state
-  const isFormDataLoading = isFursLoading || !isFursSelectionReady || isNextNumberLoading;
+  const isFormDataLoading =
+    isFursLoading || !isFursSelectionReady || isFinaLoading || !isFinaSelectionReady || isNextNumberLoading;
 
   // Update header action with FURS and e-SLOG toggle buttons
   useEffect(() => {
     if (!onHeaderActionChange) return;
 
-    if (isFursLoading) {
+    if (isFursLoading || isFinaLoading) {
       onHeaderActionChange(null);
       return;
     }
@@ -368,6 +443,7 @@ export default function CreateAdvanceInvoiceForm({
     }
   }, [
     isFursLoading,
+    isFinaLoading,
     isFursEnabled,
     hasFursPremises,
     skipFiscalization,
@@ -422,6 +498,12 @@ export default function CreateAdvanceInvoiceForm({
           electronic_device_name: selectedDeviceName,
         });
       }
+      if (isFinaActive && selectedFinaPremiseId && selectedFinaDeviceId) {
+        setLastUsedFinaCombo(entityId, {
+          premise_id: selectedFinaPremiseId,
+          device_id: selectedFinaDeviceId,
+        });
+      }
       onSuccess?.(data);
     },
     onError,
@@ -463,12 +545,19 @@ export default function CreateAdvanceInvoiceForm({
       const eslogOptions =
         !isDraft && isEslogAvailable ? { validation_enabled: eslogValidationEnabled === true } : undefined;
 
+      // Build FINA options (skip for drafts; FINA can't be skipped)
+      const finaOptions =
+        !isDraft && isFinaEnabled && selectedFinaPremiseId && selectedFinaDeviceId
+          ? { premise_id: selectedFinaPremiseId, device_id: selectedFinaDeviceId, payment_type: paymentTypes[0] }
+          : undefined;
+
       const payload = prepareAdvanceInvoiceSubmission(values, {
         originalCustomer,
         wasCustomerFormShown: showCustomerForm,
         markAsPaid: isDraft ? false : markAsPaid,
         paymentTypes,
         furs: fursOptions,
+        fina: finaOptions,
         eslog: eslogOptions,
         priceModes: priceModesRef.current,
         isDraft,
@@ -483,11 +572,14 @@ export default function CreateAdvanceInvoiceForm({
       form,
       isEslogAvailable,
       isFursEnabled,
+      isFinaEnabled,
       markAsPaid,
       originalCustomer,
       paymentTypes,
       selectedDeviceName,
       selectedPremiseName,
+      selectedFinaPremiseId,
+      selectedFinaDeviceId,
       showCustomerForm,
       skipFiscalization,
     ],
@@ -668,6 +760,18 @@ export default function CreateAdvanceInvoiceForm({
                   }
                 : undefined
             }
+            finaInline={
+              isFinaEnabled && hasFinaPremises
+                ? {
+                    premises: activeFinaPremises.map((p: any) => ({ id: p.id, premise_id: p.premise_id })),
+                    devices: activeFinaDevices.map((d: any) => ({ id: d.id, device_id: d.device_id })),
+                    selectedPremise: selectedFinaPremiseId,
+                    selectedDevice: selectedFinaDeviceId,
+                    onPremiseChange: setSelectedFinaPremiseId,
+                    onDeviceChange: setSelectedFinaDeviceId,
+                  }
+                : undefined
+            }
           >
             {/* Mark as paid section (UI-only state, not in form schema) */}
             <MarkAsPaidSection
@@ -676,6 +780,7 @@ export default function CreateAdvanceInvoiceForm({
               paymentTypes={paymentTypes}
               onPaymentTypesChange={setPaymentTypes}
               t={t}
+              alwaysShowPaymentType={!!isFinaActive}
             />
           </DocumentDetailsSection>
         </div>

@@ -5,4 +5,8 @@ export default {
   "Create new": "Create invoice",
   // No results translations
   "No results found": "No invoices found",
+  selected: "selected",
+  "Export PDFs": "Export PDFs",
+  "Deselect all": "Deselect all",
+  Void: "Void",
 } as const;

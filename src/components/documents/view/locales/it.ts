@@ -13,6 +13,7 @@ export default {
   "Unshare failed": "Rimozione condivisione fallita",
   "Download failed": "Download fallito",
   "e-SLOG download failed": "Download e-SLOG fallito",
+  Recurring: "Ricorrente",
   Duplicate: "Duplica",
   "Duplicate invoice": "Duplica fattura",
   "Duplicate estimate": "Duplica preventivo",
@@ -80,6 +81,10 @@ export default {
   "Draft deleted": "Bozza eliminata",
   "Delete draft failed": "Eliminazione bozza fallita",
   Draft: "Bozza",
+
+  // Void
+  Void: "Annulla",
+  "Voiding...": "Annullamento...",
 
   // Activity list
   Activity: "Attività",

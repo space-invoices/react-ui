@@ -5,4 +5,7 @@ export default {
   "Create new": "Create estimate",
   // No results translations
   "No results found": "No estimates found",
+  selected: "selected",
+  "Export PDFs": "Export PDFs",
+  "Deselect all": "Deselect all",
 } as const;

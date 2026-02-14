@@ -1,6 +1,6 @@
 import type { Invoice } from "@spaceinvoices/js-sdk";
 
-import { Copy, Download, Eye, Link2Off, Loader2, Mail, MoreHorizontal, Plus } from "lucide-react";
+import { Ban, Copy, Download, Eye, Link2Off, Loader2, Mail, MoreHorizontal, Plus } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/ui/components/ui/button";
 import {
@@ -19,6 +19,7 @@ import { useInvoiceDownload } from "./use-invoice-download";
 
 type InvoiceListRowActionsProps = {
   invoice: Invoice;
+  onView?: (invoice: Invoice) => void;
   onAddPayment?: (invoice: Invoice) => void;
   onDuplicate?: (invoice: Invoice) => void;
   onDownloadStart?: () => void;
@@ -26,10 +27,13 @@ type InvoiceListRowActionsProps = {
   onDownloadError?: (error: string) => void;
   onUnshare?: (invoice: Invoice) => Promise<void>;
   isUnsharing?: boolean;
+  onVoid?: (invoice: Invoice) => void;
+  isVoiding?: boolean;
 } & ComponentTranslationProps;
 
 export default function InvoiceListRowActions({
   invoice,
+  onView,
   onAddPayment,
   onDuplicate,
   onDownloadStart,
@@ -37,6 +41,8 @@ export default function InvoiceListRowActions({
   onDownloadError,
   onUnshare,
   isUnsharing,
+  onVoid,
+  isVoiding,
   ...i18nProps
 }: InvoiceListRowActionsProps) {
   const t = createTranslation(i18nProps);
@@ -67,13 +73,7 @@ export default function InvoiceListRowActions({
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
           <DropdownMenuGroup>
-            <DropdownMenuItem
-              className="cursor-pointer"
-              onClick={() => {
-                // TODO: Use router
-                window.location.href = `/app/documents/view/${invoice.id}`;
-              }}
-            >
+            <DropdownMenuItem className="cursor-pointer" onClick={() => onView?.(invoice)}>
               <Eye className="h-4 w-4" />
               {t("View invoice")}
             </DropdownMenuItem>
@@ -114,6 +114,21 @@ export default function InvoiceListRowActions({
                 >
                   {isUnsharing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Link2Off className="h-4 w-4" />}
                   {t("Unshare")}
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+            </>
+          )}
+          {onVoid && !invoice.voided_at && !(invoice as any).is_draft && (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuGroup>
+                <DropdownMenuItem
+                  className="cursor-pointer text-destructive focus:text-destructive"
+                  onClick={() => onVoid(invoice)}
+                  disabled={isVoiding}
+                >
+                  {isVoiding ? <Loader2 className="h-4 w-4 animate-spin" /> : <Ban className="h-4 w-4" />}
+                  {t("Void")}
                 </DropdownMenuItem>
               </DropdownMenuGroup>
             </>

@@ -1,4 +1,4 @@
-import type { AdvanceInvoice, CreateAdvanceInvoiceBody } from "@spaceinvoices/js-sdk";
+import type { AdvanceInvoice, CreateAdvanceInvoice } from "@spaceinvoices/js-sdk";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { NEXT_DOCUMENT_NUMBER_CACHE_KEY } from "@/ui/hooks/use-next-document-number";
 import { useSDK } from "@/ui/providers/sdk-provider";
@@ -21,7 +21,7 @@ export function useCreateAdvanceInvoice({ entityId, onSuccess, onError }: UseCre
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: CreateAdvanceInvoiceBody) => {
+    mutationFn: async (data: CreateAdvanceInvoice) => {
       return sdk.advanceInvoices.create(data, { entity_id: entityId });
     },
     onSuccess: (data) => {
@@ -71,5 +71,35 @@ export function setLastUsedFursCombo(entityId: string, combo: FursCombo): void {
     localStorage.setItem(`${FURS_ADV_LAST_USED_KEY}:${entityId}`, JSON.stringify(combo));
   } catch {
     // Ignore localStorage errors (quota exceeded, etc.)
+  }
+}
+
+// ============================================================================
+// FINA Last-Used Combo (localStorage) for advance invoices
+// ============================================================================
+
+const FINA_ADV_LAST_USED_KEY = "hr:fina:adv:last-used";
+
+export type FinaCombo = {
+  premise_id: string;
+  device_id: string;
+};
+
+export function getLastUsedFinaCombo(entityId: string): FinaCombo | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const stored = localStorage.getItem(`${FINA_ADV_LAST_USED_KEY}:${entityId}`);
+    return stored ? JSON.parse(stored) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function setLastUsedFinaCombo(entityId: string, combo: FinaCombo): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(`${FINA_ADV_LAST_USED_KEY}:${entityId}`, JSON.stringify(combo));
+  } catch {
+    // Ignore localStorage errors
   }
 }

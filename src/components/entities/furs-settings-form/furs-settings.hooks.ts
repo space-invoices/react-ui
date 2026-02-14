@@ -125,7 +125,7 @@ export function useFursPremises(
     queryKey: fursQueryKeys.premises(entityId),
     queryFn: async () => {
       if (!sdk) throw new Error("SDK not initialized");
-      return sdk.fursFiscalization.listFursBusinessPremises({ entity_id: entityId });
+      return sdk.fursPremises.listFursBusinessPremises({ entity_id: entityId });
     },
     enabled: !!sdk,
     staleTime: 0, // Always fetch fresh data to reflect device changes
@@ -146,7 +146,7 @@ export function useRegisterRealEstatePremise(
     ...options,
     mutationFn: async ({ entityId, data }) => {
       if (!sdk) throw new Error("SDK not initialized");
-      return sdk.fursFiscalization.registerFursRealEstatePremise(data, { entity_id: entityId });
+      return sdk.fursPremises.registerFursRealEstatePremise(data, { entity_id: entityId });
     },
     onSuccess: (data, variables, context) => {
       // Invalidate premises list
@@ -174,7 +174,7 @@ export function useRegisterMovablePremise(
     ...options,
     mutationFn: async ({ entityId, data }) => {
       if (!sdk) throw new Error("SDK not initialized");
-      return sdk.fursFiscalization.registerFursMovablePremise(data, { entity_id: entityId });
+      return sdk.fursPremises.registerFursMovablePremise(data, { entity_id: entityId });
     },
     onSuccess: (data, variables, context) => {
       // Invalidate premises list
@@ -200,7 +200,7 @@ export function useClosePremise(options?: UseMutationOptions<any, Error, { entit
     ...options,
     mutationFn: async ({ entityId, premiseId }) => {
       if (!sdk) throw new Error("SDK not initialized");
-      return sdk.fursFiscalization.closeFursBusinessPremise(premiseId, { entity_id: entityId });
+      return sdk.fursPremises.closeFursBusinessPremise(premiseId, { entity_id: entityId });
     },
     onSuccess: (data, variables, context) => {
       // Invalidate premises list
@@ -228,11 +228,7 @@ export function useRegisterElectronicDevice(
     ...options,
     mutationFn: async ({ entityId, premiseId, deviceName }) => {
       if (!sdk) throw new Error("SDK not initialized");
-      return sdk.fursFiscalization.registerFursElectronicDevice(
-        premiseId,
-        { name: deviceName },
-        { entity_id: entityId },
-      );
+      return sdk.fursDevices.registerFursElectronicDevice(premiseId, { name: deviceName }, { entity_id: entityId });
     },
     onSuccess: (data, variables, context) => {
       // Invalidate premises list to refresh devices

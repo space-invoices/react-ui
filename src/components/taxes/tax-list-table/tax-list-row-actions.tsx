@@ -12,14 +12,11 @@ import {
 
 type TaxListRowActionsProps = {
   tax: Tax;
+  onView?: (tax: Tax) => void;
   t: (key: string) => string;
 };
 
-export default function TaxListRowActions({ tax, t }: TaxListRowActionsProps) {
-  const handleViewTax = () => {
-    window.location.href = `/app/taxes/${tax.id}`;
-  };
-
+export default function TaxListRowActions({ tax, onView, t }: TaxListRowActionsProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -34,7 +31,7 @@ export default function TaxListRowActions({ tax, t }: TaxListRowActionsProps) {
           {t("Copy tax ID")}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem className="cursor-pointer" onClick={handleViewTax}>
+        <DropdownMenuItem className="cursor-pointer" onClick={() => onView?.(tax)}>
           {t("View tax")}
         </DropdownMenuItem>
       </DropdownMenuContent>

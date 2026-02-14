@@ -1,7 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { CompanyRegistryResult, CreateCustomerRequest, Customer } from "@spaceinvoices/js-sdk";
 import { useForm } from "react-hook-form";
-import type z from "zod";
 import { CompanyRegistryAutocomplete } from "@/ui/components/company-registry";
 import { FormInput } from "@/ui/components/form";
 import { Form } from "@/ui/components/ui/form";

@@ -8,6 +8,7 @@ import { Button } from "@/ui/components/ui/button";
 import { FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/ui/components/ui/form";
 import { Input } from "@/ui/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/ui/components/ui/radio-group";
+import { Separator } from "@/ui/components/ui/separator";
 import { cn } from "@/ui/lib/utils";
 import { useUpdateUserFursSettings, useUserFursSettings } from "../furs-settings.hooks";
 import type { FursSettingsFormSchema, SectionType } from "../furs-settings-form";
@@ -190,6 +191,13 @@ export const GeneralSettingsSection: FC<GeneralSettingsSectionProps> = ({
         </div>
       </div>
 
+      {(!userFursSettings?.operator_tax_number || !userFursSettings?.operator_label) && (
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>{t("Operator tax number and label are required for FURS fiscalization")}</AlertDescription>
+        </Alert>
+      )}
+
       <div className="space-y-4">
         <div>
           <label htmlFor="operator-tax-number" className="font-medium text-sm">
@@ -212,13 +220,15 @@ export const GeneralSettingsSection: FC<GeneralSettingsSectionProps> = ({
           </label>
           <Input
             id="operator-label"
-            placeholder={t("Your Name")}
+            placeholder={t("e.g. Cashier 1")}
             value={operatorLabel}
             onChange={(e) => setOperatorLabel(e.target.value)}
             className="mt-2 h-10"
             disabled={userSettingsLoading}
           />
-          <p className="mt-1 text-muted-foreground text-xs">{t("Your name or identifier for FURS invoices")}</p>
+          <p className="mt-1 text-muted-foreground text-xs">
+            {t("Descriptive label for the operator (e.g. Cashier 1)")}
+          </p>
         </div>
 
         <Button
@@ -364,8 +374,11 @@ export const GeneralSettingsSection: FC<GeneralSettingsSectionProps> = ({
   return (
     <div className="space-y-6">
       {wrap("entity-info", entityInfoContent)}
+      <Separator />
       {wrap("operator", operatorContent)}
+      <Separator />
       {wrap("fiscalization", fiscalizationContent)}
+      <Separator />
       {wrap("advanced", advancedContent)}
     </div>
   );

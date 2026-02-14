@@ -66,4 +66,11 @@ export default {
   "Net price": "Prix net",
   "Gross price (tax included)": "Prix brut (taxes comprises)",
   "Net price (before tax)": "Prix net (hors taxes)",
+  // FINA fiscalization
+  "Fiscally verify": "Verification fiscale",
+  "Click to skip fiscalization for this credit note": "Cliquez pour ignorer la fiscalisation pour cet avoir",
+  "Click to enable fiscalization": "Cliquez pour activer la fiscalisation",
+  "Cannot skip fiscalization for cash payments": "Impossible d'ignorer la fiscalisation pour les paiements en especes",
+  Premise: "Local",
+  Device: "Appareil",
 } as const;

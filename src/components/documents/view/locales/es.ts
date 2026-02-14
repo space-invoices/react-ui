@@ -13,6 +13,7 @@ export default {
   "Unshare failed": "Error al dejar de compartir",
   "Download failed": "Error en la descarga",
   "e-SLOG download failed": "Error en la descarga e-SLOG",
+  Recurring: "Recurrente",
   Duplicate: "Duplicar",
   "Duplicate invoice": "Duplicar factura",
   "Duplicate estimate": "Duplicar presupuesto",
@@ -80,6 +81,10 @@ export default {
   "Draft deleted": "Borrador eliminado",
   "Delete draft failed": "Error al eliminar el borrador",
   Draft: "Borrador",
+
+  // Void
+  Void: "Anular",
+  "Voiding...": "Anulando...",
 
   // Activity list
   Activity: "Actividad",

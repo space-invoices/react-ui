@@ -66,4 +66,12 @@ export default {
   "Net price": "Nettopreis",
   "Gross price (tax included)": "Bruttopreis (inkl. MwSt.)",
   "Net price (before tax)": "Nettopreis (exkl. MwSt.)",
+  // FINA fiscalization
+  "Fiscally verify": "Steuerlich bestätigen",
+  "Click to skip fiscalization for this credit note":
+    "Klicken, um die Fiskalisierung für diese Gutschrift zu überspringen",
+  "Click to enable fiscalization": "Klicken, um die Fiskalisierung zu aktivieren",
+  "Cannot skip fiscalization for cash payments": "Fiskalisierung kann für Barzahlungen nicht übersprungen werden",
+  Premise: "Geschäftsräume",
+  Device: "Gerät",
 } as const;

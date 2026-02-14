@@ -65,4 +65,11 @@ export default {
   "Net price": "Cena netto",
   "Gross price (tax included)": "Cena brutto (z podatkiem)",
   "Net price (before tax)": "Cena netto (przed podatkiem)",
+  // FINA fiscalization
+  "Fiscally verify": "Zweryfikuj fiskalnie",
+  "Click to skip fiscalization for this credit note": "Kliknij, aby pominac fiskalizacje dla tej noty kredytowej",
+  "Click to enable fiscalization": "Kliknij, aby wlaczyc fiskalizacje",
+  "Cannot skip fiscalization for cash payments": "Nie mozna pominac fiskalizacji dla platnosci gotowkowych",
+  Premise: "Lokal",
+  Device: "Urządzenie",
 } as const;

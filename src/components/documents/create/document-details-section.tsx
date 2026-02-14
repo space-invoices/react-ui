@@ -39,6 +39,25 @@ type FursInlineProps = {
   isSkipped?: boolean;
 };
 
+type FinaPremise = {
+  id: string;
+  premise_id: string;
+};
+
+type FinaDevice = {
+  id: string;
+  device_id: string;
+};
+
+type FinaInlineProps = {
+  premises: FinaPremise[];
+  devices: FinaDevice[];
+  selectedPremise?: string;
+  selectedDevice?: string;
+  onPremiseChange: (value: string | undefined) => void;
+  onDeviceChange: (value: string | undefined) => void;
+};
+
 type ServiceDateProps = {
   dateType: "single" | "range";
   onDateTypeChange: (type: "single" | "range") => void;
@@ -50,6 +69,7 @@ type DocumentDetailsSectionProps = {
   t: (key: string) => string;
   children?: React.ReactNode; // For document-specific additions (e.g., mark as paid for invoices)
   fursInline?: FursInlineProps; // FURS premise/device inline with number
+  finaInline?: FinaInlineProps; // FINA premise/device inline with number
   serviceDate?: ServiceDateProps; // Service date section (invoice only)
 };
 
@@ -59,6 +79,7 @@ export function DocumentDetailsSection({
   t,
   children,
   fursInline,
+  finaInline,
   serviceDate,
 }: DocumentDetailsSectionProps) {
   // Determine the date field name based on document type
@@ -67,8 +88,9 @@ export function DocumentDetailsSection({
   const dateFieldLabel =
     documentType === "invoice" || documentType === "advance_invoice" ? t("Due Date") : t("Valid Until");
 
-  // Check if FURS inline should show premise/device selects
+  // Check if FURS/FINA inline should show premise/device selects
   const showFursSelects = fursInline && !fursInline.isSkipped;
+  const showFinaSelects = !!finaInline;
 
   return (
     <div className="flex-1 space-y-4">
@@ -110,6 +132,50 @@ export function DocumentDetailsSection({
                     {fursInline.devices.map((device) => (
                       <SelectItem key={device.id} value={device.electronic_device_name}>
                         {device.electronic_device_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <FormControl>
+                      <Input {...field} disabled className="flex-1" />
+                    </FormControl>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{t("Number format can be changed in settings")}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
+            ) : showFinaSelects ? (
+              <div className="flex gap-2">
+                <Select
+                  value={finaInline.selectedPremise || ""}
+                  onValueChange={(v) => finaInline.onPremiseChange(v ?? undefined)}
+                >
+                  <SelectTrigger className="w-24">
+                    <SelectValue placeholder={t("Premise")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {finaInline.premises.map((premise) => (
+                      <SelectItem key={premise.id} value={premise.premise_id}>
+                        {premise.premise_id}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select
+                  value={finaInline.selectedDevice || ""}
+                  onValueChange={(v) => finaInline.onDeviceChange(v ?? undefined)}
+                  disabled={!finaInline.selectedPremise || finaInline.devices.length === 0}
+                >
+                  <SelectTrigger className="w-24">
+                    <SelectValue placeholder={t("Device")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {finaInline.devices.map((device) => (
+                      <SelectItem key={device.id} value={device.device_id}>
+                        {device.device_id}
                       </SelectItem>
                     ))}
                   </SelectContent>

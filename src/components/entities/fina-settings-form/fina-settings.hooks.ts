@@ -10,6 +10,7 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
+import { useMemo } from "react";
 import { useSDK } from "../../../providers/sdk-provider";
 
 /**
@@ -20,6 +21,7 @@ export const finaQueryKeys = {
   premises: (entityId: string) => ["fina", "premises", entityId] as const,
   premise: (premiseId: string) => ["fina", "premise", premiseId] as const,
   devices: (premiseId: string) => ["fina", "devices", premiseId] as const,
+  currentUser: () => ["user", "me"] as const,
 };
 
 /**
@@ -110,11 +112,9 @@ export function useFinaPremises(entityId: string, options?: Omit<UseQueryOptions
 }
 
 /**
- * Hook: Register real estate premise
+ * Hook: Create premise (simple, local storage only)
  */
-export function useRegisterFinaRealEstatePremise(
-  options?: UseMutationOptions<any, Error, { entityId: string; data: any }>,
-) {
+export function useCreateFinaPremise(options?: UseMutationOptions<any, Error, { entityId: string; data: any }>) {
   const { sdk } = useSDK();
   const queryClient = useQueryClient();
 
@@ -122,7 +122,7 @@ export function useRegisterFinaRealEstatePremise(
     ...options,
     mutationFn: async ({ entityId, data }) => {
       if (!sdk) throw new Error("SDK not initialized");
-      return sdk.finaPremises.registerFinaRealEstatePremise(data, { entity_id: entityId });
+      return sdk.finaPremises.create(data, { entity_id: entityId });
     },
     onSuccess: (data, variables, context) => {
       queryClient.invalidateQueries({
@@ -136,35 +136,11 @@ export function useRegisterFinaRealEstatePremise(
 }
 
 /**
- * Hook: Register movable premise
+ * Hook: Delete (deactivate) premise
  */
-export function useRegisterFinaMovablePremise(
-  options?: UseMutationOptions<any, Error, { entityId: string; data: any }>,
+export function useDeleteFinaPremise(
+  options?: UseMutationOptions<any, Error, { entityId: string; premiseId: string }>,
 ) {
-  const { sdk } = useSDK();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    ...options,
-    mutationFn: async ({ entityId, data }) => {
-      if (!sdk) throw new Error("SDK not initialized");
-      return sdk.finaPremises.registerFinaMovablePremise(data, { entity_id: entityId });
-    },
-    onSuccess: (data, variables, context) => {
-      queryClient.invalidateQueries({
-        queryKey: finaQueryKeys.premises(variables.entityId),
-      });
-      if (options?.onSuccess) {
-        (options.onSuccess as (d: any, v: any, c: any) => void)(data, variables, context);
-      }
-    },
-  });
-}
-
-/**
- * Hook: Close premise
- */
-export function useCloseFinaPremise(options?: UseMutationOptions<any, Error, { entityId: string; premiseId: string }>) {
   const { sdk } = useSDK();
   const queryClient = useQueryClient();
 
@@ -172,7 +148,7 @@ export function useCloseFinaPremise(options?: UseMutationOptions<any, Error, { e
     ...options,
     mutationFn: async ({ entityId, premiseId }) => {
       if (!sdk) throw new Error("SDK not initialized");
-      return sdk.finaPremises.closeFinaPremise(premiseId, { entity_id: entityId });
+      return sdk.finaPremises.delete(premiseId, { entity_id: entityId });
     },
     onSuccess: (data, variables, context) => {
       queryClient.invalidateQueries({
@@ -206,6 +182,111 @@ export function useRegisterFinaElectronicDevice(
       });
       queryClient.invalidateQueries({
         queryKey: finaQueryKeys.devices(variables.premiseId),
+      });
+      if (options?.onSuccess) {
+        (options.onSuccess as (d: any, v: any, c: any) => void)(data, variables, context);
+      }
+    },
+  });
+}
+
+/**
+ * Hook: Delete (deactivate) device
+ */
+export function useDeleteFinaDevice(
+  options?: UseMutationOptions<any, Error, { entityId: string; deviceId: string; premiseId?: string }>,
+) {
+  const { sdk } = useSDK();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    ...options,
+    mutationFn: async ({ entityId, deviceId }) => {
+      if (!sdk) throw new Error("SDK not initialized");
+      return sdk.finaDevices.delete(deviceId, { entity_id: entityId });
+    },
+    onSuccess: (data, variables, context) => {
+      queryClient.invalidateQueries({
+        queryKey: finaQueryKeys.premises(variables.entityId),
+      });
+      if (variables.premiseId) {
+        queryClient.invalidateQueries({
+          queryKey: finaQueryKeys.devices(variables.premiseId),
+        });
+      }
+      if (options?.onSuccess) {
+        (options.onSuccess as (d: any, v: any, c: any) => void)(data, variables, context);
+      }
+    },
+  });
+}
+
+/**
+ * User FINA settings type (stored in user.settings as fina_<entity_id>)
+ */
+export interface UserFinaSettings {
+  operator_oib?: string;
+  operator_label?: string;
+}
+
+/**
+ * Hook: Get current user
+ */
+function useCurrentUser(options?: Omit<UseQueryOptions<any>, "queryKey" | "queryFn">) {
+  const { sdk } = useSDK();
+
+  return useQuery({
+    queryKey: finaQueryKeys.currentUser(),
+    queryFn: async () => {
+      if (!sdk) throw new Error("SDK not initialized");
+      return sdk.users.getMe();
+    },
+    enabled: !!sdk,
+    staleTime: 1000 * 60 * 5,
+    ...options,
+  });
+}
+
+/**
+ * Hook: Get user FINA settings for a specific entity
+ * Extracts FINA settings from user.settings using the fina_<entity_id> key
+ */
+export function useUserFinaSettings(entityId: string) {
+  const { data: user, isLoading, error, ...rest } = useCurrentUser();
+
+  const userFinaSettings = useMemo<UserFinaSettings | null>(() => {
+    if (!user?.settings) return null;
+    const key = `fina_${entityId}`;
+    const settings = (user.settings as Record<string, unknown>)[key];
+    if (!settings || typeof settings !== "object") return null;
+    return settings as UserFinaSettings;
+  }, [user?.settings, entityId]);
+
+  return { data: userFinaSettings, user, isLoading, error, ...rest };
+}
+
+/**
+ * Hook: Update user FINA settings for a specific entity
+ */
+export function useUpdateUserFinaSettings(
+  options?: UseMutationOptions<
+    any,
+    Error,
+    { entityId: string; data: { operator_oib?: string; operator_label?: string } }
+  >,
+) {
+  const { sdk } = useSDK();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    ...options,
+    mutationFn: async ({ entityId, data }) => {
+      if (!sdk) throw new Error("SDK not initialized");
+      return sdk.users.updateFinaSettings(data, { entity_id: entityId });
+    },
+    onSuccess: (data, variables, context) => {
+      queryClient.invalidateQueries({
+        queryKey: finaQueryKeys.currentUser(),
       });
       if (options?.onSuccess) {
         (options.onSuccess as (d: any, v: any, c: any) => void)(data, variables, context);

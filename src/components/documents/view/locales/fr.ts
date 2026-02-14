@@ -13,6 +13,7 @@ export default {
   "Unshare failed": "Échec de l'annulation du partage",
   "Download failed": "Échec du téléchargement",
   "e-SLOG download failed": "Échec du téléchargement e-SLOG",
+  Recurring: "Récurrent",
   Duplicate: "Dupliquer",
   "Duplicate invoice": "Dupliquer la facture",
   "Duplicate estimate": "Dupliquer le devis",
@@ -80,6 +81,10 @@ export default {
   "Draft deleted": "Brouillon supprimé",
   "Delete draft failed": "Échec de la suppression du brouillon",
   Draft: "Brouillon",
+
+  // Void
+  Void: "Annuler",
+  "Voiding...": "Annulation...",
 
   // Activity list
   Activity: "Activité",

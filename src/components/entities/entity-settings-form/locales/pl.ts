@@ -1,5 +1,7 @@
 export default {
   // Company settings
+  "Tax ID 2": "Tax ID 2",
+  "Secondary tax identification number (optional)": "Secondary tax identification number (optional)",
   "Company Information": "Informacje o firmie",
   "Basic information about your company": "Podstawowe informacje o Twojej firmie",
   // Branding settings

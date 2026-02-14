@@ -84,76 +84,96 @@ export function KirExportForm({ sdk, entityId, t, onSuccess, onError, onLoadingC
     }
   };
 
+  const fileName = `KIR_${year}_${periodType === "month" ? `M${month}` : `Q${quarter}`}.zip`;
+
   return (
     <div className="space-y-4">
-      {/* Year Selection */}
-      <div className="space-y-2">
-        <Label htmlFor="kir-year">{t("kir-export.year")}</Label>
-        <Select value={year.toString()} onValueChange={(v) => setYear(Number(v))}>
-          <SelectTrigger id="kir-year">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {yearOptions.map((y) => (
-              <SelectItem key={y} value={y.toString()}>
-                {y}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Period Type Selection */}
-      <div className="space-y-2">
-        <Label htmlFor="kir-period-type">{t("kir-export.period-type")}</Label>
-        <Select value={periodType} onValueChange={(v) => setPeriodType(v as PeriodType)}>
-          <SelectTrigger id="kir-period-type">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="month">{t("kir-export.period-types.month")}</SelectItem>
-            <SelectItem value="quarter">{t("kir-export.period-types.quarter")}</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Month/Quarter Selection */}
-      {periodType === "month" ? (
+      {/* Year + Period Type + Month/Quarter */}
+      <div className="grid grid-cols-3 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="kir-month">{t("kir-export.month")}</Label>
-          <Select value={month.toString()} onValueChange={(v) => setMonth(Number(v))}>
-            <SelectTrigger id="kir-month">
+          <Label htmlFor="kir-year">{t("kir-export.year")}</Label>
+          <Select value={year.toString()} onValueChange={(v) => setYear(Number(v))}>
+            <SelectTrigger id="kir-year">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
-                <SelectItem key={m} value={m.toString()}>
-                  {t(`kir-export.months.${m}`)}
+              {yearOptions.map((y) => (
+                <SelectItem key={y} value={y.toString()}>
+                  {y}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
-      ) : (
+
         <div className="space-y-2">
-          <Label htmlFor="kir-quarter">{t("kir-export.quarter")}</Label>
-          <Select value={quarter.toString()} onValueChange={(v) => setQuarter(Number(v))}>
-            <SelectTrigger id="kir-quarter">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {[1, 2, 3, 4].map((q) => (
-                <SelectItem key={q} value={q.toString()}>
-                  {t(`kir-export.quarters.${q}`)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Label>{t("kir-export.period-type")}</Label>
+          <div className="flex rounded-md border">
+            <button
+              type="button"
+              onClick={() => setPeriodType("month")}
+              className={`flex-1 rounded-l-md px-3 py-2 font-medium text-sm transition-colors ${
+                periodType === "month" ? "bg-primary text-primary-foreground" : "hover:bg-muted"
+              }`}
+            >
+              {t("kir-export.period-types.month")}
+            </button>
+            <button
+              type="button"
+              onClick={() => setPeriodType("quarter")}
+              className={`flex-1 rounded-r-md border-l px-3 py-2 font-medium text-sm transition-colors ${
+                periodType === "quarter" ? "bg-primary text-primary-foreground" : "hover:bg-muted"
+              }`}
+            >
+              {t("kir-export.period-types.quarter")}
+            </button>
+          </div>
         </div>
-      )}
+
+        {periodType === "month" ? (
+          <div className="space-y-2">
+            <Label htmlFor="kir-month">{t("kir-export.month")}</Label>
+            <Select value={month.toString()} onValueChange={(v) => setMonth(Number(v))}>
+              <SelectTrigger id="kir-month">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
+                  <SelectItem key={m} value={m.toString()}>
+                    {t(`kir-export.months.${m}`)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <Label htmlFor="kir-quarter">{t("kir-export.quarter")}</Label>
+            <Select value={quarter.toString()} onValueChange={(v) => setQuarter(Number(v))}>
+              <SelectTrigger id="kir-quarter">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {[1, 2, 3, 4].map((q) => (
+                  <SelectItem key={q} value={q.toString()}>
+                    {t(`kir-export.quarters.${q}`)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+      </div>
+
+      {/* File Preview */}
+      <div className="rounded-md border border-dashed p-3">
+        <p className="text-muted-foreground text-sm">
+          {t("kir-export.file-preview")}: <span className="font-medium font-mono text-foreground">{fileName}</span>
+        </p>
+      </div>
 
       {/* Export Button */}
-      <Button onClick={handleExport} disabled={isExporting} className="w-full">
+      <Button onClick={handleExport} disabled={isExporting} className="w-full" size="lg">
         {isExporting ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />

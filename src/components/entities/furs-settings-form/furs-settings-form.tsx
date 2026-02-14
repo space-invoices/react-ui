@@ -14,7 +14,7 @@ import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
 import { cn } from "@/ui/lib/utils";
 import { useFormFooterRegistration } from "@/ui/providers/form-footer-context";
-import { useFursPremises, useFursSettings, useUpdateFursSettings } from "./furs-settings.hooks";
+import { useFursPremises, useFursSettings, useUpdateFursSettings, useUserFursSettings } from "./furs-settings.hooks";
 // Import locale files
 import de from "./locales/de";
 import en from "./locales/en";
@@ -117,6 +117,7 @@ export const FursSettingsForm: FC<FursSettingsFormProps> = ({
   // Fetch FURS settings and premises
   const { data: fursSettings, isLoading: settingsLoading } = useFursSettings(entity.id);
   const { data: premises, isLoading: premisesLoading } = useFursPremises(entity.id);
+  const { data: userFursSettings } = useUserFursSettings(entity.id);
 
   const { mutate: updateSettings, isPending } = useUpdateFursSettings({
     onSuccess: () => {
@@ -155,20 +156,25 @@ export const FursSettingsForm: FC<FursSettingsFormProps> = ({
 
   // Step unlocking logic (new flow: settings -> certificate -> premises -> enable)
   // - Step 1 (Settings): Always accessible
-  // - Step 2 (Certificate): Requires entity tax number
-  // - Step 3 (Premises): Requires valid certificate
-  // - Step 4 (Enable): Requires certificate + premise + device
+  // - Step 2 (Certificate): Requires entity tax number + operator settings
+  // - Step 3 (Premises): Requires valid certificate + operator settings
+  // - Step 4 (Enable): Requires certificate + premise + device + operator settings
   const hasEntityTaxNumber = !!entity.tax_number;
+  // Operator settings can come from user settings or entity-level FURS settings
+  const hasOperatorSettings =
+    (!!userFursSettings?.operator_tax_number && !!userFursSettings?.operator_label) ||
+    (!!fursSettings?.operator_tax_number && !!fursSettings?.operator_label);
   const fursEnabled = fursSettings?.enabled || false;
-  const canAccessCertificate = hasEntityTaxNumber;
-  const canAccessPremises = hasEntityTaxNumber && hasCertificate && certificateValid;
-  const canAccessEnable = hasEntityTaxNumber && certificateValid && hasPremises && hasPremiseWithDevice;
+  const canAccessCertificate = hasEntityTaxNumber && hasOperatorSettings;
+  const canAccessPremises = hasEntityTaxNumber && hasOperatorSettings && hasCertificate && certificateValid;
+  const canAccessEnable =
+    hasEntityTaxNumber && hasOperatorSettings && certificateValid && hasPremises && hasPremiseWithDevice;
 
   const steps = [
     {
       id: "settings" as const,
       title: translate("General Settings"),
-      complete: hasEntityTaxNumber,
+      complete: hasEntityTaxNumber && hasOperatorSettings,
       unlocked: true,
     },
     {
@@ -275,15 +281,23 @@ export const FursSettingsForm: FC<FursSettingsFormProps> = ({
 
             if (isLocked) {
               if (step.id === "certificate") {
-                tooltipText = translate("Set entity tax number in General Settings first");
+                if (!hasEntityTaxNumber) {
+                  tooltipText = translate("Set entity tax number in General Settings first");
+                } else {
+                  tooltipText = translate("Set operator tax number and label in General Settings first");
+                }
               } else if (step.id === "premises") {
                 if (!hasEntityTaxNumber) {
                   tooltipText = translate("Set entity tax number in General Settings first");
+                } else if (!hasOperatorSettings) {
+                  tooltipText = translate("Set operator tax number and label in General Settings first");
                 } else {
                   tooltipText = translate("Upload and validate digital certificate first");
                 }
               } else if (step.id === "enable") {
-                if (!certificateValid) {
+                if (!hasEntityTaxNumber || !hasOperatorSettings) {
+                  tooltipText = translate("Complete General Settings first");
+                } else if (!certificateValid) {
                   tooltipText = translate("Upload and validate digital certificate first");
                 } else if (!hasPremises) {
                   tooltipText = translate("Register at least one business premise first");

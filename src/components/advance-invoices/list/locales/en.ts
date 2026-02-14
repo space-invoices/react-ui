@@ -5,4 +5,7 @@ export default {
   "Create new": "Create advance invoice",
   // No results translations
   "No results found": "No advance invoices found",
+  selected: "selected",
+  "Export PDFs": "Export PDFs",
+  "Deselect all": "Deselect all",
 } as const;

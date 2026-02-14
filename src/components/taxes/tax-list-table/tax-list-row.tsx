@@ -8,10 +8,11 @@ import TaxListRowActions from "./tax-list-row-actions";
 type TaxListRowProps = {
   tax: Tax;
   onRowClick?: (tax: Tax) => void;
+  onView?: (tax: Tax) => void;
   t: (key: string) => string;
 };
 
-export default function TaxListRow({ tax, onRowClick, t }: TaxListRowProps) {
+export default function TaxListRow({ tax, onRowClick, onView, t }: TaxListRowProps) {
   const formatTaxRates = (taxRates: Tax["tax_rates"]) => {
     if (!taxRates || taxRates.length === 0) return "-";
     return taxRates.map((rate) => `${rate.rate}%`).join(", ");
@@ -39,7 +40,7 @@ export default function TaxListRow({ tax, onRowClick, t }: TaxListRowProps) {
       <TableCell>{formatTaxRates(tax.tax_rates)}</TableCell>
       <TableCell>{formatDate(tax.created_at)}</TableCell>
       <TableCell className="text-right">
-        <TaxListRowActions tax={tax} t={t} />
+        <TaxListRowActions tax={tax} onView={onView} t={t} />
       </TableCell>
     </TableRow>
   );

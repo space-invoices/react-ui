@@ -37,12 +37,14 @@ type ItemListTableProps = {
   namespace?: string;
   locale?: string;
   entityId?: string;
+  onView?: (item: Item) => void;
 } & ListTableProps<Item>;
 
 export default function ItemListTable({
   queryParams,
   createNewTrigger,
   onRowClick,
+  onView,
   onChangeParams,
   entityId,
   ...i18nProps
@@ -67,7 +69,9 @@ export default function ItemListTable({
         { id: "price", header: t("Price"), align: "right" },
         { id: "actions", header: "", align: "right" },
       ]}
-      renderRow={(item) => <ItemListRow item={item} key={item.id} onRowClick={(item) => onRowClick?.(item)} t={t} />}
+      renderRow={(item) => (
+        <ItemListRow item={item} key={item.id} onRowClick={(item) => onRowClick?.(item)} onView={onView} t={t} />
+      )}
       renderHeader={(headerProps) => <ItemListHeader orderBy={headerProps.orderBy} onSort={headerProps.onSort} t={t} />}
       queryParams={queryParams}
       resourceName="item"

@@ -47,6 +47,24 @@ export const CertificateSettingsSection: FC<CertificateSettingsSectionProps> = (
       onSuccess?.();
     },
     onError: (error) => {
+      const apiMsg = (error as any)?.data?.message || (error as any)?.message;
+      if (typeof apiMsg === "string") {
+        if (apiMsg.includes("certificate") && apiMsg.includes("mode")) {
+          onError?.(new Error(t(apiMsg)));
+          return;
+        }
+        if (apiMsg.includes("Invalid certificate passphrase")) {
+          onError?.(new Error(t("Invalid certificate passphrase. Please check your passphrase and try again.")));
+          return;
+        }
+        const oibMatch = apiMsg.match(/Certificate OIB \((\d+)\) does not match entity OIB \((\d+)\)/);
+        if (oibMatch) {
+          onError?.(
+            new Error(t("Certificate OIB does not match entity OIB. Please upload a certificate for this entity.")),
+          );
+          return;
+        }
+      }
       onError?.(error);
     },
   });

@@ -13,6 +13,7 @@ export default {
   "Unshare failed": "Opheffen van delen mislukt",
   "Download failed": "Download mislukt",
   "e-SLOG download failed": "e-SLOG download mislukt",
+  Recurring: "Terugkerend",
   Duplicate: "Dupliceren",
   "Duplicate invoice": "Factuur dupliceren",
   "Duplicate estimate": "Offerte dupliceren",
@@ -81,6 +82,10 @@ export default {
   "Draft deleted": "Concept verwijderd",
   "Delete draft failed": "Verwijderen van concept mislukt",
   Draft: "Concept",
+
+  // Void
+  Void: "Nietig verklaren",
+  "Voiding...": "Nietig verklaren...",
 
   // Activity list
   Activity: "Activiteit",

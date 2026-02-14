@@ -18,6 +18,7 @@ type CreditNote = any;
 
 type CreditNoteListRowActionsProps = {
   creditNote: CreditNote;
+  onView?: (creditNote: CreditNote) => void;
   onAddPayment?: (creditNote: CreditNote) => void;
   onDuplicate?: (creditNote: CreditNote) => void;
   onDownloadStart?: () => void;
@@ -29,6 +30,7 @@ type CreditNoteListRowActionsProps = {
 
 export default function CreditNoteListRowActions({
   creditNote,
+  onView,
   onAddPayment,
   onDuplicate,
   onDownloadStart,
@@ -64,12 +66,7 @@ export default function CreditNoteListRowActions({
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          <DropdownMenuItem
-            className="cursor-pointer"
-            onClick={() => {
-              window.location.href = `/app/documents/view/${creditNote.id}`;
-            }}
-          >
+          <DropdownMenuItem className="cursor-pointer" onClick={() => onView?.(creditNote)}>
             <Eye className="h-4 w-4" />
             {t("View credit note")}
           </DropdownMenuItem>

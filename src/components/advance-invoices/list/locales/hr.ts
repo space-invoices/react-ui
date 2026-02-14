@@ -38,4 +38,7 @@ export default {
   "No results found": "Nije pronadjen nijedan avansni racun",
   "Try adjusting your search criteria": "Pokusajte prilagoditi kriterije pretrazivanja",
   "Clear search": "Ocisti pretragu",
+  selected: "odabranih",
+  "Export PDFs": "Izvezi PDF-ove",
+  "Deselect all": "Poništi odabir",
 } as const;

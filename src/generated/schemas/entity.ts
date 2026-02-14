@@ -24,7 +24,7 @@ const createEntitySchemaDefinition = z.object({
   tax_number_2: z.union([z.string(), z.null()]).optional(),
   company_number: z.union([z.string(), z.null()]).optional(),
   email: z.union([z.string(), z.null()]).optional(),
-  environment: z.string().max(20).optional(),
+  environment: z.enum(["live", "sandbox"]).optional(),
   is_tax_subject: z.boolean().optional(),
   is_enabled: z.boolean().optional(),
   settings: z

@@ -39,4 +39,8 @@ export default {
   "No results found": "No se encontraron facturas",
   "Try adjusting your search criteria": "Intente ajustar sus criterios de búsqueda",
   "Clear search": "Limpiar búsqueda",
+  selected: "seleccionados",
+  "Export PDFs": "Exportar PDFs",
+  "Deselect all": "Deseleccionar todo",
+  Void: "Anular",
 } as const;

@@ -5,4 +5,7 @@ export default {
   "Create new": "Create credit note",
   // No results translations
   "No results found": "No credit notes found",
+  selected: "selected",
+  "Export PDFs": "Export PDFs",
+  "Deselect all": "Deselect all",
 } as const;

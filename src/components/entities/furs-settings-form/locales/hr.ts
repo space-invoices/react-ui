@@ -43,7 +43,7 @@ export default {
   "Tax number of the operator for API key usage (optional)":
     "Porezni broj operatera za korištenje API ključa (opcionalno)",
   "Operator Label": "Oznaka operatera",
-  "Descriptive label for the operator (optional)": "Opisna oznaka za operatera (opcionalno)",
+
   "Digital Certificate": "Digitalni certifikat",
   "Upload your FURS digital certificate": "Prenesite svoj digitalni certifikat FURS",
   "Your certificate is required to digitally sign all fiscalized invoices. The certificate must be obtained from the Slovenian Financial Administration (FURS).":
@@ -54,6 +54,10 @@ export default {
     "Nevažeća vrsta datoteke. Molimo prenesite datoteku certifikata .p12 ili .pfx.",
   "Please select a certificate file and enter the passphrase":
     "Molimo odaberite datoteku certifikata i unesite lozinku",
+  "Invalid certificate passphrase. Please check your passphrase and try again.":
+    "Nevažeća lozinka certifikata. Provjerite lozinku i pokušajte ponovo.",
+  "Certificate tax number does not match entity tax number. Please upload a certificate for this entity.":
+    "Porezni broj certifikata ne odgovara poreznom broju entiteta. Učitajte certifikat za ovaj entitet.",
   Valid: "Valjan",
   "Expiring Soon": "Uskoro ističe",
   Expired: "Istekao",
@@ -177,8 +181,8 @@ export default {
   "Your personal operator info for FURS invoices": "Vaši osobni podaci operatera za FURS račune",
   "Save Operator Settings": "Spremi postavke operatera",
   "Your tax number for FURS fiscalization": "Vaš porezni broj za fiskalizaciju FURS",
-  "Your name or identifier for FURS invoices": "Vaše ime ili identifikator za FURS račune",
-  "Your Name": "Vaše ime",
+  "Descriptive label for the operator (e.g. Cashier 1)": "Opisna oznaka za operatera (npr. Blagajnik 1)",
+  "e.g. Cashier 1": "npr. Blagajnik 1",
   "Fiscalization Settings": "Postavke fiskalizacije",
   "Advanced Settings": "Napredne postavke",
   "API Default Operator": "Zadani operater API",
@@ -194,4 +198,23 @@ export default {
     "Zadane informacije operatera korištene kada se računi kreiraju putem API-ja bez prijavljenog korisnika.",
   "Certificate uploaded successfully": "Certifikat uspješno prenesen",
   "Loading certificate details...": "Učitavanje pojedinosti certifikata...",
+  // Entity info section
+  "Entity Information": "Entity Information",
+  "Required company details for FURS fiscalization": "Required company details for FURS fiscalization",
+  "Entity Tax Number": "Entity Tax Number",
+  "Your company's tax number (must match FURS certificate)": "Your company's tax number (must match FURS certificate)",
+  Address: "Address",
+  "Post Code": "Post Code",
+  "Save Entity Info": "Save Entity Info",
+  "Tax number is required for FURS fiscalization": "Tax number is required for FURS fiscalization",
+  "Set entity tax number in General Settings first": "Set entity tax number in General Settings first",
+  "Set operator tax number and label in General Settings first":
+    "Set operator tax number and label in General Settings first",
+  "Complete General Settings first": "Complete General Settings first",
+  "Operator tax number and label are required for FURS fiscalization":
+    "Operator tax number and label are required for FURS fiscalization",
+  "FURS Operator Settings Required": "FURS Operator Settings Required",
+  "Your FURS operator information is needed to fiscalize this document. Please enter your operator details.":
+    "Your FURS operator information is needed to fiscalize this document. Please enter your operator details.",
+  "Save & Retry": "Save & Retry",
 } as const;

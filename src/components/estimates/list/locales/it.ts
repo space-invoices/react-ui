@@ -29,4 +29,7 @@ export default {
   "No results found": "Nessun preventivo trovato",
   "Try adjusting your search criteria": "Prova a modificare i criteri di ricerca",
   "Clear search": "Cancella ricerca",
+  selected: "selezionati",
+  "Export PDFs": "Esporta PDF",
+  "Deselect all": "Deseleziona tutto",
 } as const;

@@ -39,4 +39,8 @@ export default {
   "No results found": "Keine Rechnungen gefunden",
   "Try adjusting your search criteria": "Versuchen Sie, Ihre Suchkriterien anzupassen",
   "Clear search": "Suche zurücksetzen",
+  selected: "ausgewählt",
+  "Export PDFs": "PDFs exportieren",
+  "Deselect all": "Auswahl aufheben",
+  Void: "Stornieren",
 } as const;

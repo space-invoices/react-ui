@@ -20,6 +20,7 @@ interface GeneralSettingsSectionProps {
   onSuccess?: () => void;
   onError?: (error: unknown) => void;
   wrapSection?: (section: SectionType, content: ReactNode) => ReactNode;
+  hideUserOperatorSection?: boolean;
 }
 
 export const GeneralSettingsSection: FC<GeneralSettingsSectionProps> = ({
@@ -29,9 +30,10 @@ export const GeneralSettingsSection: FC<GeneralSettingsSectionProps> = ({
   onSuccess,
   onError,
   wrapSection,
+  hideUserOperatorSection,
 }) => {
   const wrap = (section: SectionType, content: ReactNode) => (wrapSection ? wrapSection(section, content) : content);
-  const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
+  const [isAdvancedOpen, setIsAdvancedOpen] = useState(!!hideUserOperatorSection);
 
   // Entity info (local state for form)
   const [entityTaxNumber, setEntityTaxNumber] = useState("");
@@ -65,7 +67,9 @@ export const GeneralSettingsSection: FC<GeneralSettingsSectionProps> = ({
   };
 
   // User operator settings (local state for form)
-  const { data: userFursSettings, isLoading: userSettingsLoading } = useUserFursSettings(entity.id);
+  const { data: userFursSettings, isLoading: userSettingsLoading } = useUserFursSettings(entity.id, {
+    enabled: !hideUserOperatorSection,
+  });
   const [operatorTaxNumber, setOperatorTaxNumber] = useState("");
   const [operatorLabel, setOperatorLabel] = useState("");
 
@@ -375,8 +379,12 @@ export const GeneralSettingsSection: FC<GeneralSettingsSectionProps> = ({
     <div className="space-y-6">
       {wrap("entity-info", entityInfoContent)}
       <Separator />
-      {wrap("operator", operatorContent)}
-      <Separator />
+      {!hideUserOperatorSection && (
+        <>
+          {wrap("operator", operatorContent)}
+          <Separator />
+        </>
+      )}
       {wrap("fiscalization", fiscalizationContent)}
       <Separator />
       {wrap("advanced", advancedContent)}

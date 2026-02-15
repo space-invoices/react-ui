@@ -176,7 +176,7 @@ export default function CreditNoteListTable({
       {
         id: "status",
         header: t("Status"),
-        cell: (creditNote) => <PaymentStatusBadge creditNote={creditNote} t={t} />,
+        cell: (creditNote) => <CreditNoteStatusBadge creditNote={creditNote} t={t} />,
       },
       {
         id: "actions",
@@ -231,13 +231,41 @@ export default function CreditNoteListTable({
   );
 }
 
-/** Payment status badge for credit notes */
-function PaymentStatusBadge({ creditNote, t }: { creditNote: CreditNote; t: (key: string) => string }) {
+/** Status badge for credit notes */
+function CreditNoteStatusBadge({ creditNote, t }: { creditNote: CreditNote; t: (key: string) => string }) {
+  if ((creditNote as any).voided_at) {
+    return (
+      <Badge variant="outline" className="border-red-500 bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-400">
+        {t("Voided")}
+      </Badge>
+    );
+  }
+  if ((creditNote as any).is_draft) {
+    return null;
+  }
   if (creditNote.paid_in_full) {
-    return <span className="rounded-full bg-green-100 px-2 py-1 text-green-800 text-xs">{t("Paid")}</span>;
+    return (
+      <Badge
+        variant="outline"
+        className="border-green-500 bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-400"
+      >
+        {t("Paid")}
+      </Badge>
+    );
   }
   if (creditNote.total_paid > 0) {
-    return <span className="rounded-full bg-yellow-100 px-2 py-1 text-xs text-yellow-800">{t("Partial")}</span>;
+    return (
+      <Badge
+        variant="outline"
+        className="border-yellow-500 bg-yellow-50 text-yellow-700 dark:bg-yellow-950 dark:text-yellow-400"
+      >
+        {t("Partially Paid")}
+      </Badge>
+    );
   }
-  return <span className="rounded-full bg-gray-100 px-2 py-1 text-gray-800 text-xs">{t("Unpaid")}</span>;
+  return (
+    <Badge variant="outline" className="border-gray-500 bg-gray-50 text-gray-700 dark:bg-gray-800 dark:text-gray-400">
+      {t("Unpaid")}
+    </Badge>
+  );
 }

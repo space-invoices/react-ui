@@ -35,7 +35,7 @@ export function useCollectionRateData(entityId: string | undefined) {
           );
         },
         enabled: !!entityId && !!sdk,
-        staleTime: 30_000,
+        staleTime: 120_000,
       },
       // Total collected (payments)
       {
@@ -51,7 +51,7 @@ export function useCollectionRateData(entityId: string | undefined) {
           );
         },
         enabled: !!entityId && !!sdk,
-        staleTime: 30_000,
+        staleTime: 120_000,
       },
     ],
   });

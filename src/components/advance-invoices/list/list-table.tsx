@@ -185,6 +185,11 @@ export default function AdvanceInvoiceListTable({
         cell: (advanceInvoice) => advanceInvoice.total_with_tax,
       },
       {
+        id: "status",
+        header: t("Status"),
+        cell: (advanceInvoice) => <AdvanceInvoiceStatusBadge advanceInvoice={advanceInvoice} t={t} />,
+      },
+      {
         id: "actions",
         header: "",
         align: "right",
@@ -234,5 +239,60 @@ export default function AdvanceInvoiceListTable({
       onSelectionChange={setSelectedIds}
       selectionToolbar={selectionToolbar}
     />
+  );
+}
+
+/** Status badge for advance invoices */
+function AdvanceInvoiceStatusBadge({
+  advanceInvoice,
+  t,
+}: {
+  advanceInvoice: AdvanceInvoice;
+  t: (key: string) => string;
+}) {
+  if ((advanceInvoice as any).voided_at) {
+    return (
+      <Badge variant="outline" className="border-red-500 bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-400">
+        {t("Voided")}
+      </Badge>
+    );
+  }
+  if ((advanceInvoice as any).is_draft) {
+    return null;
+  }
+  if (advanceInvoice.paid_in_full) {
+    return (
+      <Badge
+        variant="outline"
+        className="border-green-500 bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-400"
+      >
+        {t("Paid")}
+      </Badge>
+    );
+  }
+  if (advanceInvoice.date_due && new Date(advanceInvoice.date_due) < new Date()) {
+    return (
+      <Badge
+        variant="outline"
+        className="border-orange-500 bg-orange-50 text-orange-700 dark:bg-orange-950 dark:text-orange-400"
+      >
+        {t("Overdue")}
+      </Badge>
+    );
+  }
+  if (advanceInvoice.total_paid > 0) {
+    return (
+      <Badge
+        variant="outline"
+        className="border-yellow-500 bg-yellow-50 text-yellow-700 dark:bg-yellow-950 dark:text-yellow-400"
+      >
+        {t("Partially Paid")}
+      </Badge>
+    );
+  }
+  return (
+    <Badge variant="outline" className="border-gray-500 bg-gray-50 text-gray-700 dark:bg-gray-800 dark:text-gray-400">
+      {t("Unpaid")}
+    </Badge>
   );
 }

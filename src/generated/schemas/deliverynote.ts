@@ -1,0 +1,134 @@
+/**
+ * Delivery note schema for form validation.
+ * Based on the estimate schema pattern, adapted for delivery notes.
+ * Delivery notes differ from estimates: no date_valid_till, no title_type, has hide_prices.
+ */
+
+import { z } from 'zod';
+
+// Dependency schema for delivery note
+const LineDiscount = z.object({
+  value: z.number().gte(0),
+  type: z.enum(["percent", "amount"]).optional().default("percent"),
+});
+
+
+// Dependency schema for delivery note
+const DocumentItemTax = z
+  .object({
+    rate: z.number(),
+    tax_id: z.string(),
+    classification: z.string(),
+    reverse_charge: z.boolean(),
+    amount: z.number(),
+  })
+  .partial();
+
+
+// Dependency schema for delivery note
+const DocumentEntity = z
+  .object({
+    name: z.union([z.string(), z.null()]),
+    email: z.union([z.string(), z.null()]),
+    address: z.union([z.string(), z.null()]),
+    address_2: z.union([z.string(), z.null()]),
+    post_code: z.union([z.string(), z.null()]),
+    city: z.union([z.string(), z.null()]),
+    state: z.union([z.string(), z.null()]),
+    country: z.union([z.string(), z.null()]),
+    country_code: z.union([z.string(), z.null()]),
+    tax_number: z.union([z.string(), z.null()]),
+    tax_number_2: z.union([z.string(), z.null()]),
+    company_number: z.union([z.string(), z.null()]),
+    bank_account: z.union([
+      z
+        .object({
+          type: z
+            .enum(["iban", "us_domestic", "uk_domestic", "other"])
+            .default("iban"),
+          name: z.string(),
+          bank_name: z.string(),
+          iban: z.string(),
+          account_number: z.string(),
+          bic: z.string(),
+          routing_number: z.string(),
+          sort_code: z.string(),
+        })
+        .partial()
+        .passthrough(),
+      z.null(),
+    ]),
+  })
+  .partial()
+  .passthrough();
+
+
+// Schema for create delivery note operation
+const createDeliveryNoteSchemaDefinition = z.object({
+  is_draft: z.boolean().optional(),
+  date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d{3})?Z?)?$/)
+    .optional(),
+  issuer: DocumentEntity.optional(),
+  customer_id: z.union([z.string(), z.null()]).optional(),
+  customer: DocumentEntity.and(
+    z.union([
+      z
+        .object({ save_customer: z.boolean().default(true) })
+        .partial()
+        .passthrough(),
+      z.null(),
+    ])
+  ).optional(),
+  note: z.union([z.string(), z.null()]).optional(),
+  payment_terms: z.union([z.string(), z.null()]).optional(),
+  tax_clause: z.union([z.string(), z.null()]).optional(),
+  currency_code: z.string().max(3).optional(),
+  metadata: z.union([z.record(z.string(), z.any()), z.null()]).optional(),
+  hide_prices: z.boolean().optional(),
+  date_due: z.union([z.string(), z.null()]).optional(),
+  date_service: z.union([z.string(), z.null()]).optional(),
+  date_service_to: z.union([z.string(), z.null()]).optional(),
+  items: z
+    .array(
+      z.object({
+        name: z.string().min(1).optional(),
+        description: z.union([z.string().max(4000, "Description must not exceed 4000 characters"), z.null()]).optional(),
+        price: z.number().optional(),
+        gross_price: z.number().optional(),
+        quantity: z.number().gte(-140737488355328).lte(140737488355327),
+        unit: z.union([z.string(), z.null()]).optional(),
+        taxes: z.array(DocumentItemTax).optional(),
+        discounts: z.array(LineDiscount).max(5).optional(),
+        metadata: z
+          .union([
+            z.string(),
+            z.number(),
+            z.boolean(),
+            z.null(),
+            z.object({}).partial().passthrough(),
+            z.array(z.unknown()),
+            z.null(),
+          ])
+          .optional(),
+        item_id: z.string().optional(),
+      })
+    )
+    .min(1),
+  eslog: z
+    .union([
+      z
+        .object({ validation_enabled: z.union([z.boolean(), z.null()]) })
+        .partial()
+        .passthrough(),
+      z.null(),
+    ])
+    .optional(),
+  expected_total_with_tax: z.number().gt(0).optional(),
+});
+
+// Type for create delivery note operation
+export type CreateDeliveryNoteSchema = z.infer<typeof createDeliveryNoteSchemaDefinition>;
+
+export const createDeliveryNoteSchema = createDeliveryNoteSchemaDefinition;

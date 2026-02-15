@@ -2,7 +2,7 @@
  * Shared document types for invoices, estimates, credit notes, and advance invoices
  */
 
-export type DocumentTypes = "invoice" | "estimate" | "credit_note" | "advance_invoice";
+export type DocumentTypes = "invoice" | "estimate" | "credit_note" | "advance_invoice" | "delivery_note";
 
 export interface DocumentConfig {
   type: DocumentTypes;
@@ -50,6 +50,15 @@ export const DOCUMENT_CONFIGS: Record<DocumentTypes, DocumentConfig> = {
     dateFieldLabel: "Due Date",
     singularName: "Advance Invoice",
     pluralName: "Advance Invoices",
+  },
+  delivery_note: {
+    type: "delivery_note",
+    apiEndpoint: "delivery-notes",
+    cacheKey: "delivery-notes",
+    dateFieldName: null,
+    dateFieldLabel: null,
+    singularName: "Delivery Note",
+    pluralName: "Delivery Notes",
   },
 } as const;
 

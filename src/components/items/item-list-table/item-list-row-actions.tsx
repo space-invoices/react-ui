@@ -1,6 +1,7 @@
 import type { Item } from "@spaceinvoices/js-sdk";
 
 import { MoreHorizontal } from "lucide-react";
+import { memo } from "react";
 import { Button } from "@/ui/components/ui/button";
 import {
   DropdownMenu,
@@ -18,7 +19,7 @@ type ItemListRowActionsProps = {
   onView?: (item: Item) => void;
 } & ComponentTranslationProps;
 
-export default function ItemListRowActions({ item, onView, ...i18nProps }: ItemListRowActionsProps) {
+export default memo(function ItemListRowActions({ item, onView, ...i18nProps }: ItemListRowActionsProps) {
   const t = createTranslation(i18nProps);
 
   return (
@@ -41,4 +42,4 @@ export default function ItemListRowActions({ item, onView, ...i18nProps }: ItemL
       </DropdownMenuContent>
     </DropdownMenu>
   );
-}
+});

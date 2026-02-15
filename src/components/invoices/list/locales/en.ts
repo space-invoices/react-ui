@@ -9,4 +9,5 @@ export default {
   "Export PDFs": "Export PDFs",
   "Deselect all": "Deselect all",
   Void: "Void",
+  "Partially Paid": "Partially Paid",
 } as const;

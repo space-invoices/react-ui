@@ -9,12 +9,28 @@ import { z } from 'zod';
 // Schemas for startpdfexport_body endpoints
 
 // Dependency schema for startpdfexport_body
-const startPdfExport_Body = z
+const PdfExportByDocumentIds = z
   .object({
-    type: z.enum(["invoice", "estimate", "credit_note"]),
+    type: z.enum(["invoice", "estimate", "credit_note", "advance_invoice"]),
+    document_ids: z.array(z.string()).min(1),
+  })
+  .passthrough();
+
+
+// Dependency schema for startpdfexport_body
+const PdfExportByDateRange = z
+  .object({
+    type: z.enum(["invoice", "estimate", "credit_note", "advance_invoice"]),
     date_from: z.string().optional(),
     date_to: z.string().optional(),
   })
   .passthrough();
+
+
+// Dependency schema for startpdfexport_body
+const startPdfExport_Body = z.union([
+  PdfExportByDocumentIds,
+  PdfExportByDateRange,
+]);
 
 

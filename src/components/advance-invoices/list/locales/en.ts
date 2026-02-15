@@ -8,4 +8,5 @@ export default {
   selected: "selected",
   "Export PDFs": "Export PDFs",
   "Deselect all": "Deselect all",
+  "Partially Paid": "Partially Paid",
 } as const;

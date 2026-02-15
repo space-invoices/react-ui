@@ -88,7 +88,7 @@ export function useTaxCollectedData(entityId: string | undefined) {
           );
         },
         enabled: !!entityId && !!sdk,
-        staleTime: 60_000, // 1 minute
+        staleTime: 120_000, // 1 minute
       },
       // Current year taxes - aggregated by rate using stats API
       {
@@ -108,7 +108,7 @@ export function useTaxCollectedData(entityId: string | undefined) {
           );
         },
         enabled: !!entityId && !!sdk,
-        staleTime: 60_000,
+        staleTime: 120_000,
       },
     ],
   });

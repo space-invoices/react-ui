@@ -32,7 +32,7 @@ export function usePaymentMethodsData(entityId: string | undefined) {
       );
     },
     enabled: !!entityId && !!sdk,
-    staleTime: 30_000,
+    staleTime: 120_000,
     select: (response) => {
       const data = response.data || [];
       return (data as StatsQueryDataItem[]).map((row) => ({

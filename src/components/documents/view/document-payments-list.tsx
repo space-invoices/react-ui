@@ -147,9 +147,9 @@ export function DocumentPaymentsList({
     try {
       await sdk.payments.delete(paymentToDelete.id, { entity_id: entityId });
 
-      // Invalidate queries to refresh data
-      queryClient.invalidateQueries({ queryKey: ["payments"] });
-      queryClient.invalidateQueries({ queryKey: ["documents"] });
+      // Invalidate this document's payments and document view
+      queryClient.invalidateQueries({ queryKey: ["payments", documentType, documentId] });
+      queryClient.invalidateQueries({ queryKey: ["documents", documentType, documentId] });
 
       onDeleteSuccess?.();
     } catch (error) {

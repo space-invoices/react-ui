@@ -11,6 +11,7 @@ import type {
   TableQueryParams,
   TableQueryResponse,
 } from "@/ui/components/table/types";
+import { Badge } from "@/ui/components/ui/badge";
 import { Button } from "@/ui/components/ui/button";
 import { createTranslation } from "@/ui/lib/translation";
 import { useSDK } from "@/ui/providers/sdk-provider";
@@ -138,9 +139,19 @@ export default function InvoiceListTable({
         header: t("Number"),
         sortable: true,
         cell: (invoice) => (
-          <Button variant="link" className="cursor-pointer py-0 underline" onClick={() => onRowClick?.(invoice)}>
-            {(invoice as any).is_draft ? t("Draft") : invoice.number}
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="link" className="cursor-pointer py-0 underline" onClick={() => onRowClick?.(invoice)}>
+              {invoice.number}
+            </Button>
+            {(invoice as any).is_draft && (
+              <Badge
+                variant="outline"
+                className="border-amber-500 bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-400"
+              >
+                {t("Draft")}
+              </Badge>
+            )}
+          </div>
         ),
       },
       {
@@ -173,6 +184,11 @@ export default function InvoiceListTable({
         sortable: true,
         align: "right",
         cell: (invoice) => invoice.total_with_tax,
+      },
+      {
+        id: "status",
+        header: t("Status"),
+        cell: (invoice) => <InvoiceStatusBadge invoice={invoice} t={t} />,
       },
       {
         id: "actions",
@@ -229,5 +245,54 @@ export default function InvoiceListTable({
       onSelectionChange={setSelectedIds}
       selectionToolbar={selectionToolbar}
     />
+  );
+}
+
+/** Status badge for invoices */
+function InvoiceStatusBadge({ invoice, t }: { invoice: Invoice; t: (key: string) => string }) {
+  if ((invoice as any).voided_at) {
+    return (
+      <Badge variant="outline" className="border-red-500 bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-400">
+        {t("Voided")}
+      </Badge>
+    );
+  }
+  if ((invoice as any).is_draft) {
+    return null;
+  }
+  if (invoice.paid_in_full) {
+    return (
+      <Badge
+        variant="outline"
+        className="border-green-500 bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-400"
+      >
+        {t("Paid")}
+      </Badge>
+    );
+  }
+  if (invoice.date_due && new Date(invoice.date_due) < new Date()) {
+    return (
+      <Badge
+        variant="outline"
+        className="border-orange-500 bg-orange-50 text-orange-700 dark:bg-orange-950 dark:text-orange-400"
+      >
+        {t("Overdue")}
+      </Badge>
+    );
+  }
+  if (invoice.total_paid > 0) {
+    return (
+      <Badge
+        variant="outline"
+        className="border-yellow-500 bg-yellow-50 text-yellow-700 dark:bg-yellow-950 dark:text-yellow-400"
+      >
+        {t("Partially Paid")}
+      </Badge>
+    );
+  }
+  return (
+    <Badge variant="outline" className="border-gray-500 bg-gray-50 text-gray-700 dark:bg-gray-800 dark:text-gray-400">
+      {t("Unpaid")}
+    </Badge>
   );
 }

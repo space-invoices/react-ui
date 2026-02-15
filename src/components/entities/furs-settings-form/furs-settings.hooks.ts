@@ -277,8 +277,13 @@ export function useCurrentUser(options?: Omit<UseQueryOptions<User>, "queryKey" 
  * Hook: Get user FURS settings for a specific entity
  * Extracts FURS settings from user.settings using the furs_<entity_id> key
  */
-export function useUserFursSettings(entityId: string) {
-  const { data: user, isLoading, error, ...rest } = useCurrentUser();
+export function useUserFursSettings(entityId: string, options?: { enabled?: boolean }) {
+  const {
+    data: user,
+    isLoading,
+    error,
+    ...rest
+  } = useCurrentUser(options?.enabled === false ? { enabled: false } : undefined);
 
   const userFursSettings = useMemo<UserFursSettings | null>(() => {
     if (!user?.settings) return null;

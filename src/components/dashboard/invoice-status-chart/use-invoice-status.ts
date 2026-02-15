@@ -36,7 +36,7 @@ export function useInvoiceStatusData(entityId: string | undefined) {
           );
         },
         enabled: !!entityId && !!sdk,
-        staleTime: 30_000,
+        staleTime: 120_000,
       },
       // Unpaid invoices grouped by overdue bucket (current = pending, others = overdue)
       {
@@ -54,7 +54,7 @@ export function useInvoiceStatusData(entityId: string | undefined) {
           );
         },
         enabled: !!entityId && !!sdk,
-        staleTime: 30_000,
+        staleTime: 120_000,
       },
       // Total count to derive voided
       {
@@ -71,7 +71,7 @@ export function useInvoiceStatusData(entityId: string | undefined) {
           );
         },
         enabled: !!entityId && !!sdk,
-        staleTime: 30_000,
+        staleTime: 120_000,
       },
     ],
   });

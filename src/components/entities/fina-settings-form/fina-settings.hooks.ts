@@ -251,8 +251,13 @@ function useCurrentUser(options?: Omit<UseQueryOptions<any>, "queryKey" | "query
  * Hook: Get user FINA settings for a specific entity
  * Extracts FINA settings from user.settings using the fina_<entity_id> key
  */
-export function useUserFinaSettings(entityId: string) {
-  const { data: user, isLoading, error, ...rest } = useCurrentUser();
+export function useUserFinaSettings(entityId: string, options?: { enabled?: boolean }) {
+  const {
+    data: user,
+    isLoading,
+    error,
+    ...rest
+  } = useCurrentUser(options?.enabled === false ? { enabled: false } : undefined);
 
   const userFinaSettings = useMemo<UserFinaSettings | null>(() => {
     if (!user?.settings) return null;

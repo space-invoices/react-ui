@@ -28,7 +28,7 @@ export default {
   Overdue: "Zapadlo",
   Voided: "Stornirano",
   "Created At": "Ustvarjeno",
-  Partial: "Delno plačano",
+  "Partially Paid": "Delno plačano",
   Unshare: "Odstrani deljenje",
   // Empty state translations
   "Your list is empty": "Vaš seznam dobropisov je prazen",

@@ -83,6 +83,8 @@ export function DocumentDetailsSection({
   serviceDate,
 }: DocumentDetailsSectionProps) {
   // Determine the date field name based on document type
+  // Delivery notes don't have a secondary date field
+  const hasSecondaryDate = documentType !== "delivery_note";
   const dateFieldName =
     documentType === "invoice" || documentType === "advance_invoice" ? "date_due" : "date_valid_till";
   const dateFieldLabel =
@@ -346,38 +348,40 @@ export function DocumentDetailsSection({
         />
       )}
 
-      <FormField
-        control={control}
-        name={dateFieldName}
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel className="">{dateFieldLabel}</FormLabel>
-            <Popover>
-              <PopoverTrigger asChild>
-                <FormControl>
-                  <Button
-                    variant="outline"
-                    className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
-                  >
-                    {field.value ? new Date(field.value).toLocaleDateString() : <span>{t("Pick a date")}</span>}
-                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                  </Button>
-                </FormControl>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={field.value ? new Date(field.value) : undefined}
-                  onSelect={(date) => field.onChange(date?.toISOString())}
-                  disabled={(date) => date < new Date("1900-01-01")}
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+      {hasSecondaryDate && (
+        <FormField
+          control={control}
+          name={dateFieldName}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="">{dateFieldLabel}</FormLabel>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <FormControl>
+                    <Button
+                      variant="outline"
+                      className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
+                    >
+                      {field.value ? new Date(field.value).toLocaleDateString() : <span>{t("Pick a date")}</span>}
+                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                    </Button>
+                  </FormControl>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={field.value ? new Date(field.value) : undefined}
+                    onSelect={(date) => field.onChange(date?.toISOString())}
+                    disabled={(date) => date < new Date("1900-01-01")}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      )}
 
       <FormField
         control={control}

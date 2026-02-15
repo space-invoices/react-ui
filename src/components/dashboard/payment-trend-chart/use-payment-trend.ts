@@ -54,7 +54,7 @@ export function usePaymentTrendData(entityId: string | undefined) {
       );
     },
     enabled: !!entityId && !!sdk,
-    staleTime: 30_000,
+    staleTime: 120_000,
     select: (response) => {
       // Build a map of all months with 0 amount
       const monthMap: Record<string, number> = {};

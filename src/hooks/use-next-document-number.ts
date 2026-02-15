@@ -4,7 +4,7 @@ import { useSDK } from "@/ui/providers/sdk-provider";
 
 export const NEXT_DOCUMENT_NUMBER_CACHE_KEY = "next-document-number";
 
-export type DocumentType = "invoice" | "estimate" | "credit_note" | "advance_invoice";
+export type DocumentType = "invoice" | "estimate" | "credit_note" | "advance_invoice" | "delivery_note";
 
 /** Response type for next document number preview */
 export type NextDocumentNumberResponse = {
@@ -43,7 +43,7 @@ export function useNextDocumentNumber(
     queryFn: async () => {
       const response = await sdk.documents.getNextNumber(
         {
-          type,
+          type: type as "invoice",
           business_premise_name: options?.businessPremiseName,
           electronic_device_name: options?.electronicDeviceName,
         },

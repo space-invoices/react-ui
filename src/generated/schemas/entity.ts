@@ -40,6 +40,7 @@ const createEntitySchemaDefinition = z.object({
             estimate: z.union([z.string(), z.null()]),
             credit_note: z.union([z.string(), z.null()]),
             advance_invoice: z.union([z.string(), z.null()]),
+            delivery_note: z.union([z.string(), z.null()]),
           })
           .partial()
           .passthrough(),
@@ -136,6 +137,7 @@ const createEntitySchemaDefinition = z.object({
       ]),
       bank_accounts: z.union([z.array(z.any()), z.null()]),
       eslog_validation_enabled: z.union([z.boolean(), z.null()]),
+      delivery_note_hide_prices: z.union([z.boolean(), z.null()]),
       tax_clause_defaults: z.union([
         z
           .object({
@@ -189,6 +191,7 @@ const patchEntitySchemaDefinition = z
               estimate: z.union([z.string(), z.null()]),
               credit_note: z.union([z.string(), z.null()]),
               advance_invoice: z.union([z.string(), z.null()]),
+              delivery_note: z.union([z.string(), z.null()]),
             })
             .partial()
             .passthrough(),
@@ -285,6 +288,7 @@ const patchEntitySchemaDefinition = z
         ]),
         bank_accounts: z.union([z.array(z.any()), z.null()]),
         eslog_validation_enabled: z.union([z.boolean(), z.null()]),
+        delivery_note_hide_prices: z.union([z.boolean(), z.null()]),
         tax_clause_defaults: z.union([
           z
             .object({

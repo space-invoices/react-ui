@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSDK } from "@/ui/providers/sdk-provider";
 
 // Document type union for API calls
-export type DocumentType = "invoice" | "estimate" | "credit_note" | "advance_invoice";
+export type DocumentType = "invoice" | "estimate" | "credit_note" | "advance_invoice" | "delivery_note";
 
 // Cache key map for invalidation
 const CACHE_KEYS: Record<DocumentType, string> = {
@@ -10,6 +10,7 @@ const CACHE_KEYS: Record<DocumentType, string> = {
   estimate: "estimates",
   credit_note: "credit-notes",
   advance_invoice: "advance-invoices",
+  delivery_note: "delivery-notes",
 };
 
 // ============================================================================

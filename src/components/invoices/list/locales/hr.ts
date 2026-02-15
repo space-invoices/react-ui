@@ -43,4 +43,5 @@ export default {
   "Export PDFs": "Izvezi PDF-ove",
   "Deselect all": "Poništi odabir",
   Void: "Storniraj",
+  "Partially Paid": "Djelomično plaćeno",
 } as const;

@@ -1,4 +1,4 @@
-import type { AdvanceInvoice, CreditNote, Estimate, Invoice } from "@spaceinvoices/js-sdk";
+import type { AdvanceInvoice, CreditNote, DeliveryNote, Estimate, Invoice } from "@spaceinvoices/js-sdk";
 import { Badge } from "@/ui/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/ui/components/ui/card";
 import { Separator } from "@/ui/components/ui/separator";
@@ -17,8 +17,8 @@ import sl from "./locales/sl";
 const translations = { sl, de, it, fr, es, pt, nl, pl, hr } as const;
 
 // Document type union
-type Document = Invoice | Estimate | CreditNote | AdvanceInvoice;
-type DocumentType = "invoice" | "estimate" | "credit_note" | "advance_invoice";
+type Document = Invoice | Estimate | CreditNote | AdvanceInvoice | DeliveryNote;
+type DocumentType = "invoice" | "estimate" | "credit_note" | "advance_invoice" | "delivery_note";
 
 interface DocumentDetailsCardProps extends ComponentTranslationProps {
   document: Document;

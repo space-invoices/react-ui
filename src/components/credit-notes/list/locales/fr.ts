@@ -28,7 +28,7 @@ export default {
   Overdue: "En retard",
   Voided: "Annule",
   "Created At": "Cree le",
-  Partial: "Partiellement paye",
+  "Partially Paid": "Partiellement payé",
   Unshare: "Supprimer le partage",
   // Empty state translations
   "Your list is empty": "Votre liste d'avoirs est vide",

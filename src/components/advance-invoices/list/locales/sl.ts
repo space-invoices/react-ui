@@ -41,4 +41,5 @@ export default {
   selected: "izbranih",
   "Export PDFs": "Izvozi PDF-je",
   "Deselect all": "Počisti izbiro",
+  "Partially Paid": "Delno plačano",
 } as const;

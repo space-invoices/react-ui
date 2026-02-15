@@ -69,6 +69,11 @@ interface FursSettingsFormProps extends ComponentTranslationProps {
    * Optional render prop to wrap each section with help content
    */
   renderSection?: (section: SectionType, content: ReactNode) => ReactNode;
+  /**
+   * Hide user-specific operator section (for embed/API key contexts without user session).
+   * When true, the "Advanced Settings" entity-level operator fields are auto-expanded instead.
+   */
+  hideUserOperatorSection?: boolean;
 }
 
 /**
@@ -92,6 +97,7 @@ export const FursSettingsForm: FC<FursSettingsFormProps> = ({
   initialStep = "settings",
   onStepChange,
   renderSection,
+  hideUserOperatorSection,
 }) => {
   // Step navigation state (can be controlled via props for URL sync)
   const [activeStep, setActiveStep] = useState<StepType>(initialStep);
@@ -117,7 +123,9 @@ export const FursSettingsForm: FC<FursSettingsFormProps> = ({
   // Fetch FURS settings and premises
   const { data: fursSettings, isLoading: settingsLoading } = useFursSettings(entity.id);
   const { data: premises, isLoading: premisesLoading } = useFursPremises(entity.id);
-  const { data: userFursSettings } = useUserFursSettings(entity.id);
+  const { data: userFursSettings } = useUserFursSettings(entity.id, {
+    enabled: !hideUserOperatorSection,
+  });
 
   const { mutate: updateSettings, isPending } = useUpdateFursSettings({
     onSuccess: () => {
@@ -388,6 +396,7 @@ export const FursSettingsForm: FC<FursSettingsFormProps> = ({
             onSuccess={onSuccess}
             onError={onError}
             wrapSection={wrapSection}
+            hideUserOperatorSection={hideUserOperatorSection}
           />
         )}
 

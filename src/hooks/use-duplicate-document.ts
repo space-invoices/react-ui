@@ -2,9 +2,11 @@ import type {
   AdvanceInvoice,
   CreateAdvanceInvoiceRequest,
   CreateCreditNoteRequest,
+  CreateDeliveryNoteRequest,
   CreateEstimateRequest,
   CreateInvoiceRequest,
   CreditNote,
+  DeliveryNote,
   Estimate,
   Invoice,
 } from "@spaceinvoices/js-sdk";
@@ -13,13 +15,14 @@ import { useQuery } from "@tanstack/react-query";
 import { useEntities } from "@/ui/providers/entities-context";
 import { useSDK } from "@/ui/providers/sdk-provider";
 
-export type DocumentType = "invoice" | "estimate" | "credit_note" | "advance_invoice";
-type Document = Invoice | Estimate | CreditNote | AdvanceInvoice;
+export type DocumentType = "invoice" | "estimate" | "credit_note" | "advance_invoice" | "delivery_note";
+type Document = Invoice | Estimate | CreditNote | AdvanceInvoice | DeliveryNote;
 type CreateRequest =
   | CreateInvoiceRequest
   | CreateEstimateRequest
   | CreateCreditNoteRequest
-  | CreateAdvanceInvoiceRequest;
+  | CreateAdvanceInvoiceRequest
+  | CreateDeliveryNoteRequest;
 
 /**
  * Get document type from ID prefix
@@ -29,6 +32,7 @@ export function getDocumentTypeFromId(id: string): DocumentType | null {
   if (id.startsWith("est_")) return "estimate";
   if (id.startsWith("cn_")) return "credit_note";
   if (id.startsWith("adv_")) return "advance_invoice";
+  if (id.startsWith("dn_")) return "delivery_note";
   return null;
 }
 
@@ -45,6 +49,8 @@ export function getAllowedDuplicateTargets(sourceType: DocumentType): DocumentTy
       return ["credit_note"];
     case "advance_invoice":
       return ["advance_invoice", "invoice"];
+    case "delivery_note":
+      return ["delivery_note"];
     default:
       return [];
   }
@@ -170,6 +176,8 @@ export function useDuplicateDocument({
         source = await sdk.estimates.get(sourceId, undefined, { entity_id: activeEntity.id });
       } else if (sourceType === "advance_invoice") {
         source = await sdk.advanceInvoices.get(sourceId, undefined, { entity_id: activeEntity.id });
+      } else if (sourceType === "delivery_note") {
+        source = await sdk.deliveryNotes.get(sourceId, undefined, { entity_id: activeEntity.id });
       } else {
         // Credit note
         source = await sdk.creditNotes.get(sourceId, undefined, { entity_id: activeEntity.id });

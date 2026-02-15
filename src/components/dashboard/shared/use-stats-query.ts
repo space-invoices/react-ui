@@ -32,7 +32,7 @@ export function useStatsQuery<TData = StatsQueryResponse>(
       return await sdk.entityStats.queryEntityStats(query, { entity_id: entityId });
     },
     enabled: !!entityId && !!sdk,
-    staleTime: 30_000, // 30 seconds
+    staleTime: 120_000, // 2 minutes
     ...options,
   });
 }

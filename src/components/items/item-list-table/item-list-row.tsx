@@ -1,5 +1,6 @@
 import type { Item } from "@spaceinvoices/js-sdk";
 import { Package } from "lucide-react";
+import { memo } from "react";
 import { TableCell, TableRow } from "@/ui/components/ui/table";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
@@ -12,7 +13,7 @@ type ItemListRowProps = {
   onView?: (item: Item) => void;
 } & ComponentTranslationProps;
 
-export default function ItemListRow({ item, onRowClick, onView, ...i18nProps }: ItemListRowProps) {
+export default memo(function ItemListRow({ item, onRowClick, onView, ...i18nProps }: ItemListRowProps) {
   const t = createTranslation(i18nProps);
 
   return (
@@ -30,4 +31,4 @@ export default function ItemListRow({ item, onRowClick, onView, ...i18nProps }: 
       </TableCell>
     </TableRow>
   );
-}
+});

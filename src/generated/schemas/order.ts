@@ -64,7 +64,7 @@ const OrderItem = z
 // Schema for create order operation
 const createOrderSchemaDefinition = z.object({
   order_integration_id: z.string().max(36),
-  source: z.string().max(50),
+  source: z.enum(["shopify", "woocommerce", "manual"]),
   source_id: z.string().max(255),
   source_order_number: z.union([z.string(), z.null()]).optional(),
   customer_name: z.union([z.string(), z.null()]).optional(),
@@ -86,7 +86,9 @@ const createOrderSchemaDefinition = z.object({
     .lte(140737488355327)
     .optional(),
   items: z.array(OrderItem).min(1),
-  payment_status: z.string().max(30).optional(),
+  payment_status: z
+    .enum(["unpaid", "paid", "partially_paid", "refunded"])
+    .optional(),
   payment_method: z.union([z.string(), z.null()]).optional(),
   payment_gateway: z.union([z.string(), z.null()]).optional(),
   ordered_at: z.union([z.string(), z.null()]).optional(),
@@ -112,7 +114,7 @@ const updateOrderSchemaDefinition = z
     total_discount: z.number().gte(-140737488355328).lte(140737488355327),
     total_shipping: z.number().gte(-140737488355328).lte(140737488355327),
     items: z.array(OrderItem).min(1),
-    payment_status: z.string().max(30),
+    payment_status: z.enum(["unpaid", "paid", "partially_paid", "refunded"]),
     payment_method: z.union([z.string(), z.null()]),
     payment_gateway: z.union([z.string(), z.null()]),
     ordered_at: z.union([z.string(), z.null()]),

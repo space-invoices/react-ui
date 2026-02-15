@@ -27,7 +27,7 @@ function getDocTypePathFromShareableId(shareableId: string): string {
 type DocumentPreviewDisplayProps = {
   /** The document to display (invoice, estimate, credit note, or advance invoice) */
   document: Document;
-  template?: "modern";
+  template?: "modern" | "classic" | "minimal" | "fashion";
   className?: string;
   apiBaseUrl?: string;
   /** Locale for document rendering (e.g., "en-US", "sl-SI"). Uses user's UI language. */
@@ -36,6 +36,10 @@ type DocumentPreviewDisplayProps = {
   isPublicView?: boolean;
   /** Shareable ID for public view (required when isPublicView is true) */
   shareableId?: string;
+  /** Translation function for UI strings */
+  t?: (key: string) => string;
+  /** Document type label for display (e.g., "Invoice", "Estimate") */
+  documentTypeLabel?: string;
 };
 
 /**
@@ -53,7 +57,10 @@ export function DocumentPreviewDisplay({
   locale,
   isPublicView = false,
   shareableId,
+  t: tProp,
+  documentTypeLabel,
 }: DocumentPreviewDisplayProps) {
+  const t = tProp ?? ((key: string) => key);
   const [previewHtml, setPreviewHtml] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -133,7 +140,7 @@ export function DocumentPreviewDisplay({
         <div className="flex h-full items-center justify-center rounded-lg border bg-muted/50">
           <div className="flex flex-col items-center gap-2">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <p className="text-muted-foreground text-sm">Loading preview...</p>
+            <p className="text-muted-foreground text-sm">{t("Loading preview...")}</p>
           </div>
         </div>
       )}
@@ -143,7 +150,7 @@ export function DocumentPreviewDisplay({
         <div className="flex h-full items-center justify-center rounded-lg border border-destructive/50 bg-destructive/10 p-8">
           <div className="flex flex-col items-center gap-2 text-center">
             <AlertCircle className="h-8 w-8 text-destructive" />
-            <p className="font-semibold text-destructive">Preview Error</p>
+            <p className="font-semibold text-destructive">{t("Preview Error")}</p>
             <p className="text-muted-foreground text-sm">{error}</p>
           </div>
         </div>
@@ -157,8 +164,8 @@ export function DocumentPreviewDisplay({
               <FileText className="h-8 w-8 text-muted-foreground" />
             </div>
             <div>
-              <p className="font-medium text-muted-foreground">Document Preview</p>
-              <p className="text-muted-foreground/70 text-sm">Preview will appear here</p>
+              <p className="font-medium text-muted-foreground">{documentTypeLabel || t("Document Preview")}</p>
+              <p className="text-muted-foreground/70 text-sm">{t("Preview will appear here")}</p>
             </div>
           </div>
         </div>

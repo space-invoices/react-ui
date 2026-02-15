@@ -1,6 +1,6 @@
 import SDK from "@spaceinvoices/js-sdk";
 import type { ReactNode } from "react";
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
 import { AUTH_COOKIES } from "@/ui/lib/auth";
 import { flushCookies, getCookie } from "@/ui/lib/browser-cookies";
@@ -59,7 +59,7 @@ export function SDKProvider({
   /**
    * Initialize the SDK with the current auth token
    */
-  const initializeSDK = async () => {
+  const initializeSDK = useCallback(async () => {
     setIsLoading(true);
     setError(null);
 
@@ -92,17 +92,15 @@ export function SDKProvider({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [onUnauthorized]);
 
   // Initialize SDK on component mount
-  // biome-ignore lint/correctness/useExhaustiveDependencies: initializeSDK is intentionally omitted - should only run once on mount
   useEffect(() => {
     initializeSDK();
-  }, []); // Empty dependency array - only run on mount
+  }, [initializeSDK]);
 
   // IMPORTANT: useMemo must be called BEFORE any conditional returns
   // to satisfy React's Rules of Hooks
-  // biome-ignore lint/correctness/useExhaustiveDependencies: initializeSDK is stable (doesn't change) and including it would cause unnecessary re-renders
   const value = useMemo(
     () => ({
       sdk: sdk as SDK, // Will be non-null when children render (checked below)
@@ -111,7 +109,7 @@ export function SDKProvider({
       error,
       reinitialize: initializeSDK,
     }),
-    [sdk, isInitialized, isLoading, error], // Don't include initializeSDK - it's stable but causes re-renders
+    [sdk, isInitialized, isLoading, error, initializeSDK],
   );
 
   // Render appropriate UI based on SDK state

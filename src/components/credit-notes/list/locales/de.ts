@@ -28,7 +28,7 @@ export default {
   Overdue: "Überfällig",
   Voided: "Storniert",
   "Created At": "Erstellt am",
-  Partial: "Teilweise bezahlt",
+  "Partially Paid": "Teilweise bezahlt",
   Unshare: "Freigabe aufheben",
   // Empty state translations
   "Your list is empty": "Ihre Gutschriftenliste ist leer",

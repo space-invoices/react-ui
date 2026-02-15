@@ -43,6 +43,7 @@ const createWebhookSchemaDefinition = z.object({
         "estimate.restored",
         "credit_note.created",
         "credit_note.issued",
+        "credit_note.voided",
         "credit_note.deleted",
         "credit_note.restored",
         "advance_invoice.created",
@@ -83,6 +84,11 @@ const createWebhookSchemaDefinition = z.object({
         "order_integration.created",
         "order_integration.updated",
         "order_integration.deleted",
+        "delivery_note.created",
+        "delivery_note.sent",
+        "delivery_note.cancelled",
+        "delivery_note.deleted",
+        "delivery_note.restored",
       ])
     )
     .min(1),
@@ -130,6 +136,7 @@ const updateWebhookSchemaDefinition = z
           "estimate.restored",
           "credit_note.created",
           "credit_note.issued",
+          "credit_note.voided",
           "credit_note.deleted",
           "credit_note.restored",
           "advance_invoice.created",
@@ -170,6 +177,11 @@ const updateWebhookSchemaDefinition = z
           "order_integration.created",
           "order_integration.updated",
           "order_integration.deleted",
+          "delivery_note.created",
+          "delivery_note.sent",
+          "delivery_note.cancelled",
+          "delivery_note.deleted",
+          "delivery_note.restored",
         ])
       )
       .min(1),

@@ -1,7 +1,7 @@
 import type { Invoice } from "@spaceinvoices/js-sdk";
 
 import { Ban, Copy, Download, Eye, Link2Off, Loader2, Mail, MoreHorizontal, Plus } from "lucide-react";
-import { useState } from "react";
+import { memo, useState } from "react";
 import { Button } from "@/ui/components/ui/button";
 import {
   DropdownMenu,
@@ -31,7 +31,7 @@ type InvoiceListRowActionsProps = {
   isVoiding?: boolean;
 } & ComponentTranslationProps;
 
-export default function InvoiceListRowActions({
+export default memo(function InvoiceListRowActions({
   invoice,
   onView,
   onAddPayment,
@@ -144,4 +144,4 @@ export default function InvoiceListRowActions({
       />
     </>
   );
-}
+});

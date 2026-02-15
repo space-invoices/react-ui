@@ -132,6 +132,7 @@ const CreateDocumentItem = z.object({
   unit: z.union([z.string(), z.null()]).optional(),
   taxes: z.array(DocumentItemTax).optional(),
   discounts: z.array(LineDiscount).max(5).optional(),
+  delivery_note_id: z.union([z.string(), z.null()]).optional(),
   metadata: z
     .union([
       z.string(),

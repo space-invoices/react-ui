@@ -8,6 +8,7 @@ import { useEntities } from "@/ui/providers/entities-context";
 import { useSDK } from "@/ui/providers/sdk-provider";
 import { ScaledDocumentPreview } from "../shared/scaled-document-preview";
 import { useA4Scaling } from "../shared/use-a4-scaling";
+import type { DocumentTypes } from "../types";
 import { filterUnresolvedTaxes } from "./prepare-preview-data";
 
 export type PdfTemplateId = "modern" | "classic" | "minimal" | "fashion";
@@ -23,6 +24,12 @@ type LiveInvoicePreviewProps = {
   locale?: string;
   /** Fixed scale to use instead of dynamic scaling. Useful to prevent layout shifts. */
   fixedScale?: number;
+  /** Translation function for UI strings */
+  t?: (key: string) => string;
+  /** Document type label for display (e.g., "Invoice", "Estimate") */
+  documentTypeLabel?: string;
+  /** Document type to determine which render endpoint to use */
+  documentType?: DocumentTypes;
 };
 
 /**
@@ -44,7 +51,11 @@ export function LiveInvoicePreview({
   className,
   locale,
   fixedScale,
+  t: tProp,
+  documentTypeLabel,
+  documentType = "invoice",
 }: LiveInvoicePreviewProps) {
+  const t = tProp ?? ((key: string) => key);
   const [previewHtml, setPreviewHtml] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -104,12 +115,27 @@ export function LiveInvoicePreview({
           },
         };
 
-        // Call the render API using the SDK wrapper
-        const html = await sdk.invoices.renderInvoicePreview(
-          previewData as any,
-          { partial: "true", template, locale },
-          { entity_id: activeEntity.id },
-        );
+        // Call the render API using the appropriate SDK method for the document type
+        const renderParams = { partial: "true" as const, template, locale };
+        const requestOpts = { entity_id: activeEntity.id };
+        let html: string;
+        switch (documentType) {
+          case "estimate":
+            html = await sdk.estimates.renderEstimatePreview(previewData as any, renderParams, requestOpts);
+            break;
+          case "credit_note":
+            html = await sdk.creditNotes.renderCreditNotePreview(previewData as any, renderParams, requestOpts);
+            break;
+          case "advance_invoice":
+            html = await sdk.advanceInvoices.renderAdvanceInvoicePreview(previewData as any, renderParams, requestOpts);
+            break;
+          case "delivery_note":
+            html = await sdk.deliveryNotes.renderDeliveryNotePreview(previewData as any, renderParams, requestOpts);
+            break;
+          default:
+            html = await sdk.invoices.renderInvoicePreview(previewData as any, renderParams, requestOpts);
+            break;
+        }
 
         setPreviewHtml(html);
         setError(null);
@@ -146,6 +172,7 @@ export function LiveInvoicePreview({
       template,
       locale,
       sdk,
+      documentType,
     ],
   );
 
@@ -195,7 +222,7 @@ export function LiveInvoicePreview({
         <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/80 backdrop-blur-sm">
           <div className="flex flex-col items-center gap-2">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <p className="text-muted-foreground text-sm">Generating preview...</p>
+            <p className="text-muted-foreground text-sm">{t("Generating preview...")}</p>
           </div>
         </div>
       )}
@@ -204,7 +231,7 @@ export function LiveInvoicePreview({
       {error && !isLoading && (
         <div className="flex min-h-[200px] items-center justify-center rounded-lg border border-destructive/50 bg-destructive/10 p-8">
           <div className="text-center">
-            <p className="font-semibold text-destructive">Preview Error</p>
+            <p className="font-semibold text-destructive">{t("Preview Error")}</p>
             <p className="text-muted-foreground text-sm">{error}</p>
           </div>
         </div>
@@ -214,8 +241,8 @@ export function LiveInvoicePreview({
       {!previewHtml && !isLoading && !error && (
         <div className="flex min-h-[200px] items-center justify-center rounded-lg border border-dashed p-8">
           <div className="text-center">
-            <p className="font-semibold text-muted-foreground">Invoice Preview</p>
-            <p className="text-muted-foreground text-sm">Start filling the form to see a live preview</p>
+            <p className="font-semibold text-muted-foreground">{documentTypeLabel || t("Document Preview")}</p>
+            <p className="text-muted-foreground text-sm">{t("Start filling the form to see a live preview")}</p>
           </div>
         </div>
       )}

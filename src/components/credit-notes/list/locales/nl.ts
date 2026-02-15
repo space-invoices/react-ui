@@ -28,7 +28,7 @@ export default {
   Overdue: "Achterstallig",
   Voided: "Nietig verklaard",
   "Created At": "Aangemaakt op",
-  Partial: "Gedeeltelijk betaald",
+  "Partially Paid": "Gedeeltelijk betaald",
   Unshare: "Delen opheffen",
   // Empty state translations
   "Your list is empty": "Uw lijst met creditnota's is leeg",

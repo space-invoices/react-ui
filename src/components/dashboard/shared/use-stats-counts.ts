@@ -31,7 +31,7 @@ export function useStatsCountsData(entityId: string | undefined) {
           );
         },
         enabled: !!entityId && !!sdk,
-        staleTime: 30_000,
+        staleTime: 120_000,
       },
       // Estimates count
       {
@@ -44,7 +44,7 @@ export function useStatsCountsData(entityId: string | undefined) {
           );
         },
         enabled: !!entityId && !!sdk,
-        staleTime: 30_000,
+        staleTime: 120_000,
       },
       // Customers count
       {
@@ -57,7 +57,7 @@ export function useStatsCountsData(entityId: string | undefined) {
           );
         },
         enabled: !!entityId && !!sdk,
-        staleTime: 30_000,
+        staleTime: 120_000,
       },
       // Items count
       {
@@ -70,7 +70,7 @@ export function useStatsCountsData(entityId: string | undefined) {
           );
         },
         enabled: !!entityId && !!sdk,
-        staleTime: 30_000,
+        staleTime: 120_000,
       },
     ],
   });

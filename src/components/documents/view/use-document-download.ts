@@ -1,10 +1,10 @@
-import type { AdvanceInvoice, CreditNote, Estimate, Invoice } from "@spaceinvoices/js-sdk";
+import type { AdvanceInvoice, CreditNote, DeliveryNote, Estimate, Invoice } from "@spaceinvoices/js-sdk";
 import { useState } from "react";
 import { useEntities } from "@/ui/providers/entities-context";
 import { useSDK } from "@/ui/providers/sdk-provider";
 
-type Document = Invoice | Estimate | CreditNote | AdvanceInvoice;
-type DocumentType = "invoice" | "estimate" | "credit_note" | "advance_invoice";
+type Document = Invoice | Estimate | CreditNote | AdvanceInvoice | DeliveryNote;
+type DocumentType = "invoice" | "estimate" | "credit_note" | "advance_invoice" | "delivery_note";
 
 // Document type labels for PDF filename
 const TYPE_LABELS: Record<string, string> = {
@@ -12,6 +12,7 @@ const TYPE_LABELS: Record<string, string> = {
   estimate: "Estimate",
   credit_note: "Credit Note",
   advance_invoice: "Advance Invoice",
+  delivery_note: "Delivery Note",
 };
 
 interface UseDocumentDownloadOptions {
@@ -90,6 +91,7 @@ export function useDocumentDownload({
         advance_invoice: "advance_invoice",
         credit_note: "credit_note",
         estimate: "estimate",
+        delivery_note: "delivery_note",
       };
 
       // e-SLOG download - cast to any since the SDK structure may vary

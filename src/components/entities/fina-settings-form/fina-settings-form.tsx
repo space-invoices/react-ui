@@ -54,6 +54,11 @@ interface FinaSettingsFormProps extends ComponentTranslationProps {
   initialStep?: FinaStepType;
   onStepChange?: (step: FinaStepType) => void;
   renderSection?: (section: FinaSectionType, content: ReactNode) => ReactNode;
+  /**
+   * Hide user-specific operator section (for embed/API key contexts without user session).
+   * When true, the "Advanced Settings" entity-level operator fields are auto-expanded instead.
+   */
+  hideUserOperatorSection?: boolean;
 }
 
 /**
@@ -75,6 +80,7 @@ export const FinaSettingsForm: FC<FinaSettingsFormProps> = ({
   initialStep = "settings",
   onStepChange,
   renderSection,
+  hideUserOperatorSection,
 }) => {
   const [activeStep, setActiveStep] = useState<FinaStepType>(initialStep);
   const [hasInitializedStep, setHasInitializedStep] = useState(false);
@@ -138,7 +144,9 @@ export const FinaSettingsForm: FC<FinaSettingsFormProps> = ({
   });
 
   // User FINA operator settings (per-user, stored in user.settings)
-  const { data: userFinaSettings, isLoading: userSettingsLoading } = useUserFinaSettings(entity.id);
+  const { data: userFinaSettings, isLoading: userSettingsLoading } = useUserFinaSettings(entity.id, {
+    enabled: !hideUserOperatorSection,
+  });
   const [userOperatorOib, setUserOperatorOib] = useState("");
   const [userOperatorLabel, setUserOperatorLabel] = useState("");
 
@@ -166,7 +174,7 @@ export const FinaSettingsForm: FC<FinaSettingsFormProps> = ({
   };
 
   // Form state for entity-level settings (API default)
-  const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
+  const [isAdvancedOpen, setIsAdvancedOpen] = useState(!!hideUserOperatorSection);
   const [formData, setFormData] = useState({
     enabled: false,
     numbering_sequence: "N" as "N" | "P",
@@ -553,73 +561,77 @@ export const FinaSettingsForm: FC<FinaSettingsFormProps> = ({
 
           <Separator />
 
-          {/* Per-user operator settings */}
-          {wrapSection(
-            "user-operator",
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500/10">
-                  <User className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-lg">{translate("Your Operator Settings")}</h3>
-                  <p className="text-muted-foreground text-sm">
-                    {translate("Your personal operator info for FINA invoices")}
-                  </p>
-                </div>
-              </div>
+          {/* Per-user operator settings (hidden in embed/API key mode) */}
+          {!hideUserOperatorSection && (
+            <>
+              {wrapSection(
+                "user-operator",
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500/10">
+                      <User className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-lg">{translate("Your Operator Settings")}</h3>
+                      <p className="text-muted-foreground text-sm">
+                        {translate("Your personal operator info for FINA invoices")}
+                      </p>
+                    </div>
+                  </div>
 
-              {(!userFinaSettings?.operator_oib || !userFinaSettings?.operator_label) && (
-                <Alert variant="destructive">
-                  <AlertTriangle className="h-4 w-4" />
-                  <AlertDescription>
-                    {translate("Operator OIB and label are required for FINA fiscalization")}
-                  </AlertDescription>
-                </Alert>
+                  {(!userFinaSettings?.operator_oib || !userFinaSettings?.operator_label) && (
+                    <Alert variant="destructive">
+                      <AlertTriangle className="h-4 w-4" />
+                      <AlertDescription>
+                        {translate("Operator OIB and label are required for FINA fiscalization")}
+                      </AlertDescription>
+                    </Alert>
+                  )}
+
+                  <div className="space-y-4">
+                    <div>
+                      <Label className="font-medium text-sm">{translate("Operator OIB")}</Label>
+                      <Input
+                        type="text"
+                        value={userOperatorOib}
+                        onChange={(e) => {
+                          const val = e.target.value.replace(/[^0-9]/g, "");
+                          setUserOperatorOib(val);
+                        }}
+                        placeholder={translate("OIB of the operator (11 digits)")}
+                        className={cn("mt-1", userOperatorOibError && "border-destructive")}
+                        maxLength={11}
+                        disabled={userSettingsLoading}
+                      />
+                      {userOperatorOibError && <p className="mt-1 text-destructive text-xs">{userOperatorOibError}</p>}
+                    </div>
+                    <div>
+                      <Label className="font-medium text-sm">{translate("Operator Label")}</Label>
+                      <Input
+                        type="text"
+                        value={userOperatorLabel}
+                        onChange={(e) => setUserOperatorLabel(e.target.value)}
+                        placeholder={translate("e.g. Cashier 1")}
+                        className="mt-1"
+                        disabled={userSettingsLoading}
+                      />
+                    </div>
+
+                    <Button
+                      type="button"
+                      onClick={handleSaveUserSettings}
+                      disabled={isUserSettingsPending || userSettingsLoading || !!userOperatorOibError}
+                      className="cursor-pointer"
+                    >
+                      {isUserSettingsPending ? translate("Saving...") : translate("Save Operator Settings")}
+                    </Button>
+                  </div>
+                </div>,
               )}
 
-              <div className="space-y-4">
-                <div>
-                  <Label className="font-medium text-sm">{translate("Operator OIB")}</Label>
-                  <Input
-                    type="text"
-                    value={userOperatorOib}
-                    onChange={(e) => {
-                      const val = e.target.value.replace(/[^0-9]/g, "");
-                      setUserOperatorOib(val);
-                    }}
-                    placeholder={translate("OIB of the operator (11 digits)")}
-                    className={cn("mt-1", userOperatorOibError && "border-destructive")}
-                    maxLength={11}
-                    disabled={userSettingsLoading}
-                  />
-                  {userOperatorOibError && <p className="mt-1 text-destructive text-xs">{userOperatorOibError}</p>}
-                </div>
-                <div>
-                  <Label className="font-medium text-sm">{translate("Operator Label")}</Label>
-                  <Input
-                    type="text"
-                    value={userOperatorLabel}
-                    onChange={(e) => setUserOperatorLabel(e.target.value)}
-                    placeholder={translate("e.g. Cashier 1")}
-                    className="mt-1"
-                    disabled={userSettingsLoading}
-                  />
-                </div>
-
-                <Button
-                  type="button"
-                  onClick={handleSaveUserSettings}
-                  disabled={isUserSettingsPending || userSettingsLoading || !!userOperatorOibError}
-                  className="cursor-pointer"
-                >
-                  {isUserSettingsPending ? translate("Saving...") : translate("Save Operator Settings")}
-                </Button>
-              </div>
-            </div>,
+              <Separator />
+            </>
           )}
-
-          <Separator />
 
           {/* API Default Operator (advanced/entity-level) */}
           {wrapSection(

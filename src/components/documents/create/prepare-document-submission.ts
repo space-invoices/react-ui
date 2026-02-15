@@ -33,7 +33,7 @@ type PrepareDocumentOptions = {
   /** For invoices/credit notes: payment types when markAsPaid is true */
   paymentTypes?: string[];
   /** Document type for specific date handling */
-  documentType: "invoice" | "estimate" | "credit_note" | "advance_invoice";
+  documentType: "invoice" | "estimate" | "credit_note" | "advance_invoice" | "delivery_note";
   /** Secondary date field value (date_due for invoices, date_valid_till for estimates) */
   secondaryDate?: string;
   /** Map of item index to gross price mode (collected from component state) */

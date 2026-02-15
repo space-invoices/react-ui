@@ -43,4 +43,5 @@ export default {
   "Export PDFs": "Esporta PDF",
   "Deselect all": "Deseleziona tutto",
   Void: "Annulla",
+  "Partially Paid": "Parzialmente pagato",
 } as const;

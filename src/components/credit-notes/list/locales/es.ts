@@ -28,7 +28,7 @@ export default {
   Overdue: "Vencido",
   Voided: "Anulado",
   "Created At": "Creado el",
-  Partial: "Parcialmente pagado",
+  "Partially Paid": "Parcialmente pagado",
   Unshare: "Dejar de compartir",
   // Empty state translations
   "Your list is empty": "Su lista de notas de credito esta vacia",

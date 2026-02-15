@@ -61,7 +61,7 @@ export function useRevenueData(entityId: string | undefined) {
           );
         },
         enabled: !!entityId && !!sdk,
-        staleTime: 30_000,
+        staleTime: 120_000,
       },
       // This year revenue (using converted amounts for multi-currency support)
       {
@@ -80,7 +80,7 @@ export function useRevenueData(entityId: string | undefined) {
           );
         },
         enabled: !!entityId && !!sdk,
-        staleTime: 30_000,
+        staleTime: 120_000,
       },
       // Outstanding (unpaid, not voided)
       {
@@ -97,7 +97,7 @@ export function useRevenueData(entityId: string | undefined) {
           );
         },
         enabled: !!entityId && !!sdk,
-        staleTime: 30_000,
+        staleTime: 120_000,
       },
       // Overdue (past due date, unpaid)
       {
@@ -118,7 +118,7 @@ export function useRevenueData(entityId: string | undefined) {
           );
         },
         enabled: !!entityId && !!sdk,
-        staleTime: 30_000,
+        staleTime: 120_000,
       },
     ],
   });

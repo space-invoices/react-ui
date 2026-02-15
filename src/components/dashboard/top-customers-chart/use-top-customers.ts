@@ -34,7 +34,7 @@ export function useTopCustomersData(entityId: string | undefined, limit = 5) {
       );
     },
     enabled: !!entityId && !!sdk,
-    staleTime: 30_000,
+    staleTime: 120_000,
     select: (response) => {
       const data = response.data || [];
 

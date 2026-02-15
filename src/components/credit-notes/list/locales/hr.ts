@@ -28,7 +28,7 @@ export default {
   Overdue: "Dospjelo",
   Voided: "Stornirano",
   "Created At": "Kreirano",
-  Partial: "Djelomicno placeno",
+  "Partially Paid": "Djelomično plaćeno",
   Unshare: "Ukloni dijeljenje",
   // Empty state translations
   "Your list is empty": "Vasa lista odobrenja je prazna",

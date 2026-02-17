@@ -810,7 +810,6 @@ export default function CreateAdvanceInvoiceForm({
           document={{
             number: formValues.number,
             date: formValues.date,
-            date_due: formValues.date_due,
             currency_code: formValues.currency_code,
             customer: formValues.customer as any,
           }}

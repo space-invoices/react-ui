@@ -19,10 +19,12 @@ export default {
   "Duplicate estimate": "Podvoji predračun",
   "Duplicate credit_note": "Podvoji dobropis",
   "Duplicate advance_invoice": "Podvoji avansni račun",
+  "Duplicate delivery_note": "Podvoji dobavnico",
   "Create invoice": "Ustvari račun",
   "Create estimate": "Ustvari predračun",
   "Create credit_note": "Ustvari dobropis",
   "Create advance_invoice": "Ustvari avansni račun",
+  "Create delivery_note": "Ustvari dobavnico",
 
   // Details card
   Details: "Podrobnosti",

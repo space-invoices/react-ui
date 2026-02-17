@@ -19,10 +19,12 @@ export default {
   "Duplicate estimate": "Duplica preventivo",
   "Duplicate credit_note": "Duplica nota di credito",
   "Duplicate advance_invoice": "Duplica fattura di acconto",
+  "Duplicate delivery_note": "Duplica bolla di consegna",
   "Create invoice": "Crea fattura",
   "Create estimate": "Crea preventivo",
   "Create credit_note": "Crea nota di credito",
   "Create advance_invoice": "Crea fattura di acconto",
+  "Create delivery_note": "Crea bolla di consegna",
 
   // Details card
   Details: "Dettagli",

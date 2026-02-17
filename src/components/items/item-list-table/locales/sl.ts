@@ -13,4 +13,5 @@ export default {
   "No results found": "Ni najdenih izdelkov",
   "Try adjusting your search criteria": "Poskusite prilagoditi iskalne kriterije",
   "Clear search": "Počisti iskanje",
+  "Clear all": "Počisti vse",
 };

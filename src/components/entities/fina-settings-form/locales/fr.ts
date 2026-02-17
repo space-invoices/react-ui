@@ -18,8 +18,8 @@ export default {
     "Enregistrez au moins un local commercial avant de fiscaliser les factures",
   "Numbering Sequence": "Séquence de numérotation",
   "Choose how invoice numbers are sequenced": "Choisissez comment les numéros de factures sont séquencés",
-  "Per Premise (N)": "Par local (N)",
-  "Per Device (P)": "Par appareil (P)",
+  "Per Device (N)": "Par appareil (N)",
+  "Per Premise (P)": "Par local (P)",
   Recommended: "Recommandé",
   "One sequence per business premise. Simpler to manage.": "Une séquence par local commercial. Plus simple à gérer.",
   "Separate sequence per electronic device. For multi-device setups.":

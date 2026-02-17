@@ -6,4 +6,8 @@ export default {
   selected: "izbranih",
   "Export PDFs": "Izvozi PDF-je",
   "Deselect all": "Počisti izbor",
+  "Copy to Invoice": "Kopiraj v račun",
+  "Clear all": "Počisti vse",
+  Void: "Storniraj",
+  Voided: "Stornirano",
 } as const;

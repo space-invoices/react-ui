@@ -28,4 +28,6 @@ export default {
   Other: "Altro",
   Premise: "Locale",
   Device: "Dispositivo",
+  "FINA fiscalized invoices always use the current date":
+    "I documenti fiscalizzati FINA utilizzano sempre la data corrente",
 } as const;

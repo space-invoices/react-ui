@@ -38,8 +38,13 @@ export default {
   "No results found": "Aucune facture d'acompte trouvee",
   "Try adjusting your search criteria": "Essayez de modifier vos criteres de recherche",
   "Clear search": "Effacer la recherche",
+  "Clear all": "Tout effacer",
   selected: "sélectionnés",
   "Export PDFs": "Exporter les PDF",
   "Deselect all": "Tout désélectionner",
   "Partially Paid": "Partiellement payé",
+  "FURS fiscalization failed": "FURS fiscalization failed",
+  "FINA fiscalization failed": "FINA fiscalization failed",
+  "Retry Fiscalization": "Retry Fiscalization",
+  "Some selected documents don't have failed fiscalization": "Some selected documents don't have failed fiscalization",
 } as const;

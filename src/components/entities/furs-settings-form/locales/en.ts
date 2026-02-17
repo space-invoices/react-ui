@@ -183,7 +183,6 @@ export default {
   "Save Operator Settings": "Save Operator Settings",
   "Your tax number for FURS fiscalization": "Your tax number for FURS fiscalization",
   "Descriptive label for the operator (e.g. Cashier 1)": "Descriptive label for the operator (e.g. Cashier 1)",
-  "e.g. Cashier 1": "e.g. Cashier 1",
   "Fiscalization Settings": "Fiscalization Settings",
   "Advanced Settings": "Advanced Settings",
   "API Default Operator": "API Default Operator",

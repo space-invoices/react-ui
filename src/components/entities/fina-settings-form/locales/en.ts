@@ -18,8 +18,8 @@ export default {
     "Register at least one business premise before fiscalizing invoices",
   "Numbering Sequence": "Numbering Sequence",
   "Choose how invoice numbers are sequenced": "Choose how invoice numbers are sequenced",
-  "Per Premise (N)": "Per Premise (N)",
-  "Per Device (P)": "Per Device (P)",
+  "Per Device (N)": "Per Device (N)",
+  "Per Premise (P)": "Per Premise (P)",
   Recommended: "Recommended",
   "One sequence per business premise. Simpler to manage.": "One sequence per business premise. Simpler to manage.",
   "Separate sequence per electronic device. For multi-device setups.":

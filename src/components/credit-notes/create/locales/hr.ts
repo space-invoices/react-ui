@@ -72,4 +72,5 @@ export default {
   "Cannot skip fiscalization for cash payments": "Za gotovinska placanja nije moguce preskociti fiskalizaciju",
   Premise: "Prostor",
   Device: "Uredaj",
+  "FINA fiscalized invoices always use the current date": "FINA fiskalizirani dokumenti uvijek koriste trenutni datum",
 } as const;

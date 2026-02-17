@@ -27,6 +27,7 @@ import {
 } from "../../documents/create/document-details-section";
 import { DocumentItemsSection, type PriceModesMap } from "../../documents/create/document-items-section";
 import { DocumentRecipientSection } from "../../documents/create/document-recipient-section";
+import { type LinkedDocumentSummary, LinkedDocumentsInfo } from "../../documents/create/linked-documents-info";
 import { MarkAsPaidSection } from "../../documents/create/mark-as-paid-section";
 import type { DocumentTypes } from "../../documents/types";
 import { useFinaPremises, useFinaSettings } from "../../entities/fina-settings-form/fina-settings.hooks";
@@ -52,6 +53,12 @@ import pt from "./locales/pt";
 import sl from "./locales/sl";
 import { prepareInvoiceSubmission } from "./prepare-invoice-submission";
 import { useInvoiceCustomerForm } from "./use-invoice-customer-form";
+
+function calculateDueDate(dateIso: string, days: number): string {
+  const date = new Date(dateIso);
+  date.setDate(date.getDate() + days);
+  return date.toISOString();
+}
 
 const translations = {
   sl,
@@ -83,6 +90,10 @@ type DocumentAddFormProps = {
   onHeaderActionChange?: (action: ReactNode) => void;
   /** Initial values for form fields (used for document duplication or editing) */
   initialValues?: Partial<CreateInvoiceRequest> & { number?: string };
+  /** Source documents linked to this invoice (e.g., delivery notes merged into this invoice) */
+  sourceDocuments?: LinkedDocumentSummary[];
+  /** Force linking documents even if an advance invoice is already applied to another invoice */
+  forceLinkedDocuments?: boolean;
   /** Mode: create (default) or edit */
   mode?: "create" | "edit";
   /** Document ID for edit mode */
@@ -98,6 +109,8 @@ export default function CreateInvoiceForm({
   onAddNewTax,
   onHeaderActionChange,
   initialValues,
+  sourceDocuments,
+  forceLinkedDocuments,
   mode = "create",
   documentId,
   t: translateProp,
@@ -118,6 +131,7 @@ export default function CreateInvoiceForm({
   // Get default invoice note and payment terms from entity settings
   const defaultInvoiceNote = (activeEntity?.settings as any)?.default_invoice_note || "";
   const defaultPaymentTerms = (activeEntity?.settings as any)?.default_invoice_payment_terms || "";
+  const defaultInvoiceDueDays = (activeEntity?.settings as any)?.default_invoice_due_days ?? 30;
 
   // ============================================================================
   // FURS Settings & Premises
@@ -327,7 +341,11 @@ export default function CreateInvoiceForm({
       currency_code: initialValues?.currency_code || activeEntity?.currency_code || "EUR",
       note: initialValues?.note ?? defaultInvoiceNote,
       payment_terms: initialValues?.payment_terms ?? defaultPaymentTerms,
+      date_due:
+        initialValues?.date_due ||
+        calculateDueDate(initialValues?.date || new Date().toISOString(), defaultInvoiceDueDays),
       date_service: new Date().toISOString(),
+      linked_documents: (initialValues as any)?.linked_documents,
     },
   });
 
@@ -630,6 +648,11 @@ export default function CreateInvoiceForm({
         isDraft,
       });
 
+      // Add force_linked_documents if set (used after conflict dialog approval)
+      if (forceLinkedDocuments) {
+        (payload as any).force_linked_documents = true;
+      }
+
       if (isEditMode && documentId) {
         // In edit mode, use updateInvoice
         // Remove number from payload as it's not editable
@@ -645,6 +668,7 @@ export default function CreateInvoiceForm({
       updateInvoice,
       documentId,
       eslogValidationEnabled,
+      forceLinkedDocuments,
       form,
       isEditMode,
       isEslogAvailable,
@@ -721,6 +745,15 @@ export default function CreateInvoiceForm({
       form.setValue("payment_terms", entityDefaultPaymentTerms);
     }
 
+    // Auto-populate due date from entity settings when entity loads async
+    if (!isEditMode && !initialValues?.date_due) {
+      const dueDays = (activeEntity.settings as any)?.default_invoice_due_days ?? 30;
+      const currentDate = form.getValues("date");
+      if (currentDate) {
+        form.setValue("date_due", calculateDueDate(currentDate, dueDays));
+      }
+    }
+
     // Auto-add tax field for tax subject entities
     if (activeEntity.is_tax_subject) {
       const items = form.getValues("items") || [];
@@ -730,7 +763,17 @@ export default function CreateInvoiceForm({
     }
 
     initialSetupDoneRef.current = true;
-  }, [activeEntity, form]);
+  }, [activeEntity, form, isEditMode, initialValues?.date_due]);
+
+  // Recalculate due date when document date changes (skip in edit mode)
+  const prevDateRef = useRef(form.getValues("date"));
+  useEffect(() => {
+    if (isEditMode) return;
+    if (!watchedDate || watchedDate === prevDateRef.current) return;
+    prevDateRef.current = watchedDate;
+    const dueDays = (activeEntity?.settings as any)?.default_invoice_due_days ?? 30;
+    form.setValue("date_due", calculateDueDate(watchedDate, dueDays));
+  }, [watchedDate, activeEntity, isEditMode, form]);
 
   // Use form.watch subscription for onChange callback (avoids re-render loops)
   const prevPayloadRef = useRef<string>("");
@@ -962,6 +1005,10 @@ export default function CreateInvoiceForm({
             customer: watchedCustomer as any,
           }}
         />
+
+        {sourceDocuments && sourceDocuments.length > 0 && (
+          <LinkedDocumentsInfo documents={sourceDocuments} locale={locale || "en"} t={t} />
+        )}
       </form>
     </Form>
   );

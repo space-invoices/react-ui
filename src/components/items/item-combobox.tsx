@@ -30,7 +30,7 @@ export function ItemCombobox({
   disabled,
 }: ItemComboboxProps) {
   const [search, setSearch] = useState("");
-  const [displayValue, setDisplayValue] = useState("");
+  const [displayValue, setDisplayValue] = useState(value || "");
   const debouncedSearch = useDebounce(search, 300);
 
   // Fetch recent items (non-blocking, cached)
@@ -120,9 +120,11 @@ export function ItemCombobox({
     }
   };
 
-  // Reset when value changes externally
+  // Sync when value changes externally (e.g., duplication, form reset)
   useEffect(() => {
-    if (!value) {
+    if (value) {
+      setDisplayValue(value);
+    } else {
       setSearch("");
       setDisplayValue("");
     }

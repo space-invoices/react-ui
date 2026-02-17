@@ -32,6 +32,7 @@ export default {
   "No results found": "Ni najdenih predračunov",
   "Try adjusting your search criteria": "Poskusite prilagoditi iskalne kriterije",
   "Clear search": "Počisti iskanje",
+  "Clear all": "Počisti vse",
   selected: "izbranih",
   "Export PDFs": "Izvozi PDF-je",
   "Deselect all": "Počisti izbiro",

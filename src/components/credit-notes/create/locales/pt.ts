@@ -72,4 +72,5 @@ export default {
   "Cannot skip fiscalization for cash payments": "Nao e possivel ignorar a fiscalizacao para pagamentos em dinheiro",
   Premise: "Estabelecimento",
   Device: "Dispositivo",
+  "FINA fiscalized invoices always use the current date": "Os documentos fiscalizados FINA usam sempre a data atual",
 } as const;

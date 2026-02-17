@@ -9,4 +9,8 @@ export default {
   "Export PDFs": "Export PDFs",
   "Deselect all": "Deselect all",
   "Partially Paid": "Partially Paid",
+  "FURS fiscalization failed": "FURS fiscalization failed",
+  "FINA fiscalization failed": "FINA fiscalization failed",
+  "Retry Fiscalization": "Retry Fiscalization",
+  "Some selected documents don't have failed fiscalization": "Some selected documents don't have failed fiscalization",
 } as const;

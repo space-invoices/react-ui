@@ -74,4 +74,6 @@ export default {
     "Non e possibile saltare la fiscalizzazione per i pagamenti in contanti",
   Premise: "Locale",
   Device: "Dispositivo",
+  "FINA fiscalized invoices always use the current date":
+    "I documenti fiscalizzati FINA utilizzano sempre la data corrente",
 } as const;

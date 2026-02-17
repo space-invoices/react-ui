@@ -209,8 +209,6 @@ export function RequestLogListTable({
       id: "created_at",
       header: "Time",
       align: "right",
-      sortable: true,
-      sortField: "created_at",
       cell: (log) => (
         <span className="text-muted-foreground text-xs">
           {formatDistanceToNow(new Date(log.created_at), { addSuffix: true })}
@@ -243,7 +241,6 @@ export function RequestLogListTable({
         entityId={entityId}
         filterConfig={filterConfig}
         onRowClick={(log) => onSelectLog?.(log)}
-        defaultOrderBy="-created_at"
       />
 
       <Sheet open={!!selectedLog} onOpenChange={(open) => !open && onSelectLog?.(null)}>

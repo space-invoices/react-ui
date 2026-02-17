@@ -14,4 +14,5 @@ export default {
   "No results found": "Geen belastingen gevonden",
   "Try adjusting your search criteria": "Probeer uw zoekcriteria aan te passen",
   "Clear search": "Zoekopdracht wissen",
+  "Clear all": "Alles wissen",
 };

@@ -18,8 +18,8 @@ export default {
     "Zarejestruj co najmniej jeden lokal użytkowy przed fiskalizacją faktur",
   "Numbering Sequence": "Sekwencja numeracji",
   "Choose how invoice numbers are sequenced": "Wybierz sposób numeracji faktur",
-  "Per Premise (N)": "Na lokal (N)",
-  "Per Device (P)": "Na urządzenie (P)",
+  "Per Device (N)": "Na urządzenie (N)",
+  "Per Premise (P)": "Na lokal (P)",
   Recommended: "Zalecane",
   "One sequence per business premise. Simpler to manage.": "Jedna sekwencja na lokal użytkowy. Łatwiejsze zarządzanie.",
   "Separate sequence per electronic device. For multi-device setups.":

@@ -73,4 +73,6 @@ export default {
   "Cannot skip fiscalization for cash payments": "No se puede omitir la fiscalizacion para pagos en efectivo",
   Premise: "Local",
   Device: "Dispositivo",
+  "FINA fiscalized invoices always use the current date":
+    "Los documentos fiscalizados con FINA siempre usan la fecha actual",
 } as const;

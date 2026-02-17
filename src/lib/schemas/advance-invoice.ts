@@ -11,7 +11,6 @@ import { customerSchema, lineItemSchema, transformItemsForApi } from "./shared";
 export const advanceInvoiceFormSchema = z.object({
   number: z.string().max(100).optional(),
   date: z.string().optional(),
-  date_due: z.string().optional(),
   customer_id: z.string().nullish(),
   customer: customerSchema,
   items: z.array(lineItemSchema).min(1),

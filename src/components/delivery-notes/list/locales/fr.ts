@@ -6,4 +6,8 @@ export default {
   selected: "sélectionnés",
   "Export PDFs": "Exporter les PDFs",
   "Deselect all": "Tout désélectionner",
+  "Copy to Invoice": "Copier vers facture",
+  "Clear all": "Tout effacer",
+  Void: "Annuler",
+  Voided: "Annulé",
 } as const;

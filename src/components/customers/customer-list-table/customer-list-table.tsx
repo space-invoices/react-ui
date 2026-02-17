@@ -69,7 +69,6 @@ export default function CustomerListTable({
       limit: params.limit,
       next_cursor: params.next_cursor,
       prev_cursor: params.prev_cursor,
-      order_by: params.order_by,
       search: params.search,
       query: params.query,
     });
@@ -81,7 +80,6 @@ export default function CustomerListTable({
       {
         id: "name",
         header: t("Name"),
-        sortable: true,
         cell: (customer) => (
           <Button variant="link" className="cursor-pointer py-0 underline" onClick={() => onRowClick?.(customer)}>
             <User className="h-4 w-4 flex-shrink-0" />
@@ -92,7 +90,6 @@ export default function CustomerListTable({
       {
         id: "address",
         header: t("Address"),
-        sortable: true,
         cell: (customer) => customer.address,
       },
       {

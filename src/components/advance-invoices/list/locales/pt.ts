@@ -38,8 +38,13 @@ export default {
   "No results found": "Nenhuma fatura antecipada encontrada",
   "Try adjusting your search criteria": "Tente ajustar os seus criterios de pesquisa",
   "Clear search": "Limpar pesquisa",
+  "Clear all": "Limpar tudo",
   selected: "selecionados",
   "Export PDFs": "Exportar PDFs",
   "Deselect all": "Desselecionar tudo",
   "Partially Paid": "Parcialmente pago",
+  "FURS fiscalization failed": "FURS fiscalization failed",
+  "FINA fiscalization failed": "FINA fiscalization failed",
+  "Retry Fiscalization": "Retry Fiscalization",
+  "Some selected documents don't have failed fiscalization": "Some selected documents don't have failed fiscalization",
 } as const;

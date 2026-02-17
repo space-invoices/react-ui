@@ -24,4 +24,5 @@ export default {
   "Your list is empty": "La lista delle fatture ricorrenti è vuota",
   "Get started by creating your first entry": "Inizia creando il tuo primo programma ricorrente",
   "No results found": "Nessuna fattura ricorrente trovata",
+  "Clear all": "Cancella tutto",
 } as const;

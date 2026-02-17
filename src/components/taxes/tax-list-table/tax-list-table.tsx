@@ -58,15 +58,15 @@ export default function TaxListTable({
   return (
     <DataTable
       columns={[
-        { id: "name", header: t("Name"), sortable: true },
+        { id: "name", header: t("Name") },
         { id: "tax_rates", header: t("Tax Rates") },
-        { id: "created_at", header: t("Created"), sortable: true },
+        { id: "created_at", header: t("Created") },
         { id: "actions", header: "", align: "right" },
       ]}
       renderRow={(tax) => (
         <TaxListRow tax={tax} key={tax.id} onRowClick={(tax) => onRowClick?.(tax)} onView={onView} t={t} />
       )}
-      renderHeader={(headerProps) => <TaxListHeader orderBy={headerProps.orderBy} onSort={headerProps.onSort} t={t} />}
+      renderHeader={() => <TaxListHeader t={t} />}
       queryParams={queryParams}
       resourceName="tax"
       cacheKey={TAXES_CACHE_KEY}

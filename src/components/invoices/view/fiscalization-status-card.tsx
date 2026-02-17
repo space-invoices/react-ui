@@ -28,6 +28,7 @@ interface FiscalizationStatusCardProps extends ComponentTranslationProps {
   fiscalizationData: FiscalizationData | null | undefined;
   onRetry?: () => void;
   isRetrying?: boolean;
+  variant?: "card" | "inline";
 }
 
 export function FiscalizationStatusCard({
@@ -35,6 +36,7 @@ export function FiscalizationStatusCard({
   fiscalizationData,
   onRetry,
   isRetrying,
+  variant = "card",
   t: translateFn,
   namespace,
   locale,
@@ -87,6 +89,45 @@ export function FiscalizationStatusCard({
     }
   };
 
+  const bodyContent = (
+    <>
+      <div className="text-muted-foreground text-sm">
+        {label} &middot;{" "}
+        {fiscalizationData.fiscalized_at && new Date(fiscalizationData.fiscalized_at).toLocaleString(locale)}
+      </div>
+
+      {fiscalizationData.status === "failed" && fiscalizationData.error && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription className="text-sm">{fiscalizationData.error}</AlertDescription>
+        </Alert>
+      )}
+
+      {fiscalizationData.status === "skipped" && (fiscalizationData as any).data?.reason && (
+        <div className="text-muted-foreground text-sm">{(fiscalizationData as any).data.reason}</div>
+      )}
+
+      {fiscalizationData.status === "failed" && onRetry && (
+        <Button variant="outline" size="sm" onClick={onRetry} disabled={isRetrying}>
+          {isRetrying ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
+          {t("Retry fiscalization")}
+        </Button>
+      )}
+    </>
+  );
+
+  if (variant === "inline") {
+    return (
+      <div className="space-y-3">
+        <div className="flex items-center justify-between font-medium text-sm">
+          <span>{t("Fiscalization")}</span>
+          {getStatusBadge()}
+        </div>
+        {bodyContent}
+      </div>
+    );
+  }
+
   return (
     <Card>
       <CardHeader className="pb-3">
@@ -95,30 +136,7 @@ export function FiscalizationStatusCard({
           {getStatusBadge()}
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3">
-        <div className="text-muted-foreground text-sm">
-          {label} &middot;{" "}
-          {fiscalizationData.fiscalized_at && new Date(fiscalizationData.fiscalized_at).toLocaleString(locale)}
-        </div>
-
-        {fiscalizationData.status === "failed" && fiscalizationData.error && (
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription className="text-sm">{fiscalizationData.error}</AlertDescription>
-          </Alert>
-        )}
-
-        {fiscalizationData.status === "skipped" && (fiscalizationData as any).data?.reason && (
-          <div className="text-muted-foreground text-sm">{(fiscalizationData as any).data.reason}</div>
-        )}
-
-        {fiscalizationData.status === "failed" && onRetry && (
-          <Button variant="outline" size="sm" onClick={onRetry} disabled={isRetrying}>
-            {isRetrying ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
-            {t("Retry fiscalization")}
-          </Button>
-        )}
-      </CardContent>
+      <CardContent className="space-y-3">{bodyContent}</CardContent>
     </Card>
   );
 }

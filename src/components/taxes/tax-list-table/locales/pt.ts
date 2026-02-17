@@ -14,4 +14,5 @@ export default {
   "No results found": "Nenhum imposto encontrado",
   "Try adjusting your search criteria": "Tente ajustar os seus critérios de pesquisa",
   "Clear search": "Limpar pesquisa",
+  "Clear all": "Limpar tudo",
 };

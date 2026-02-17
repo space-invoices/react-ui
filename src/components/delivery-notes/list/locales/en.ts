@@ -8,4 +8,6 @@ export default {
   selected: "selected",
   "Export PDFs": "Export PDFs",
   "Deselect all": "Deselect all",
+  "Copy to Invoice": "Copy to Invoice",
+  Void: "Void",
 } as const;

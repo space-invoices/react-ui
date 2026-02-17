@@ -1,6 +1,6 @@
 import type { DeliveryNote } from "@spaceinvoices/js-sdk";
 
-import { Copy, Download, Eye, Link2Off, Loader2, MoreHorizontal } from "lucide-react";
+import { Ban, Copy, Download, Eye, Link2Off, Loader2, MoreHorizontal } from "lucide-react";
 import { Button } from "@/ui/components/ui/button";
 import {
   DropdownMenu,
@@ -24,6 +24,8 @@ type DeliveryNoteListRowActionsProps = {
   onDownloadError?: (error: string) => void;
   onUnshare?: (deliveryNote: DeliveryNote) => Promise<void>;
   isUnsharing?: boolean;
+  onVoid?: (deliveryNote: DeliveryNote) => void;
+  isVoiding?: boolean;
 } & ComponentTranslationProps;
 
 export default function DeliveryNoteListRowActions({
@@ -35,6 +37,8 @@ export default function DeliveryNoteListRowActions({
   onDownloadError,
   onUnshare,
   isUnsharing,
+  onVoid,
+  isVoiding,
   ...i18nProps
 }: DeliveryNoteListRowActionsProps) {
   const t = createTranslation(i18nProps);
@@ -82,6 +86,21 @@ export default function DeliveryNoteListRowActions({
             </DropdownMenuItem>
           )}
         </DropdownMenuGroup>
+        {onVoid && !deliveryNote.voided_at && !(deliveryNote as any).is_draft && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuGroup>
+              <DropdownMenuItem
+                className="cursor-pointer text-destructive focus:text-destructive"
+                onClick={() => onVoid(deliveryNote)}
+                disabled={isVoiding}
+              >
+                {isVoiding ? <Loader2 className="h-4 w-4 animate-spin" /> : <Ban className="h-4 w-4" />}
+                {t("Void")}
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
+          </>
+        )}
         {deliveryNote.shareable_id && onUnshare && (
           <>
             <DropdownMenuSeparator />

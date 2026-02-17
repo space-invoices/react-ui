@@ -37,6 +37,12 @@ import sl from "./locales/sl";
 import { prepareEstimateSubmission } from "./prepare-estimate-submission";
 import { useEstimateCustomerForm } from "./use-estimate-customer-form";
 
+function calculateDueDate(dateIso: string, days: number): string {
+  const date = new Date(dateIso);
+  date.setDate(date.getDate() + days);
+  return date.toISOString();
+}
+
 const translations = {
   sl,
   de,
@@ -101,6 +107,7 @@ export default function CreateEstimateForm({
 
   // Get default estimate note from entity settings
   const defaultEstimateNote = (activeEntity?.settings as any)?.default_estimate_note || "";
+  const defaultEstimateValidDays = (activeEntity?.settings as any)?.default_estimate_valid_days ?? 30;
 
   // Fetch next estimate number
   const { data: nextNumberData } = useNextDocumentNumber(entityId, "estimate", {
@@ -139,6 +146,9 @@ export default function CreateEstimateForm({
       currency_code: initialValues?.currency_code || activeEntity?.currency_code || "EUR",
       note: initialValues?.note ?? defaultEstimateNote,
       payment_terms: initialValues?.payment_terms ?? defaultPaymentTerms,
+      date_valid_till:
+        initialValues?.date_valid_till ||
+        calculateDueDate(initialValues?.date || new Date().toISOString(), defaultEstimateValidDays),
     },
   });
 
@@ -165,13 +175,20 @@ export default function CreateEstimateForm({
     }
   }, [nextNumberData?.number, form]);
 
-  // Update default note when entity loads
+  // Update default note and valid-till date when entity loads
   useEffect(() => {
     const entityDefaultNote = (activeEntity?.settings as any)?.default_estimate_note;
     if (entityDefaultNote && !form.getValues("note")) {
       form.setValue("note", entityDefaultNote);
     }
-  }, [activeEntity, form]);
+    if (!initialValues?.date_valid_till) {
+      const validDays = (activeEntity?.settings as any)?.default_estimate_valid_days ?? 30;
+      const currentDate = form.getValues("date");
+      if (currentDate) {
+        form.setValue("date_valid_till", calculateDueDate(currentDate, validDays));
+      }
+    }
+  }, [activeEntity, form, initialValues?.date_valid_till]);
 
   // Auto-add tax field for tax subject entities
   useEffect(() => {
@@ -299,6 +316,16 @@ export default function CreateEstimateForm({
       form.setValue("payment_terms", entityDefaultPaymentTerms);
     }
   }, [activeEntity, form]);
+
+  // Recalculate valid-till date when document date changes
+  const prevDateRef = useRef(form.getValues("date"));
+  useEffect(() => {
+    const currentDate = formValues.date;
+    if (!currentDate || currentDate === prevDateRef.current) return;
+    prevDateRef.current = currentDate;
+    const validDays = (activeEntity?.settings as any)?.default_estimate_valid_days ?? 30;
+    form.setValue("date_valid_till", calculateDueDate(currentDate, validDays));
+  }, [formValues.date, activeEntity, form]);
 
   useEffect(() => {
     const callback = onChangeRef.current;

@@ -29,6 +29,7 @@ export default {
   "No results found": "Nie znaleziono kosztorysów",
   "Try adjusting your search criteria": "Spróbuj dostosować kryteria wyszukiwania",
   "Clear search": "Wyczyść wyszukiwanie",
+  "Clear all": "Wyczyść wszystko",
   selected: "wybranych",
   "Export PDFs": "Eksportuj PDF-y",
   "Deselect all": "Odznacz wszystko",

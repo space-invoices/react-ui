@@ -10,10 +10,6 @@ export type Column<T> = {
   header: ReactNode;
   /** Cell renderer function - returns content for each row. Optional when using renderRow. */
   cell?: (item: T) => ReactNode;
-  /** Field name for sorting (if different from id) */
-  sortField?: string;
-  /** Whether this column is sortable */
-  sortable?: boolean;
   /** Text alignment */
   align?: "left" | "center" | "right";
   /** Optional CSS class for the column */
@@ -24,7 +20,6 @@ export type Column<T> = {
  * Query parameters for table data fetching
  */
 export type TableQueryParams = {
-  order_by?: string;
   search?: string;
   prev_cursor?: string;
   next_cursor?: string;

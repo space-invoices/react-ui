@@ -24,4 +24,5 @@ export default {
   "Your list is empty": "Vaš popis ponavljajućih računa je prazan",
   "Get started by creating your first entry": "Počnite kreiranjem prvog ponavljajućeg rasporeda",
   "No results found": "Nisu pronađeni ponavljajući računi",
+  "Clear all": "Očisti sve",
 } as const;

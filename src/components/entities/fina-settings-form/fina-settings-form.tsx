@@ -177,7 +177,7 @@ export const FinaSettingsForm: FC<FinaSettingsFormProps> = ({
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(!!hideUserOperatorSection);
   const [formData, setFormData] = useState({
     enabled: false,
-    numbering_sequence: "N" as "N" | "P",
+    numbering_sequence: "P" as "N" | "P",
     operator_oib: "",
     operator_label: "",
     u_sust_pdv: true,
@@ -188,7 +188,7 @@ export const FinaSettingsForm: FC<FinaSettingsFormProps> = ({
     if (finaSettings) {
       setFormData({
         enabled: finaSettings.enabled || false,
-        numbering_sequence: finaSettings.numbering_sequence || "N",
+        numbering_sequence: finaSettings.numbering_sequence || "P",
         operator_oib: finaSettings.operator_oib || "",
         operator_label: finaSettings.operator_label || "",
         u_sust_pdv: finaSettings.u_sust_pdv ?? true,
@@ -523,12 +523,12 @@ export const FinaSettingsForm: FC<FinaSettingsFormProps> = ({
                 className="space-y-2"
               >
                 <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="N" id="seq-n" />
-                  <Label htmlFor="seq-n">{translate("Per Premise (N)")}</Label>
+                  <RadioGroupItem value="P" id="seq-p" />
+                  <Label htmlFor="seq-p">{translate("Per Premise (P)")}</Label>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="P" id="seq-p" />
-                  <Label htmlFor="seq-p">{translate("Per Device (P)")}</Label>
+                  <RadioGroupItem value="N" id="seq-n" />
+                  <Label htmlFor="seq-n">{translate("Per Device (N)")}</Label>
                 </div>
               </RadioGroup>
             </div>,

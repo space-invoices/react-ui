@@ -19,10 +19,12 @@ export default {
   "Duplicate estimate": "Offerte dupliceren",
   "Duplicate credit_note": "Creditnota dupliceren",
   "Duplicate advance_invoice": "Voorschotfactuur dupliceren",
+  "Duplicate delivery_note": "Afleverbon dupliceren",
   "Create invoice": "Factuur aanmaken",
   "Create estimate": "Offerte aanmaken",
   "Create credit_note": "Creditnota aanmaken",
   "Create advance_invoice": "Voorschotfactuur aanmaken",
+  "Create delivery_note": "Afleverbon aanmaken",
 
   // Details card
   Details: "Details",

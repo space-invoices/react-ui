@@ -1,14 +1,13 @@
 type TFunction = (key: string, options?: Record<string, unknown>) => string;
 
 import { Calendar, Download, Loader2 } from "lucide-react";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 
-export type DocumentType = "invoice" | "estimate" | "credit_note";
-export type ExportFormat = "xlsx" | "csv" | "pdf_zip";
+type ExportFormat = "xlsx" | "csv";
 
 // Maximum date range for export (1 year in milliseconds)
 const MAX_DATE_RANGE_MS = 365 * 24 * 60 * 60 * 1000;
@@ -31,13 +30,13 @@ function getPreviousMonthRange(): { from: string; to: string } {
 }
 
 function isDateRangeValid(dateFrom: string, dateTo: string): boolean {
-  if (!dateFrom || !dateTo) return true;
+  if (!dateFrom || !dateTo) return false;
   const from = new Date(dateFrom);
   const to = new Date(dateTo);
-  return to.getTime() - from.getTime() <= MAX_DATE_RANGE_MS;
+  return to.getTime() - from.getTime() <= MAX_DATE_RANGE_MS && to >= from;
 }
 
-export type DocumentExportFormProps = {
+export type SalesPerItemExportFormProps = {
   entityId: string;
   token: string;
   accountId?: string | null;
@@ -47,11 +46,9 @@ export type DocumentExportFormProps = {
   apiBaseUrl?: string;
   onSuccess?: (fileName: string) => void;
   onError?: (error: Error) => void;
-  onPdfExportStarted?: (jobId: string) => void;
-  onLoadingChange?: (isLoading: boolean, toastId: string | number | null) => void;
 };
 
-export function DocumentExportForm({
+export function SalesPerItemExportForm({
   entityId,
   token,
   accountId,
@@ -60,98 +57,59 @@ export function DocumentExportForm({
   apiBaseUrl = "",
   onSuccess,
   onError,
-  onPdfExportStarted,
-  onLoadingChange,
-}: DocumentExportFormProps) {
+}: SalesPerItemExportFormProps) {
   const defaultDates = getPreviousMonthRange();
-  const [documentType, setDocumentType] = useState<DocumentType>("invoice");
   const [exportFormat, setExportFormat] = useState<ExportFormat>("xlsx");
   const [dateFrom, setDateFrom] = useState(defaultDates.from);
   const [dateTo, setDateTo] = useState(defaultDates.to);
   const [isExporting, setIsExporting] = useState(false);
   const [dateRangeError, setDateRangeError] = useState(false);
 
-  const toastIdRef = useRef<string | number | null>(null);
-
   const validateDateRange = (from: string, to: string) => {
     const isValid = isDateRangeValid(from, to);
-    setDateRangeError(!isValid);
+    setDateRangeError(!isValid && !!from && !!to);
     return isValid;
   };
 
   const handleExport = async () => {
+    if (!dateFrom || !dateTo) {
+      onError?.(new Error(t("sales-per-item-export.error.dates-required")));
+      return;
+    }
+
     if (!validateDateRange(dateFrom, dateTo)) {
       onError?.(new Error(t("export-page.error.date-range-exceeded")));
       return;
     }
 
     setIsExporting(true);
-    onLoadingChange?.(true, null);
 
-    // PDF export is async - different flow
-    if (exportFormat === "pdf_zip") {
-      try {
-        const response = await fetch(`${apiBaseUrl}/documents/export/pdf`, {
-          method: "POST",
+    try {
+      const exportLanguage = language === "sl" ? "sl" : "en";
+      const queryParams: Record<string, string> = {
+        format: exportFormat,
+        date_from: dateFrom,
+        date_to: dateTo,
+        language: exportLanguage,
+      };
+
+      const response = await fetch(
+        `${apiBaseUrl}/documents/export/sales-per-item?${new URLSearchParams(queryParams).toString()}`,
+        {
           headers: {
             Authorization: `Bearer ${token}`,
             "x-entity-id": entityId,
             ...(accountId && { "x-account-id": accountId }),
-            "Content-Type": "application/json",
           },
-          body: JSON.stringify({
-            type: documentType,
-            date_from: dateFrom || undefined,
-            date_to: dateTo || undefined,
-          }),
-        });
-
-        if (!response.ok) {
-          const error = await response.json().catch(() => ({}));
-          throw new Error(error.error || `Export failed: ${response.statusText}`);
-        }
-
-        const data = await response.json();
-        onPdfExportStarted?.(data.id);
-      } catch (error) {
-        onError?.(error instanceof Error ? error : new Error("Unknown error"));
-      } finally {
-        setIsExporting(false);
-        onLoadingChange?.(false, toastIdRef.current);
-        toastIdRef.current = null;
-      }
-      return;
-    }
-
-    // XLSX/CSV export - synchronous download
-    try {
-      const exportLanguage = language === "sl" ? "sl" : "en";
-      const queryParams: Record<string, string> = {
-        type: documentType,
-        format: exportFormat,
-        language: exportLanguage,
-      };
-      if (dateFrom) {
-        queryParams.date_from = dateFrom;
-      }
-      if (dateTo) {
-        queryParams.date_to = dateTo;
-      }
-
-      const response = await fetch(`${apiBaseUrl}/documents/export?${new URLSearchParams(queryParams).toString()}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "x-entity-id": entityId,
-          ...(accountId && { "x-account-id": accountId }),
         },
-      });
+      );
 
       if (!response.ok) {
         throw new Error(`Export failed: ${response.statusText}`);
       }
 
       const contentDisposition = response.headers.get("content-disposition");
-      let fileName = `${documentType}s_export.${exportFormat}`;
+      let fileName = `sales-per-item.${exportFormat}`;
       if (contentDisposition) {
         const match = contentDisposition.match(/filename="?([^";\n]+)"?/);
         if (match) {
@@ -176,59 +134,41 @@ export function DocumentExportForm({
       onError?.(error instanceof Error ? error : new Error("Unknown error"));
     } finally {
       setIsExporting(false);
-      onLoadingChange?.(false, toastIdRef.current);
-      toastIdRef.current = null;
     }
   };
 
+  const datesProvided = !!dateFrom && !!dateTo;
+
   return (
     <div className="space-y-6">
-      {/* Document Type + Export Format */}
+      {/* Export Format */}
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="document-type">{t("export-page.document-type")}</Label>
-          <Select value={documentType} onValueChange={(v) => setDocumentType(v as DocumentType)}>
-            <SelectTrigger id="document-type">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="invoice">{t("export-page.types.invoice")}</SelectItem>
-              <SelectItem value="estimate">{t("export-page.types.estimate")}</SelectItem>
-              <SelectItem value="credit_note">{t("export-page.types.credit_note")}</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="export-format">{t("export-page.format")}</Label>
+          <Label htmlFor="sales-export-format">{t("export-page.format")}</Label>
           <Select value={exportFormat} onValueChange={(v) => setExportFormat(v as ExportFormat)}>
-            <SelectTrigger id="export-format">
+            <SelectTrigger id="sales-export-format">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="xlsx">{t("export-page.formats.xlsx")}</SelectItem>
               <SelectItem value="csv">{t("export-page.formats.csv")}</SelectItem>
-              <SelectItem value="pdf_zip">{t("export-page.formats.pdf_zip")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
       </div>
-      {exportFormat === "pdf_zip" && (
-        <p className="text-muted-foreground text-sm">{t("export-page.pdf-export-info")}</p>
-      )}
 
       {/* Date Range */}
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="date-from">{t("export-page.date-from")}</Label>
+          <Label htmlFor="sales-date-from">{t("export-page.date-from")}</Label>
           <div className="relative">
             <Input
-              id="date-from"
+              id="sales-date-from"
               type="date"
               value={dateFrom}
               onChange={(e) => {
                 setDateFrom(e.target.value);
-                validateDateRange(e.target.value, dateTo);
+                if (dateTo) validateDateRange(e.target.value, dateTo);
               }}
               onClick={(e) => (e.target as HTMLInputElement).showPicker?.()}
               className="cursor-pointer pr-9 [&::-webkit-calendar-picker-indicator]:hidden"
@@ -238,15 +178,15 @@ export function DocumentExportForm({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="date-to">{t("export-page.date-to")}</Label>
+          <Label htmlFor="sales-date-to">{t("export-page.date-to")}</Label>
           <div className="relative">
             <Input
-              id="date-to"
+              id="sales-date-to"
               type="date"
               value={dateTo}
               onChange={(e) => {
                 setDateTo(e.target.value);
-                validateDateRange(dateFrom, e.target.value);
+                if (dateFrom) validateDateRange(dateFrom, e.target.value);
               }}
               onClick={(e) => (e.target as HTMLInputElement).showPicker?.()}
               className={`cursor-pointer pr-9 [&::-webkit-calendar-picker-indicator]:hidden ${dateRangeError ? "border-destructive" : ""}`}
@@ -259,23 +199,13 @@ export function DocumentExportForm({
       {/* Date range error message */}
       {dateRangeError && <p className="text-destructive text-sm">{t("export-page.error.date-range-exceeded")}</p>}
 
-      {/* Clear dates button */}
-      {(dateFrom || dateTo) && (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => {
-            setDateFrom("");
-            setDateTo("");
-            setDateRangeError(false);
-          }}
-        >
-          {t("export-page.clear-dates")}
-        </Button>
-      )}
-
       {/* Export Button */}
-      <Button onClick={handleExport} disabled={isExporting || dateRangeError} className="w-full" size="lg">
+      <Button
+        onClick={handleExport}
+        disabled={isExporting || dateRangeError || !datesProvided}
+        className="w-full"
+        size="lg"
+      >
         {isExporting ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />

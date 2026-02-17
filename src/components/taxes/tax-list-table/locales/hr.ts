@@ -14,4 +14,5 @@ export default {
   "No results found": "Nisu pronađeni porezi",
   "Try adjusting your search criteria": "Pokušajte prilagoditi kriterije pretrage",
   "Clear search": "Očisti pretragu",
+  "Clear all": "Očisti sve",
 };

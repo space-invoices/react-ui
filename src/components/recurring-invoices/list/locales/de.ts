@@ -24,4 +24,5 @@ export default {
   "Your list is empty": "Ihre Liste der wiederkehrenden Rechnungen ist leer",
   "Get started by creating your first entry": "Erstellen Sie Ihren ersten wiederkehrenden Plan",
   "No results found": "Keine wiederkehrenden Rechnungen gefunden",
+  "Clear all": "Alles zurücksetzen",
 } as const;

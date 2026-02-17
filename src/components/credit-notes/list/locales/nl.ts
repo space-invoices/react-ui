@@ -38,7 +38,12 @@ export default {
   "No results found": "Geen creditnota's gevonden",
   "Try adjusting your search criteria": "Probeer uw zoekcriteria aan te passen",
   "Clear search": "Zoekopdracht wissen",
+  "Clear all": "Alles wissen",
   selected: "geselecteerd",
   "Export PDFs": "PDFs exporteren",
   "Deselect all": "Alles deselecteren",
+  "FURS fiscalization failed": "FURS fiscalization failed",
+  "FINA fiscalization failed": "FINA fiscalization failed",
+  "Retry Fiscalization": "Retry Fiscalization",
+  "Some selected documents don't have failed fiscalization": "Some selected documents don't have failed fiscalization",
 } as const;

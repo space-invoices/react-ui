@@ -19,8 +19,8 @@ export default {
     "Registrieren Sie mindestens einen Geschäftsraum, bevor Sie Rechnungen fiskalisieren",
   "Numbering Sequence": "Nummerierungsfolge",
   "Choose how invoice numbers are sequenced": "Wählen Sie, wie Rechnungsnummern sequenziert werden",
-  "Per Premise (N)": "Pro Raum (N)",
-  "Per Device (P)": "Pro Gerät (P)",
+  "Per Device (N)": "Pro Gerät (N)",
+  "Per Premise (P)": "Pro Raum (P)",
   Recommended: "Empfohlen",
   "One sequence per business premise. Simpler to manage.": "Eine Sequenz pro Geschäftsraum. Einfacher zu verwalten.",
   "Separate sequence per electronic device. For multi-device setups.":

@@ -3,7 +3,6 @@ import type { FilterState, HttpMethodFilter, HttpStatusCodeFilter, StatusFilter,
 
 type UseTableStateProps = {
   initialParams?: TableQueryParams;
-  defaultOrderBy?: string;
   onChangeParams?: (params: TableQueryParams) => void;
   /** When true, disables URL sync entirely (for embedded tables like dashboard) */
   disableUrlSync?: boolean;
@@ -115,17 +114,11 @@ export function buildQueryFromFilterState(state: FilterState | null): string | u
 }
 
 /**
- * Manages table state (sorting, search, pagination) with optional URL sync
+ * Manages table state (search, pagination, filters) with optional URL sync
  */
-export function useTableState({
-  initialParams = {},
-  defaultOrderBy = "-id",
-  onChangeParams,
-  disableUrlSync = false,
-}: UseTableStateProps) {
+export function useTableState({ initialParams = {}, onChangeParams, disableUrlSync = false }: UseTableStateProps) {
   const [params, setParams] = useState<TableQueryParams>({
     ...initialParams,
-    order_by: initialParams.order_by ?? defaultOrderBy,
   });
 
   // Use ref for onChangeParams to keep it stable
@@ -147,10 +140,9 @@ export function useTableState({
       isUpdatingFromInitialRef.current = true;
       setParams({
         ...initialParams,
-        order_by: initialParams.order_by ?? defaultOrderBy,
       });
     }
-  }, [initialParams, defaultOrderBy]);
+  }, [initialParams]);
 
   // Sync params to parent or URL when they change
   useEffect(() => {
@@ -184,21 +176,6 @@ export function useTableState({
       window.history.pushState({}, "", newUrl);
     }
   }, [params, disableUrlSync]);
-
-  /**
-   * Handle sort change
-   */
-  const handleSort = useCallback(
-    (order: string | null) => {
-      setParams((prevParams) => ({
-        ...prevParams,
-        order_by: order ?? defaultOrderBy,
-        prev_cursor: undefined,
-        next_cursor: undefined,
-      }));
-    },
-    [defaultOrderBy],
-  );
 
   /**
    * Handle search change
@@ -285,7 +262,6 @@ export function useTableState({
     params,
     apiParams,
     filterState,
-    handleSort,
     handleSearch,
     handlePageChange,
     handleFilterChange,

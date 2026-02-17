@@ -7,7 +7,10 @@ export default {
   Modern: "Moderne",
   "Modern template description": "Design épuré et professionnel adapté à la plupart des entreprises",
   Classic: "Classique",
-  "Classic template description": "Mise en page traditionnelle avec polices à empattements et bordures",
+  "Classic template description":
+    "Design avec police Lato, boîte de données colorée et arrière-plans de lignes alternés",
+  Condensed: "Condensé",
+  "Condensed template description": "Mise en page traditionnelle avec bordures et disposition compacte",
   Minimal: "Minimaliste",
   "Minimal template description": "Design axé sur la typographie avec une esthétique épurée",
   Fashion: "Fashion",

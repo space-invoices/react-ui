@@ -18,8 +18,8 @@ export default {
     "Registreer ten minste één bedrijfsruimte voordat u facturen fiscaliseert",
   "Numbering Sequence": "Nummeringsreeks",
   "Choose how invoice numbers are sequenced": "Kies hoe factuurnummers worden gesequenst",
-  "Per Premise (N)": "Per ruimte (N)",
-  "Per Device (P)": "Per apparaat (P)",
+  "Per Device (N)": "Per apparaat (N)",
+  "Per Premise (P)": "Per ruimte (P)",
   Recommended: "Aanbevolen",
   "One sequence per business premise. Simpler to manage.": "Eén reeks per bedrijfsruimte. Eenvoudiger te beheren.",
   "Separate sequence per electronic device. For multi-device setups.":

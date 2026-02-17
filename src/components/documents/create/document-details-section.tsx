@@ -84,11 +84,9 @@ export function DocumentDetailsSection({
 }: DocumentDetailsSectionProps) {
   // Determine the date field name based on document type
   // Delivery notes don't have a secondary date field
-  const hasSecondaryDate = documentType !== "delivery_note";
-  const dateFieldName =
-    documentType === "invoice" || documentType === "advance_invoice" ? "date_due" : "date_valid_till";
-  const dateFieldLabel =
-    documentType === "invoice" || documentType === "advance_invoice" ? t("Due Date") : t("Valid Until");
+  const hasSecondaryDate = documentType !== "delivery_note" && documentType !== "advance_invoice";
+  const dateFieldName = documentType === "invoice" ? "date_due" : "date_valid_till";
+  const dateFieldLabel = documentType === "invoice" ? t("Due Date") : t("Valid Until");
 
   // Check if FURS/FINA inline should show premise/device selects
   const showFursSelects = fursInline && !fursInline.isSkipped;
@@ -216,28 +214,44 @@ export function DocumentDetailsSection({
         render={({ field }) => (
           <FormItem>
             <FormLabel className="">{t("Date")} *</FormLabel>
-            <Popover>
-              <PopoverTrigger asChild>
-                <FormControl>
-                  <Button
-                    variant="outline"
-                    className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
-                  >
-                    {field.value ? new Date(field.value).toLocaleDateString() : <span>{t("Pick a date")}</span>}
-                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                  </Button>
-                </FormControl>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={field.value ? new Date(field.value) : undefined}
-                  onSelect={(date) => field.onChange(date?.toISOString())}
-                  disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
+            {showFinaSelects ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <FormControl>
+                    <Button variant="outline" disabled className="w-full pl-3 text-left font-normal">
+                      {new Date().toLocaleDateString()}
+                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                    </Button>
+                  </FormControl>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{t("FINA fiscalized invoices always use the current date")}</p>
+                </TooltipContent>
+              </Tooltip>
+            ) : (
+              <Popover>
+                <PopoverTrigger asChild>
+                  <FormControl>
+                    <Button
+                      variant="outline"
+                      className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
+                    >
+                      {field.value ? new Date(field.value).toLocaleDateString() : <span>{t("Pick a date")}</span>}
+                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                    </Button>
+                  </FormControl>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={field.value ? new Date(field.value) : undefined}
+                    onSelect={(date) => field.onChange(date?.toISOString())}
+                    disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            )}
             <FormMessage />
           </FormItem>
         )}

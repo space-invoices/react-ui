@@ -187,4 +187,13 @@ export default {
   "Enter EU consumer sales clause...": "Vnesite klavzulo za EU potrošniško prodajo...",
   "tax-clauses.other.description":
     "Te vrste transakcij običajno ne zahtevajo posebnih davčnih klavzul, vendar jih lahko konfigurirate po potrebi.",
+  // EPC QR Payment section
+  "EPC QR Payment": "EPC QR plačilo",
+  "SEPA credit transfer QR code for invoices": "SEPA QR koda za kreditne prenose na računih",
+  "Enable EPC QR on invoices": "Omogoči EPC QR na računih",
+  "Show SEPA QR code on EUR invoices for easy bank payments":
+    "Prikaži SEPA QR kodo na EUR računih za enostavna bančna plačila",
+  "EPC QR Payments": "EPC QR plačila",
+  "EPC QR is a European standard for SEPA credit transfers. When enabled, EUR invoices include a QR code that customers can scan with their banking app to pay instantly.":
+    "EPC QR je evropski standard za SEPA kreditne prenose. Ko je omogočen, EUR računi vključujejo QR kodo, ki jo stranke lahko skenirajo z bančno aplikacijo za takojšnje plačilo.",
 } as const;

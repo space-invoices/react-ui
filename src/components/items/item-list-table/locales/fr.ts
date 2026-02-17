@@ -13,4 +13,5 @@ export default {
   "No results found": "Aucun article trouvé",
   "Try adjusting your search criteria": "Essayez de modifier vos critères de recherche",
   "Clear search": "Effacer la recherche",
+  "Clear all": "Tout effacer",
 };

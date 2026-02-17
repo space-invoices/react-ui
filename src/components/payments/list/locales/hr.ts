@@ -22,4 +22,5 @@ export default {
   "No results found": "Nisu pronađena plaćanja",
   "Try adjusting your search criteria": "Pokušajte prilagoditi kriterije pretrage",
   "Clear search": "Očisti pretragu",
+  "Clear all": "Očisti sve",
 } as const;

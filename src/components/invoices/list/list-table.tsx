@@ -1,4 +1,5 @@
 import type { Invoice } from "@spaceinvoices/js-sdk";
+import { AlertTriangle } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { DataTable } from "@/ui/components/table/data-table";
 import { FormattedDate } from "@/ui/components/table/date-cell";
@@ -13,6 +14,8 @@ import type {
 } from "@/ui/components/table/types";
 import { Badge } from "@/ui/components/ui/badge";
 import { Button } from "@/ui/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/ui/components/ui/tooltip";
+import { getFiscalizationFailureType } from "@/ui/lib/fiscalization";
 import { createTranslation } from "@/ui/lib/translation";
 import { useSDK } from "@/ui/providers/sdk-provider";
 
@@ -53,8 +56,11 @@ type InvoiceListTableProps = {
   onDownloadSuccess?: (fileName: string) => void;
   onDownloadError?: (error: string) => void;
   onExportSelected?: (documentIds: string[]) => void;
+  onRetryFiscalization?: (documentIds: string[]) => void;
+  fiscalizationFeatures?: ("furs" | "fina")[];
   onVoid?: (invoice: Invoice) => void;
   isVoiding?: boolean;
+  onCreateNew?: () => void;
 } & ListTableProps<Invoice>;
 
 export default function InvoiceListTable({
@@ -70,8 +76,11 @@ export default function InvoiceListTable({
   onDownloadSuccess,
   onDownloadError,
   onExportSelected,
+  onRetryFiscalization,
+  fiscalizationFeatures,
   onVoid,
   isVoiding,
+  onCreateNew,
   ...i18nProps
 }: InvoiceListTableProps) {
   const t = createTranslation({
@@ -91,7 +100,6 @@ export default function InvoiceListTable({
       limit: params.limit,
       next_cursor: params.next_cursor,
       prev_cursor: params.prev_cursor,
-      order_by: params.order_by,
       search: params.search,
       query: params.query,
     });
@@ -121,15 +129,42 @@ export default function InvoiceListTable({
   }, []);
 
   const selectionToolbar = useCallback(
-    (count: number) => (
-      <SelectionToolbar
-        selectedCount={count}
-        onExportPdfs={onExportSelected ? handleExportPdfs : undefined}
-        onDeselectAll={handleDeselectAll}
-        t={t}
-      />
-    ),
-    [handleExportPdfs, handleDeselectAll, onExportSelected, t],
+    (count: number, data: Invoice[]) => {
+      const selectedDocs = data.filter((d) => selectedIds.has(d.id));
+      const failedDocs = selectedDocs.filter((d) => {
+        const failureType = getFiscalizationFailureType(d as any);
+        return failureType && fiscalizationFeatures?.includes(failureType);
+      });
+
+      const hasRetry = onRetryFiscalization && fiscalizationFeatures?.length;
+      const failedCount = failedDocs.length;
+      const allFailed = failedCount > 0 && failedCount === selectedDocs.length;
+      const someFailed = failedCount > 0 && failedCount < selectedDocs.length;
+      const showRetry = hasRetry && failedCount > 0;
+
+      return (
+        <SelectionToolbar
+          selectedCount={count}
+          onExportPdfs={onExportSelected ? handleExportPdfs : undefined}
+          onRetryFiscalization={showRetry ? () => onRetryFiscalization(failedDocs.map((d) => d.id)) : undefined}
+          retryFiscalizationDisabled={someFailed && !allFailed}
+          retryFiscalizationTooltip={
+            someFailed ? t("Some selected documents don't have failed fiscalization") : undefined
+          }
+          onDeselectAll={handleDeselectAll}
+          t={t}
+        />
+      );
+    },
+    [
+      handleExportPdfs,
+      handleDeselectAll,
+      onExportSelected,
+      onRetryFiscalization,
+      fiscalizationFeatures,
+      selectedIds,
+      t,
+    ],
   );
 
   const columns: Column<Invoice>[] = useMemo(
@@ -137,22 +172,35 @@ export default function InvoiceListTable({
       {
         id: "number",
         header: t("Number"),
-        sortable: true,
-        cell: (invoice) => (
-          <div className="flex items-center gap-2">
-            <Button variant="link" className="cursor-pointer py-0 underline" onClick={() => onRowClick?.(invoice)}>
-              {invoice.number}
-            </Button>
-            {(invoice as any).is_draft && (
-              <Badge
-                variant="outline"
-                className="border-amber-500 bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-400"
-              >
-                {t("Draft")}
-              </Badge>
-            )}
-          </div>
-        ),
+        cell: (invoice) => {
+          const failureType = getFiscalizationFailureType(invoice as any);
+          const showWarning = failureType && fiscalizationFeatures?.includes(failureType);
+          return (
+            <div className="flex items-center gap-2">
+              <Button variant="link" className="cursor-pointer py-0 underline" onClick={() => onRowClick?.(invoice)}>
+                {invoice.number}
+              </Button>
+              {(invoice as any).is_draft && (
+                <Badge
+                  variant="outline"
+                  className="border-amber-500 bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-400"
+                >
+                  {t("Draft")}
+                </Badge>
+              )}
+              {showWarning && (
+                <Tooltip>
+                  <TooltipTrigger>
+                    <AlertTriangle className="size-4 text-orange-500" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {t(failureType === "furs" ? "FURS fiscalization failed" : "FINA fiscalization failed")}
+                  </TooltipContent>
+                </Tooltip>
+              )}
+            </div>
+          );
+        },
       },
       {
         id: "customer",
@@ -162,26 +210,22 @@ export default function InvoiceListTable({
       {
         id: "date",
         header: t("Date"),
-        sortable: true,
         cell: (invoice) => <FormattedDate date={invoice.date} />,
       },
       {
         id: "date_due",
         header: t("Date Due"),
-        sortable: true,
         cell: (invoice) => <FormattedDate date={invoice.date_due} />,
       },
       {
         id: "total",
         header: t("Total"),
-        sortable: true,
         align: "right",
         cell: (invoice) => invoice.total,
       },
       {
         id: "total_with_tax",
         header: t("Total with Tax"),
-        sortable: true,
         align: "right",
         cell: (invoice) => invoice.total_with_tax,
       },
@@ -223,6 +267,7 @@ export default function InvoiceListTable({
       onVoid,
       isVoiding,
       i18nProps.locale,
+      fiscalizationFeatures,
     ],
   );
 
@@ -233,6 +278,7 @@ export default function InvoiceListTable({
       resourceName="invoice"
       cacheKey="invoices"
       createNewLink={entityId ? `/app/${entityId}/documents/add/invoice` : undefined}
+      onCreateNew={onCreateNew}
       onFetch={handleFetch}
       onChangeParams={onChangeParams}
       disableUrlSync={disableUrlSync}
@@ -240,7 +286,7 @@ export default function InvoiceListTable({
       filterConfig={filterConfig}
       t={t}
       locale={i18nProps.locale}
-      selectable={!!onExportSelected}
+      selectable={!!(onExportSelected || onRetryFiscalization)}
       selectedIds={selectedIds}
       onSelectionChange={setSelectedIds}
       selectionToolbar={selectionToolbar}

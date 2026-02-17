@@ -22,4 +22,5 @@ export default {
   "No results found": "Nie znaleziono klientow",
   "Try adjusting your search criteria": "Sprobuj dostosowac kryteria wyszukiwania",
   "Clear search": "Wyczysc wyszukiwanie",
+  "Clear all": "Wyczyść wszystko",
 } as const;

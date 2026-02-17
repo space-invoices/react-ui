@@ -38,7 +38,12 @@ export default {
   "No results found": "Ni najdenih dobropisov",
   "Try adjusting your search criteria": "Poskusite prilagoditi iskalne kriterije",
   "Clear search": "Počisti iskanje",
+  "Clear all": "Počisti vse",
   selected: "izbranih",
   "Export PDFs": "Izvozi PDF-je",
   "Deselect all": "Počisti izbiro",
+  "FURS fiscalization failed": "FURS davčno potrjevanje ni uspelo",
+  "FINA fiscalization failed": "FINA fiskalizacija ni uspela",
+  "Retry Fiscalization": "Ponovi fiskalizacijo",
+  "Some selected documents don't have failed fiscalization": "Nekateri izbrani dokumenti nimajo neuspele fiskalizacije",
 } as const;

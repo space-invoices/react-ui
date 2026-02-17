@@ -1,4 +1,5 @@
 import type { CreditNote } from "@spaceinvoices/js-sdk";
+import { AlertTriangle } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { DataTable } from "@/ui/components/table/data-table";
 import { FormattedDate } from "@/ui/components/table/date-cell";
@@ -13,6 +14,8 @@ import type {
 } from "@/ui/components/table/types";
 import { Badge } from "@/ui/components/ui/badge";
 import { Button } from "@/ui/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/ui/components/ui/tooltip";
+import { getFiscalizationFailureType } from "@/ui/lib/fiscalization";
 import { createTranslation } from "@/ui/lib/translation";
 import { useSDK } from "@/ui/providers/sdk-provider";
 
@@ -53,6 +56,9 @@ type CreditNoteListTableProps = {
   onDownloadSuccess?: (fileName: string) => void;
   onDownloadError?: (error: string) => void;
   onExportSelected?: (documentIds: string[]) => void;
+  onRetryFiscalization?: (documentIds: string[]) => void;
+  fiscalizationFeatures?: ("furs" | "fina")[];
+  onCreateNew?: () => void;
 } & ListTableProps<CreditNote>;
 
 export default function CreditNoteListTable({
@@ -67,6 +73,9 @@ export default function CreditNoteListTable({
   onDownloadSuccess,
   onDownloadError,
   onExportSelected,
+  onRetryFiscalization,
+  fiscalizationFeatures,
+  onCreateNew,
   ...i18nProps
 }: CreditNoteListTableProps) {
   const t = createTranslation({
@@ -86,7 +95,6 @@ export default function CreditNoteListTable({
       limit: params.limit,
       next_cursor: params.next_cursor,
       prev_cursor: params.prev_cursor,
-      order_by: params.order_by,
       search: params.search,
       query: params.query,
     });
@@ -115,15 +123,42 @@ export default function CreditNoteListTable({
   }, []);
 
   const selectionToolbar = useCallback(
-    (count: number) => (
-      <SelectionToolbar
-        selectedCount={count}
-        onExportPdfs={onExportSelected ? handleExportPdfs : undefined}
-        onDeselectAll={handleDeselectAll}
-        t={t}
-      />
-    ),
-    [handleExportPdfs, handleDeselectAll, onExportSelected, t],
+    (count: number, data: CreditNote[]) => {
+      const selectedDocs = data.filter((d) => selectedIds.has(d.id));
+      const failedDocs = selectedDocs.filter((d) => {
+        const failureType = getFiscalizationFailureType(d as any);
+        return failureType && fiscalizationFeatures?.includes(failureType);
+      });
+
+      const hasRetry = onRetryFiscalization && fiscalizationFeatures?.length;
+      const failedCount = failedDocs.length;
+      const allFailed = failedCount > 0 && failedCount === selectedDocs.length;
+      const someFailed = failedCount > 0 && failedCount < selectedDocs.length;
+      const showRetry = hasRetry && failedCount > 0;
+
+      return (
+        <SelectionToolbar
+          selectedCount={count}
+          onExportPdfs={onExportSelected ? handleExportPdfs : undefined}
+          onRetryFiscalization={showRetry ? () => onRetryFiscalization(failedDocs.map((d) => d.id)) : undefined}
+          retryFiscalizationDisabled={someFailed && !allFailed}
+          retryFiscalizationTooltip={
+            someFailed ? t("Some selected documents don't have failed fiscalization") : undefined
+          }
+          onDeselectAll={handleDeselectAll}
+          t={t}
+        />
+      );
+    },
+    [
+      handleExportPdfs,
+      handleDeselectAll,
+      onExportSelected,
+      onRetryFiscalization,
+      fiscalizationFeatures,
+      selectedIds,
+      t,
+    ],
   );
 
   const columns: Column<CreditNote>[] = useMemo(
@@ -131,22 +166,35 @@ export default function CreditNoteListTable({
       {
         id: "number",
         header: t("Number"),
-        sortable: true,
-        cell: (creditNote) => (
-          <div className="flex items-center gap-2">
-            <Button variant="link" className="cursor-pointer py-0 underline" onClick={() => onRowClick?.(creditNote)}>
-              {creditNote.number}
-            </Button>
-            {(creditNote as any).is_draft && (
-              <Badge
-                variant="outline"
-                className="border-amber-500 bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-400"
-              >
-                {t("Draft")}
-              </Badge>
-            )}
-          </div>
-        ),
+        cell: (creditNote) => {
+          const failureType = getFiscalizationFailureType(creditNote as any);
+          const showWarning = failureType && fiscalizationFeatures?.includes(failureType);
+          return (
+            <div className="flex items-center gap-2">
+              <Button variant="link" className="cursor-pointer py-0 underline" onClick={() => onRowClick?.(creditNote)}>
+                {creditNote.number}
+              </Button>
+              {(creditNote as any).is_draft && (
+                <Badge
+                  variant="outline"
+                  className="border-amber-500 bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-400"
+                >
+                  {t("Draft")}
+                </Badge>
+              )}
+              {showWarning && (
+                <Tooltip>
+                  <TooltipTrigger>
+                    <AlertTriangle className="size-4 text-orange-500" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {t(failureType === "furs" ? "FURS fiscalization failed" : "FINA fiscalization failed")}
+                  </TooltipContent>
+                </Tooltip>
+              )}
+            </div>
+          );
+        },
       },
       {
         id: "customer",
@@ -156,20 +204,17 @@ export default function CreditNoteListTable({
       {
         id: "date",
         header: t("Date"),
-        sortable: true,
         cell: (creditNote) => <FormattedDate date={creditNote.date} />,
       },
       {
         id: "total",
         header: t("Total"),
-        sortable: true,
         align: "right",
         cell: (creditNote) => creditNote.total,
       },
       {
         id: "total_with_tax",
         header: t("Total with Tax"),
-        sortable: true,
         align: "right",
         cell: (creditNote) => creditNote.total_with_tax,
       },
@@ -207,6 +252,7 @@ export default function CreditNoteListTable({
       onDownloadSuccess,
       onDownloadError,
       i18nProps.locale,
+      fiscalizationFeatures,
     ],
   );
 
@@ -217,13 +263,14 @@ export default function CreditNoteListTable({
       resourceName="credit_note"
       cacheKey="credit-notes"
       createNewLink={entityId ? `/app/${entityId}/documents/add/credit_note` : undefined}
+      onCreateNew={onCreateNew}
       onFetch={handleFetch}
       onChangeParams={onChangeParams}
       entityId={entityId}
       filterConfig={filterConfig}
       t={t}
       locale={i18nProps.locale}
-      selectable={!!onExportSelected}
+      selectable={!!(onExportSelected || onRetryFiscalization)}
       selectedIds={selectedIds}
       onSelectionChange={setSelectedIds}
       selectionToolbar={selectionToolbar}

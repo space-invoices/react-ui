@@ -27,6 +27,7 @@ interface DocumentActivitiesListProps extends ComponentTranslationProps {
   entityId: string;
   currentUserId?: string;
   locale?: string;
+  variant?: "card" | "inline";
 }
 
 function formatActivityDate(date: string, locale: string): string {
@@ -67,6 +68,7 @@ export function DocumentActivitiesList({
   entityId,
   currentUserId,
   locale = "en",
+  variant = "card",
   ...i18nProps
 }: DocumentActivitiesListProps) {
   const t = createTranslation({ translations, locale, ...i18nProps });
@@ -107,60 +109,76 @@ export function DocumentActivitiesList({
   const hasPrev = cursors.length > 0;
   const hasNext = !!pagination?.has_more;
 
+  const paginationButtons = (hasPrev || hasNext) && (
+    <div className="flex items-center gap-1">
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={handlePrevPage}
+        disabled={!hasPrev}
+        className="h-8 w-8 cursor-pointer p-0"
+      >
+        <ChevronLeft className="h-4 w-4" />
+      </Button>
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={handleNextPage}
+        disabled={!hasNext}
+        className="h-8 w-8 cursor-pointer p-0"
+      >
+        <ChevronRight className="h-4 w-4" />
+      </Button>
+    </div>
+  );
+
+  const bodyContent = isLoading ? (
+    <div className="space-y-2">
+      <Skeleton className="h-10 w-full" />
+      <Skeleton className="h-10 w-full" />
+      <Skeleton className="h-10 w-full" />
+    </div>
+  ) : activities.length === 0 ? (
+    <p className="py-4 text-center text-muted-foreground text-sm">{t("No activity")}</p>
+  ) : (
+    <div className="space-y-2">
+      {activities.map((activity) => (
+        <div key={activity.id} className="flex items-start justify-between rounded-md border p-3">
+          <div className="flex flex-col gap-0.5">
+            <span className="font-medium text-sm">{getActionLabel(activity.action, t)}</span>
+            <span className="text-muted-foreground text-xs">
+              {t("by")} {getActorLabel(activity, t, currentUserId)}
+            </span>
+          </div>
+          <span className="text-muted-foreground text-xs">{formatActivityDate(activity.created_at, locale)}</span>
+        </div>
+      ))}
+    </div>
+  );
+
+  if (variant === "inline") {
+    return (
+      <div>
+        <div className="mb-3 flex items-center justify-between">
+          <h3 className="font-medium text-sm">
+            {t("Activity")} {pagination && pagination.total > 0 && `(${pagination.total})`}
+          </h3>
+          {paginationButtons}
+        </div>
+        {bodyContent}
+      </div>
+    );
+  }
+
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between pb-3">
         <CardTitle className="text-lg">
           {t("Activity")} {pagination && pagination.total > 0 && `(${pagination.total})`}
         </CardTitle>
-        {(hasPrev || hasNext) && (
-          <div className="flex items-center gap-1">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handlePrevPage}
-              disabled={!hasPrev}
-              className="h-8 w-8 cursor-pointer p-0"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleNextPage}
-              disabled={!hasNext}
-              className="h-8 w-8 cursor-pointer p-0"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-        )}
+        {paginationButtons}
       </CardHeader>
-      <CardContent>
-        {isLoading ? (
-          <div className="space-y-2">
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
-          </div>
-        ) : activities.length === 0 ? (
-          <p className="py-4 text-center text-muted-foreground text-sm">{t("No activity")}</p>
-        ) : (
-          <div className="space-y-2">
-            {activities.map((activity) => (
-              <div key={activity.id} className="flex items-start justify-between rounded-md border p-3">
-                <div className="flex flex-col gap-0.5">
-                  <span className="font-medium text-sm">{getActionLabel(activity.action, t)}</span>
-                  <span className="text-muted-foreground text-xs">
-                    {t("by")} {getActorLabel(activity, t, currentUserId)}
-                  </span>
-                </div>
-                <span className="text-muted-foreground text-xs">{formatActivityDate(activity.created_at, locale)}</span>
-              </div>
-            ))}
-          </div>
-        )}
-      </CardContent>
+      <CardContent>{bodyContent}</CardContent>
     </Card>
   );
 }

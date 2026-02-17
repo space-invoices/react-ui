@@ -109,6 +109,17 @@ export default {
   "Net price": "Nettopreis",
   "Gross price (tax included)": "Bruttopreis (inkl. MwSt.)",
   "Net price (before tax)": "Nettopreis (exkl. MwSt.)",
+  // Linked documents
+  "Linked documents": "Verknüpfte Dokumente",
+  Type: "Typ",
+  Total: "Gesamt",
+  "Delivery note": "Lieferschein",
+  Invoice: "Rechnung",
+  Estimate: "Angebot",
+  "Credit note": "Gutschrift",
+  "Advance invoice": "Vorausrechnung",
+  "FINA fiscalized invoices always use the current date":
+    "FINA-fiskalisierte Rechnungen verwenden immer das aktuelle Datum",
   // Service date
   "Service Date": "Leistungsdatum",
   "Single Date": "Datum",

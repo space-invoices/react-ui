@@ -52,7 +52,6 @@ export function prepareAdvanceInvoiceSubmission(
     markAsPaid: options.markAsPaid,
     paymentTypes: options.paymentTypes,
     documentType: "advance_invoice",
-    secondaryDate: values.date_due ?? undefined,
     priceModes: options.priceModes,
     isDraft: options.isDraft,
   }) as CreateAdvanceInvoiceRequest;

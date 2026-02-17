@@ -13,4 +13,5 @@ export default {
   "No results found": "Nie znaleziono pozycji",
   "Try adjusting your search criteria": "Spróbuj dostosować kryteria wyszukiwania",
   "Clear search": "Wyczyść wyszukiwanie",
+  "Clear all": "Wyczyść wszystko",
 };

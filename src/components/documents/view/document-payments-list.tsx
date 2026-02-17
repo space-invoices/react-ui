@@ -51,6 +51,7 @@ interface DocumentPaymentsListProps extends ComponentTranslationProps {
   onDeleteSuccess?: () => void;
   /** Callback on delete error */
   onDeleteError?: (error: string) => void;
+  variant?: "card" | "inline";
 }
 
 /**
@@ -94,6 +95,7 @@ export function DocumentPaymentsList({
   onEditPayment,
   onDeleteSuccess,
   onDeleteError,
+  variant = "card",
   ...i18nProps
 }: DocumentPaymentsListProps) {
   const t = createTranslation({ translations, locale, ...i18nProps });
@@ -180,6 +182,101 @@ export function DocumentPaymentsList({
   const fmt = (amount: number) => formatCurrency(amount, currencyCode, locale);
   const fmtDate = (date: Date | string | null) => formatDate(date, locale);
 
+  const headerContent = (
+    <div
+      className={
+        variant === "inline" ? "flex items-center justify-between" : "flex flex-row items-center justify-between"
+      }
+    >
+      <h3
+        className={variant === "inline" ? "font-medium text-sm" : "font-semibold text-lg leading-none tracking-tight"}
+      >
+        {t("Payments")} {payments.length > 0 && `(${payments.length})`}
+      </h3>
+      <Button variant="outline" size="sm" onClick={onAddPayment} className="cursor-pointer">
+        <Plus className="mr-1 h-4 w-4" />
+        {t("Add payment")}
+      </Button>
+    </div>
+  );
+
+  const bodyContent = isLoading ? (
+    <div className="space-y-2">
+      <Skeleton className="h-10 w-full" />
+      <Skeleton className="h-10 w-full" />
+    </div>
+  ) : payments.length === 0 ? (
+    <p className="py-4 text-center text-muted-foreground text-sm">{t("No payments")}</p>
+  ) : (
+    <div className="space-y-2">
+      {payments.map((payment) => (
+        <div key={payment.id} className="flex items-center justify-between rounded-md border p-3">
+          <div className="flex items-center gap-4">
+            <span className="text-muted-foreground text-sm">{fmtDate(payment.date)}</span>
+            <span className="font-medium">{fmt(payment.amount)}</span>
+            <span className="text-muted-foreground text-sm">{getTypeLabel(payment.type)}</span>
+          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="h-8 w-8 cursor-pointer p-0">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => onEditPayment?.(payment)} className="cursor-pointer">
+                <Pencil className="mr-2 h-4 w-4" />
+                {t("Edit")}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => setPaymentToDelete(payment)}
+                className="cursor-pointer text-destructive focus:text-destructive"
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                {t("Delete")}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      ))}
+    </div>
+  );
+
+  const deleteDialog = (
+    <Dialog open={!!paymentToDelete} onOpenChange={() => setPaymentToDelete(null)}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{t("Delete payment")}</DialogTitle>
+          <DialogDescription>{t("Delete payment confirmation")}</DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button
+            variant="outline"
+            disabled={isDeleting}
+            onClick={() => setPaymentToDelete(null)}
+            className="cursor-pointer"
+          >
+            {t("Cancel")}
+          </Button>
+          <Button variant="destructive" onClick={handleDelete} disabled={isDeleting} className="cursor-pointer">
+            {t("Delete")}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+
+  if (variant === "inline") {
+    return (
+      <>
+        <div>
+          {headerContent}
+          <div className="mt-3">{bodyContent}</div>
+        </div>
+        {deleteDialog}
+      </>
+    );
+  }
+
   return (
     <>
       <Card>
@@ -192,72 +289,9 @@ export function DocumentPaymentsList({
             {t("Add payment")}
           </Button>
         </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="space-y-2">
-              <Skeleton className="h-10 w-full" />
-              <Skeleton className="h-10 w-full" />
-            </div>
-          ) : payments.length === 0 ? (
-            <p className="py-4 text-center text-muted-foreground text-sm">{t("No payments")}</p>
-          ) : (
-            <div className="space-y-2">
-              {payments.map((payment) => (
-                <div key={payment.id} className="flex items-center justify-between rounded-md border p-3">
-                  <div className="flex items-center gap-4">
-                    <span className="text-muted-foreground text-sm">{fmtDate(payment.date)}</span>
-                    <span className="font-medium">{fmt(payment.amount)}</span>
-                    <span className="text-muted-foreground text-sm">{getTypeLabel(payment.type)}</span>
-                  </div>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm" className="h-8 w-8 cursor-pointer p-0">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => onEditPayment?.(payment)} className="cursor-pointer">
-                        <Pencil className="mr-2 h-4 w-4" />
-                        {t("Edit")}
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => setPaymentToDelete(payment)}
-                        className="cursor-pointer text-destructive focus:text-destructive"
-                      >
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        {t("Delete")}
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
+        <CardContent>{bodyContent}</CardContent>
       </Card>
-
-      {/* Delete Confirmation Dialog */}
-      <Dialog open={!!paymentToDelete} onOpenChange={() => setPaymentToDelete(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t("Delete payment")}</DialogTitle>
-            <DialogDescription>{t("Delete payment confirmation")}</DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              disabled={isDeleting}
-              onClick={() => setPaymentToDelete(null)}
-              className="cursor-pointer"
-            >
-              {t("Cancel")}
-            </Button>
-            <Button variant="destructive" onClick={handleDelete} disabled={isDeleting} className="cursor-pointer">
-              {t("Delete")}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {deleteDialog}
     </>
   );
 }

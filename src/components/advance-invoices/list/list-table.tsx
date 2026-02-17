@@ -1,4 +1,5 @@
 import type { AdvanceInvoice } from "@spaceinvoices/js-sdk";
+import { AlertTriangle } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { DataTable } from "@/ui/components/table/data-table";
 import { FormattedDate } from "@/ui/components/table/date-cell";
@@ -13,6 +14,8 @@ import type {
 } from "@/ui/components/table/types";
 import { Badge } from "@/ui/components/ui/badge";
 import { Button } from "@/ui/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/ui/components/ui/tooltip";
+import { getFiscalizationFailureType } from "@/ui/lib/fiscalization";
 import { createTranslation } from "@/ui/lib/translation";
 import { useSDK } from "@/ui/providers/sdk-provider";
 
@@ -53,6 +56,9 @@ type AdvanceInvoiceListTableProps = {
   onDownloadSuccess?: (fileName: string) => void;
   onDownloadError?: (error: string) => void;
   onExportSelected?: (documentIds: string[]) => void;
+  onRetryFiscalization?: (documentIds: string[]) => void;
+  fiscalizationFeatures?: ("furs" | "fina")[];
+  onCreateNew?: () => void;
 } & ListTableProps<AdvanceInvoice>;
 
 export default function AdvanceInvoiceListTable({
@@ -67,6 +73,9 @@ export default function AdvanceInvoiceListTable({
   onDownloadSuccess,
   onDownloadError,
   onExportSelected,
+  onRetryFiscalization,
+  fiscalizationFeatures,
+  onCreateNew,
   ...i18nProps
 }: AdvanceInvoiceListTableProps) {
   const t = createTranslation({
@@ -86,7 +95,6 @@ export default function AdvanceInvoiceListTable({
       limit: params.limit,
       next_cursor: params.next_cursor,
       prev_cursor: params.prev_cursor,
-      order_by: params.order_by,
       search: params.search,
       query: params.query,
     });
@@ -97,7 +105,6 @@ export default function AdvanceInvoiceListTable({
     () => ({
       dateFields: [
         { id: "date", label: t("Date") },
-        { id: "date_due", label: t("Date Due") },
         { id: "created_at", label: t("Created At") },
       ],
       statusFilter: true,
@@ -116,15 +123,42 @@ export default function AdvanceInvoiceListTable({
   }, []);
 
   const selectionToolbar = useCallback(
-    (count: number) => (
-      <SelectionToolbar
-        selectedCount={count}
-        onExportPdfs={onExportSelected ? handleExportPdfs : undefined}
-        onDeselectAll={handleDeselectAll}
-        t={t}
-      />
-    ),
-    [handleExportPdfs, handleDeselectAll, onExportSelected, t],
+    (count: number, data: AdvanceInvoice[]) => {
+      const selectedDocs = data.filter((d) => selectedIds.has(d.id));
+      const failedDocs = selectedDocs.filter((d) => {
+        const failureType = getFiscalizationFailureType(d as any);
+        return failureType && fiscalizationFeatures?.includes(failureType);
+      });
+
+      const hasRetry = onRetryFiscalization && fiscalizationFeatures?.length;
+      const failedCount = failedDocs.length;
+      const allFailed = failedCount > 0 && failedCount === selectedDocs.length;
+      const someFailed = failedCount > 0 && failedCount < selectedDocs.length;
+      const showRetry = hasRetry && failedCount > 0;
+
+      return (
+        <SelectionToolbar
+          selectedCount={count}
+          onExportPdfs={onExportSelected ? handleExportPdfs : undefined}
+          onRetryFiscalization={showRetry ? () => onRetryFiscalization(failedDocs.map((d) => d.id)) : undefined}
+          retryFiscalizationDisabled={someFailed && !allFailed}
+          retryFiscalizationTooltip={
+            someFailed ? t("Some selected documents don't have failed fiscalization") : undefined
+          }
+          onDeselectAll={handleDeselectAll}
+          t={t}
+        />
+      );
+    },
+    [
+      handleExportPdfs,
+      handleDeselectAll,
+      onExportSelected,
+      onRetryFiscalization,
+      fiscalizationFeatures,
+      selectedIds,
+      t,
+    ],
   );
 
   const columns: Column<AdvanceInvoice>[] = useMemo(
@@ -132,26 +166,39 @@ export default function AdvanceInvoiceListTable({
       {
         id: "number",
         header: t("Number"),
-        sortable: true,
-        cell: (advanceInvoice) => (
-          <div className="flex items-center gap-2">
-            <Button
-              variant="link"
-              className="cursor-pointer py-0 underline"
-              onClick={() => onRowClick?.(advanceInvoice)}
-            >
-              {advanceInvoice.number}
-            </Button>
-            {(advanceInvoice as any).is_draft && (
-              <Badge
-                variant="outline"
-                className="border-amber-500 bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-400"
+        cell: (advanceInvoice) => {
+          const failureType = getFiscalizationFailureType(advanceInvoice as any);
+          const showWarning = failureType && fiscalizationFeatures?.includes(failureType);
+          return (
+            <div className="flex items-center gap-2">
+              <Button
+                variant="link"
+                className="cursor-pointer py-0 underline"
+                onClick={() => onRowClick?.(advanceInvoice)}
               >
-                {t("Draft")}
-              </Badge>
-            )}
-          </div>
-        ),
+                {advanceInvoice.number}
+              </Button>
+              {(advanceInvoice as any).is_draft && (
+                <Badge
+                  variant="outline"
+                  className="border-amber-500 bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-400"
+                >
+                  {t("Draft")}
+                </Badge>
+              )}
+              {showWarning && (
+                <Tooltip>
+                  <TooltipTrigger>
+                    <AlertTriangle className="size-4 text-orange-500" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {t(failureType === "furs" ? "FURS fiscalization failed" : "FINA fiscalization failed")}
+                  </TooltipContent>
+                </Tooltip>
+              )}
+            </div>
+          );
+        },
       },
       {
         id: "customer",
@@ -161,26 +208,17 @@ export default function AdvanceInvoiceListTable({
       {
         id: "date",
         header: t("Date"),
-        sortable: true,
         cell: (advanceInvoice) => <FormattedDate date={advanceInvoice.date} />,
-      },
-      {
-        id: "date_due",
-        header: t("Date Due"),
-        sortable: true,
-        cell: (advanceInvoice) => <FormattedDate date={advanceInvoice.date_due} />,
       },
       {
         id: "total",
         header: t("Total"),
-        sortable: true,
         align: "right",
         cell: (advanceInvoice) => advanceInvoice.total,
       },
       {
         id: "total_with_tax",
         header: t("Total with Tax"),
-        sortable: true,
         align: "right",
         cell: (advanceInvoice) => advanceInvoice.total_with_tax,
       },
@@ -218,6 +256,7 @@ export default function AdvanceInvoiceListTable({
       onDownloadSuccess,
       onDownloadError,
       i18nProps.locale,
+      fiscalizationFeatures,
     ],
   );
 
@@ -228,13 +267,14 @@ export default function AdvanceInvoiceListTable({
       resourceName="advance_invoice"
       cacheKey="advance-invoices"
       createNewLink={entityId ? `/app/${entityId}/documents/add/advance_invoice` : undefined}
+      onCreateNew={onCreateNew}
       onFetch={handleFetch}
       onChangeParams={onChangeParams}
       entityId={entityId}
       filterConfig={filterConfig}
       t={t}
       locale={i18nProps.locale}
-      selectable={!!onExportSelected}
+      selectable={!!(onExportSelected || onRetryFiscalization)}
       selectedIds={selectedIds}
       onSelectionChange={setSelectedIds}
       selectionToolbar={selectionToolbar}
@@ -267,16 +307,6 @@ function AdvanceInvoiceStatusBadge({
         className="border-green-500 bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-400"
       >
         {t("Paid")}
-      </Badge>
-    );
-  }
-  if (advanceInvoice.date_due && new Date(advanceInvoice.date_due) < new Date()) {
-    return (
-      <Badge
-        variant="outline"
-        className="border-orange-500 bg-orange-50 text-orange-700 dark:bg-orange-950 dark:text-orange-400"
-      >
-        {t("Overdue")}
       </Badge>
     );
   }

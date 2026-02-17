@@ -22,4 +22,5 @@ export default {
   "No results found": "Nenhum pagamento encontrado",
   "Try adjusting your search criteria": "Tente ajustar os seus critérios de pesquisa",
   "Clear search": "Limpar pesquisa",
+  "Clear all": "Limpar tudo",
 } as const;

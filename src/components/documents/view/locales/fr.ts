@@ -19,10 +19,12 @@ export default {
   "Duplicate estimate": "Dupliquer le devis",
   "Duplicate credit_note": "Dupliquer l'avoir",
   "Duplicate advance_invoice": "Dupliquer la facture d'acompte",
+  "Duplicate delivery_note": "Dupliquer le bon de livraison",
   "Create invoice": "Créer une facture",
   "Create estimate": "Créer un devis",
   "Create credit_note": "Créer un avoir",
   "Create advance_invoice": "Créer une facture d'acompte",
+  "Create delivery_note": "Créer un bon de livraison",
 
   // Details card
   Details: "Détails",

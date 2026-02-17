@@ -79,7 +79,6 @@ export default function RecurringInvoiceListTable({
       limit: params.limit,
       next_cursor: params.next_cursor,
       prev_cursor: params.prev_cursor,
-      order_by: params.order_by,
       search: params.search,
       query: params.query,
     });
@@ -101,13 +100,11 @@ export default function RecurringInvoiceListTable({
       {
         id: "name",
         header: t("Name"),
-        sortable: true,
         cell: (ri) => <span className="font-medium">{ri.name}</span>,
       },
       {
         id: "frequency",
         header: t("Frequency"),
-        sortable: true,
         cell: (ri) => {
           const label = frequencyLabels[ri.frequency] ?? ri.frequency;
           return ri.interval > 1 ? `${t("Every")} ${ri.interval} ${label.toLowerCase()}` : label;
@@ -116,13 +113,11 @@ export default function RecurringInvoiceListTable({
       {
         id: "status",
         header: t("Status"),
-        sortable: true,
         cell: (ri) => <Badge variant={statusVariant(ri.status)}>{t(`status.${ri.status}`)}</Badge>,
       },
       {
         id: "next_run_date",
         header: t("Next Run"),
-        sortable: true,
         cell: (ri) =>
           ri.next_run_date ? (
             <FormattedDate date={ri.next_run_date} />
@@ -133,14 +128,12 @@ export default function RecurringInvoiceListTable({
       {
         id: "invoices_generated",
         header: t("Generated"),
-        sortable: true,
         align: "right",
         cell: (ri) => ri.invoices_generated,
       },
       {
         id: "created_at",
         header: t("Created"),
-        sortable: true,
         cell: (ri) => <FormattedDate date={ri.created_at} />,
       },
       {

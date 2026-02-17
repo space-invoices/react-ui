@@ -26,4 +26,5 @@ export default {
   Other: "Ostalo",
   Premise: "Prostor",
   Device: "Uredaj",
+  "FINA fiscalized invoices always use the current date": "FINA fiskalizirani dokumenti uvijek koriste trenutni datum",
 } as const;

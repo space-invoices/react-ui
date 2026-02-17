@@ -51,11 +51,20 @@ export function Autocomplete({
     setInternalSearchValue(value);
     onSearch?.(value);
 
-    // Open popover when user starts typing
-    if (!open) {
+    // Open popover when user starts typing (only if there are options)
+    if (!open && options.length > 0) {
       setOpen(true);
     }
   };
+
+  // Close popover when options become empty, open when they appear
+  React.useEffect(() => {
+    if (options.length === 0) {
+      setOpen(false);
+    } else if (document.activeElement === inputRef.current && searchValue) {
+      setOpen(true);
+    }
+  }, [options.length, searchValue]);
 
   const handleSelect = (selectedValue: string) => {
     onValueChange?.(selectedValue);
@@ -81,6 +90,12 @@ export function Autocomplete({
     onBlurProp?.(e); // Call the passed onBlur prop after internal logic
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && open) {
+      e.preventDefault();
+    }
+  };
+
   // Handle popover open/close - prevent closing when input is focused
   const handleOpenChange = (newOpen: boolean) => {
     if (!newOpen && document.activeElement === inputRef.current) {
@@ -98,6 +113,7 @@ export function Autocomplete({
         onChange={handleInputChange}
         onFocus={handleInputFocus}
         onBlur={handleInputBlur}
+        onKeyDown={handleKeyDown}
         placeholder={placeholder}
         className={className}
         disabled={disabled}

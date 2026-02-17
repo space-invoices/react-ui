@@ -52,6 +52,7 @@ type EstimateListTableProps = {
   onDownloadSuccess?: (fileName: string) => void;
   onDownloadError?: (error: string) => void;
   onExportSelected?: (documentIds: string[]) => void;
+  onCreateNew?: () => void;
 } & ListTableProps<Estimate>;
 
 export default function EstimateListTable({
@@ -65,6 +66,7 @@ export default function EstimateListTable({
   onDownloadSuccess,
   onDownloadError,
   onExportSelected,
+  onCreateNew,
   ...i18nProps
 }: EstimateListTableProps) {
   const t = createTranslation({
@@ -84,7 +86,6 @@ export default function EstimateListTable({
       limit: params.limit,
       next_cursor: params.next_cursor,
       prev_cursor: params.prev_cursor,
-      order_by: params.order_by,
       search: params.search,
       query: params.query,
     });
@@ -130,7 +131,6 @@ export default function EstimateListTable({
       {
         id: "number",
         header: t("Number"),
-        sortable: true,
         cell: (estimate) => (
           <div className="flex items-center gap-2">
             <Button variant="link" className="cursor-pointer py-0 underline" onClick={() => onRowClick?.(estimate)}>
@@ -155,26 +155,22 @@ export default function EstimateListTable({
       {
         id: "date",
         header: t("Date"),
-        sortable: true,
         cell: (estimate) => <FormattedDate date={estimate.date} />,
       },
       {
         id: "date_valid_till",
         header: t("Valid Until"),
-        sortable: true,
         cell: (estimate) => <FormattedDate date={estimate.date_valid_till} />,
       },
       {
         id: "total",
         header: t("Total"),
-        sortable: true,
         align: "right",
         cell: (estimate) => estimate.total,
       },
       {
         id: "total_with_tax",
         header: t("Total with Tax"),
-        sortable: true,
         align: "right",
         cell: (estimate) => estimate.total_with_tax,
       },
@@ -208,6 +204,7 @@ export default function EstimateListTable({
       cacheKey="estimates"
       resourceName="estimate"
       createNewLink={entityId ? `/app/${entityId}/documents/add/estimate` : undefined}
+      onCreateNew={onCreateNew}
       entityId={entityId}
       filterConfig={filterConfig}
       t={t}

@@ -95,6 +95,17 @@ export default {
   "Net price": "Precio neto",
   "Gross price (tax included)": "Precio bruto (impuestos incluidos)",
   "Net price (before tax)": "Precio neto (antes de impuestos)",
+  // Linked documents
+  "Linked documents": "Documentos vinculados",
+  Type: "Tipo",
+  Total: "Total",
+  "Delivery note": "Albarán",
+  Invoice: "Factura",
+  Estimate: "Presupuesto",
+  "Credit note": "Nota de crédito",
+  "Advance invoice": "Factura anticipada",
+  "FINA fiscalized invoices always use the current date":
+    "Las facturas fiscalizadas con FINA siempre usan la fecha actual",
   "Service Date": "Fecha de servicio",
   "Single Date": "Fecha única",
   "Date Range": "Rango de fechas",

@@ -1,6 +1,6 @@
 # Table Component Library
 
-A comprehensive, type-safe table system with built-in sorting, search, pagination, and loading states.
+A comprehensive, type-safe table system with built-in search, pagination, and loading states.
 
 ## Features
 
@@ -32,7 +32,6 @@ function InvoiceTable() {
         {
           id: "number",
           header: "Invoice #",
-          sortable: true,
           cell: (invoice) => (
             <a href={`/invoices/${invoice.id}`} className="underline">
               {invoice.number}
@@ -47,14 +46,12 @@ function InvoiceTable() {
         {
           id: "date",
           header: "Date",
-          sortable: true,
           cell: (invoice) => <FormattedDate date={invoice.date} />,
         },
         {
           id: "total",
           header: "Total",
           align: "right",
-          sortable: true,
           cell: (invoice) => `$${invoice.total}`,
         },
       ]}
@@ -81,17 +78,12 @@ function InvoiceTable() {
   return (
     <DataTable<Invoice>
       columns={[
-        { field: "number", header: "Number", sortable: true },
-        { field: "customer", header: "Customer" },
-        { field: "date", header: "Date", sortable: true },
-        { field: "total", header: "Total", sortable: true, align: "right" },
+        { id: "number", header: "Number" },
+        { id: "customer", header: "Customer" },
+        { id: "date", header: "Date" },
+        { id: "total", header: "Total", align: "right" },
       ]}
-      renderHeader={(props) => (
-        <InvoiceListHeader
-          orderBy={props.orderBy}
-          onSort={props.onSort}
-        />
-      )}
+      renderHeader={() => <InvoiceListHeader />}
       renderRow={(invoice) => (
         <InvoiceListRow
           key={invoice.id}
@@ -117,7 +109,6 @@ function InvoiceTable() {
 | `cacheKey` | `string` | Yes | Unique key for react-query cache |
 | `onFetch` | `(params) => Promise<Response>` | Yes | Data fetch function |
 | `resourceName` | `string` | Yes | Resource name for empty states |
-| `defaultOrderBy` | `string` | No | Default sort order (e.g., "-id") |
 | `queryParams` | `TableQueryParams` | No | External query parameters |
 | `onChangeParams` | `(params) => void` | No | Callback for param changes |
 | `entityId` | `string` | No | Entity ID for multi-tenant filtering |
@@ -125,7 +116,7 @@ function InvoiceTable() {
 | `createNewTrigger` | `ReactNode` | No | Custom create action |
 | `onRowClick` | `(item: T) => void` | No | Row click handler |
 | `renderRow` | `(item: T) => ReactNode` | No | Custom row renderer |
-| `renderHeader` | `(props) => ReactNode` | No | Custom header renderer |
+| `renderHeader` | `() => ReactNode` | No | Custom header renderer |
 
 ### Column Definition
 
@@ -133,8 +124,6 @@ function InvoiceTable() {
 type Column<T> = {
   id: string;                    // Unique column identifier
   header: ReactNode;             // Header label or component
-  sortField?: string;            // Field name for sorting (if different from id)
-  sortable?: boolean;            // Enable sorting
   align?: "left" | "center" | "right"; // Text alignment
   cell?: (item: T) => ReactNode; // Cell renderer function
   className?: string;            // Optional CSS classes
@@ -150,9 +139,8 @@ Manages table state internally with optional URL sync:
 ```tsx
 import { useTableState } from "@space-invoices/ui";
 
-const { params, handleSort, handleSearch, handlePageChange } = useTableState({
-  initialParams: { order_by: "-created_at" },
-  defaultOrderBy: "-id",
+const { params, handleSearch, handlePageChange } = useTableState({
+  initialParams: {},
   onChangeParams: (params) => {
     // Optional: sync with router or external state
     navigate({ search: params });
@@ -170,7 +158,7 @@ import { useTableQuery } from "@space-invoices/ui";
 const { data, isFetching } = useTableQuery({
   cacheKey: "customers",
   fetchFn: (params) => sdk.customers.getCustomers(params),
-  params: { order_by: "-id", search: "acme" },
+  params: { search: "acme" },
   entityId: "entity-123",
 });
 ```
@@ -201,21 +189,6 @@ Search input with optional debouncing:
   placeholder="Search customers..."
   debounceMs={300} // Optional debouncing
 />
-```
-
-### SortableHeader
-
-Sortable column header with visual indicators:
-
-```tsx
-<SortableHeader
-  field="name"
-  currentOrder="-name"
-  onSort={(order) => console.log(order)}
-  align="left"
->
-  Customer Name
-</SortableHeader>
 ```
 
 ### Pagination
@@ -259,7 +232,6 @@ For straightforward tables, define columns with cell renderers:
     {
       id: "name",
       header: "Name",
-      sortable: true,
       cell: (item) => item.name,
     },
     {
@@ -281,98 +253,20 @@ For advanced tables with complex row/header components:
 ```tsx
 <DataTable
   columns={[
-    { id: "name", header: "Name", sortable: true },
+    { id: "name", header: "Name" },
     { id: "email", header: "Email" },
   ]}
   renderRow={(item) => (
     <CustomRow key={item.id} item={item} />
   )}
-  renderHeader={(props) => (
-    <CustomHeader {...props} />
+  renderHeader={() => (
+    <CustomHeader />
   )}
   cacheKey="users"
   resourceName="user"
   onFetch={(params) => sdk.users.getUsers(params)}
 />
 ```
-
-## Key Improvements
-
-### 1. Simplified State Management
-
-**Before:**
-- Manual `useState` for params
-- Manual URL sync with `updateQueryParams`
-- Complex callback chains
-
-**After:**
-- `useTableState` hook handles everything
-- Automatic URL sync
-- Single source of truth
-
-### 2. Cleaner Hooks
-
-**Before:**
-```tsx
-const { data, isFetching } = useTableQuery({
-  cacheKey,
-  fetchFn,
-  params,
-  entityId,
-});
-
-// Unnecessary isMounted ref logic
-const isMounted = useRef(true);
-```
-
-**After:**
-```tsx
-// Simplified, no ref needed
-const { data, isFetching } = useTableQuery({
-  cacheKey,
-  fetchFn,
-  params,
-  entityId,
-});
-```
-
-### 3. Better Column API
-
-**Before:**
-- Column definitions not used for rendering
-- Must implement custom row/header components
-
-**After:**
-- Column definitions drive rendering
-- Optional custom renderers for flexibility
-- Built-in cell renderers via `cell` prop
-
-### 4. Improved Type Safety
-
-**Before:**
-```typescript
-// Loose typing on columns
-columns: { field: string; header: React.ReactNode }[]
-```
-
-**After:**
-```typescript
-// Strongly typed with generics
-columns: Column<T>[]
-// T is your data type (e.g., Invoice, Customer)
-```
-
-### 5. Better UX
-
-**Before:**
-- Basic search input
-- Minimal empty states
-
-**After:**
-- Search with clear button
-- Rich empty states with icons
-- Better error handling in date formatter
-- Improved accessibility
 
 ## Best Practices
 
@@ -382,8 +276,7 @@ columns: Column<T>[]
 4. **Handle loading states**: The component handles this automatically
 5. **Provide meaningful resource names**: Used in empty states
 6. **Use FormattedDate**: Consistent date formatting with error handling
-7. **Enable sorting selectively**: Not all columns need sorting
-8. **Use proper TypeScript types**: Import from `@spaceinvoices/js-sdk`
+7. **Use proper TypeScript types**: Import from `@spaceinvoices/js-sdk`
 
 ## Testing
 

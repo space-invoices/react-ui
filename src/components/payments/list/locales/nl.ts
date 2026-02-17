@@ -22,4 +22,5 @@ export default {
   "No results found": "Geen betalingen gevonden",
   "Try adjusting your search criteria": "Probeer uw zoekcriteria aan te passen",
   "Clear search": "Zoekopdracht wissen",
+  "Clear all": "Alles wissen",
 } as const;

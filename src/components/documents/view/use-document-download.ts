@@ -38,7 +38,7 @@ export function useDocumentDownload({
   /**
    * Download PDF in specified locale
    */
-  const downloadPdf = async (document: Document, documentType: DocumentType, _locale: string) => {
+  const downloadPdf = async (document: Document, documentType: DocumentType, locale: string) => {
     if (!sdk || !activeEntity?.id) {
       onDownloadError?.("Download failed");
       return;
@@ -51,7 +51,8 @@ export function useDocumentDownload({
       // SDK signature: renderPdf(id, params?, SDKMethodOptions?)
       // entity_id goes in SDKMethodOptions (last arg), not params
       // Note: renderPdf is on invoices module but works with any document ID via /documents/{id}/pdf
-      const blob = await sdk.invoices.renderPdf(document.id, {}, { entity_id: activeEntity.id });
+      const params = locale ? { locale } : {};
+      const blob = await sdk.invoices.renderPdf(document.id, params, { entity_id: activeEntity.id });
       const downloadUrl = window.URL.createObjectURL(blob);
       const link = window.document.createElement("a");
       link.href = downloadUrl;

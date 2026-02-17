@@ -29,6 +29,7 @@ export default {
   "No results found": "No se encontraron presupuestos",
   "Try adjusting your search criteria": "Intente ajustar sus criterios de búsqueda",
   "Clear search": "Limpiar búsqueda",
+  "Clear all": "Borrar todo",
   selected: "seleccionados",
   "Export PDFs": "Exportar PDFs",
   "Deselect all": "Deseleccionar todo",

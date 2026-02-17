@@ -6,6 +6,8 @@ type TableEmptyStateProps = {
   resource: string;
   createNewLink?: string;
   createNewTrigger?: React.ReactNode;
+  /** Callback for "Create new" click — enables client-side navigation instead of full page reload */
+  onCreateNew?: () => void;
   /** Number of rows to calculate height (default: 10) */
   rows?: number;
   /** Translation function */
@@ -21,6 +23,7 @@ const ROW_HEIGHT = 53;
 export function TableEmptyState({
   createNewLink,
   createNewTrigger,
+  onCreateNew,
   rows = 10,
   t = (key) => key,
 }: TableEmptyStateProps) {
@@ -32,13 +35,13 @@ export function TableEmptyState({
       <Sprout size={70} strokeWidth={0.35} className="text-muted-foreground" />
       <div className="space-y-1 text-center">
         <p className="font-light text-lg text-muted-foreground">{t("Your list is empty")}</p>
-        {(createNewLink || createNewTrigger) && (
+        {(createNewLink || createNewTrigger || onCreateNew) && (
           <p className="text-muted-foreground text-sm">{t("Get started by creating your first entry")}</p>
         )}
       </div>
       {createNewLink && (
-        <Button variant="default" size="sm" asChild>
-          <a href={createNewLink}>{t("Create new")}</a>
+        <Button variant="default" size="sm" {...(onCreateNew ? { onClick: onCreateNew } : { asChild: true })}>
+          {onCreateNew ? t("Create new") : <a href={createNewLink}>{t("Create new")}</a>}
         </Button>
       )}
       {createNewTrigger && !createNewLink && <div>{createNewTrigger}</div>}

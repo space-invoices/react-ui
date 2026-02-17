@@ -18,8 +18,8 @@ export default {
     "Registe pelo menos uma instalação comercial antes de fiscalizar faturas",
   "Numbering Sequence": "Sequência de numeração",
   "Choose how invoice numbers are sequenced": "Escolha como os números de fatura são sequenciados",
-  "Per Premise (N)": "Por instalação (N)",
-  "Per Device (P)": "Por dispositivo (P)",
+  "Per Device (N)": "Por dispositivo (N)",
+  "Per Premise (P)": "Por instalação (P)",
   Recommended: "Recomendado",
   "One sequence per business premise. Simpler to manage.":
     "Uma sequência por instalação comercial. Mais simples de gerir.",

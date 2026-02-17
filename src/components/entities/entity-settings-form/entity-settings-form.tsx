@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Entity } from "@spaceinvoices/js-sdk";
-import { CreditCard, FileText, Globe, Mail, Palette, Sparkles } from "lucide-react";
+import { CreditCard, FileText, Globe, Mail, Palette, QrCode, Sparkles } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -67,6 +67,38 @@ const SUPPORTED_LOCALES = [
   { value: "sl-SI", label: "Slovenščina (SI)" },
 ] as const;
 
+// Countries with EPC QR feature (EU 27 + Switzerland)
+const EPC_QR_COUNTRIES = new Set([
+  "AT",
+  "BE",
+  "BG",
+  "HR",
+  "CY",
+  "CZ",
+  "DK",
+  "EE",
+  "FI",
+  "FR",
+  "DE",
+  "GR",
+  "HU",
+  "IE",
+  "IT",
+  "LV",
+  "LT",
+  "LU",
+  "MT",
+  "NL",
+  "PL",
+  "PT",
+  "RO",
+  "SK",
+  "SI",
+  "ES",
+  "SE",
+  "CH",
+]);
+
 // Form schema extends the generated patchEntitySchema but flattens nested settings for better UX
 // Uses .omit() to remove nested fields, then .extend() to add flattened versions
 // This approach keeps the base validation from the API schema while allowing a better form structure
@@ -116,6 +148,8 @@ const entitySettingsFormSchema = patchEntitySchema
         message: "Must be a 4-letter uppercase code (e.g., OTHR)",
       })
       .optional(),
+    // EPC QR settings (EU + CH)
+    epc_qr_enabled: z.union([z.boolean(), z.null()]).optional(),
   });
 
 export type EntitySettingsFormSchema = z.infer<typeof entitySettingsFormSchema>;
@@ -186,6 +220,7 @@ export function EntitySettingsForm({
       upn_qr_enabled: currentSettings.upn_qr?.enabled || false,
       upn_qr_display_mode: currentSettings.upn_qr?.display_mode || "qr_only",
       upn_qr_purpose_code: currentSettings.upn_qr?.purpose_code || "OTHR",
+      epc_qr_enabled: currentSettings.epc_qr?.enabled || false,
     },
   });
 
@@ -346,6 +381,9 @@ export function EntitySettingsForm({
                   purpose_code: values.upn_qr_purpose_code || "OTHR",
                 }
               : undefined,
+          // EPC QR settings - only include if enabled or was previously enabled
+          epc_qr:
+            values.epc_qr_enabled || currentSettings.epc_qr ? { enabled: values.epc_qr_enabled || false } : undefined,
           // Bank accounts - store in array format (preserving other accounts if any)
           bank_accounts: values.bank_account_iban
             ? [
@@ -1006,6 +1044,68 @@ export function EntitySettingsForm({
                     <p className="text-muted-foreground/80 text-xs leading-relaxed">
                       {translate(
                         "UPN QR is a Slovenian standard for payment slips. When enabled, your invoices will include a QR code that customers can scan with their mobile banking app to pay instantly.",
+                      )}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* EPC QR Section - For EU + CH entities */}
+        {EPC_QR_COUNTRIES.has((entity as any).country_code) && (
+          <div className="grid gap-8 border-t pt-8 lg:grid-cols-2">
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-sky-500/10">
+                  <QrCode className="h-5 w-5 text-sky-600 dark:text-sky-400" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-lg">{translate("EPC QR Payment")}</h3>
+                  <p className="text-muted-foreground text-sm">
+                    {translate("SEPA credit transfer QR code for invoices")}
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-6 pl-[52px]">
+                <FormField
+                  control={form.control}
+                  name="epc_qr_enabled"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                      <div className="space-y-0.5">
+                        <FormLabel className="font-medium text-base">
+                          {translate("Enable EPC QR on invoices")}
+                        </FormLabel>
+                        <FormDescription className="text-xs">
+                          {translate("Show SEPA QR code on EUR invoices for easy bank payments")}
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value || false}
+                          onCheckedChange={field.onChange}
+                          disabled={!form.watch("bank_account_iban")}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+
+            {/* Help Content */}
+            <div className="hidden lg:block">
+              <div className="sticky top-6 space-y-3 border-muted border-l-2 pl-4">
+                <div className="flex items-start gap-2">
+                  <QrCode className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground/70" />
+                  <div className="space-y-2">
+                    <p className="font-medium text-muted-foreground text-sm">{translate("EPC QR Payments")}</p>
+                    <p className="text-muted-foreground/80 text-xs leading-relaxed">
+                      {translate(
+                        "EPC QR is a European standard for SEPA credit transfers. When enabled, EUR invoices include a QR code that customers can scan with their banking app to pay instantly.",
                       )}
                     </p>
                   </div>

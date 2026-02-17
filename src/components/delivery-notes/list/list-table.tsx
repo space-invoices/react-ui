@@ -52,6 +52,10 @@ type DeliveryNoteListTableProps = {
   onDownloadSuccess?: (fileName: string) => void;
   onDownloadError?: (error: string) => void;
   onExportSelected?: (documentIds: string[]) => void;
+  onCopyToInvoice?: (documentIds: string[]) => void;
+  onCreateNew?: () => void;
+  onVoid?: (deliveryNote: DeliveryNote) => void;
+  isVoiding?: boolean;
 } & ListTableProps<DeliveryNote>;
 
 export default function DeliveryNoteListTable({
@@ -65,6 +69,10 @@ export default function DeliveryNoteListTable({
   onDownloadSuccess,
   onDownloadError,
   onExportSelected,
+  onCopyToInvoice,
+  onCreateNew,
+  onVoid,
+  isVoiding,
   ...i18nProps
 }: DeliveryNoteListTableProps) {
   const t = createTranslation({
@@ -84,9 +92,9 @@ export default function DeliveryNoteListTable({
       limit: params.limit,
       next_cursor: params.next_cursor,
       prev_cursor: params.prev_cursor,
-      order_by: params.order_by,
       search: params.search,
       query: params.query,
+      include: "document_relations",
     });
     return response as unknown as TableQueryResponse<DeliveryNote>;
   }, entityId);
@@ -108,6 +116,12 @@ export default function DeliveryNoteListTable({
     }
   }, [selectedIds, onExportSelected]);
 
+  const handleCopyToInvoice = useCallback(() => {
+    if (selectedIds.size > 0 && onCopyToInvoice) {
+      onCopyToInvoice(Array.from(selectedIds));
+    }
+  }, [selectedIds, onCopyToInvoice]);
+
   const handleDeselectAll = useCallback(() => {
     setSelectedIds(new Set());
   }, []);
@@ -117,11 +131,12 @@ export default function DeliveryNoteListTable({
       <SelectionToolbar
         selectedCount={count}
         onExportPdfs={onExportSelected ? handleExportPdfs : undefined}
+        onCopyToInvoice={onCopyToInvoice ? handleCopyToInvoice : undefined}
         onDeselectAll={handleDeselectAll}
         t={t}
       />
     ),
-    [handleExportPdfs, handleDeselectAll, onExportSelected, t],
+    [handleExportPdfs, handleCopyToInvoice, handleDeselectAll, onExportSelected, onCopyToInvoice, t],
   );
 
   const columns: Column<DeliveryNote>[] = useMemo(
@@ -129,7 +144,6 @@ export default function DeliveryNoteListTable({
       {
         id: "number",
         header: t("Number"),
-        sortable: true,
         cell: (deliveryNote) => (
           <div className="flex items-center gap-2">
             <Button variant="link" className="cursor-pointer py-0 underline" onClick={() => onRowClick?.(deliveryNote)}>
@@ -143,6 +157,14 @@ export default function DeliveryNoteListTable({
                 {t("Draft")}
               </Badge>
             )}
+            {deliveryNote.voided_at && (
+              <Badge
+                variant="outline"
+                className="border-red-500 bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-400"
+              >
+                {t("Voided")}
+              </Badge>
+            )}
           </div>
         ),
       },
@@ -154,20 +176,17 @@ export default function DeliveryNoteListTable({
       {
         id: "date",
         header: t("Date"),
-        sortable: true,
         cell: (deliveryNote) => <FormattedDate date={deliveryNote.date} />,
       },
       {
         id: "total",
         header: t("Total"),
-        sortable: true,
         align: "right",
         cell: (deliveryNote) => deliveryNote.total,
       },
       {
         id: "total_with_tax",
         header: t("Total with Tax"),
-        sortable: true,
         align: "right",
         cell: (deliveryNote) => deliveryNote.total_with_tax,
       },
@@ -183,13 +202,26 @@ export default function DeliveryNoteListTable({
             onDownloadStart={onDownloadStart}
             onDownloadSuccess={onDownloadSuccess}
             onDownloadError={onDownloadError}
+            onVoid={onVoid}
+            isVoiding={isVoiding}
             t={t}
             locale={i18nProps.locale}
           />
         ),
       },
     ],
-    [t, onRowClick, onView, onDuplicate, onDownloadStart, onDownloadSuccess, onDownloadError, i18nProps.locale],
+    [
+      t,
+      onRowClick,
+      onView,
+      onDuplicate,
+      onDownloadStart,
+      onDownloadSuccess,
+      onDownloadError,
+      onVoid,
+      isVoiding,
+      i18nProps.locale,
+    ],
   );
 
   return (
@@ -201,11 +233,12 @@ export default function DeliveryNoteListTable({
       cacheKey="delivery-notes"
       resourceName="delivery note"
       createNewLink={entityId ? `/app/${entityId}/documents/add/delivery_note` : undefined}
+      onCreateNew={onCreateNew}
       entityId={entityId}
       filterConfig={filterConfig}
       t={t}
       locale={i18nProps.locale}
-      selectable={!!onExportSelected}
+      selectable={!!(onExportSelected || onCopyToInvoice)}
       selectedIds={selectedIds}
       onSelectionChange={setSelectedIds}
       selectionToolbar={selectionToolbar}

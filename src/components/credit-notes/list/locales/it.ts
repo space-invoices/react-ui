@@ -38,7 +38,12 @@ export default {
   "No results found": "Nessuna nota di credito trovata",
   "Try adjusting your search criteria": "Prova a modificare i criteri di ricerca",
   "Clear search": "Cancella ricerca",
+  "Clear all": "Cancella tutto",
   selected: "selezionati",
   "Export PDFs": "Esporta PDF",
   "Deselect all": "Deseleziona tutto",
+  "FURS fiscalization failed": "FURS fiscalization failed",
+  "FINA fiscalization failed": "FINA fiscalization failed",
+  "Retry Fiscalization": "Retry Fiscalization",
+  "Some selected documents don't have failed fiscalization": "Some selected documents don't have failed fiscalization",
 } as const;

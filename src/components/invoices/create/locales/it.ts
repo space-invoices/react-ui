@@ -97,6 +97,17 @@ export default {
   "Net price": "Prezzo netto",
   "Gross price (tax included)": "Prezzo lordo (imposte incluse)",
   "Net price (before tax)": "Prezzo netto (prima delle imposte)",
+  // Linked documents
+  "Linked documents": "Documenti collegati",
+  Type: "Tipo",
+  Total: "Totale",
+  "Delivery note": "Bolla di consegna",
+  Invoice: "Fattura",
+  Estimate: "Preventivo",
+  "Credit note": "Nota di credito",
+  "Advance invoice": "Fattura di acconto",
+  "FINA fiscalized invoices always use the current date":
+    "Le fatture fiscalizzate FINA utilizzano sempre la data corrente",
   "Service Date": "Data del servizio",
   "Single Date": "Data singola",
   "Date Range": "Intervallo di date",

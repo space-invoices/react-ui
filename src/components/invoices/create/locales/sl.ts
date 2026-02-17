@@ -105,6 +105,16 @@ export default {
   "Net price": "Neto cena",
   "Gross price (tax included)": "Bruto cena (z davkom)",
   "Net price (before tax)": "Neto cena (brez davka)",
+  // Linked documents
+  "Linked documents": "Povezani dokumenti",
+  Type: "Vrsta",
+  Total: "Skupaj",
+  "Delivery note": "Dobavnica",
+  Invoice: "Račun",
+  Estimate: "Predračun",
+  "Credit note": "Dobropis",
+  "Advance invoice": "Avansni račun",
+  "FINA fiscalized invoices always use the current date": "FINA fiskalizirani računi vedno uporabijo trenutni datum",
   // Service date
   "Service Date": "Datum storitve",
   "Single Date": "Datum",

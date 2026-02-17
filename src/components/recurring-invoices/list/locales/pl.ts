@@ -24,4 +24,5 @@ export default {
   "Your list is empty": "Twoja lista faktur cyklicznych jest pusta",
   "Get started by creating your first entry": "Zacznij od utworzenia pierwszego harmonogramu cyklicznego",
   "No results found": "Nie znaleziono faktur cyklicznych",
+  "Clear all": "Wyczyść wszystko",
 } as const;

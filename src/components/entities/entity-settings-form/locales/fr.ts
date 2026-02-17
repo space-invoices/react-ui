@@ -195,4 +195,13 @@ export default {
   "Enter EU consumer sales clause...": "Entrez la clause de vente aux consommateurs UE...",
   "tax-clauses.other.description":
     "Ces types de transactions ne nécessitent généralement pas de clauses fiscales spécifiques, mais vous pouvez les configurer selon vos besoins.",
+  // EPC QR Payment section
+  "EPC QR Payment": "Paiement EPC QR",
+  "SEPA credit transfer QR code for invoices": "Code QR de virement SEPA pour les factures",
+  "Enable EPC QR on invoices": "Activer EPC QR sur les factures",
+  "Show SEPA QR code on EUR invoices for easy bank payments":
+    "Afficher le code QR SEPA sur les factures en EUR pour des paiements bancaires faciles",
+  "EPC QR Payments": "Paiements EPC QR",
+  "EPC QR is a European standard for SEPA credit transfers. When enabled, EUR invoices include a QR code that customers can scan with their banking app to pay instantly.":
+    "EPC QR est un standard européen pour les virements SEPA. Lorsqu'il est activé, les factures en EUR incluent un code QR que les clients peuvent scanner avec leur application bancaire pour payer instantanément.",
 } as const;

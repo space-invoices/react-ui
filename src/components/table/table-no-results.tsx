@@ -6,6 +6,8 @@ import { TableCell, TableRow } from "@/ui/components/ui/table";
 type TableNoResultsProps = {
   resource: string;
   search?: (value: null) => void;
+  /** Combined clear handler for both search and filters */
+  onClear?: () => void;
   /** Number of rows to calculate height (default: 10) */
   rows?: number;
   /** Translation function */
@@ -18,9 +20,12 @@ const ROW_HEIGHT = 53;
 /**
  * No results message shown when search returns empty
  */
-export function TableNoResults({ search, rows = 10, t = (key) => key }: TableNoResultsProps) {
+export function TableNoResults({ search, onClear, rows = 10, t = (key) => key }: TableNoResultsProps) {
   // Calculate height based on row count (min 150px)
   const height = Math.max(rows * ROW_HEIGHT, 150);
+
+  const handleClear = onClear ?? (search ? () => search(null) : undefined);
+  const clearLabel = onClear ? t("Clear all") : t("Clear search");
 
   return (
     <TableRow className="hover:bg-transparent">
@@ -29,11 +34,11 @@ export function TableNoResults({ search, rows = 10, t = (key) => key }: TableNoR
           <FileX size={32} strokeWidth={1.5} className="text-muted-foreground" />
           <div className="space-y-1">
             <p className="font-medium text-muted-foreground">{t("No results found")}</p>
-            {search && <p className="text-muted-foreground text-sm">{t("Try adjusting your search criteria")}</p>}
+            {handleClear && <p className="text-muted-foreground text-sm">{t("Try adjusting your search criteria")}</p>}
           </div>
-          {search && (
-            <Button variant="link" size="sm" onClick={() => search(null)} className="underline">
-              {t("Clear search")}
+          {handleClear && (
+            <Button variant="link" size="sm" onClick={handleClear} className="underline">
+              {clearLabel}
             </Button>
           )}
         </div>

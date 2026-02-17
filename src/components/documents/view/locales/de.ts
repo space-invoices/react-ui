@@ -20,10 +20,12 @@ export default {
   "Duplicate estimate": "Angebot duplizieren",
   "Duplicate credit_note": "Gutschrift duplizieren",
   "Duplicate advance_invoice": "Anzahlungsrechnung duplizieren",
+  "Duplicate delivery_note": "Lieferschein duplizieren",
   "Create invoice": "Rechnung erstellen",
   "Create estimate": "Angebot erstellen",
   "Create credit_note": "Gutschrift erstellen",
   "Create advance_invoice": "Anzahlungsrechnung erstellen",
+  "Create delivery_note": "Lieferschein erstellen",
 
   // Details card
   Details: "Details",

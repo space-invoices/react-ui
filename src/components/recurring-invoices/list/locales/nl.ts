@@ -24,4 +24,5 @@ export default {
   "Your list is empty": "Uw lijst met terugkerende facturen is leeg",
   "Get started by creating your first entry": "Begin met het maken van uw eerste terugkerend schema",
   "No results found": "Geen terugkerende facturen gevonden",
+  "Clear all": "Alles wissen",
 } as const;

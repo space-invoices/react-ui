@@ -73,4 +73,6 @@ export default {
   "Cannot skip fiscalization for cash payments": "Fiscalisatie kan niet worden overgeslagen voor contante betalingen",
   Premise: "Bedrijfsruimte",
   Device: "Apparaat",
+  "FINA fiscalized invoices always use the current date":
+    "FINA-gefiscaliseerde documenten gebruiken altijd de huidige datum",
 } as const;

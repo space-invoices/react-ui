@@ -38,8 +38,13 @@ export default {
   "No results found": "Nije pronadjen nijedan avansni racun",
   "Try adjusting your search criteria": "Pokusajte prilagoditi kriterije pretrazivanja",
   "Clear search": "Ocisti pretragu",
+  "Clear all": "Očisti sve",
   selected: "odabranih",
   "Export PDFs": "Izvezi PDF-ove",
   "Deselect all": "Poništi odabir",
   "Partially Paid": "Djelomično plaćeno",
+  "FURS fiscalization failed": "FURS fiskalizacija nije uspjela",
+  "FINA fiscalization failed": "FINA fiskalizacija nije uspjela",
+  "Retry Fiscalization": "Ponovi fiskalizaciju",
+  "Some selected documents don't have failed fiscalization": "Neki odabrani dokumenti nemaju neuspjelu fiskalizaciju",
 } as const;

@@ -6,7 +6,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { FilterBar } from "./filter-bar";
 import { useTableQuery } from "./hooks/use-table-query";
 import { useTableState } from "./hooks/use-table-state";
-import { SortableHeader } from "./sortable-header";
 import { TableEmptyState } from "./table-empty-state";
 import { TableNoResults } from "./table-no-results";
 import { Pagination } from "./table-pagination";
@@ -22,8 +21,6 @@ export type DataTableProps<T> = {
   onFetch: (params: TableQueryParams) => Promise<TableQueryResponse<T>>;
   /** Resource name for empty states (e.g., "customer", "invoice") */
   resourceName: string;
-  /** Default sort order (e.g., "-id", "name") */
-  defaultOrderBy?: string;
   /** Initial/external query parameters */
   queryParams?: TableQueryParams;
   /** Callback when params change (for external state management) */
@@ -36,12 +33,14 @@ export type DataTableProps<T> = {
   createNewLink?: string;
   /** Custom trigger for create action */
   createNewTrigger?: ReactNode;
+  /** Callback for "Create new" click — enables client-side navigation instead of full page reload */
+  onCreateNew?: () => void;
   /** Optional row click handler */
   onRowClick?: (item: T) => void;
   /** Custom row renderer (overrides default cell rendering) */
   renderRow?: (item: T) => ReactNode;
   /** Custom header renderer (overrides default header) */
-  renderHeader?: (props: { orderBy?: string; onSort?: (order: string | null) => void }) => ReactNode;
+  renderHeader?: () => ReactNode;
   /** Filter configuration (date fields, status filter) */
   filterConfig?: FilterConfig;
   /** Translation function */
@@ -55,7 +54,7 @@ export type DataTableProps<T> = {
   /** Callback when selection changes */
   onSelectionChange?: (selectedIds: Set<string>) => void;
   /** Content to render in selection toolbar (shown when items selected) */
-  selectionToolbar?: (selectedCount: number) => ReactNode;
+  selectionToolbar?: (selectedCount: number, data: T[]) => ReactNode;
 };
 
 /**
@@ -66,13 +65,13 @@ export function DataTable<T extends { id: string }>({
   cacheKey,
   onFetch,
   resourceName,
-  defaultOrderBy = "-id",
   queryParams,
   onChangeParams,
   disableUrlSync,
   entityId,
   createNewLink,
   createNewTrigger,
+  onCreateNew,
   onRowClick,
   renderRow,
   renderHeader,
@@ -94,14 +93,12 @@ export function DataTable<T extends { id: string }>({
   );
   const [filterPanelOpen, setFilterPanelOpen] = useState(hasInitialFilters);
 
-  // Manage table state (sort, search, pagination, filters)
-  const { params, apiParams, filterState, handleSort, handleSearch, handlePageChange, handleFilterChange } =
-    useTableState({
-      initialParams: queryParams,
-      defaultOrderBy,
-      onChangeParams,
-      disableUrlSync,
-    });
+  // Manage table state (search, pagination, filters)
+  const { params, apiParams, filterState, handleSearch, handlePageChange, handleFilterChange } = useTableState({
+    initialParams: queryParams,
+    onChangeParams,
+    disableUrlSync,
+  });
 
   // Fetch table data (use apiParams which has the query JSON for API)
   const { data: queryResult, isFetching } = useTableQuery<T>({
@@ -120,6 +117,12 @@ export function DataTable<T extends { id: string }>({
       params.filter_method ||
       params.filter_http_status,
   );
+
+  // Combined clear handler for both search and filters
+  const handleClearAll = useCallback(() => {
+    handleSearch(null);
+    handleFilterChange(null);
+  }, [handleSearch, handleFilterChange]);
 
   // Selection helpers
   const pageIds = useMemo(() => data.map((item) => item.id), [data]);
@@ -186,6 +189,7 @@ export function DataTable<T extends { id: string }>({
         resource={resourceName}
         createNewLink={createNewLink}
         createNewTrigger={createNewTrigger}
+        onCreateNew={onCreateNew}
         t={t}
       />
     );
@@ -207,19 +211,17 @@ export function DataTable<T extends { id: string }>({
 
       {selectable && selectedCount > 0 && selectionToolbar && (
         <div className="flex items-center gap-3 rounded-lg border bg-muted/50 px-4 py-2">
-          {selectionToolbar(selectedCount)}
+          {selectionToolbar(selectedCount, data)}
         </div>
       )}
 
       <div className="rounded-lg border">
         <Table>
           {renderHeader ? (
-            renderHeader({ orderBy: params.order_by, onSort: handleSort })
+            renderHeader()
           ) : (
             <DefaultTableHeader
               columns={columns}
-              orderBy={params.order_by}
-              onSort={handleSort}
               selectable={selectable}
               allPageSelected={allPageSelected}
               somePageSelected={somePageSelected}
@@ -249,7 +251,7 @@ export function DataTable<T extends { id: string }>({
                 );
               })
             ) : (
-              <TableNoResults resource={resourceName} search={handleSearch} t={t} />
+              <TableNoResults resource={resourceName} search={handleSearch} onClear={handleClearAll} t={t} />
             )}
           </TableBody>
         </Table>
@@ -271,16 +273,12 @@ export function DataTable<T extends { id: string }>({
  */
 const DefaultTableHeader = memo(function DefaultTableHeader<T>({
   columns,
-  orderBy,
-  onSort,
   selectable,
   allPageSelected,
   somePageSelected,
   onToggleAll,
 }: {
   columns: Column<T>[];
-  orderBy?: string;
-  onSort?: (order: string | null) => void;
   selectable?: boolean;
   allPageSelected?: boolean;
   somePageSelected?: boolean;
@@ -300,18 +298,7 @@ const DefaultTableHeader = memo(function DefaultTableHeader<T>({
         )}
         {columns.map((column) => (
           <TableHead key={column.id} className={column.className} style={{ textAlign: column.align }}>
-            {column.sortable ? (
-              <SortableHeader
-                field={column.sortField ?? column.id}
-                currentOrder={orderBy}
-                onSort={onSort}
-                align={column.align}
-              >
-                {column.header}
-              </SortableHeader>
-            ) : (
-              column.header
-            )}
+            {column.header}
           </TableHead>
         ))}
       </TableRow>
@@ -319,8 +306,6 @@ const DefaultTableHeader = memo(function DefaultTableHeader<T>({
   );
 }) as <T>(props: {
   columns: Column<T>[];
-  orderBy?: string;
-  onSort?: (order: string | null) => void;
   selectable?: boolean;
   allPageSelected?: boolean;
   somePageSelected?: boolean;

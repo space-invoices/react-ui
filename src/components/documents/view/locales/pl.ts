@@ -19,10 +19,12 @@ export default {
   "Duplicate estimate": "Duplikuj kosztorys",
   "Duplicate credit_note": "Duplikuj notę kredytową",
   "Duplicate advance_invoice": "Duplikuj fakturę zaliczkową",
+  "Duplicate delivery_note": "Duplikuj dowód dostawy",
   "Create invoice": "Utwórz fakturę",
   "Create estimate": "Utwórz kosztorys",
   "Create credit_note": "Utwórz notę kredytową",
   "Create advance_invoice": "Utwórz fakturę zaliczkową",
+  "Create delivery_note": "Utwórz dowód dostawy",
 
   // Details card
   Details: "Szczegóły",

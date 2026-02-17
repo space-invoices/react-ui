@@ -97,6 +97,17 @@ export default {
   "Net price": "Prix net",
   "Gross price (tax included)": "Prix brut (taxes incluses)",
   "Net price (before tax)": "Prix net (avant taxes)",
+  // Linked documents
+  "Linked documents": "Documents liés",
+  Type: "Type",
+  Total: "Total",
+  "Delivery note": "Bon de livraison",
+  Invoice: "Facture",
+  Estimate: "Devis",
+  "Credit note": "Avoir",
+  "Advance invoice": "Facture d'acompte",
+  "FINA fiscalized invoices always use the current date":
+    "Les factures fiscalisées FINA utilisent toujours la date actuelle",
   "Service Date": "Date de service",
   "Single Date": "Date unique",
   "Date Range": "Plage de dates",

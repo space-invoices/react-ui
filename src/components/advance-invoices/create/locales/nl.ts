@@ -27,4 +27,6 @@ export default {
   Other: "Overig",
   Premise: "Bedrijfsruimte",
   Device: "Apparaat",
+  "FINA fiscalized invoices always use the current date":
+    "FINA-gefiscaliseerde documenten gebruiken altijd de huidige datum",
 } as const;

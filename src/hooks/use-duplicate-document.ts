@@ -32,7 +32,7 @@ export function getDocumentTypeFromId(id: string): DocumentType | null {
   if (id.startsWith("est_")) return "estimate";
   if (id.startsWith("cn_")) return "credit_note";
   if (id.startsWith("adv_")) return "advance_invoice";
-  if (id.startsWith("dn_")) return "delivery_note";
+  if (id.startsWith("del_")) return "delivery_note";
   return null;
 }
 
@@ -50,7 +50,7 @@ export function getAllowedDuplicateTargets(sourceType: DocumentType): DocumentTy
     case "advance_invoice":
       return ["advance_invoice", "invoice"];
     case "delivery_note":
-      return ["delivery_note"];
+      return ["delivery_note", "invoice"];
     default:
       return [];
   }
@@ -60,7 +60,7 @@ export function getAllowedDuplicateTargets(sourceType: DocumentType): DocumentTy
  * Transform a source document into form-compatible initial values
  * Copies relevant fields and resets computed/generated ones
  */
-function transformDocumentForDuplication(source: Document, _targetType: DocumentType): Partial<CreateRequest> {
+function transformDocumentForDuplication(source: Document, targetType: DocumentType): Partial<CreateRequest> {
   // Transform items - copy only the fields needed for creation
   // Use type assertion for items since all document item types share the same shape
   const sourceItems = source.items as Array<{
@@ -98,6 +98,10 @@ function transformDocumentForDuplication(source: Document, _targetType: Document
       }
     : undefined;
 
+  // When converting to a different type, link back to the source document
+  const sourceType = getDocumentTypeFromId(source.id);
+  const isConversion = sourceType && sourceType !== targetType;
+
   // Build base duplicate data
   const baseData: Partial<CreateRequest> = {
     // Customer - always pass both customer_id AND customer data when available
@@ -115,6 +119,8 @@ function transformDocumentForDuplication(source: Document, _targetType: Document
     date: new Date().toISOString(),
     // Number - leave empty for auto-generation
     // Do NOT copy: number, totals, taxes, payments, furs, eslog, vies, shareable_id
+    // Link back to source document when converting (e.g., delivery note → invoice)
+    ...(isConversion ? { linked_documents: [source.id] } : {}),
   };
 
   return baseData;
@@ -129,9 +135,20 @@ export type UseDuplicateDocumentOptions = {
   enabled?: boolean;
 };
 
+export type LinkedDocumentSummary = {
+  id: string;
+  type: string;
+  number: string;
+  date: string;
+  total_with_tax: number;
+  currency_code: string;
+};
+
 export type UseDuplicateDocumentResult = {
   /** Transformed initial values for the form */
   initialValues: Partial<CreateRequest> | undefined;
+  /** Source documents linked to this document (populated for conversions) */
+  sourceDocuments: LinkedDocumentSummary[];
   /** Loading state */
   isLoading: boolean;
   /** Error if fetch failed */
@@ -187,13 +204,31 @@ export function useDuplicateDocument({
         throw new Error("Source document not found");
       }
 
-      return transformDocumentForDuplication(source, targetType);
+      const initialValues = transformDocumentForDuplication(source, targetType);
+
+      // Build source document summaries for conversions (different source → target type)
+      const isConversion = sourceType !== targetType;
+      const sourceDocuments: LinkedDocumentSummary[] = isConversion
+        ? [
+            {
+              id: source.id,
+              type: sourceType,
+              number: (source as any).number || "",
+              date: (source as any).date || "",
+              total_with_tax: (source as any).total_with_tax ?? 0,
+              currency_code: (source as any).currency_code || "",
+            },
+          ]
+        : [];
+
+      return { initialValues, sourceDocuments };
     },
     enabled: enabled && !!sourceId && !!activeEntity?.id && !!sourceType,
   });
 
   return {
-    initialValues: query.data,
+    initialValues: query.data?.initialValues,
+    sourceDocuments: query.data?.sourceDocuments ?? [],
     isLoading: query.isLoading,
     error: query.error,
     sourceType,

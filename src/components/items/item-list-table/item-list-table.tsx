@@ -63,8 +63,8 @@ export default function ItemListTable({
   return (
     <DataTable
       columns={[
-        { id: "name", header: t("Name"), sortable: true },
-        { id: "description", header: t("Description"), sortable: true },
+        { id: "name", header: t("Name") },
+        { id: "description", header: t("Description") },
         { id: "unit", header: t("Unit") },
         { id: "price", header: t("Price"), align: "right" },
         { id: "actions", header: "", align: "right" },
@@ -72,7 +72,7 @@ export default function ItemListTable({
       renderRow={(item) => (
         <ItemListRow item={item} key={item.id} onRowClick={(item) => onRowClick?.(item)} onView={onView} t={t} />
       )}
-      renderHeader={(headerProps) => <ItemListHeader orderBy={headerProps.orderBy} onSort={headerProps.onSort} t={t} />}
+      renderHeader={() => <ItemListHeader t={t} />}
       queryParams={queryParams}
       resourceName="item"
       cacheKey={ITEMS_CACHE_KEY}

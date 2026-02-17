@@ -18,8 +18,8 @@ export default {
     "Registrirajte vsaj en poslovni prostor, preden fiskalizirate račune",
   "Numbering Sequence": "Zaporedje številčenja",
   "Choose how invoice numbers are sequenced": "Izberite način številčenja računov",
-  "Per Premise (N)": "Po prostoru (N)",
-  "Per Device (P)": "Po napravi (P)",
+  "Per Device (N)": "Po napravi (N)",
+  "Per Premise (P)": "Po prostoru (P)",
   Recommended: "Priporočeno",
   "One sequence per business premise. Simpler to manage.":
     "Eno zaporedje na poslovni prostor. Enostavnejše za upravljanje.",

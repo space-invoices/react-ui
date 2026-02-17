@@ -22,6 +22,36 @@ const {
 export { useCreateCreditNote, useUpdateCreditNote, useDeleteCreditNote };
 
 // ============================================================================
+// FURS Last-Used Combo (localStorage) for credit notes
+// ============================================================================
+
+const FURS_CN_LAST_USED_KEY = "si:furs:cn:last-used";
+
+export type FursCombo = {
+  business_premise_name: string;
+  electronic_device_name: string;
+};
+
+export function getLastUsedFursCombo(entityId: string): FursCombo | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const stored = localStorage.getItem(`${FURS_CN_LAST_USED_KEY}:${entityId}`);
+    return stored ? JSON.parse(stored) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function setLastUsedFursCombo(entityId: string, combo: FursCombo): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(`${FURS_CN_LAST_USED_KEY}:${entityId}`, JSON.stringify(combo));
+  } catch {
+    // Ignore localStorage errors
+  }
+}
+
+// ============================================================================
 // FINA Last-Used Combo (localStorage) for credit notes
 // ============================================================================
 

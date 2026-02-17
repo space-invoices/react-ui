@@ -3,7 +3,7 @@ import { useSDK } from "@/ui/providers/sdk-provider";
 
 interface VoidDocumentParams {
   documentId: string;
-  documentType: "invoice" | "credit_note" | "advance_invoice";
+  documentType: "invoice" | "credit_note" | "advance_invoice" | "delivery_note";
   entityId: string;
   reason?: string;
 }
@@ -28,12 +28,15 @@ export function useVoidDocument() {
           return sdk.creditNotes.void(documentId, body, opts);
         case "advance_invoice":
           return sdk.advanceInvoices.void(documentId, body, opts);
+        case "delivery_note":
+          return sdk.deliveryNotes.void(documentId, body, opts);
       }
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["invoices"] });
       queryClient.invalidateQueries({ queryKey: ["credit-notes"] });
       queryClient.invalidateQueries({ queryKey: ["advance-invoices"] });
+      queryClient.invalidateQueries({ queryKey: ["delivery-notes"] });
       queryClient.invalidateQueries({ queryKey: ["documents", variables.documentType, variables.documentId] });
     },
   });

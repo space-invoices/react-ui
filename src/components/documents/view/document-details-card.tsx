@@ -25,6 +25,7 @@ interface DocumentDetailsCardProps extends ComponentTranslationProps {
   documentType: DocumentType;
   /** Locale for date formatting */
   locale?: string;
+  variant?: "card" | "inline";
 }
 
 /**
@@ -79,7 +80,13 @@ function getPaymentStatus(
  * - Totals breakdown
  * - Payment status (for invoices/advance invoices)
  */
-export function DocumentDetailsCard({ document, documentType, locale = "en", ...i18nProps }: DocumentDetailsCardProps) {
+export function DocumentDetailsCard({
+  document,
+  documentType,
+  locale = "en",
+  variant = "card",
+  ...i18nProps
+}: DocumentDetailsCardProps) {
   const t = createTranslation({ translations, locale, ...i18nProps });
 
   const currencyCode = document.currency_code;
@@ -98,6 +105,96 @@ export function DocumentDetailsCard({ document, documentType, locale = "en", ...
   // Calculate tax total
   const taxTotal = document.total_with_tax - document.total;
 
+  const bodyContent = (
+    <>
+      {/* Document info */}
+      <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+        <div className="text-muted-foreground">{t("Number")}</div>
+        <div className="text-right font-medium">{document.number}</div>
+
+        <div className="text-muted-foreground">{t("Date")}</div>
+        <div className="text-right">{fmtDate(document.date)}</div>
+
+        {isInvoiceOrAdvance && invoiceDoc.date_due && (
+          <>
+            <div className="text-muted-foreground">{t("Due date")}</div>
+            <div className="text-right">{fmtDate(invoiceDoc.date_due)}</div>
+          </>
+        )}
+
+        {isInvoiceOrAdvance && (invoiceDoc as any).date_service && (
+          <>
+            <div className="text-muted-foreground">
+              {(invoiceDoc as any).date_service_to ? t("Service period") : t("Service date")}
+            </div>
+            <div className="text-right">
+              {(invoiceDoc as any).date_service_to
+                ? `${fmtDate((invoiceDoc as any).date_service)} - ${fmtDate((invoiceDoc as any).date_service_to)}`
+                : fmtDate((invoiceDoc as any).date_service)}
+            </div>
+          </>
+        )}
+
+        {isEstimate && estimateDoc.date_valid_till && (
+          <>
+            <div className="text-muted-foreground">{t("Valid until")}</div>
+            <div className="text-right">{fmtDate(estimateDoc.date_valid_till)}</div>
+          </>
+        )}
+
+        <div className="text-muted-foreground">{t("Customer")}</div>
+        <div className="text-right">{customerName}</div>
+      </div>
+
+      <Separator />
+
+      {/* Totals */}
+      <div className="space-y-2 text-sm">
+        <div className="flex justify-between">
+          <span className="text-muted-foreground">{t("Subtotal")}</span>
+          <span>{fmt(document.total)}</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-muted-foreground">{t("Tax")}</span>
+          <span>{fmt(taxTotal)}</span>
+        </div>
+        <div className="flex justify-between font-semibold">
+          <span>{t("Total")}</span>
+          <span>{fmt(document.total_with_tax)}</span>
+        </div>
+
+        {/* Payment info for invoices/advance invoices */}
+        {isInvoiceOrAdvance && invoiceDoc.total_paid > 0 && (
+          <>
+            <Separator />
+            <div className="flex justify-between text-green-600">
+              <span>{t("Paid")}</span>
+              <span>-{fmt(invoiceDoc.total_paid)}</span>
+            </div>
+            <div className="flex justify-between font-semibold">
+              <span>{t("Due")}</span>
+              <span>{fmt(invoiceDoc.total_due)}</span>
+            </div>
+          </>
+        )}
+      </div>
+    </>
+  );
+
+  if (variant === "inline") {
+    return (
+      <div className="space-y-3">
+        <div className="flex items-center justify-between font-medium text-sm">
+          {t("Details")}
+          {isInvoiceOrAdvance && (
+            <Badge variant={getPaymentStatus(invoiceDoc, t).variant}>{getPaymentStatus(invoiceDoc, t).label}</Badge>
+          )}
+        </div>
+        <div className="space-y-4">{bodyContent}</div>
+      </div>
+    );
+  }
+
   return (
     <Card>
       <CardHeader className="pb-3">
@@ -108,79 +205,7 @@ export function DocumentDetailsCard({ document, documentType, locale = "en", ...
           )}
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Document info */}
-        <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-          <div className="text-muted-foreground">{t("Number")}</div>
-          <div className="text-right font-medium">{document.number}</div>
-
-          <div className="text-muted-foreground">{t("Date")}</div>
-          <div className="text-right">{fmtDate(document.date)}</div>
-
-          {isInvoiceOrAdvance && (
-            <>
-              <div className="text-muted-foreground">{t("Due date")}</div>
-              <div className="text-right">{fmtDate(invoiceDoc.date_due)}</div>
-            </>
-          )}
-
-          {isInvoiceOrAdvance && (invoiceDoc as any).date_service && (
-            <>
-              <div className="text-muted-foreground">
-                {(invoiceDoc as any).date_service_to ? t("Service period") : t("Service date")}
-              </div>
-              <div className="text-right">
-                {(invoiceDoc as any).date_service_to
-                  ? `${fmtDate((invoiceDoc as any).date_service)} - ${fmtDate((invoiceDoc as any).date_service_to)}`
-                  : fmtDate((invoiceDoc as any).date_service)}
-              </div>
-            </>
-          )}
-
-          {isEstimate && estimateDoc.date_valid_till && (
-            <>
-              <div className="text-muted-foreground">{t("Valid until")}</div>
-              <div className="text-right">{fmtDate(estimateDoc.date_valid_till)}</div>
-            </>
-          )}
-
-          <div className="text-muted-foreground">{t("Customer")}</div>
-          <div className="text-right">{customerName}</div>
-        </div>
-
-        <Separator />
-
-        {/* Totals */}
-        <div className="space-y-2 text-sm">
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">{t("Subtotal")}</span>
-            <span>{fmt(document.total)}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">{t("Tax")}</span>
-            <span>{fmt(taxTotal)}</span>
-          </div>
-          <div className="flex justify-between font-semibold">
-            <span>{t("Total")}</span>
-            <span>{fmt(document.total_with_tax)}</span>
-          </div>
-
-          {/* Payment info for invoices/advance invoices */}
-          {isInvoiceOrAdvance && invoiceDoc.total_paid > 0 && (
-            <>
-              <Separator />
-              <div className="flex justify-between text-green-600">
-                <span>{t("Paid")}</span>
-                <span>-{fmt(invoiceDoc.total_paid)}</span>
-              </div>
-              <div className="flex justify-between font-semibold">
-                <span>{t("Due")}</span>
-                <span>{fmt(invoiceDoc.total_due)}</span>
-              </div>
-            </>
-          )}
-        </div>
-      </CardContent>
+      <CardContent className="space-y-4">{bodyContent}</CardContent>
     </Card>
   );
 }

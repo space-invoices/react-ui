@@ -24,4 +24,5 @@ export default {
   "Your list is empty": "A sua lista de faturas recorrentes está vazia",
   "Get started by creating your first entry": "Comece criando o seu primeiro agendamento recorrente",
   "No results found": "Nenhuma fatura recorrente encontrada",
+  "Clear all": "Limpar tudo",
 } as const;

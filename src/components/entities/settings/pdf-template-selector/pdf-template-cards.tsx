@@ -9,6 +9,7 @@ const TEMPLATES: Array<{
 }> = [
   { id: "modern", nameKey: "Modern", descriptionKey: "Modern template description" },
   { id: "classic", nameKey: "Classic", descriptionKey: "Classic template description" },
+  { id: "condensed", nameKey: "Condensed", descriptionKey: "Condensed template description" },
   { id: "minimal", nameKey: "Minimal", descriptionKey: "Minimal template description" },
   { id: "fashion", nameKey: "Fashion", descriptionKey: "Fashion template description" },
 ];

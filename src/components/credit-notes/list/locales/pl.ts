@@ -38,7 +38,12 @@ export default {
   "No results found": "Nie znaleziono not kredytowych",
   "Try adjusting your search criteria": "Sprobuj dostosowac kryteria wyszukiwania",
   "Clear search": "Wyczysc wyszukiwanie",
+  "Clear all": "Wyczyść wszystko",
   selected: "wybranych",
   "Export PDFs": "Eksportuj PDF-y",
   "Deselect all": "Odznacz wszystko",
+  "FURS fiscalization failed": "FURS fiscalization failed",
+  "FINA fiscalization failed": "FINA fiscalization failed",
+  "Retry Fiscalization": "Retry Fiscalization",
+  "Some selected documents don't have failed fiscalization": "Some selected documents don't have failed fiscalization",
 } as const;

@@ -72,4 +72,5 @@ export default {
   "Cannot skip fiscalization for cash payments": "Nie mozna pominac fiskalizacji dla platnosci gotowkowych",
   Premise: "Lokal",
   Device: "Urządzenie",
+  "FINA fiscalized invoices always use the current date": "Dokumenty fiskalizowane FINA zawsze używają bieżącej daty",
 } as const;

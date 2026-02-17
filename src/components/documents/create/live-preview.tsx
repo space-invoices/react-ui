@@ -11,7 +11,7 @@ import { useA4Scaling } from "../shared/use-a4-scaling";
 import type { DocumentTypes } from "../types";
 import { filterUnresolvedTaxes } from "./prepare-preview-data";
 
-export type PdfTemplateId = "modern" | "classic" | "minimal" | "fashion";
+export type PdfTemplateId = "modern" | "classic" | "condensed" | "minimal" | "fashion";
 
 type LiveInvoicePreviewProps = {
   data: Partial<CreateInvoiceRequest>;

@@ -24,4 +24,5 @@ export default {
   "Your list is empty": "Votre liste de factures récurrentes est vide",
   "Get started by creating your first entry": "Commencez par créer votre premier programme récurrent",
   "No results found": "Aucune facture récurrente trouvée",
+  "Clear all": "Tout effacer",
 } as const;

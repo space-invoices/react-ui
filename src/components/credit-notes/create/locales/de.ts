@@ -74,4 +74,6 @@ export default {
   "Cannot skip fiscalization for cash payments": "Fiskalisierung kann für Barzahlungen nicht übersprungen werden",
   Premise: "Geschäftsräume",
   Device: "Gerät",
+  "FINA fiscalized invoices always use the current date":
+    "FINA-fiskalisierte Dokumente verwenden immer das aktuelle Datum",
 } as const;

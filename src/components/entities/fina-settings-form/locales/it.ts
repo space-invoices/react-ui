@@ -18,8 +18,8 @@ export default {
     "Registra almeno un locale commerciale prima di fiscalizzare le fatture",
   "Numbering Sequence": "Sequenza di numerazione",
   "Choose how invoice numbers are sequenced": "Scegli come vengono numerati i documenti",
-  "Per Premise (N)": "Per locale (N)",
-  "Per Device (P)": "Per dispositivo (P)",
+  "Per Device (N)": "Per dispositivo (N)",
+  "Per Premise (P)": "Per locale (P)",
   Recommended: "Consigliato",
   "One sequence per business premise. Simpler to manage.":
     "Una sequenza per locale commerciale. Più semplice da gestire.",

@@ -14,4 +14,5 @@ export default {
   "No results found": "Nessuna tassa trovata",
   "Try adjusting your search criteria": "Prova a modificare i criteri di ricerca",
   "Clear search": "Cancella ricerca",
+  "Clear all": "Cancella tutto",
 };

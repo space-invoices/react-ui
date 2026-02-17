@@ -77,7 +77,6 @@ export default function PaymentListTable({
       limit: params.limit,
       next_cursor: params.next_cursor,
       prev_cursor: params.prev_cursor,
-      order_by: params.order_by,
       search: params.search,
       query: params.query,
     });
@@ -100,20 +99,17 @@ export default function PaymentListTable({
       {
         id: "date",
         header: t("Date"),
-        sortable: true,
         cell: (payment) => <FormattedDate date={payment.date} />,
       },
       {
         id: "amount",
         header: t("Amount"),
-        sortable: true,
         align: "right",
         cell: (payment) => <span className="font-medium">{payment.amount.toFixed(2)}</span>,
       },
       {
         id: "type",
         header: t("Type"),
-        sortable: true,
         cell: (payment) => typeLabels[payment.type] ?? payment.type,
       },
       {

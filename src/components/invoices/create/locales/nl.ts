@@ -96,6 +96,17 @@ export default {
   "Net price": "Nettoprijs",
   "Gross price (tax included)": "Brutoprijs (inclusief belasting)",
   "Net price (before tax)": "Nettoprijs (exclusief belasting)",
+  // Linked documents
+  "Linked documents": "Gekoppelde documenten",
+  Type: "Type",
+  Total: "Totaal",
+  "Delivery note": "Pakbon",
+  Invoice: "Factuur",
+  Estimate: "Offerte",
+  "Credit note": "Creditnota",
+  "Advance invoice": "Voorschotfactuur",
+  "FINA fiscalized invoices always use the current date":
+    "FINA-gefiscaliseerde facturen gebruiken altijd de huidige datum",
   "Service Date": "Servicedatum",
   "Single Date": "Enkele datum",
   "Date Range": "Datumbereik",

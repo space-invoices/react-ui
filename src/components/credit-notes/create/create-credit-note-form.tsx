@@ -26,7 +26,14 @@ import { prepareDocumentSubmission } from "../../documents/create/prepare-docume
 import { useDocumentCustomerForm } from "../../documents/create/use-document-customer-form";
 import type { DocumentTypes } from "../../documents/types";
 import { useFinaPremises, useFinaSettings } from "../../entities/fina-settings-form/fina-settings.hooks";
-import { getLastUsedFinaCombo, setLastUsedFinaCombo, useCreateCreditNote } from "../credit-notes.hooks";
+import { useFursPremises, useFursSettings } from "../../entities/furs-settings-form/furs-settings.hooks";
+import {
+  getLastUsedFinaCombo,
+  getLastUsedFursCombo,
+  setLastUsedFinaCombo,
+  setLastUsedFursCombo,
+  useCreateCreditNote,
+} from "../credit-notes.hooks";
 import de from "./locales/de";
 import es from "./locales/es";
 import fr from "./locales/fr";
@@ -91,6 +98,23 @@ export default function CreateCreditNoteForm({
   const queryClient = useQueryClient();
 
   // ============================================================================
+  // FURS Settings & Premises
+  // ============================================================================
+  const { data: fursSettings, isLoading: isFursSettingsLoading } = useFursSettings(entityId);
+  const { data: fursPremises, isLoading: isFursPremisesLoading } = useFursPremises(entityId, {
+    enabled: fursSettings?.enabled === true,
+  });
+
+  const isFursLoading = isFursSettingsLoading || (fursSettings?.enabled && isFursPremisesLoading);
+  const isFursEnabled = fursSettings?.enabled === true;
+  const activePremises = useMemo(() => fursPremises?.filter((p) => p.is_active) || [], [fursPremises]);
+  const hasFursPremises = activePremises.length > 0;
+
+  // FURS premise/device selection state
+  const [selectedPremiseName, setSelectedPremiseName] = useState<string | undefined>();
+  const [selectedDeviceName, setSelectedDeviceName] = useState<string | undefined>();
+
+  // ============================================================================
   // FINA Settings & Premises
   // ============================================================================
   const { data: finaSettings, isLoading: isFinaSettingsLoading } = useFinaSettings(entityId);
@@ -121,6 +145,57 @@ export default function CreateCreditNoteForm({
     }, {} as PriceModesMap);
   }, [initialValues?.items]);
   const priceModesRef = useRef<PriceModesMap>(initialPriceModes);
+
+  // Get active FURS devices for selected premise
+  const activeDevices = useMemo(() => {
+    if (!selectedPremiseName) return [];
+    const premise = activePremises.find((p) => p.business_premise_name === selectedPremiseName);
+    return premise?.Devices?.filter((d) => d.is_active) || [];
+  }, [activePremises, selectedPremiseName]);
+
+  // Initialize FURS selection from localStorage or first active combo
+  useEffect(() => {
+    if (!isFursEnabled || !hasFursPremises || selectedPremiseName) return;
+
+    const lastUsed = getLastUsedFursCombo(entityId);
+    if (lastUsed) {
+      const premise = activePremises.find((p) => p.business_premise_name === lastUsed.business_premise_name);
+      const device = premise?.Devices?.find(
+        (d) => d.electronic_device_name === lastUsed.electronic_device_name && d.is_active,
+      );
+      if (premise && device) {
+        setSelectedPremiseName(lastUsed.business_premise_name);
+        setSelectedDeviceName(lastUsed.electronic_device_name);
+        return;
+      }
+    }
+
+    const firstPremise = activePremises[0];
+    const firstDevice = firstPremise?.Devices?.find((d) => d.is_active);
+    if (firstPremise && firstDevice) {
+      setSelectedPremiseName(firstPremise.business_premise_name);
+      setSelectedDeviceName(firstDevice.electronic_device_name);
+    }
+  }, [isFursEnabled, hasFursPremises, activePremises, entityId, selectedPremiseName]);
+
+  // When FURS premise changes, select first active device
+  useEffect(() => {
+    if (!selectedPremiseName) return;
+    const premise = activePremises.find((p) => p.business_premise_name === selectedPremiseName);
+    const firstDevice = premise?.Devices?.find((d) => d.is_active);
+    if (firstDevice && selectedDeviceName !== firstDevice.electronic_device_name) {
+      const currentDeviceInPremise = premise?.Devices?.find(
+        (d) => d.electronic_device_name === selectedDeviceName && d.is_active,
+      );
+      if (!currentDeviceInPremise) {
+        setSelectedDeviceName(firstDevice.electronic_device_name);
+      }
+    }
+  }, [selectedPremiseName, activePremises, selectedDeviceName]);
+
+  // FURS selection ready and active checks
+  const isFursSelectionReady = !isFursEnabled || !hasFursPremises || (!!selectedPremiseName && !!selectedDeviceName);
+  const isFursActive = isFursEnabled && hasFursPremises && selectedPremiseName && selectedDeviceName;
 
   // Get active FINA devices for selected premise
   const activeFinaDevices = useMemo(() => {
@@ -176,11 +251,14 @@ export default function CreateCreditNoteForm({
   // Next Credit Note Number Preview
   // ============================================================================
   const { data: nextNumberData, isLoading: isNextNumberLoading } = useNextDocumentNumber(entityId, "credit_note", {
-    enabled: !!entityId && !isFinaLoading && isFinaSelectionReady,
+    businessPremiseName: isFursActive ? selectedPremiseName : undefined,
+    electronicDeviceName: isFursActive ? selectedDeviceName : undefined,
+    enabled: !!entityId && !isFursLoading && isFursSelectionReady && !isFinaLoading && isFinaSelectionReady,
   });
 
   // Overall loading state
-  const isFormDataLoading = isFinaLoading || !isFinaSelectionReady || isNextNumberLoading;
+  const isFormDataLoading =
+    isFursLoading || !isFursSelectionReady || isFinaLoading || !isFinaSelectionReady || isNextNumberLoading;
 
   // No header action for credit notes - FINA can't be skipped
 
@@ -245,6 +323,13 @@ export default function CreateCreditNoteForm({
   const { mutate: createCreditNote, isPending } = useCreateCreditNote({
     entityId,
     onSuccess: (data) => {
+      // Save FURS combo to localStorage on successful creation
+      if (isFursActive && selectedPremiseName && selectedDeviceName) {
+        setLastUsedFursCombo(entityId, {
+          business_premise_name: selectedPremiseName,
+          electronic_device_name: selectedDeviceName,
+        });
+      }
       // Save FINA combo to localStorage on successful creation
       if (isFinaActive && selectedFinaPremiseId && selectedFinaDeviceId) {
         setLastUsedFinaCombo(entityId, {
@@ -264,6 +349,12 @@ export default function CreateCreditNoteForm({
   // Shared submit logic for both regular save and save as draft
   const submitCreditNote = useCallback(
     (values: CreateCreditNoteFormValues, isDraft: boolean) => {
+      // Build FURS options (skip for drafts; no skip toggle for credit notes)
+      const fursOptions =
+        !isDraft && isFursEnabled && selectedPremiseName && selectedDeviceName
+          ? { business_premise_name: selectedPremiseName, electronic_device_name: selectedDeviceName }
+          : undefined;
+
       // Build FINA options (skip for drafts; FINA can't be skipped)
       const finaOptions =
         !isDraft && isFinaEnabled && selectedFinaPremiseId && selectedFinaDeviceId
@@ -280,6 +371,11 @@ export default function CreateCreditNoteForm({
         isDraft,
       });
 
+      // Add FURS data to payload
+      if (fursOptions) {
+        (payload as any).furs = fursOptions;
+      }
+
       // Add FINA data to payload
       if (finaOptions) {
         (payload as any).fina = finaOptions;
@@ -289,12 +385,15 @@ export default function CreateCreditNoteForm({
     },
     [
       createCreditNote,
+      isFursEnabled,
       isFinaEnabled,
       markAsPaid,
       originalCustomer,
       paymentTypes,
+      selectedDeviceName,
       selectedFinaDeviceId,
       selectedFinaPremiseId,
+      selectedPremiseName,
       showCustomerForm,
     ],
   );
@@ -449,6 +548,18 @@ export default function CreateCreditNoteForm({
             control={form.control}
             documentType={_type}
             t={t}
+            fursInline={
+              isFursEnabled && hasFursPremises
+                ? {
+                    premises: activePremises.map((p) => ({ id: p.id, business_premise_name: p.business_premise_name })),
+                    devices: activeDevices.map((d) => ({ id: d.id, electronic_device_name: d.electronic_device_name })),
+                    selectedPremise: selectedPremiseName,
+                    selectedDevice: selectedDeviceName,
+                    onPremiseChange: setSelectedPremiseName,
+                    onDeviceChange: setSelectedDeviceName,
+                  }
+                : undefined
+            }
             finaInline={
               isFinaEnabled && hasFinaPremises
                 ? {

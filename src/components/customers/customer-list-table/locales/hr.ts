@@ -22,4 +22,5 @@ export default {
   "No results found": "Nije pronadjen nijedan kupac",
   "Try adjusting your search criteria": "Pokusajte prilagoditi kriterije pretrazivanja",
   "Clear search": "Ocisti pretragu",
+  "Clear all": "Očisti sve",
 } as const;

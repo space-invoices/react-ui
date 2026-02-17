@@ -32,6 +32,7 @@ export default {
   "No results found": "Keine Angebote gefunden",
   "Try adjusting your search criteria": "Versuchen Sie, Ihre Suchkriterien anzupassen",
   "Clear search": "Suche zurücksetzen",
+  "Clear all": "Alles zurücksetzen",
   selected: "ausgewählt",
   "Export PDFs": "PDFs exportieren",
   "Deselect all": "Auswahl aufheben",

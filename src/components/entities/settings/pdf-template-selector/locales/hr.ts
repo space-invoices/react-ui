@@ -7,7 +7,10 @@ export default {
   Modern: "Moderan",
   "Modern template description": "Čist, profesionalan dizajn prikladan za većinu tvrtki",
   Classic: "Klasičan",
-  "Classic template description": "Tradicionalni raspored računa sa serifnim fontovima i okvirima",
+  "Classic template description":
+    "Dizajn s Lato fontom, obojenom podatkovnom kutijom i izmjenjujućim pozadinama redaka",
+  Condensed: "Kompaktan",
+  "Condensed template description": "Tradicionalni raspored računa s okvirima i kompaktnim rasporedom",
   Minimal: "Minimalistički",
   "Minimal template description": "Tipografski usmjeren dizajn s čistom estetikom",
   Fashion: "Fashion",

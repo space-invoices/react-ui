@@ -90,6 +90,7 @@ export function DocumentDetailsCard({
   const t = createTranslation({ translations, locale, ...i18nProps });
 
   const currencyCode = document.currency_code;
+  const sign = documentType === "credit_note" ? -1 : 1;
   const fmt = (amount: number) => formatCurrency(amount, currencyCode, locale);
   const fmtDate = (date: Date | string | null | undefined) => formatDate(date, locale);
 
@@ -101,9 +102,6 @@ export function DocumentDetailsCard({
 
   // Get customer name
   const customerName = document.customer?.name || "-";
-
-  // Calculate tax total
-  const taxTotal = document.total_with_tax - document.total;
 
   const bodyContent = (
     <>
@@ -152,15 +150,34 @@ export function DocumentDetailsCard({
       <div className="space-y-2 text-sm">
         <div className="flex justify-between">
           <span className="text-muted-foreground">{t("Subtotal")}</span>
-          <span>{fmt(document.total)}</span>
+          <span>{fmt(document.total * sign)}</span>
         </div>
-        <div className="flex justify-between">
-          <span className="text-muted-foreground">{t("Tax")}</span>
-          <span>{fmt(taxTotal)}</span>
-        </div>
+        {document.taxes && document.taxes.length > 0 ? (
+          document.taxes.map((tax: Document["taxes"][number]) => {
+            const taxAmount = tax.amount ?? 0;
+            return (
+              <div key={String(tax.rate)} className="flex justify-between">
+                <span className="text-muted-foreground">
+                  {t("Tax")} {tax.rate ?? 0}%{" "}
+                  {tax.base != null && (
+                    <span className="text-xs">
+                      {t("of")} {fmt(tax.base * sign)}
+                    </span>
+                  )}
+                </span>
+                <span>{fmt(taxAmount * sign)}</span>
+              </div>
+            );
+          })
+        ) : (
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">{t("Tax")}</span>
+            <span>{fmt(0)}</span>
+          </div>
+        )}
         <div className="flex justify-between font-semibold">
           <span>{t("Total")}</span>
-          <span>{fmt(document.total_with_tax)}</span>
+          <span>{fmt(document.total_with_tax * sign)}</span>
         </div>
 
         {/* Payment info for invoices/advance invoices */}

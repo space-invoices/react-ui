@@ -31,6 +31,8 @@ type MarkAsPaidSectionProps = {
   t: (key: string) => string;
   /** Always show payment type selector (e.g. for FINA fiscalization) */
   alwaysShowPaymentType?: boolean;
+  /** Force paid state — hides the checkbox and always shows payment selectors */
+  forced?: boolean;
 };
 
 export function MarkAsPaidSection({
@@ -40,31 +42,38 @@ export function MarkAsPaidSection({
   onPaymentTypesChange,
   t,
   alwaysShowPaymentType,
+  forced,
 }: MarkAsPaidSectionProps) {
-  const showPaymentTypes = checked || alwaysShowPaymentType;
+  const showPaymentTypes = forced || checked || alwaysShowPaymentType;
 
   return (
     <div className={cn("flex flex-col gap-4 rounded-md border p-4", showPaymentTypes && "gap-3")}>
-      <div className="flex flex-row items-center space-x-3 space-y-0">
-        <Checkbox checked={checked} onCheckedChange={(v) => onCheckedChange(v === true)} />
-        <div className="flex items-center gap-1 leading-none">
-          <Label>{checked ? t("Paid") : t("Mark as Paid")}</Label>
-          {!checked && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  type="button"
-                  className="rounded-full p-1 transition-colors hover:bg-accent"
-                  onClick={(e) => e.preventDefault()}
-                >
-                  <HelpCircle className="size-4 text-muted-foreground" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="top">{t("Invoice will be marked as fully paid upon creation")}</TooltipContent>
-            </Tooltip>
-          )}
+      {forced ? (
+        <div className="flex flex-row items-center space-x-3 space-y-0">
+          <Label>{t("Paid")}</Label>
         </div>
-      </div>
+      ) : (
+        <div className="flex flex-row items-center space-x-3 space-y-0">
+          <Checkbox checked={checked} onCheckedChange={(v) => onCheckedChange(v === true)} />
+          <div className="flex items-center gap-1 leading-none">
+            <Label>{checked ? t("Paid") : t("Mark as Paid")}</Label>
+            {!checked && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    className="rounded-full p-1 transition-colors hover:bg-accent"
+                    onClick={(e) => e.preventDefault()}
+                  >
+                    <HelpCircle className="size-4 text-muted-foreground" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="top">{t("Invoice will be marked as fully paid upon creation")}</TooltipContent>
+              </Tooltip>
+            )}
+          </div>
+        </div>
+      )}
 
       {showPaymentTypes && (
         <div className="flex flex-col gap-2">

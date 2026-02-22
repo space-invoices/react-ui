@@ -112,4 +112,19 @@ export default {
   "Date Range": "Intervalo de datas",
   From: "De",
   To: "Até",
+  // Separator items
+  "Add separator": "Adicionar separador",
+  "Section header": "Cabeçalho da secção",
+  "Section title...": "Título da secção...",
+  // Transaction type
+  "Transaction type": "Tipo de transação",
+  Domestic: "Nacional",
+  "EU B2B": "EU B2B",
+  "EU B2C": "EU B2C",
+  Export: "Exportação",
+  "Determining transaction type...": "Determinando tipo de transação...",
+  "This invoice will not be fiscalized (non-domestic transaction)":
+    "Esta fatura não será fiscalizada (transação não nacional)",
+  "Tax Clause": "Cláusula fiscal",
+  "Add tax clause...": "Adicionar cláusula fiscal...",
 } as const;

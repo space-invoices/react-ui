@@ -1,5 +1,6 @@
 export default {
   // Company settings
+  "Tax subject": "Assujetti à la TVA",
   "Tax ID 2": "Tax ID 2",
   "Secondary tax identification number (optional)": "Secondary tax identification number (optional)",
   "Company Information": "Informations sur l'entreprise",

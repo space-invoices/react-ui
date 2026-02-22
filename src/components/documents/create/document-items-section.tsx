@@ -2,7 +2,7 @@
  * Shared document items section for invoices and estimates
  * Handles: item management (add, remove, reorder)
  */
-import { PlusIcon } from "lucide-react";
+import { PlusIcon, SeparatorHorizontal } from "lucide-react";
 import type { MutableRefObject } from "react";
 import type { UseFormGetValues, UseFormSetValue, UseFormWatch } from "react-hook-form";
 import { Button } from "@/ui/components/ui/button";
@@ -61,6 +61,18 @@ export function DocumentItemsSection({
         quantity: 1,
         price: undefined,
         taxes: [],
+      },
+    ]);
+  };
+
+  const addSeparator = () => {
+    const currentItems = getValues("items") || [];
+    setValue("items", [
+      ...currentItems,
+      {
+        type: "separator",
+        name: "",
+        description: "",
       },
     ]);
   };
@@ -125,9 +137,14 @@ export function DocumentItemsSection({
         </div>
       ))}
 
-      <Button type="button" variant="outline" onClick={addItem} className="w-full cursor-pointer border-dashed">
-        <PlusIcon className="mr-2 h-4 w-4" /> {t("Add item")}
-      </Button>
+      <div className="flex gap-2">
+        <Button type="button" variant="outline" onClick={addItem} className="flex-1 cursor-pointer border-dashed">
+          <PlusIcon className="mr-2 h-4 w-4" /> {t("Add item")}
+        </Button>
+        <Button type="button" variant="ghost" onClick={addSeparator} className="cursor-pointer text-muted-foreground">
+          <SeparatorHorizontal className="mr-2 h-4 w-4" /> {t("Add separator")}
+        </Button>
+      </div>
     </div>
   );
 }

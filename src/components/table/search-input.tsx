@@ -16,6 +16,7 @@ type SearchInputProps = {
  */
 export function SearchInput({ initialValue = "", onSearch, placeholder = "Search...", debounceMs }: SearchInputProps) {
   const [value, setValue] = useState(initialValue);
+  const [isFocused, setIsFocused] = useState(false);
 
   // Use ref to keep onSearch stable in useEffect
   const onSearchRef = useRef(onSearch);
@@ -56,6 +57,9 @@ export function SearchInput({ initialValue = "", onSearch, placeholder = "Search
     onSearchRef.current(null);
   }, []);
 
+  // Show "Enter ↵" hint when input requires Enter to search (no debounce) and user is typing
+  const showEnterHint = debounceMs === undefined && value && isFocused;
+
   return (
     <form onSubmit={handleSubmit} className="relative inline-block" data-testid="search-form">
       <Search className="pointer-events-none absolute top-1/2 left-2.5 z-10 h-3 w-3 -translate-y-1/2 text-muted-foreground" />
@@ -66,8 +70,21 @@ export function SearchInput({ initialValue = "", onSearch, placeholder = "Search
         placeholder={placeholder}
         value={value}
         onChange={handleChange}
+        onFocus={() => setIsFocused(true)}
+        onBlur={() => setIsFocused(false)}
         className="h-8 w-[150px] pr-8 pl-8 lg:w-[250px] [&::-webkit-search-cancel-button]:hidden [&::-webkit-search-decoration]:hidden"
       />
+      {/* Overlay that mirrors input padding to position hint right after typed text */}
+      {showEnterHint && (
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 flex items-center overflow-hidden pl-8 text-sm"
+        >
+          {/* Invisible text matching input value to push hint to the right */}
+          <span className="invisible whitespace-pre">{value}</span>
+          <span className="ml-1.5 shrink-0 text-muted-foreground/50 text-xs">Enter &crarr;</span>
+        </span>
+      )}
       {value && (
         <Button
           type="button"

@@ -33,4 +33,5 @@ export default {
   selected: "seleccionados",
   "Export PDFs": "Exportar PDFs",
   "Deselect all": "Deseleccionar todo",
+  "Copy to Invoice": "Copiar a factura",
 } as const;

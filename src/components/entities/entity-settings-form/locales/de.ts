@@ -1,5 +1,6 @@
 export default {
   // Company settings
+  "Tax subject": "Steuerpflichtig",
   "Tax ID 2": "Steuernummer",
   "Secondary tax identification number (optional)": "Sekundäre Steueridentifikationsnummer (optional)",
   "Company Information": "Unternehmensinformationen",

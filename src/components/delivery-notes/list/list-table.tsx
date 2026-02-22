@@ -157,14 +157,6 @@ export default function DeliveryNoteListTable({
                 {t("Draft")}
               </Badge>
             )}
-            {deliveryNote.voided_at && (
-              <Badge
-                variant="outline"
-                className="border-red-500 bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-400"
-              >
-                {t("Voided")}
-              </Badge>
-            )}
           </div>
         ),
       },
@@ -189,6 +181,23 @@ export default function DeliveryNoteListTable({
         header: t("Total with Tax"),
         align: "right",
         cell: (deliveryNote) => deliveryNote.total_with_tax,
+      },
+      {
+        id: "status",
+        header: t("Status"),
+        cell: (deliveryNote) => {
+          if (deliveryNote.voided_at) {
+            return (
+              <Badge
+                variant="outline"
+                className="border-red-500 bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-400"
+              >
+                {t("Voided")}
+              </Badge>
+            );
+          }
+          return null;
+        },
       },
       {
         id: "actions",

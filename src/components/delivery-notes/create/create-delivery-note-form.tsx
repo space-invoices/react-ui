@@ -10,12 +10,17 @@ import { Form } from "@/ui/components/ui/form";
 import { Label } from "@/ui/components/ui/label";
 import { createDeliveryNoteSchema } from "@/ui/generated/schemas";
 import { useNextDocumentNumber } from "@/ui/hooks/use-next-document-number";
+import { useViesCheck } from "@/ui/hooks/use-vies-check";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
 import { useEntities } from "@/ui/providers/entities-context";
 import { useFormFooterRegistration } from "@/ui/providers/form-footer-context";
 import { CUSTOMERS_CACHE_KEY } from "../../customers/customers.hooks";
-import { DocumentDetailsSection, DocumentNoteField } from "../../documents/create/document-details-section";
+import {
+  DocumentDetailsSection,
+  DocumentNoteField,
+  DocumentTaxClauseField,
+} from "../../documents/create/document-details-section";
 import { DocumentItemsSection, type PriceModesMap } from "../../documents/create/document-items-section";
 import { DocumentRecipientSection } from "../../documents/create/document-recipient-section";
 import type { DocumentTypes } from "../../documents/types";
@@ -106,13 +111,18 @@ export default function CreateDeliveryNoteForm({
       // Cast customer to form schema type (API type may have additional fields)
       customer: (initialValues?.customer as CreateDeliveryNoteFormValues["customer"]) ?? undefined,
       items: initialValues?.items?.length
-        ? initialValues.items.map((item) => ({
+        ? initialValues.items.map((item: any) => ({
+            type: item.type,
             name: item.name || "",
             description: item.description || "",
-            quantity: item.quantity ?? 1,
-            // Use gross_price if set, otherwise use price
-            price: item.gross_price ?? item.price,
-            taxes: item.taxes || [],
+            ...(item.type !== "separator"
+              ? {
+                  quantity: item.quantity ?? 1,
+                  // Use gross_price if set, otherwise use price
+                  price: item.gross_price ?? item.price,
+                  taxes: item.taxes || [],
+                }
+              : {}),
           }))
         : [
             {
@@ -125,6 +135,7 @@ export default function CreateDeliveryNoteForm({
           ],
       currency_code: initialValues?.currency_code || activeEntity?.currency_code || "EUR",
       note: initialValues?.note ?? "",
+      tax_clause: (initialValues as any)?.tax_clause ?? "",
     },
   });
 
@@ -161,6 +172,37 @@ export default function CreateDeliveryNoteForm({
   const formValues = useWatch({
     control: form.control,
   });
+
+  // ============================================================================
+  // VIES Check - determine if reverse charge applies
+  // ============================================================================
+  const {
+    reverseChargeApplies,
+    transactionType,
+    isFetching: isViesFetching,
+    warning: viesWarning,
+  } = useViesCheck({
+    issuerCountryCode: activeEntity?.country_code,
+    isTaxSubject: activeEntity?.is_tax_subject ?? true,
+    customerCountry: formValues.customer?.country,
+    customerCountryCode: formValues.customer?.country_code,
+    customerTaxNumber: formValues.customer?.tax_number,
+    enabled: !!activeEntity,
+  });
+
+  // Auto-populate tax_clause from entity settings when transaction type changes
+  const effectiveTransactionType = transactionType ?? "domestic";
+  const prevTransactionTypeRef = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    if (effectiveTransactionType === prevTransactionTypeRef.current) return;
+    prevTransactionTypeRef.current = effectiveTransactionType;
+
+    const taxClauseDefaults = (activeEntity?.settings as any)?.tax_clause_defaults;
+    if (!taxClauseDefaults) return;
+
+    const clause = taxClauseDefaults[effectiveTransactionType] ?? "";
+    form.setValue("tax_clause", clause);
+  }, [effectiveTransactionType, activeEntity, form]);
 
   // Extract customer management logic into a custom hook
   const {
@@ -232,7 +274,7 @@ export default function CreateDeliveryNoteForm({
   useFormFooterRegistration({
     formId: "create-delivery-note-form",
     isPending,
-    isDirty: form.formState.isDirty,
+    isDirty: form.formState.isDirty || !!initialValues,
     label: t("Create Delivery Note"),
     secondaryAction,
   });
@@ -313,6 +355,10 @@ export default function CreateDeliveryNoteForm({
           maxTaxesPerItem={activeEntity?.country_rules?.max_taxes_per_item}
           priceModesRef={priceModesRef}
           initialPriceModes={initialPriceModes}
+          taxesDisabled={reverseChargeApplies}
+          taxesDisabledMessage={
+            reverseChargeApplies ? t("Reverse charge - tax exempt EU B2B sale") : viesWarning ? viesWarning : undefined
+          }
         />
 
         <DocumentNoteField
@@ -325,6 +371,20 @@ export default function CreateDeliveryNoteForm({
             currency_code: formValues.currency_code,
             customer: formValues.customer as any,
           }}
+        />
+
+        <DocumentTaxClauseField
+          control={form.control}
+          t={t}
+          entity={activeEntity}
+          document={{
+            number: formValues.number,
+            date: formValues.date,
+            currency_code: formValues.currency_code,
+            customer: formValues.customer as any,
+          }}
+          transactionType={transactionType}
+          isTransactionTypeFetching={isViesFetching}
         />
       </form>
     </Form>

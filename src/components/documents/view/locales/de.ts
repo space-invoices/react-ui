@@ -38,6 +38,7 @@ export default {
   Customer: "Kunde",
   Subtotal: "Zwischensumme",
   Tax: "Steuer",
+  of: "von",
   Total: "Gesamt",
   Paid: "Bezahlt",
   Due: "Offen",
@@ -108,6 +109,7 @@ export default {
   Pending: "Ausstehend",
   Failed: "Fehlgeschlagen",
   Skipped: "Übersprungen",
+  "Skipped by user": "Vom Benutzer übersprungen",
   "Retry fiscalization": "Fiskalisierung wiederholen",
 
   // PDF language names

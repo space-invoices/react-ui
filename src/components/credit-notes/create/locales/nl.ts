@@ -75,4 +75,20 @@ export default {
   Device: "Apparaat",
   "FINA fiscalized invoices always use the current date":
     "FINA-gefiscaliseerde documenten gebruiken altijd de huidige datum",
+  // Separator items
+  "Add separator": "Scheidingslijn toevoegen",
+  "Section header": "Sectiekop",
+  "Section title...": "Sectietitel...",
+  // Transaction type
+  "Transaction type": "Transactietype",
+  Domestic: "Binnenland",
+  "EU B2B": "EU B2B",
+  "EU B2C": "EU B2C",
+  Export: "Export",
+  "Determining transaction type...": "Transactietype bepalen...",
+  "This invoice will not be fiscalized (non-domestic transaction)":
+    "Deze factuur wordt niet gefiscaliseerd (niet-binnenlandse transactie)",
+  "Tax Clause": "Belastingclausule",
+  "Add tax clause...": "Belastingclausule toevoegen...",
+  "Reverse charge - tax exempt EU B2B sale": "Verlegging - belastingvrijgestelde EU B2B verkoop",
 } as const;

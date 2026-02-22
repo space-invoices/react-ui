@@ -37,6 +37,7 @@ export default {
   Customer: "Kupac",
   Subtotal: "Međuzbroj",
   Tax: "Porez",
+  of: "od",
   Total: "Ukupno",
   Paid: "Plaćeno",
   Due: "Za plaćanje",
@@ -106,6 +107,7 @@ export default {
   Pending: "Na čekanju",
   Failed: "Neuspjelo",
   Skipped: "Preskočeno",
+  "Skipped by user": "Korisnik preskočio",
   "Retry fiscalization": "Ponovi fiskalizaciju",
 
   // PDF language names

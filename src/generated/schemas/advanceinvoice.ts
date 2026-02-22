@@ -104,11 +104,12 @@ const createAdvanceInvoiceSchemaDefinition = z.object({
   items: z
     .array(
       z.object({
+        type: z.enum(["separator"]).optional(),
         name: z.string().min(1).optional(),
         description: z.union([z.string().max(4000, "Description must not exceed 4000 characters"), z.null()]).optional(),
         price: z.number().optional(),
         gross_price: z.number().optional(),
-        quantity: z.number().gte(-140737488355328).lte(140737488355327),
+        quantity: z.number().gte(-140737488355328).lte(140737488355327).optional(),
         unit: z.union([z.string(), z.null()]).optional(),
         taxes: z.array(DocumentItemTax).optional(),
         discounts: z.array(LineDiscount).max(5).optional(),
@@ -202,11 +203,12 @@ const updateAdvanceInvoiceSchemaDefinition = z
     items: z
       .array(
         z.object({
+          type: z.enum(["separator"]).optional(),
           name: z.string().min(1).optional(),
           description: z.union([z.string().max(4000, "Description must not exceed 4000 characters"), z.null()]).optional(),
           price: z.number().optional(),
           gross_price: z.number().optional(),
-          quantity: z.number().gte(-140737488355328).lte(140737488355327),
+          quantity: z.number().gte(-140737488355328).lte(140737488355327).optional(),
           unit: z.union([z.string(), z.null()]).optional(),
           taxes: z.array(DocumentItemTax).optional(),
           discounts: z.array(LineDiscount).max(5).optional(),

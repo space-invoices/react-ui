@@ -36,7 +36,8 @@ export default {
   "Valid until": "Veljavno do",
   Customer: "Stranka",
   Subtotal: "Vmesni seštevek",
-  Tax: "Davek",
+  Tax: "DDV",
+  of: "od",
   Total: "Skupaj",
   Paid: "Plačano",
   Due: "Za plačilo",
@@ -107,6 +108,7 @@ export default {
   Pending: "V čakanju",
   Failed: "Neuspešno",
   Skipped: "Preskočeno",
+  "Skipped by user": "Uporabnik preskočil",
   "Retry fiscalization": "Ponovi fiskalizacijo",
 
   // PDF language names

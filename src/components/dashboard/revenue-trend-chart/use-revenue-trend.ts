@@ -3,7 +3,7 @@
  * Server-side aggregation by month for accurate trend data.
  */
 import type { StatsQueryDataItem } from "@spaceinvoices/js-sdk";
-import { useQuery } from "@tanstack/react-query";
+import { useQueries } from "@tanstack/react-query";
 import { useSDK } from "@/ui/providers/sdk-provider";
 import { STATS_QUERY_CACHE_KEY } from "../shared/use-stats-query";
 
@@ -37,57 +37,86 @@ export function useRevenueTrendData(entityId: string | undefined) {
 
   const { months, startDate, endDate } = getLastMonths(6);
 
-  const query = useQuery({
-    queryKey: [STATS_QUERY_CACHE_KEY, entityId, "revenue-trend", startDate, endDate],
-    queryFn: async () => {
-      if (!entityId || !sdk) throw new Error("Missing entity or SDK");
-      return sdk.entityStats.queryEntityStats(
-        {
-          metrics: [{ type: "sum", field: "total_with_tax_converted", alias: "revenue" }],
-          table: "invoices",
-          date_from: startDate,
-          date_to: endDate,
-          filters: { is_draft: false, voided_at: null },
-          group_by: ["month", "quote_currency"], // Include currency for display
-          order_by: [{ field: "month", direction: "asc" }],
+  const sharedQueryParams = {
+    date_from: startDate,
+    date_to: endDate,
+    filters: { is_draft: false },
+    group_by: ["month", "quote_currency"],
+    order_by: [{ field: "month", direction: "asc" as const }],
+  };
+
+  const queries = useQueries({
+    queries: [
+      {
+        queryKey: [STATS_QUERY_CACHE_KEY, entityId, "revenue-trend", startDate, endDate],
+        queryFn: async () => {
+          if (!entityId || !sdk) throw new Error("Missing entity or SDK");
+          return sdk.entityStats.queryEntityStats(
+            {
+              metrics: [{ type: "sum", field: "total_with_tax_converted", alias: "revenue" }],
+              table: "invoices",
+              ...sharedQueryParams,
+            },
+            { entity_id: entityId },
+          );
         },
-        { entity_id: entityId },
-      );
-    },
-    enabled: !!entityId && !!sdk,
-    staleTime: 120_000,
-    select: (response) => {
-      // Build a map of all months with 0 revenue
-      const monthMap: Record<string, number> = {};
-      for (const month of months) {
-        monthMap[month] = 0;
-      }
-
-      // Fill in the actual revenue from the API response
-      // Sum up revenues per month (in case of multiple rows due to quote_currency grouping)
-      const data = response.data || [];
-      let currency = "EUR";
-      for (const row of data as StatsQueryDataItem[]) {
-        const month = String(row.month);
-        if (month in monthMap) {
-          monthMap[month] += Number(row.revenue) || 0;
-        }
-        // Get currency from first row with data
-        if (row.quote_currency && currency === "EUR") {
-          currency = String(row.quote_currency);
-        }
-      }
-
-      return {
-        data: months.map((month) => ({ month, revenue: monthMap[month] })),
-        currency, // Currency from document data
-      };
-    },
+        enabled: !!entityId && !!sdk,
+        staleTime: 120_000,
+      },
+      {
+        queryKey: [STATS_QUERY_CACHE_KEY, entityId, "cn-revenue-trend", startDate, endDate],
+        queryFn: async () => {
+          if (!entityId || !sdk) throw new Error("Missing entity or SDK");
+          return sdk.entityStats.queryEntityStats(
+            {
+              metrics: [{ type: "sum", field: "total_with_tax_converted", alias: "revenue" }],
+              table: "credit_notes",
+              ...sharedQueryParams,
+            },
+            { entity_id: entityId },
+          );
+        },
+        enabled: !!entityId && !!sdk,
+        staleTime: 120_000,
+      },
+    ],
   });
 
+  const [invoiceQuery, cnQuery] = queries;
+
+  // Build month maps
+  const monthMap: Record<string, number> = {};
+  const cnMonthMap: Record<string, number> = {};
+  for (const month of months) {
+    monthMap[month] = 0;
+    cnMonthMap[month] = 0;
+  }
+
+  // Fill invoice revenue per month
+  const invoiceData = (invoiceQuery.data?.data || []) as StatsQueryDataItem[];
+  let currency = "EUR";
+  for (const row of invoiceData) {
+    const month = String(row.month);
+    if (month in monthMap) {
+      monthMap[month] += Number(row.revenue) || 0;
+    }
+    if (row.quote_currency && currency === "EUR") {
+      currency = String(row.quote_currency);
+    }
+  }
+
+  // Fill credit note revenue per month
+  const cnData = (cnQuery.data?.data || []) as StatsQueryDataItem[];
+  for (const row of cnData) {
+    const month = String(row.month);
+    if (month in cnMonthMap) {
+      cnMonthMap[month] += Number(row.revenue) || 0;
+    }
+  }
+
   return {
-    data: query.data?.data || [],
-    currency: query.data?.currency || "EUR",
-    isLoading: query.isLoading,
+    data: months.map((month) => ({ month, revenue: monthMap[month] - cnMonthMap[month] })),
+    currency,
+    isLoading: queries.some((q) => q.isLoading),
   };
 }

@@ -59,6 +59,8 @@ type CreditNoteListTableProps = {
   onRetryFiscalization?: (documentIds: string[]) => void;
   fiscalizationFeatures?: ("furs" | "fina")[];
   onCreateNew?: () => void;
+  onVoid?: (creditNote: CreditNote) => void;
+  isVoiding?: boolean;
 } & ListTableProps<CreditNote>;
 
 export default function CreditNoteListTable({
@@ -76,6 +78,8 @@ export default function CreditNoteListTable({
   onRetryFiscalization,
   fiscalizationFeatures,
   onCreateNew,
+  onVoid,
+  isVoiding,
   ...i18nProps
 }: CreditNoteListTableProps) {
   const t = createTranslation({
@@ -97,6 +101,7 @@ export default function CreditNoteListTable({
       prev_cursor: params.prev_cursor,
       search: params.search,
       query: params.query,
+      include: "document_relations",
     });
     return response as unknown as TableQueryResponse<CreditNote>;
   }, entityId);
@@ -210,13 +215,13 @@ export default function CreditNoteListTable({
         id: "total",
         header: t("Total"),
         align: "right",
-        cell: (creditNote) => creditNote.total,
+        cell: (creditNote) => -creditNote.total,
       },
       {
         id: "total_with_tax",
         header: t("Total with Tax"),
         align: "right",
-        cell: (creditNote) => creditNote.total_with_tax,
+        cell: (creditNote) => -creditNote.total_with_tax,
       },
       {
         id: "status",
@@ -236,6 +241,8 @@ export default function CreditNoteListTable({
             onDownloadStart={onDownloadStart}
             onDownloadSuccess={onDownloadSuccess}
             onDownloadError={onDownloadError}
+            onVoid={onVoid}
+            isVoiding={isVoiding}
             t={t}
             locale={i18nProps.locale}
           />
@@ -251,6 +258,8 @@ export default function CreditNoteListTable({
       onDownloadStart,
       onDownloadSuccess,
       onDownloadError,
+      onVoid,
+      isVoiding,
       i18nProps.locale,
       fiscalizationFeatures,
     ],
@@ -288,6 +297,11 @@ function CreditNoteStatusBadge({ creditNote, t }: { creditNote: CreditNote; t: (
     );
   }
   if ((creditNote as any).is_draft) {
+    return null;
+  }
+  // Hide payment badges for void-created credit notes (has "credit_for" relation)
+  const isVoidCreated = (creditNote as any).document_relations?.some((rel: any) => rel.relation_type === "credit_for");
+  if (isVoidCreated) {
     return null;
   }
   if (creditNote.paid_in_full) {

@@ -73,4 +73,20 @@ export default {
   Premise: "Lokal",
   Device: "Urządzenie",
   "FINA fiscalized invoices always use the current date": "Dokumenty fiskalizowane FINA zawsze używają bieżącej daty",
+  // Separator items
+  "Add separator": "Dodaj separator",
+  "Section header": "Nagłówek sekcji",
+  "Section title...": "Tytuł sekcji...",
+  // Transaction type
+  "Transaction type": "Typ transakcji",
+  Domestic: "Krajowa",
+  "EU B2B": "EU B2B",
+  "EU B2C": "EU B2C",
+  Export: "Eksport",
+  "Determining transaction type...": "Określanie typu transakcji...",
+  "This invoice will not be fiscalized (non-domestic transaction)":
+    "Ta faktura nie będzie fiskalizowana (transakcja niekrajowa)",
+  "Tax Clause": "Klauzula podatkowa",
+  "Add tax clause...": "Dodaj klauzulę podatkową...",
+  "Reverse charge - tax exempt EU B2B sale": "Odwrotne obciążenie - zwolniona z podatku sprzedaż EU B2B",
 } as const;

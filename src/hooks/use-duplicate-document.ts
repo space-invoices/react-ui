@@ -64,6 +64,7 @@ function transformDocumentForDuplication(source: Document, targetType: DocumentT
   // Transform items - copy only the fields needed for creation
   // Use type assertion for items since all document item types share the same shape
   const sourceItems = source.items as Array<{
+    type?: string | null;
     name: string;
     description: string | null;
     quantity: number;
@@ -72,15 +73,21 @@ function transformDocumentForDuplication(source: Document, targetType: DocumentT
     taxes: Array<{ tax_id?: string }>;
   }>;
   const items = sourceItems?.map((item) => ({
+    type: item.type ?? undefined,
     name: item.name,
     description: item.description,
-    quantity: item.quantity,
-    // Use gross_price if set, otherwise use price. The form uses is_gross_price as a UI toggle.
-    price: item.gross_price ?? item.price,
-    // Copy tax references (tax_id), not computed tax data
-    taxes: item.taxes?.map((tax) => ({ tax_id: tax.tax_id })),
-    // Derive is_gross_price from whether gross_price is set
-    gross_price: item.gross_price ?? undefined,
+    // Separator items skip financial fields
+    ...(item.type !== "separator"
+      ? {
+          quantity: item.quantity,
+          // Use gross_price if set, otherwise use price. The form uses is_gross_price as a UI toggle.
+          price: item.gross_price ?? item.price,
+          // Copy tax references (tax_id), not computed tax data
+          taxes: item.taxes?.map((tax) => ({ tax_id: tax.tax_id })),
+          // Derive is_gross_price from whether gross_price is set
+          gross_price: item.gross_price ?? undefined,
+        }
+      : {}),
   }));
 
   // Build customer data - always copy if available (form needs this for display)
@@ -108,8 +115,8 @@ function transformDocumentForDuplication(source: Document, targetType: DocumentT
     // The form needs customer data for display, even when customer_id is set
     ...(source.customer_id ? { customer_id: source.customer_id } : {}),
     ...(customerData ? { customer: customerData } : {}),
-    // Items
-    items,
+    // Items (cast needed: separator items omit financial fields like quantity)
+    items: items as any,
     // Currency
     currency_code: source.currency_code,
     // Notes

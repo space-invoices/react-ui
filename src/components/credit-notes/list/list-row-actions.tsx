@@ -1,4 +1,4 @@
-import { Copy, Download, Eye, Link2Off, Loader2, MoreHorizontal, Plus } from "lucide-react";
+import { Ban, Copy, Download, Eye, Link2Off, Loader2, MoreHorizontal, Plus } from "lucide-react";
 import { Button } from "@/ui/components/ui/button";
 import {
   DropdownMenu,
@@ -9,6 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/ui/components/ui/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/ui/components/ui/tooltip";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
 import { useCreditNoteDownload } from "./use-credit-note-download";
@@ -26,6 +27,8 @@ type CreditNoteListRowActionsProps = {
   onDownloadError?: (error: string) => void;
   onUnshare?: (creditNote: CreditNote) => Promise<void>;
   isUnsharing?: boolean;
+  onVoid?: (creditNote: CreditNote) => void;
+  isVoiding?: boolean;
 } & ComponentTranslationProps;
 
 export default function CreditNoteListRowActions({
@@ -38,6 +41,8 @@ export default function CreditNoteListRowActions({
   onDownloadError,
   onUnshare,
   isUnsharing,
+  onVoid,
+  isVoiding,
   ...i18nProps
 }: CreditNoteListRowActionsProps) {
   const t = createTranslation(i18nProps);
@@ -107,6 +112,44 @@ export default function CreditNoteListRowActions({
             </DropdownMenuGroup>
           </>
         )}
+        {onVoid &&
+          !creditNote.voided_at &&
+          !creditNote.is_draft &&
+          (() => {
+            const isFiscalized = !!(creditNote.furs || creditNote.fina);
+            const voidDisabled = isVoiding || isFiscalized;
+            const voidItem = (
+              <DropdownMenuItem
+                className={
+                  voidDisabled
+                    ? "text-destructive opacity-50"
+                    : "cursor-pointer text-destructive focus:text-destructive"
+                }
+                onClick={() => !voidDisabled && onVoid(creditNote)}
+                disabled={voidDisabled}
+              >
+                {isVoiding ? <Loader2 className="h-4 w-4 animate-spin" /> : <Ban className="h-4 w-4" />}
+                {t("Void")}
+              </DropdownMenuItem>
+            );
+            return (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuGroup>
+                  {isFiscalized ? (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div>{voidItem}</div>
+                      </TooltipTrigger>
+                      <TooltipContent side="left">{t("Cannot void a fiscalized credit note")}</TooltipContent>
+                    </Tooltip>
+                  ) : (
+                    voidItem
+                  )}
+                </DropdownMenuGroup>
+              </>
+            );
+          })()}
       </DropdownMenuContent>
     </DropdownMenu>
   );

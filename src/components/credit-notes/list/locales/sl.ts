@@ -46,4 +46,6 @@ export default {
   "FINA fiscalization failed": "FINA fiskalizacija ni uspela",
   "Retry Fiscalization": "Ponovi fiskalizacijo",
   "Some selected documents don't have failed fiscalization": "Nekateri izbrani dokumenti nimajo neuspele fiskalizacije",
+  Void: "Storniraj",
+  "Cannot void a fiscalized credit note": "Ni mogoče razveljaviti fiskalizirane dobropisa",
 } as const;

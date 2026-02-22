@@ -42,6 +42,8 @@ export interface UseViesCheckResult {
   reverseChargeApplies: boolean;
   /** Transaction type determined by VIES check */
   transactionType: ViesCheckResponse["transaction_type"] | undefined;
+  /** Customer country code returned by VIES check */
+  customerCountryCode: string | null;
   /** Warning message from VIES validation */
   warning: string | null;
   /** Whether VIES validation was successful */
@@ -124,6 +126,7 @@ export function useViesCheck({
     error: query.error,
     reverseChargeApplies: query.data?.reverse_charge_applies ?? false,
     transactionType: query.data?.transaction_type,
+    customerCountryCode: query.data?.customer_country_code ?? null,
     warning: query.data?.warning ?? null,
     viesValid: query.data?.vies_valid ?? null,
   };

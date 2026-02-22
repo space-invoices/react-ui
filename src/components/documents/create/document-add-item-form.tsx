@@ -67,6 +67,12 @@ export default function DocumentAddItemForm({
   initialIsGrossPrice = false,
   onPriceModeChange,
 }: DocumentAddItemFormProps) {
+  const itemType = useWatch({
+    control,
+    name: `items.${index}.type`,
+  });
+  const isSeparator = itemType === "separator";
+
   const taxes = useWatch({
     control,
     name: `items.${index}.taxes`,
@@ -139,6 +145,70 @@ export default function DocumentAddItemForm({
       form.setValue(`items.${index}.name`, customName);
     }
   };
+
+  if (isSeparator) {
+    return (
+      <div className="space-y-4 rounded-lg border border-muted-foreground/50 border-dashed p-4">
+        {/* Header row with name and remove button */}
+        <div className="flex items-start gap-4">
+          <div className="flex-1">
+            <FormField
+              control={control}
+              name={`items.${index}.name`}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-muted-foreground text-xs">{t("Section header")}</FormLabel>
+                  <FormControl>
+                    <Input placeholder={t("Section title...")} {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          {showRemove && (
+            <Button type="button" variant="ghost" size="icon" onClick={onRemove} className="mt-6">
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
+
+        {/* Description and move buttons */}
+        <div className="flex gap-4">
+          <div className="flex-1">
+            <FormField
+              control={control}
+              name={`items.${index}.description`}
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <Textarea placeholder={t("Description")} {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          {(showMoveUp || showMoveDown) && (
+            <div className="flex flex-col gap-2">
+              {showMoveUp && (
+                <Button type="button" variant="ghost" size="icon" onClick={onMoveUp} className="mt-auto">
+                  <ChevronUp className="h-4 w-4" />
+                </Button>
+              )}
+              {showMoveDown && (
+                <Button type="button" variant="ghost" size="icon" onClick={onMoveDown} className="mt-auto">
+                  <ChevronDown className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4 rounded-lg border p-4">

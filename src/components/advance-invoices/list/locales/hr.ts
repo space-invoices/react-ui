@@ -47,4 +47,7 @@ export default {
   "FINA fiscalization failed": "FINA fiskalizacija nije uspjela",
   "Retry Fiscalization": "Ponovi fiskalizaciju",
   "Some selected documents don't have failed fiscalization": "Neki odabrani dokumenti nemaju neuspjelu fiskalizaciju",
+  "Copy to Invoice": "Kopiraj u račun",
+  Void: "Storniraj",
+  "Cannot void an advance invoice linked to an invoice": "Nije moguće poništiti avansni račun povezan s računom",
 } as const;

@@ -80,9 +80,7 @@ export function DocumentPreviewDisplay({
         try {
           // Determine document type from shareable ID prefix
           const docTypePath = getDocTypePathFromShareableId(shareableId);
-          const response = await fetch(
-            `${apiBaseUrl}/${docTypePath}/shareable/${shareableId}/html${locale ? `?locale=${locale}` : ""}`,
-          );
+          const response = await fetch(`${apiBaseUrl}/${docTypePath}/shareable/${shareableId}/html`);
           if (!response.ok) {
             throw new Error("Failed to load preview");
           }
@@ -108,7 +106,8 @@ export function DocumentPreviewDisplay({
       try {
         // Fetch the rendered HTML by document ID using SDK wrapper
         // Document type is auto-detected from ID prefix (inv_, est_, cre_, adv_)
-        const html = await sdk.invoices.renderHtml(document.id, { template, locale }, { entity_id: activeEntity.id });
+        // Don't send locale — let entity locale drive formatting (decimal separators, date format)
+        const html = await sdk.invoices.renderHtml(document.id, { template }, { entity_id: activeEntity.id });
 
         setPreviewHtml(html);
         setError(null);

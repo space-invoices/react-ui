@@ -19,7 +19,11 @@ import { createTranslation } from "@/ui/lib/translation";
 import { cn } from "@/ui/lib/utils";
 import { useEntities } from "@/ui/providers/entities-context";
 import { useFormFooterRegistration } from "@/ui/providers/form-footer-context";
-import { DocumentDetailsSection, DocumentNoteField } from "../../documents/create/document-details-section";
+import {
+  DocumentDetailsSection,
+  DocumentNoteField,
+  DocumentTaxClauseField,
+} from "../../documents/create/document-details-section";
 import { DocumentItemsSection, type PriceModesMap } from "../../documents/create/document-items-section";
 import { DocumentRecipientSection } from "../../documents/create/document-recipient-section";
 import { MarkAsPaidSection } from "../../documents/create/mark-as-paid-section";
@@ -143,7 +147,7 @@ export default function CreateAdvanceInvoiceForm({
   const [selectedFinaDeviceId, setSelectedFinaDeviceId] = useState<string | undefined>();
 
   // UI-only state (not part of API schema)
-  const [markAsPaid, setMarkAsPaid] = useState(false);
+  const [markAsPaid, setMarkAsPaid] = useState(true);
   const [paymentTypes, setPaymentTypes] = useState<string[]>(["bank_transfer"]);
   const [isDraftPending, setIsDraftPending] = useState(false);
 
@@ -288,13 +292,18 @@ export default function CreateAdvanceInvoiceForm({
       // Cast customer to form schema type (API type may have additional fields)
       customer: (initialValues?.customer as CreateAdvanceInvoiceFormValues["customer"]) ?? undefined,
       items: initialValues?.items?.length
-        ? initialValues.items.map((item) => ({
+        ? initialValues.items.map((item: any) => ({
+            type: item.type,
             name: item.name || "",
             description: item.description || "",
-            quantity: item.quantity ?? 1,
-            // Use gross_price if set, otherwise use price
-            price: item.gross_price ?? item.price,
-            taxes: item.taxes || [],
+            ...(item.type !== "separator"
+              ? {
+                  quantity: item.quantity ?? 1,
+                  // Use gross_price if set, otherwise use price
+                  price: item.gross_price ?? item.price,
+                  taxes: item.taxes || [],
+                }
+              : {}),
           }))
         : [
             {
@@ -307,6 +316,7 @@ export default function CreateAdvanceInvoiceForm({
           ],
       currency_code: initialValues?.currency_code || activeEntity?.currency_code || "EUR",
       note: initialValues?.note ?? defaultNote,
+      tax_clause: "",
     },
   });
 
@@ -468,7 +478,13 @@ export default function CreateAdvanceInvoiceForm({
   // ============================================================================
   // VIES Check - determine if reverse charge applies
   // ============================================================================
-  const { reverseChargeApplies, warning: viesWarning } = useViesCheck({
+  const {
+    reverseChargeApplies,
+    transactionType,
+    customerCountryCode: viesCustomerCountryCode,
+    isFetching: isViesFetching,
+    warning: viesWarning,
+  } = useViesCheck({
     issuerCountryCode: activeEntity?.country_code,
     isTaxSubject: activeEntity?.is_tax_subject ?? true,
     customerCountry: formValues.customer?.country,
@@ -476,6 +492,23 @@ export default function CreateAdvanceInvoiceForm({
     customerTaxNumber: formValues.customer?.tax_number,
     enabled: !!activeEntity,
   });
+
+  // FINA non-domestic guard: hide FINA selectors for non-domestic transactions
+  const isFinaNonDomestic = isFinaEnabled && viesCustomerCountryCode != null && viesCustomerCountryCode !== "HR";
+
+  // Auto-populate tax_clause from entity settings when transaction type changes
+  const effectiveTransactionType = transactionType ?? "domestic";
+  const prevTransactionTypeRef = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    if (effectiveTransactionType === prevTransactionTypeRef.current) return;
+    prevTransactionTypeRef.current = effectiveTransactionType;
+
+    const taxClauseDefaults = (activeEntity?.settings as any)?.tax_clause_defaults;
+    if (!taxClauseDefaults) return;
+
+    const clause = taxClauseDefaults[effectiveTransactionType] ?? "";
+    form.setValue("tax_clause", clause);
+  }, [effectiveTransactionType, activeEntity, form]);
 
   // Customer form management
   const {
@@ -547,7 +580,7 @@ export default function CreateAdvanceInvoiceForm({
 
       // Build FINA options (skip for drafts; FINA can't be skipped)
       const finaOptions =
-        !isDraft && isFinaEnabled && selectedFinaPremiseId && selectedFinaDeviceId
+        !isDraft && isFinaEnabled && !isFinaNonDomestic && selectedFinaPremiseId && selectedFinaDeviceId
           ? { premise_id: selectedFinaPremiseId, device_id: selectedFinaDeviceId, payment_type: paymentTypes[0] }
           : undefined;
 
@@ -573,6 +606,7 @@ export default function CreateAdvanceInvoiceForm({
       isEslogAvailable,
       isFursEnabled,
       isFinaEnabled,
+      isFinaNonDomestic,
       markAsPaid,
       originalCustomer,
       paymentTypes,
@@ -602,7 +636,7 @@ export default function CreateAdvanceInvoiceForm({
   useFormFooterRegistration({
     formId: "create-advance-invoice-form",
     isPending,
-    isDirty: form.formState.isDirty,
+    isDirty: form.formState.isDirty || !!initialValues,
     label: t("Save"),
     secondaryAction: {
       label: t("Save as Draft"),
@@ -761,7 +795,7 @@ export default function CreateAdvanceInvoiceForm({
                 : undefined
             }
             finaInline={
-              isFinaEnabled && hasFinaPremises
+              isFinaEnabled && hasFinaPremises && !isFinaNonDomestic
                 ? {
                     premises: activeFinaPremises.map((p: any) => ({ id: p.id, premise_id: p.premise_id })),
                     devices: activeFinaDevices.map((d: any) => ({ id: d.id, device_id: d.device_id })),
@@ -781,6 +815,7 @@ export default function CreateAdvanceInvoiceForm({
               onPaymentTypesChange={setPaymentTypes}
               t={t}
               alwaysShowPaymentType={!!isFinaActive}
+              forced
             />
           </DocumentDetailsSection>
         </div>
@@ -813,6 +848,21 @@ export default function CreateAdvanceInvoiceForm({
             currency_code: formValues.currency_code,
             customer: formValues.customer as any,
           }}
+        />
+
+        <DocumentTaxClauseField
+          control={form.control}
+          t={t}
+          entity={activeEntity}
+          document={{
+            number: formValues.number,
+            date: formValues.date,
+            currency_code: formValues.currency_code,
+            customer: formValues.customer as any,
+          }}
+          transactionType={transactionType}
+          isTransactionTypeFetching={isViesFetching}
+          isFinaNonDomestic={isFinaNonDomestic}
         />
       </form>
     </Form>

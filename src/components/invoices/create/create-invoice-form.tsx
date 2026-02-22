@@ -24,6 +24,7 @@ import {
   DocumentDetailsSection,
   DocumentNoteField,
   DocumentPaymentTermsField,
+  DocumentTaxClauseField,
 } from "../../documents/create/document-details-section";
 import { DocumentItemsSection, type PriceModesMap } from "../../documents/create/document-items-section";
 import { DocumentRecipientSection } from "../../documents/create/document-recipient-section";
@@ -321,13 +322,18 @@ export default function CreateInvoiceForm({
       // Cast customer to form schema type (API type may have additional fields)
       customer: (initialValues?.customer as CreateInvoiceFormValues["customer"]) ?? undefined,
       items: initialValues?.items?.length
-        ? initialValues.items.map((item) => ({
+        ? initialValues.items.map((item: any) => ({
+            type: item.type,
             name: item.name || "",
             description: item.description || "",
-            quantity: item.quantity ?? 1,
-            // Use gross_price if set, otherwise use price
-            price: item.gross_price ?? item.price,
-            taxes: item.taxes || [],
+            ...(item.type !== "separator"
+              ? {
+                  quantity: item.quantity ?? 1,
+                  // Use gross_price if set, otherwise use price
+                  price: item.gross_price ?? item.price,
+                  taxes: item.taxes || [],
+                }
+              : {}),
           }))
         : [
             {
@@ -340,6 +346,7 @@ export default function CreateInvoiceForm({
           ],
       currency_code: initialValues?.currency_code || activeEntity?.currency_code || "EUR",
       note: initialValues?.note ?? defaultInvoiceNote,
+      tax_clause: (initialValues as any)?.tax_clause ?? "",
       payment_terms: initialValues?.payment_terms ?? defaultPaymentTerms,
       date_due:
         initialValues?.date_due ||
@@ -529,7 +536,13 @@ export default function CreateInvoiceForm({
   // ============================================================================
   // VIES Check - determine if reverse charge applies
   // ============================================================================
-  const { reverseChargeApplies, warning: viesWarning } = useViesCheck({
+  const {
+    reverseChargeApplies,
+    transactionType,
+    customerCountryCode: viesCustomerCountryCode,
+    isFetching: isViesFetching,
+    warning: viesWarning,
+  } = useViesCheck({
     issuerCountryCode: activeEntity?.country_code,
     isTaxSubject: activeEntity?.is_tax_subject ?? true,
     customerCountry,
@@ -537,6 +550,23 @@ export default function CreateInvoiceForm({
     customerTaxNumber,
     enabled: !!activeEntity,
   });
+
+  // FINA non-domestic guard: hide FINA selectors for non-domestic transactions
+  const isFinaNonDomestic = isFinaEnabled && viesCustomerCountryCode != null && viesCustomerCountryCode !== "HR";
+
+  // Auto-populate tax_clause from entity settings when transaction type changes
+  const effectiveTransactionType = transactionType ?? "domestic";
+  const prevTransactionTypeRef = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    if (effectiveTransactionType === prevTransactionTypeRef.current) return;
+    prevTransactionTypeRef.current = effectiveTransactionType;
+
+    const taxClauseDefaults = (activeEntity?.settings as any)?.tax_clause_defaults;
+    if (!taxClauseDefaults) return;
+
+    const clause = taxClauseDefaults[effectiveTransactionType] ?? "";
+    form.setValue("tax_clause", clause);
+  }, [effectiveTransactionType, activeEntity, form]);
 
   // Extract customer management logic into a custom hook
   const {
@@ -624,9 +654,9 @@ export default function CreateInvoiceForm({
               : undefined
           : undefined;
 
-      // Build FINA options (skip for drafts and edit mode; FINA can't be skipped)
+      // Build FINA options (skip for drafts, edit mode, and non-domestic transactions)
       const finaOptions =
-        !isDraft && !isEditMode && isFinaEnabled && selectedFinaPremiseId && selectedFinaDeviceId
+        !isDraft && !isEditMode && isFinaEnabled && !isFinaNonDomestic && selectedFinaPremiseId && selectedFinaDeviceId
           ? { premise_id: selectedFinaPremiseId, device_id: selectedFinaDeviceId, payment_type: paymentTypes[0] }
           : undefined;
 
@@ -674,6 +704,7 @@ export default function CreateInvoiceForm({
       isEslogAvailable,
       isFursEnabled,
       isFinaEnabled,
+      isFinaNonDomestic,
       markAsPaid,
       originalCustomer,
       paymentTypes,
@@ -717,7 +748,8 @@ export default function CreateInvoiceForm({
   );
 
   // Watch isDirty to get stable reference
-  const isDirty = form.formState.isDirty;
+  // When form is pre-populated via initialValues (duplicate/merge), treat as dirty immediately
+  const isDirty = form.formState.isDirty || !!initialValues;
 
   useFormFooterRegistration({
     formId: "create-invoice-form",
@@ -931,7 +963,7 @@ export default function CreateInvoiceForm({
                 : undefined
             }
             finaInline={
-              !isEditMode && isFinaEnabled && hasFinaPremises
+              !isEditMode && isFinaEnabled && hasFinaPremises && !isFinaNonDomestic
                 ? {
                     premises: activeFinaPremises.map((p: any) => ({ id: p.id, premise_id: p.premise_id })),
                     devices: activeFinaDevices.map((d: any) => ({ id: d.id, device_id: d.device_id })),
@@ -991,6 +1023,22 @@ export default function CreateInvoiceForm({
             currency_code: watchedCurrencyCode,
             customer: watchedCustomer as any,
           }}
+        />
+
+        <DocumentTaxClauseField
+          control={form.control}
+          t={t}
+          entity={activeEntity}
+          document={{
+            number: watchedNumber,
+            date: watchedDate,
+            date_due: watchedDateDue,
+            currency_code: watchedCurrencyCode,
+            customer: watchedCustomer as any,
+          }}
+          transactionType={transactionType}
+          isTransactionTypeFetching={isViesFetching}
+          isFinaNonDomestic={isFinaNonDomestic}
         />
 
         <DocumentPaymentTermsField

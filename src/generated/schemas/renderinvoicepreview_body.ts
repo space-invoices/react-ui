@@ -113,6 +113,7 @@ const PartialInvoicePreview = z.object({
     .array(
       z
         .object({
+          type: z.literal("separator"),
           name: z.string(),
           quantity: z.number(),
           price: z.number(),
@@ -132,6 +133,7 @@ const PartialInvoicePreview = z.object({
     .min(1),
   fina: CreateFinaInvoiceData.optional(),
   expected_total_with_tax: z.number().gt(0).optional(),
+  force_linked_documents: z.boolean().optional(),
 });
 
 
@@ -155,29 +157,22 @@ const LineDiscount = z.object({
 
 
 // Dependency schema for renderinvoicepreview_body
-const CreateDocumentItem = z.object({
-  name: z.string().min(1).optional(),
-  description: z.union([z.string(), z.null()]).optional(),
-  price: z.number().optional(),
-  gross_price: z.number().optional(),
-  quantity: z.number().gte(-140737488355328).lte(140737488355327),
-  unit: z.union([z.string(), z.null()]).optional(),
-  taxes: z.array(DocumentItemTax).optional(),
-  discounts: z.array(LineDiscount).max(5).optional(),
-  delivery_note_id: z.union([z.string(), z.null()]).optional(),
-  metadata: z
-    .union([
-      z.string(),
-      z.number(),
-      z.boolean(),
-      z.null(),
-      z.object({}).partial().passthrough(),
-      z.array(z.unknown()),
-      z.null(),
-    ])
-    .optional(),
-  item_id: z.string().optional(),
-});
+const CreateDocumentItem = z
+  .object({
+    type: z.literal("separator"),
+    name: z.string().min(1),
+    description: z.union([z.string(), z.null()]),
+    price: z.number(),
+    gross_price: z.number(),
+    quantity: z.union([z.number(), z.null()]),
+    unit: z.union([z.string(), z.null()]),
+    taxes: z.array(DocumentItemTax),
+    discounts: z.array(LineDiscount).max(5),
+    item_id: z.string(),
+    metadata: z.union([z.record(z.string(), z.any()), z.null()]),
+    save_item: z.boolean().default(true),
+  })
+  .partial();
 
 
 // Dependency schema for renderinvoicepreview_body
@@ -201,6 +196,7 @@ const CompleteInvoicePreview = z.object({
   items: z.array(CreateDocumentItem).min(1),
   fina: CreateFinaInvoiceData.optional(),
   expected_total_with_tax: z.number().gt(0).optional(),
+  force_linked_documents: z.boolean().optional(),
 });
 
 

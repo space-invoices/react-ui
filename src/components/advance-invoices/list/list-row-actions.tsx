@@ -1,6 +1,6 @@
 import type { AdvanceInvoice } from "@spaceinvoices/js-sdk";
 
-import { Copy, Download, Eye, Link2Off, Loader2, MoreHorizontal, Plus } from "lucide-react";
+import { Ban, Copy, Download, Eye, Link2Off, Loader2, MoreHorizontal, Plus } from "lucide-react";
 import { Button } from "@/ui/components/ui/button";
 import {
   DropdownMenu,
@@ -11,6 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/ui/components/ui/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/ui/components/ui/tooltip";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
 import { useAdvanceInvoiceDownload } from "./use-advance-invoice-download";
@@ -25,6 +26,8 @@ type AdvanceInvoiceListRowActionsProps = {
   onDownloadError?: (error: string) => void;
   onUnshare?: (advanceInvoice: AdvanceInvoice) => Promise<void>;
   isUnsharing?: boolean;
+  onVoid?: (advanceInvoice: AdvanceInvoice) => void;
+  isVoiding?: boolean;
 } & ComponentTranslationProps;
 
 export default function AdvanceInvoiceListRowActions({
@@ -37,6 +40,8 @@ export default function AdvanceInvoiceListRowActions({
   onDownloadError,
   onUnshare,
   isUnsharing,
+  onVoid,
+  isVoiding,
   ...i18nProps
 }: AdvanceInvoiceListRowActionsProps) {
   const t = createTranslation(i18nProps);
@@ -110,6 +115,48 @@ export default function AdvanceInvoiceListRowActions({
             </DropdownMenuGroup>
           </>
         )}
+        {onVoid &&
+          !(advanceInvoice as any).voided_at &&
+          !(advanceInvoice as any).is_draft &&
+          (() => {
+            const isLinked = (advanceInvoice as any).document_relations?.some(
+              (rel: any) => rel.relation_type === "advance_applied" || rel.relation_type === "applied_to",
+            );
+            const voidDisabled = isVoiding || isLinked;
+            const voidItem = (
+              <DropdownMenuItem
+                className={
+                  voidDisabled
+                    ? "text-destructive opacity-50"
+                    : "cursor-pointer text-destructive focus:text-destructive"
+                }
+                onClick={() => !voidDisabled && onVoid(advanceInvoice)}
+                disabled={voidDisabled}
+              >
+                {isVoiding ? <Loader2 className="h-4 w-4 animate-spin" /> : <Ban className="h-4 w-4" />}
+                {t("Void")}
+              </DropdownMenuItem>
+            );
+            return (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuGroup>
+                  {isLinked ? (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div>{voidItem}</div>
+                      </TooltipTrigger>
+                      <TooltipContent side="left">
+                        {t("Cannot void an advance invoice linked to an invoice")}
+                      </TooltipContent>
+                    </Tooltip>
+                  ) : (
+                    voidItem
+                  )}
+                </DropdownMenuGroup>
+              </>
+            );
+          })()}
       </DropdownMenuContent>
     </DropdownMenu>
   );

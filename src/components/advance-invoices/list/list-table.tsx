@@ -56,9 +56,12 @@ type AdvanceInvoiceListTableProps = {
   onDownloadSuccess?: (fileName: string) => void;
   onDownloadError?: (error: string) => void;
   onExportSelected?: (documentIds: string[]) => void;
+  onCopyToInvoice?: (documentIds: string[]) => void;
   onRetryFiscalization?: (documentIds: string[]) => void;
   fiscalizationFeatures?: ("furs" | "fina")[];
   onCreateNew?: () => void;
+  onVoid?: (advanceInvoice: AdvanceInvoice) => void;
+  isVoiding?: boolean;
 } & ListTableProps<AdvanceInvoice>;
 
 export default function AdvanceInvoiceListTable({
@@ -73,9 +76,12 @@ export default function AdvanceInvoiceListTable({
   onDownloadSuccess,
   onDownloadError,
   onExportSelected,
+  onCopyToInvoice,
   onRetryFiscalization,
   fiscalizationFeatures,
   onCreateNew,
+  onVoid,
+  isVoiding,
   ...i18nProps
 }: AdvanceInvoiceListTableProps) {
   const t = createTranslation({
@@ -97,6 +103,7 @@ export default function AdvanceInvoiceListTable({
       prev_cursor: params.prev_cursor,
       search: params.search,
       query: params.query,
+      include: "document_relations",
     });
     return response as unknown as TableQueryResponse<AdvanceInvoice>;
   }, entityId);
@@ -117,6 +124,12 @@ export default function AdvanceInvoiceListTable({
       onExportSelected(Array.from(selectedIds));
     }
   }, [selectedIds, onExportSelected]);
+
+  const handleCopyToInvoice = useCallback(() => {
+    if (selectedIds.size > 0 && onCopyToInvoice) {
+      onCopyToInvoice(Array.from(selectedIds));
+    }
+  }, [selectedIds, onCopyToInvoice]);
 
   const handleDeselectAll = useCallback(() => {
     setSelectedIds(new Set());
@@ -140,6 +153,7 @@ export default function AdvanceInvoiceListTable({
         <SelectionToolbar
           selectedCount={count}
           onExportPdfs={onExportSelected ? handleExportPdfs : undefined}
+          onCopyToInvoice={onCopyToInvoice ? handleCopyToInvoice : undefined}
           onRetryFiscalization={showRetry ? () => onRetryFiscalization(failedDocs.map((d) => d.id)) : undefined}
           retryFiscalizationDisabled={someFailed && !allFailed}
           retryFiscalizationTooltip={
@@ -152,8 +166,10 @@ export default function AdvanceInvoiceListTable({
     },
     [
       handleExportPdfs,
+      handleCopyToInvoice,
       handleDeselectAll,
       onExportSelected,
+      onCopyToInvoice,
       onRetryFiscalization,
       fiscalizationFeatures,
       selectedIds,
@@ -240,6 +256,8 @@ export default function AdvanceInvoiceListTable({
             onDownloadStart={onDownloadStart}
             onDownloadSuccess={onDownloadSuccess}
             onDownloadError={onDownloadError}
+            onVoid={onVoid}
+            isVoiding={isVoiding}
             t={t}
             locale={i18nProps.locale}
           />
@@ -255,6 +273,8 @@ export default function AdvanceInvoiceListTable({
       onDownloadStart,
       onDownloadSuccess,
       onDownloadError,
+      onVoid,
+      isVoiding,
       i18nProps.locale,
       fiscalizationFeatures,
     ],
@@ -274,7 +294,7 @@ export default function AdvanceInvoiceListTable({
       filterConfig={filterConfig}
       t={t}
       locale={i18nProps.locale}
-      selectable={!!(onExportSelected || onRetryFiscalization)}
+      selectable={!!(onExportSelected || onCopyToInvoice || onRetryFiscalization)}
       selectedIds={selectedIds}
       onSelectionChange={setSelectedIds}
       selectionToolbar={selectionToolbar}

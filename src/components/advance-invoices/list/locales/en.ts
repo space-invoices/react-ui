@@ -13,4 +13,7 @@ export default {
   "FINA fiscalization failed": "FINA fiscalization failed",
   "Retry Fiscalization": "Retry Fiscalization",
   "Some selected documents don't have failed fiscalization": "Some selected documents don't have failed fiscalization",
+  "Copy to Invoice": "Copy to Invoice",
+  Void: "Void",
+  "Cannot void an advance invoice linked to an invoice": "Cannot void an advance invoice linked to an invoice",
 } as const;

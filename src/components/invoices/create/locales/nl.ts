@@ -112,4 +112,19 @@ export default {
   "Date Range": "Datumbereik",
   From: "Van",
   To: "Tot",
+  // Separator items
+  "Add separator": "Scheidingslijn toevoegen",
+  "Section header": "Sectiekop",
+  "Section title...": "Sectietitel...",
+  // Transaction type
+  "Transaction type": "Transactietype",
+  Domestic: "Binnenland",
+  "EU B2B": "EU B2B",
+  "EU B2C": "EU B2C",
+  Export: "Export",
+  "Determining transaction type...": "Transactietype bepalen...",
+  "This invoice will not be fiscalized (non-domestic transaction)":
+    "Deze factuur wordt niet gefiscaliseerd (niet-binnenlandse transactie)",
+  "Tax Clause": "Belastingclausule",
+  "Add tax clause...": "Belastingclausule toevoegen...",
 } as const;

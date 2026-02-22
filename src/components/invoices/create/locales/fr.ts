@@ -113,4 +113,19 @@ export default {
   "Date Range": "Plage de dates",
   From: "Du",
   To: "Au",
+  // Separator items
+  "Add separator": "Ajouter un séparateur",
+  "Section header": "En-tête de section",
+  "Section title...": "Titre de section...",
+  // Transaction type
+  "Transaction type": "Type de transaction",
+  Domestic: "Nationale",
+  "EU B2B": "EU B2B",
+  "EU B2C": "EU B2C",
+  Export: "Exportation",
+  "Determining transaction type...": "Détermination du type de transaction...",
+  "This invoice will not be fiscalized (non-domestic transaction)":
+    "Cette facture ne sera pas fiscalisée (transaction non nationale)",
+  "Tax Clause": "Clause fiscale",
+  "Add tax clause...": "Ajouter une clause fiscale...",
 } as const;

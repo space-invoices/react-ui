@@ -54,7 +54,7 @@ export function useRevenueData(entityId: string | undefined) {
               table: "invoices",
               date_from: monthRange.from,
               date_to: monthRange.to,
-              filters: { is_draft: false, voided_at: null },
+              filters: { is_draft: false },
               group_by: ["quote_currency"], // Get the currency for display
             },
             { entity_id: entityId },
@@ -74,7 +74,7 @@ export function useRevenueData(entityId: string | undefined) {
               table: "invoices",
               date_from: yearRange.from,
               date_to: yearRange.to,
-              filters: { is_draft: false, voided_at: null },
+              filters: { is_draft: false },
             },
             { entity_id: entityId },
           );
@@ -91,7 +91,7 @@ export function useRevenueData(entityId: string | undefined) {
             {
               metrics: [{ type: "sum", field: "total_due", alias: "outstanding" }],
               table: "invoices",
-              filters: { is_draft: false, voided_at: null, paid_in_full: false },
+              filters: { is_draft: false, paid_in_full: false },
             },
             { entity_id: entityId },
           );
@@ -111,8 +111,63 @@ export function useRevenueData(entityId: string | undefined) {
                 { type: "count", alias: "count" },
               ],
               table: "invoices",
-              filters: { is_draft: false, voided_at: null, paid_in_full: false },
+              filters: { is_draft: false, paid_in_full: false },
               group_by: ["overdue_bucket"],
+            },
+            { entity_id: entityId },
+          );
+        },
+        enabled: !!entityId && !!sdk,
+        staleTime: 120_000,
+      },
+      // Credit notes: this month
+      {
+        queryKey: [STATS_QUERY_CACHE_KEY, entityId, "cn-this-month", monthRange.from],
+        queryFn: async () => {
+          if (!entityId || !sdk) throw new Error("Missing entity or SDK");
+          return sdk.entityStats.queryEntityStats(
+            {
+              metrics: [{ type: "sum", field: "total_with_tax_converted", alias: "revenue" }],
+              table: "credit_notes",
+              date_from: monthRange.from,
+              date_to: monthRange.to,
+              filters: { is_draft: false },
+            },
+            { entity_id: entityId },
+          );
+        },
+        enabled: !!entityId && !!sdk,
+        staleTime: 120_000,
+      },
+      // Credit notes: this year
+      {
+        queryKey: [STATS_QUERY_CACHE_KEY, entityId, "cn-this-year", yearRange.from],
+        queryFn: async () => {
+          if (!entityId || !sdk) throw new Error("Missing entity or SDK");
+          return sdk.entityStats.queryEntityStats(
+            {
+              metrics: [{ type: "sum", field: "total_with_tax_converted", alias: "revenue" }],
+              table: "credit_notes",
+              date_from: yearRange.from,
+              date_to: yearRange.to,
+              filters: { is_draft: false },
+            },
+            { entity_id: entityId },
+          );
+        },
+        enabled: !!entityId && !!sdk,
+        staleTime: 120_000,
+      },
+      // Credit notes: outstanding
+      {
+        queryKey: [STATS_QUERY_CACHE_KEY, entityId, "cn-outstanding"],
+        queryFn: async () => {
+          if (!entityId || !sdk) throw new Error("Missing entity or SDK");
+          return sdk.entityStats.queryEntityStats(
+            {
+              metrics: [{ type: "sum", field: "total_due", alias: "outstanding" }],
+              table: "credit_notes",
+              filters: { is_draft: false, paid_in_full: false },
             },
             { entity_id: entityId },
           );
@@ -123,7 +178,15 @@ export function useRevenueData(entityId: string | undefined) {
     ],
   });
 
-  const [thisMonthQuery, thisYearQuery, outstandingQuery, overdueQuery] = queries;
+  const [
+    thisMonthQuery,
+    thisYearQuery,
+    outstandingQuery,
+    overdueQuery,
+    cnThisMonthQuery,
+    cnThisYearQuery,
+    cnOutstandingQuery,
+  ] = queries;
 
   // Extract this month revenue and currency (may have multiple rows if grouped by quote_currency)
   const thisMonthData = thisMonthQuery.data?.data || [];
@@ -134,7 +197,12 @@ export function useRevenueData(entityId: string | undefined) {
   // Get currency from first row with data
   const currency = (thisMonthData[0]?.quote_currency as string) || "EUR";
 
-  // Extract overdue data (buckets other than "current")
+  // Credit note totals
+  const cnThisMonth = Number(cnThisMonthQuery.data?.data?.[0]?.revenue) || 0;
+  const cnThisYear = Number(cnThisYearQuery.data?.data?.[0]?.revenue) || 0;
+  const cnOutstanding = Number(cnOutstandingQuery.data?.data?.[0]?.outstanding) || 0;
+
+  // Extract overdue data (buckets other than "current") — stays invoice-only
   const overdueData = overdueQuery.data?.data || [];
   const overdueBuckets = overdueData.filter((row: StatsQueryDataItem) => row.overdue_bucket !== "current");
   const totalOverdue = overdueBuckets.reduce(
@@ -148,9 +216,9 @@ export function useRevenueData(entityId: string | undefined) {
 
   return {
     data: {
-      thisMonth: thisMonthRevenue,
-      thisYear: Number(thisYearQuery.data?.data?.[0]?.revenue) || 0,
-      outstanding: Number(outstandingQuery.data?.data?.[0]?.outstanding) || 0,
+      thisMonth: thisMonthRevenue - cnThisMonth,
+      thisYear: (Number(thisYearQuery.data?.data?.[0]?.revenue) || 0) - cnThisYear,
+      outstanding: (Number(outstandingQuery.data?.data?.[0]?.outstanding) || 0) - cnOutstanding,
       overdue: totalOverdue,
       overdueCount,
       currency, // Currency from document data

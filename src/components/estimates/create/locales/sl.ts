@@ -23,7 +23,7 @@ export default {
   "Tax Number": "Davčna številka",
   Items: "Postavke",
   "Add item": "Dodaj postavko",
-  Tax: "Davek",
+  Tax: "DDV",
   "Tax rate": "Davčna stopnja",
   "Add tax": "Dodaj davek",
   "Select tax...": "Izberi davek...",
@@ -60,4 +60,20 @@ export default {
   "Net price": "Neto cena",
   "Gross price (tax included)": "Bruto cena (z davkom)",
   "Net price (before tax)": "Neto cena (brez davka)",
+  // Separator items
+  "Add separator": "Dodaj ločilnik",
+  "Section header": "Naslov razdelka",
+  "Section title...": "Naslov razdelka...",
+  // Transaction type
+  "Transaction type": "Vrsta transakcije",
+  Domestic: "Domača",
+  "EU B2B": "EU B2B",
+  "EU B2C": "EU B2C",
+  Export: "Izvoz",
+  "Determining transaction type...": "Določanje vrste transakcije...",
+  "This invoice will not be fiscalized (non-domestic transaction)":
+    "Ta račun ne bo fiskaliziran (nedomača transakcija)",
+  "Tax Clause": "Davčna klavzula",
+  "Add tax clause...": "Dodajte davčno klavzulo...",
+  "Reverse charge - tax exempt EU B2B sale": "Obrnjena davčna obveznost - davka oproščena EU B2B prodaja",
 } as const;

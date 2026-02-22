@@ -99,10 +99,11 @@ export function CreateEntityForm({
   useEffect(() => {
     if (countryValue !== autoFilledCountryRef.current) {
       setActiveCountryCode(undefined);
+      form.setValue("country_code", "");
     } else {
       setActiveCountryCode(countryCode);
     }
-  }, [countryValue, countryCode]);
+  }, [countryValue, countryCode, form]);
 
   const handleCompanySelect = (company: CompanyRegistryResult) => {
     form.setValue("name", company.name);

@@ -15,7 +15,7 @@ export default {
   Price: "Cena",
   Unit: "Enota",
   Discount: "Popust",
-  Tax: "Davek",
+  Tax: "DDV",
   "Tax rate": "Davčna stopnja",
   "Add tax": "Dodaj davek",
   "Select tax...": "Izberi davek...",
@@ -72,4 +72,20 @@ export default {
   Premise: "Poslovni prostor",
   Device: "Naprava",
   "FINA fiscalized invoices always use the current date": "FINA fiskalizirani dokumenti vedno uporabijo trenutni datum",
+  // Separator items
+  "Add separator": "Dodaj ločilnik",
+  "Section header": "Naslov razdelka",
+  "Section title...": "Naslov razdelka...",
+  // Transaction type
+  "Transaction type": "Vrsta transakcije",
+  Domestic: "Domača",
+  "EU B2B": "EU B2B",
+  "EU B2C": "EU B2C",
+  Export: "Izvoz",
+  "Determining transaction type...": "Določanje vrste transakcije...",
+  "This invoice will not be fiscalized (non-domestic transaction)":
+    "Ta račun ne bo fiskaliziran (nedomača transakcija)",
+  "Tax Clause": "Davčna klavzula",
+  "Add tax clause...": "Dodajte davčno klavzulo...",
+  "Reverse charge - tax exempt EU B2B sale": "Obrnjena davčna obveznost - davka oproščena EU B2B prodaja",
 } as const;

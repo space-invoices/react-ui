@@ -1,5 +1,6 @@
 export default {
   // Company settings
+  "Tax subject": "Porezni obveznik",
   "Tax ID 2": "Tax ID 2",
   "Secondary tax identification number (optional)": "Secondary tax identification number (optional)",
   "Company Information": "Podaci o tvrtki",

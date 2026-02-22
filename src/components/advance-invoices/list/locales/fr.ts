@@ -47,4 +47,8 @@ export default {
   "FINA fiscalization failed": "FINA fiscalization failed",
   "Retry Fiscalization": "Retry Fiscalization",
   "Some selected documents don't have failed fiscalization": "Some selected documents don't have failed fiscalization",
+  "Copy to Invoice": "Copier vers facture",
+  Void: "Annuler",
+  "Cannot void an advance invoice linked to an invoice":
+    "Impossible d'annuler une facture d'acompte liée à une facture",
 } as const;

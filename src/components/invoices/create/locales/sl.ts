@@ -17,7 +17,7 @@ export default {
   Price: "Cena",
   Unit: "Enota",
   Discount: "Popust",
-  Tax: "Davek",
+  Tax: "DDV",
   "Tax rate": "Davčna stopnja",
   "Add tax": "Dodaj davek",
   "Select tax...": "Izberi davek...",
@@ -121,4 +121,19 @@ export default {
   "Date Range": "Obdobje",
   From: "Od",
   To: "Do",
+  // Separator items
+  "Add separator": "Dodaj ločilnik",
+  "Section header": "Naslov razdelka",
+  "Section title...": "Naslov razdelka...",
+  // Transaction type
+  "Transaction type": "Vrsta transakcije",
+  Domestic: "Domača",
+  "EU B2B": "EU B2B",
+  "EU B2C": "EU B2C",
+  Export: "Izvoz",
+  "Determining transaction type...": "Določanje vrste transakcije...",
+  "This invoice will not be fiscalized (non-domestic transaction)":
+    "Ta račun ne bo fiskaliziran (nedomača transakcija)",
+  "Tax Clause": "Davčna klavzula",
+  "Add tax clause...": "Dodajte davčno klavzulo...",
 } as const;

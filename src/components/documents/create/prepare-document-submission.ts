@@ -127,6 +127,15 @@ export function prepareDocumentSubmission<T extends BaseDocumentValues>(
   if (values.items) {
     const priceModes = options.priceModes ?? {};
     values.items = values.items.map((item: any, index: number) => {
+      // Separator items — pass through with only type, name, description
+      if (item.type === "separator") {
+        return {
+          type: "separator",
+          name: item.name,
+          description: item.description || undefined,
+        };
+      }
+
       const { price, ...rest } = item;
 
       // Transform price based on price mode (from component state, not form)
@@ -136,13 +145,16 @@ export function prepareDocumentSubmission<T extends BaseDocumentValues>(
       return {
         ...rest,
         ...priceFields,
-        taxes: item.taxes?.map((tax: any) => {
-          if (tax.tax_id) {
-            // Only send tax_id, API will resolve the rate
-            return { tax_id: tax.tax_id };
-          }
-          return tax;
-        }),
+        taxes: item.taxes
+          ?.map((tax: any) => {
+            if (tax.tax_id) {
+              // Only send tax_id, API will resolve the rate
+              return { tax_id: tax.tax_id };
+            }
+            return tax;
+          })
+          // Filter out empty placeholder taxes (UI adds { tax_id: undefined } for the dropdown)
+          .filter((tax: any) => tax.tax_id || tax.rate !== undefined || tax.classification),
       };
     });
   }

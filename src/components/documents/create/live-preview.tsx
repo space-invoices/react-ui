@@ -30,6 +30,12 @@ type LiveInvoicePreviewProps = {
   documentTypeLabel?: string;
   /** Document type to determine which render endpoint to use */
   documentType?: DocumentTypes;
+  /** QR settings overrides for preview (before saving) */
+  qrOverrides?: {
+    upn_qr_enabled?: boolean;
+    upn_qr_display_mode?: "qr_only" | "full_slip";
+    epc_qr_enabled?: boolean;
+  };
 };
 
 /**
@@ -49,11 +55,12 @@ export function LiveInvoicePreview({
   currency: _currency = "EUR",
   template,
   className,
-  locale,
+  locale: _locale,
   fixedScale,
   t: tProp,
   documentTypeLabel,
   documentType = "invoice",
+  qrOverrides,
 }: LiveInvoicePreviewProps) {
   const t = tProp ?? ((key: string) => key);
   const [previewHtml, setPreviewHtml] = useState<string>("");
@@ -103,7 +110,7 @@ export function LiveInvoicePreview({
           // Filter out unresolved tax_ids (race condition: form may add
           // { tax_id: undefined } before the tax dropdown auto-selects a value)
           items: filterUnresolvedTaxes(invoiceData.items),
-          issuer: invoiceData.issuer || {
+          issuer: {
             name: activeEntity.name,
             address: activeEntity.address,
             address_2: activeEntity.address_2,
@@ -112,11 +119,22 @@ export function LiveInvoicePreview({
             state: activeEntity.state,
             country: activeEntity.country,
             tax_number: activeEntity.tax_number,
+            ...invoiceData.issuer,
           },
         };
 
         // Call the render API using the appropriate SDK method for the document type
-        const renderParams = { partial: "true" as const, template, locale };
+        // Don't send locale — let entity locale drive formatting (decimal separators, date format)
+        const renderParams: Record<string, any> = { partial: "true" as const, template };
+        if (qrOverrides?.upn_qr_enabled !== undefined) {
+          renderParams.upn_qr_enabled = qrOverrides.upn_qr_enabled ? "true" : "false";
+          if (qrOverrides.upn_qr_display_mode) {
+            renderParams.upn_qr_display_mode = qrOverrides.upn_qr_display_mode;
+          }
+        }
+        if (qrOverrides?.epc_qr_enabled !== undefined) {
+          renderParams.epc_qr_enabled = qrOverrides.epc_qr_enabled ? "true" : "false";
+        }
         const requestOpts = { entity_id: activeEntity.id };
         let html: string;
         switch (documentType) {
@@ -170,9 +188,11 @@ export function LiveInvoicePreview({
       activeEntity?.city,
       activeEntity?.name,
       template,
-      locale,
       sdk,
       documentType,
+      qrOverrides?.upn_qr_enabled,
+      qrOverrides?.upn_qr_display_mode,
+      qrOverrides?.epc_qr_enabled,
     ],
   );
 

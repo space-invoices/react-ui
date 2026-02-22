@@ -37,6 +37,7 @@ export default {
   Customer: "Klant",
   Subtotal: "Subtotaal",
   Tax: "Belasting",
+  of: "van",
   Total: "Totaal",
   Paid: "Betaald",
   Due: "Openstaand",
@@ -107,6 +108,7 @@ export default {
   Pending: "In behandeling",
   Failed: "Mislukt",
   Skipped: "Overgeslagen",
+  "Skipped by user": "Overgeslagen door gebruiker",
   "Retry fiscalization": "Fiscalisatie opnieuw proberen",
 
   // PDF language names

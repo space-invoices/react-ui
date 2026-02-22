@@ -46,4 +46,6 @@ export default {
   "FINA fiscalization failed": "FINA fiscalization failed",
   "Retry Fiscalization": "Retry Fiscalization",
   "Some selected documents don't have failed fiscalization": "Some selected documents don't have failed fiscalization",
+  Void: "Anular",
+  "Cannot void a fiscalized credit note": "Não é possível anular uma nota de crédito fiscalizada",
 } as const;

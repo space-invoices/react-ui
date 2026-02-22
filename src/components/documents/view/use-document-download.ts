@@ -36,9 +36,11 @@ export function useDocumentDownload({
   const [isDownloadingEslog, setIsDownloadingEslog] = useState(false);
 
   /**
-   * Download PDF in specified locale
+   * Download PDF with optional language override for translations
+   * Formatting (decimal separators, dates) always uses entity locale.
+   * The language param only changes labels/translations on the PDF.
    */
-  const downloadPdf = async (document: Document, documentType: DocumentType, locale: string) => {
+  const downloadPdf = async (document: Document, documentType: DocumentType, language?: string) => {
     if (!sdk || !activeEntity?.id) {
       onDownloadError?.("Download failed");
       return;
@@ -51,7 +53,8 @@ export function useDocumentDownload({
       // SDK signature: renderPdf(id, params?, SDKMethodOptions?)
       // entity_id goes in SDKMethodOptions (last arg), not params
       // Note: renderPdf is on invoices module but works with any document ID via /documents/{id}/pdf
-      const params = locale ? { locale } : {};
+      // Don't send locale — entity locale drives formatting. Send language for translation override.
+      const params = language ? { language } : {};
       const blob = await sdk.invoices.renderPdf(document.id, params, { entity_id: activeEntity.id });
       const downloadUrl = window.URL.createObjectURL(blob);
       const link = window.document.createElement("a");

@@ -37,6 +37,7 @@ export default {
   Customer: "Cliente",
   Subtotal: "Subtotal",
   Tax: "Impuesto",
+  of: "de",
   Total: "Total",
   Paid: "Pagado",
   Due: "Pendiente",
@@ -106,6 +107,7 @@ export default {
   Pending: "Pendiente",
   Failed: "Fallido",
   Skipped: "Omitido",
+  "Skipped by user": "Omitido por el usuario",
   "Retry fiscalization": "Reintentar fiscalización",
 
   // PDF language names

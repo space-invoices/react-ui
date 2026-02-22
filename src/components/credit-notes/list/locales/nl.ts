@@ -46,4 +46,6 @@ export default {
   "FINA fiscalization failed": "FINA fiscalization failed",
   "Retry Fiscalization": "Retry Fiscalization",
   "Some selected documents don't have failed fiscalization": "Some selected documents don't have failed fiscalization",
+  Void: "Nietig verklaren",
+  "Cannot void a fiscalized credit note": "Kan een gefiscaliseerde creditnota niet ongeldig maken",
 } as const;

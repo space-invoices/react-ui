@@ -3,12 +3,15 @@ type TFunction = (key: string, options?: Record<string, unknown>) => string;
 import { Calendar, Download, Loader2 } from "lucide-react";
 import { useRef, useState } from "react";
 import { Button } from "../ui/button";
+import { Checkbox } from "../ui/checkbox";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 
-export type DocumentType = "invoice" | "estimate" | "credit_note";
+export type DocumentType = "invoice" | "estimate" | "credit_note" | "advance_invoice" | "delivery_note";
 export type ExportFormat = "xlsx" | "csv" | "pdf_zip";
+
+const ALL_DOCUMENT_TYPES: DocumentType[] = ["invoice", "estimate", "credit_note", "advance_invoice", "delivery_note"];
 
 // Maximum date range for export (1 year in milliseconds)
 const MAX_DATE_RANGE_MS = 365 * 24 * 60 * 60 * 1000;
@@ -65,6 +68,7 @@ export function DocumentExportForm({
 }: DocumentExportFormProps) {
   const defaultDates = getPreviousMonthRange();
   const [documentType, setDocumentType] = useState<DocumentType>("invoice");
+  const [selectedTypes, setSelectedTypes] = useState<DocumentType[]>(["invoice"]);
   const [exportFormat, setExportFormat] = useState<ExportFormat>("xlsx");
   const [dateFrom, setDateFrom] = useState(defaultDates.from);
   const [dateTo, setDateTo] = useState(defaultDates.to);
@@ -72,6 +76,17 @@ export function DocumentExportForm({
   const [dateRangeError, setDateRangeError] = useState(false);
 
   const toastIdRef = useRef<string | number | null>(null);
+
+  const toggleType = (type: DocumentType) => {
+    setSelectedTypes((prev) => {
+      if (prev.includes(type)) {
+        // Don't allow deselecting the last type
+        if (prev.length === 1) return prev;
+        return prev.filter((t) => t !== type);
+      }
+      return [...prev, type];
+    });
+  };
 
   const validateDateRange = (from: string, to: string) => {
     const isValid = isDateRangeValid(from, to);
@@ -100,7 +115,7 @@ export function DocumentExportForm({
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            type: documentType,
+            types: selectedTypes,
             date_from: dateFrom || undefined,
             date_to: dateTo || undefined,
           }),
@@ -187,16 +202,35 @@ export function DocumentExportForm({
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="document-type">{t("export-page.document-type")}</Label>
-          <Select value={documentType} onValueChange={(v) => setDocumentType(v as DocumentType)}>
-            <SelectTrigger id="document-type">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="invoice">{t("export-page.types.invoice")}</SelectItem>
-              <SelectItem value="estimate">{t("export-page.types.estimate")}</SelectItem>
-              <SelectItem value="credit_note">{t("export-page.types.credit_note")}</SelectItem>
-            </SelectContent>
-          </Select>
+          {exportFormat === "pdf_zip" ? (
+            <fieldset className="space-y-2 rounded-md border p-3">
+              {ALL_DOCUMENT_TYPES.map((type) => (
+                <div key={type} className="flex items-center gap-2">
+                  <Checkbox
+                    id={`type-${type}`}
+                    checked={selectedTypes.includes(type)}
+                    onCheckedChange={() => toggleType(type)}
+                  />
+                  <Label htmlFor={`type-${type}`} className="cursor-pointer font-normal">
+                    {t(`export-page.types.${type}`)}
+                  </Label>
+                </div>
+              ))}
+            </fieldset>
+          ) : (
+            <Select value={documentType} onValueChange={(v) => setDocumentType(v as DocumentType)}>
+              <SelectTrigger id="document-type">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="invoice">{t("export-page.types.invoice")}</SelectItem>
+                <SelectItem value="estimate">{t("export-page.types.estimate")}</SelectItem>
+                <SelectItem value="credit_note">{t("export-page.types.credit_note")}</SelectItem>
+                <SelectItem value="advance_invoice">{t("export-page.types.advance_invoice")}</SelectItem>
+                <SelectItem value="delivery_note">{t("export-page.types.delivery_note")}</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
         </div>
 
         <div className="space-y-2">

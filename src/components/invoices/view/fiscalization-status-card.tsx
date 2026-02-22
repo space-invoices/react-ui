@@ -91,20 +91,22 @@ export function FiscalizationStatusCard({
 
   const bodyContent = (
     <>
-      <div className="text-muted-foreground text-sm">
-        {label} &middot;{" "}
-        {fiscalizationData.fiscalized_at && new Date(fiscalizationData.fiscalized_at).toLocaleString(locale)}
-      </div>
+      {fiscalizationData.status === "skipped" ? (
+        <div className="text-muted-foreground text-sm">
+          {label} &middot; {t("Skipped by user")}
+        </div>
+      ) : (
+        <div className="text-muted-foreground text-sm">
+          {label} &middot;{" "}
+          {fiscalizationData.fiscalized_at && new Date(fiscalizationData.fiscalized_at).toLocaleString(locale)}
+        </div>
+      )}
 
       {fiscalizationData.status === "failed" && fiscalizationData.error && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription className="text-sm">{fiscalizationData.error}</AlertDescription>
         </Alert>
-      )}
-
-      {fiscalizationData.status === "skipped" && (fiscalizationData as any).data?.reason && (
-        <div className="text-muted-foreground text-sm">{(fiscalizationData as any).data.reason}</div>
       )}
 
       {fiscalizationData.status === "failed" && onRetry && (

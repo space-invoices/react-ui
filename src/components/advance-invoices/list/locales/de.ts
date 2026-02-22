@@ -47,4 +47,8 @@ export default {
   "FINA fiscalization failed": "FINA fiscalization failed",
   "Retry Fiscalization": "Retry Fiscalization",
   "Some selected documents don't have failed fiscalization": "Some selected documents don't have failed fiscalization",
+  "Copy to Invoice": "In Rechnung kopieren",
+  Void: "Stornieren",
+  "Cannot void an advance invoice linked to an invoice":
+    "Stornierung einer mit einer Rechnung verknüpften Anzahlungsrechnung nicht möglich",
 } as const;

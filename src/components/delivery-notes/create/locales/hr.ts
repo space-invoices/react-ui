@@ -46,4 +46,20 @@ export default {
   "Gross price (tax included)": "Bruto cijena (s porezom)",
   "Net price (before tax)": "Neto cijena (prije poreza)",
   "Hide prices": "Sakrij cijene",
+  // Separator items
+  "Add separator": "Dodaj separator",
+  "Section header": "Naslov odjeljka",
+  "Section title...": "Naslov odjeljka...",
+  // Transaction type
+  "Transaction type": "Vrsta transakcije",
+  Domestic: "Domaća",
+  "EU B2B": "EU B2B",
+  "EU B2C": "EU B2C",
+  Export: "Izvoz",
+  "Determining transaction type...": "Određivanje vrste transakcije...",
+  "This invoice will not be fiscalized (non-domestic transaction)":
+    "Ovaj račun neće biti fiskaliziran (nedomaća transakcija)",
+  "Tax Clause": "Porezna klauzula",
+  "Add tax clause...": "Dodajte poreznu klauzulu...",
+  "Reverse charge - tax exempt EU B2B sale": "Prijenos porezne obveze - porezno oslobođena EU B2B prodaja",
 } as const;

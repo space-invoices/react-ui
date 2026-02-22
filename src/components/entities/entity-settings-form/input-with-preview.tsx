@@ -17,9 +17,10 @@ interface InputWithPreviewProps {
 }
 
 function formatVariableName(varName: string): string {
-  // Convert snake_case to Title Case with spaces
-  // e.g., "document_number" -> "Document Number"
+  // Convert snake_case (with optional dot notation) to Title Case with spaces
+  // e.g., "document_number" -> "Document Number", "bank_account.iban" -> "Bank Account Iban"
   return varName
+    .replace(/\./g, "_")
     .split("_")
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
     .join(" ");
@@ -77,6 +78,33 @@ function getVariableValue(varName: string, entity: Entity, document?: Invoice | 
       if (varName === "customer_email") return (document.customer as any).email || null;
     }
   }
+
+  // Bank account variables (from entity settings)
+  const bankAccounts = (entity.settings as any)?.bank_accounts as
+    | Array<{
+        iban?: string;
+        bank_name?: string;
+        bic?: string;
+        account_number?: string;
+        routing_number?: string;
+        sort_code?: string;
+        is_default?: boolean;
+      }>
+    | undefined;
+  const bankAccount = bankAccounts?.find((acc) => acc.is_default) ?? bankAccounts?.[0];
+
+  if (varName === "bank_account" && bankAccount) {
+    const lines: string[] = [];
+    if (bankAccount.bank_name) lines.push(bankAccount.bank_name);
+    if (bankAccount.iban) lines.push(`IBAN: ${bankAccount.iban}`);
+    else if (bankAccount.account_number) lines.push(`Account: ${bankAccount.account_number}`);
+    if (bankAccount.bic) lines.push(`BIC: ${bankAccount.bic}`);
+    return lines.join(", ") || null;
+  }
+  if (varName === "bank_account.iban") return bankAccount?.iban || null;
+  if (varName === "bank_account.bank_name") return bankAccount?.bank_name || null;
+  if (varName === "bank_account.bic") return bankAccount?.bic || null;
+  if (varName === "bank_account.account_number") return bankAccount?.account_number || null;
 
   // Return null for unavailable variables - they will show as placeholders
   return null;

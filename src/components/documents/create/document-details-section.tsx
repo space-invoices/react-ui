@@ -2,9 +2,10 @@
  * Shared document details section for invoices and estimates
  * Handles: number, date, and document-type-specific date field (date_due or date_valid_till)
  */
-import type { Entity, Estimate, Invoice } from "@spaceinvoices/js-sdk";
-import { CalendarIcon } from "lucide-react";
+import type { Entity, Estimate, Invoice, ViesCheckResponse } from "@spaceinvoices/js-sdk";
+import { CalendarIcon, Globe, Info, Loader2 } from "lucide-react";
 import { useRef, useState } from "react";
+import { Badge } from "@/ui/components/ui/badge";
 import { Button } from "@/ui/components/ui/button";
 import { Calendar } from "@/ui/components/ui/calendar";
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/ui/components/ui/form";
@@ -593,6 +594,125 @@ export function DocumentNoteField({
                   value={field.value || ""}
                   placeholder={showPreview ? "" : t("Add payment instructions, terms, or other notes...")}
                   rows={5}
+                  className={cn("resize-y", showPreview && "text-transparent caret-transparent")}
+                  onFocus={() => setIsFocused(true)}
+                  onBlur={() => setIsFocused(false)}
+                />
+                {showPreview && (
+                  <div className="pointer-events-none absolute inset-0 z-10 flex items-start overflow-hidden rounded-md border border-input bg-background px-3 py-2 shadow-xs">
+                    <div className="w-full whitespace-pre-wrap text-base md:text-sm">{preview}</div>
+                  </div>
+                )}
+              </div>
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        );
+      }}
+    />
+  );
+}
+
+/**
+ * Tax clause field component with smart code insertion button
+ * Similar to DocumentNoteField, auto-populated from entity settings based on transaction type
+ */
+type TransactionType = ViesCheckResponse["transaction_type"];
+
+const TRANSACTION_TYPE_LABELS: Record<NonNullable<TransactionType>, string> = {
+  domestic: "Domestic",
+  intra_eu_b2b: "EU B2B",
+  intra_eu_b2c: "EU B2C",
+  export: "Export",
+};
+
+const TRANSACTION_TYPE_VARIANTS: Record<NonNullable<TransactionType>, "secondary" | "default" | "outline"> = {
+  domestic: "secondary",
+  intra_eu_b2b: "default",
+  intra_eu_b2c: "outline",
+  export: "outline",
+};
+
+export function DocumentTaxClauseField({
+  control,
+  t,
+  entity,
+  document,
+  transactionType,
+  isTransactionTypeFetching,
+  isFinaNonDomestic,
+}: {
+  control: AnyControl;
+  t: (key: string) => string;
+  entity?: Entity | null;
+  document?: Partial<Invoice | Estimate> | null;
+  transactionType?: TransactionType;
+  isTransactionTypeFetching?: boolean;
+  isFinaNonDomestic?: boolean;
+}) {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [isFocused, setIsFocused] = useState(false);
+
+  const effectiveTransactionType = transactionType ?? "domestic";
+  const showTransactionInfo = true;
+
+  return (
+    <FormField
+      control={control}
+      name="tax_clause"
+      render={({ field }) => {
+        const hasContent = field.value;
+        const showPreview = !isFocused && hasContent && entity;
+        const preview = showPreview ? replaceTemplateVariablesForPreview(field.value || "", entity, document) : null;
+
+        return (
+          <FormItem>
+            <div className="flex items-center justify-between">
+              <FormLabel>{t("Tax Clause")}</FormLabel>
+              <SmartCodeInsertButton
+                textareaRef={textareaRef}
+                value={field.value || ""}
+                onInsert={(newValue) => field.onChange(newValue)}
+                t={t}
+              />
+            </div>
+            {showTransactionInfo && (
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-md border border-border/50 bg-muted/30 px-2.5 py-1.5 text-sm">
+                {isTransactionTypeFetching ? (
+                  <div className="flex items-center gap-1.5 text-muted-foreground">
+                    <Loader2 className="size-3.5 animate-spin" />
+                    <span>{t("Determining transaction type...")}</span>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex items-center gap-1.5">
+                      <Globe className="size-3.5 text-muted-foreground" />
+                      <span className="text-muted-foreground">{t("Transaction type")}:</span>
+                      <Badge variant={TRANSACTION_TYPE_VARIANTS[effectiveTransactionType]}>
+                        {t(TRANSACTION_TYPE_LABELS[effectiveTransactionType])}
+                      </Badge>
+                    </div>
+                    {isFinaNonDomestic && (
+                      <div className="flex items-center gap-1.5 text-muted-foreground">
+                        <Info className="size-3.5" />
+                        <span>{t("This invoice will not be fiscalized (non-domestic transaction)")}</span>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
+            <FormControl>
+              <div className="relative">
+                <Textarea
+                  {...field}
+                  ref={(e) => {
+                    field.ref(e);
+                    (textareaRef as React.MutableRefObject<HTMLTextAreaElement | null>).current = e;
+                  }}
+                  value={field.value || ""}
+                  placeholder={showPreview ? "" : t("Add tax clause...")}
+                  rows={3}
                   className={cn("resize-y", showPreview && "text-transparent caret-transparent")}
                   onFocus={() => setIsFocused(true)}
                   onBlur={() => setIsFocused(false)}

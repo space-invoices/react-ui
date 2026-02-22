@@ -52,6 +52,7 @@ type EstimateListTableProps = {
   onDownloadSuccess?: (fileName: string) => void;
   onDownloadError?: (error: string) => void;
   onExportSelected?: (documentIds: string[]) => void;
+  onCopyToInvoice?: (documentIds: string[]) => void;
   onCreateNew?: () => void;
 } & ListTableProps<Estimate>;
 
@@ -66,6 +67,7 @@ export default function EstimateListTable({
   onDownloadSuccess,
   onDownloadError,
   onExportSelected,
+  onCopyToInvoice,
   onCreateNew,
   ...i18nProps
 }: EstimateListTableProps) {
@@ -110,6 +112,12 @@ export default function EstimateListTable({
     }
   }, [selectedIds, onExportSelected]);
 
+  const handleCopyToInvoice = useCallback(() => {
+    if (selectedIds.size > 0 && onCopyToInvoice) {
+      onCopyToInvoice(Array.from(selectedIds));
+    }
+  }, [selectedIds, onCopyToInvoice]);
+
   const handleDeselectAll = useCallback(() => {
     setSelectedIds(new Set());
   }, []);
@@ -119,11 +127,12 @@ export default function EstimateListTable({
       <SelectionToolbar
         selectedCount={count}
         onExportPdfs={onExportSelected ? handleExportPdfs : undefined}
+        onCopyToInvoice={onCopyToInvoice ? handleCopyToInvoice : undefined}
         onDeselectAll={handleDeselectAll}
         t={t}
       />
     ),
-    [handleExportPdfs, handleDeselectAll, onExportSelected, t],
+    [handleExportPdfs, handleCopyToInvoice, handleDeselectAll, onExportSelected, onCopyToInvoice, t],
   );
 
   const columns: Column<Estimate>[] = useMemo(
@@ -209,7 +218,7 @@ export default function EstimateListTable({
       filterConfig={filterConfig}
       t={t}
       locale={i18nProps.locale}
-      selectable={!!onExportSelected}
+      selectable={!!(onExportSelected || onCopyToInvoice)}
       selectedIds={selectedIds}
       onSelectionChange={setSelectedIds}
       selectionToolbar={selectionToolbar}

@@ -44,7 +44,8 @@ const translations = { sl, de, it, fr, es, pt, nl, pl, hr } as const;
 
 type Document = Invoice | Estimate | CreditNote | AdvanceInvoice;
 
-const PDF_LOCALE_CODES = [
+/** Language options for PDF label translations (formatting always uses entity locale) */
+const PDF_LANGUAGE_CODES = [
   { label: "English", code: "en-US" },
   { label: "German", code: "de-DE" },
   { label: "Slovenian", code: "sl-SI" },
@@ -100,22 +101,6 @@ interface DocumentActionsBarProps extends ComponentTranslationProps {
   isVoiding?: boolean;
 }
 
-function getApiLocale(uiLanguage: string): string {
-  const localeMap: Record<string, string> = {
-    en: "en-US",
-    de: "de-DE",
-    sl: "sl-SI",
-    it: "it-IT",
-    fr: "fr-FR",
-    es: "es-ES",
-    pt: "pt-PT",
-    nl: "nl-NL",
-    pl: "pl-PL",
-    hr: "hr-HR",
-  };
-  return localeMap[uiLanguage] || "en-US";
-}
-
 export function DocumentActionsBar({
   document,
   documentType,
@@ -163,7 +148,7 @@ export function DocumentActionsBar({
   const shareableId = (document as Invoice).shareable_id;
   const shareUrl = shareableId ? `${window.location.origin}/public/invoices/${shareableId}` : null;
 
-  const handleDownloadPdf = (locale: string) => downloadPdf(document, documentType, locale);
+  const handleDownloadPdf = (language?: string) => downloadPdf(document, documentType, language);
   const handleDownloadEslog = () => downloadEslog(document, documentType);
 
   const handleCopyShareLink = async () => {
@@ -178,7 +163,6 @@ export function DocumentActionsBar({
     }
   };
 
-  const apiLocale = getApiLocale(currentLocale);
   const isDraft = (document as any).is_draft === true;
 
   return (
@@ -189,7 +173,7 @@ export function DocumentActionsBar({
           variant="outline"
           size="sm"
           disabled={isDownloadingPdf}
-          onClick={() => handleDownloadPdf(apiLocale)}
+          onClick={() => handleDownloadPdf()}
           className="cursor-pointer rounded-r-none"
         >
           {isDownloadingPdf ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
@@ -207,13 +191,9 @@ export function DocumentActionsBar({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            {PDF_LOCALE_CODES.map((locale) => (
-              <DropdownMenuItem
-                key={locale.code}
-                onClick={() => handleDownloadPdf(locale.code)}
-                className="cursor-pointer"
-              >
-                {t(locale.label)}
+            {PDF_LANGUAGE_CODES.map((lang) => (
+              <DropdownMenuItem key={lang.code} onClick={() => handleDownloadPdf(lang.code)} className="cursor-pointer">
+                {t(lang.label)}
               </DropdownMenuItem>
             ))}
           </DropdownMenuContent>

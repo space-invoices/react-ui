@@ -35,6 +35,7 @@ export default {
   "Service period": "Serviceperiode",
   "Valid until": "Geldig tot",
   Customer: "Klant",
+  Discount: "Korting",
   Subtotal: "Subtotaal",
   Tax: "Belasting",
   of: "van",

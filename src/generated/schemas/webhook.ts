@@ -49,6 +49,7 @@ const createWebhookSchemaDefinition = z.object({
         "advance_invoice.created",
         "advance_invoice.paid",
         "advance_invoice.applied",
+        "advance_invoice.voided",
         "advance_invoice.deleted",
         "advance_invoice.restored",
         "item.created",
@@ -87,6 +88,7 @@ const createWebhookSchemaDefinition = z.object({
         "delivery_note.created",
         "delivery_note.sent",
         "delivery_note.cancelled",
+        "delivery_note.voided",
         "delivery_note.deleted",
         "delivery_note.restored",
       ])
@@ -142,6 +144,7 @@ const updateWebhookSchemaDefinition = z
           "advance_invoice.created",
           "advance_invoice.paid",
           "advance_invoice.applied",
+          "advance_invoice.voided",
           "advance_invoice.deleted",
           "advance_invoice.restored",
           "item.created",
@@ -180,6 +183,7 @@ const updateWebhookSchemaDefinition = z
           "delivery_note.created",
           "delivery_note.sent",
           "delivery_note.cancelled",
+          "delivery_note.voided",
           "delivery_note.deleted",
           "delivery_note.restored",
         ])

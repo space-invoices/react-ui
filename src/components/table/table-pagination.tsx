@@ -16,7 +16,7 @@ export function Pagination({ prevCursor, nextCursor, onPageChange }: PaginationP
   const hasNext = Boolean(nextCursor);
 
   return (
-    <div className="flex items-center justify-end space-x-2">
+    <div className="flex items-center justify-start space-x-2">
       <Button
         variant="outline"
         size="sm"

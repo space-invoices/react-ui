@@ -17,8 +17,10 @@ import { useFormFooterRegistration } from "@/ui/providers/form-footer-context";
 import { CUSTOMERS_CACHE_KEY } from "../../customers/customers.hooks";
 import {
   DocumentDetailsSection,
+  DocumentFooterField,
   DocumentNoteField,
   DocumentPaymentTermsField,
+  DocumentSignatureField,
   DocumentTaxClauseField,
 } from "../../documents/create/document-details-section";
 import { DocumentItemsSection, type PriceModesMap } from "../../documents/create/document-items-section";
@@ -130,8 +132,8 @@ export default function CreateCreditNoteForm({
   const hasFinaPremises = activeFinaPremises.length > 0;
 
   // FINA premise/device selection state (no skip - all FINA credit notes must be fiscalized)
-  const [selectedFinaPremiseId, setSelectedFinaPremiseId] = useState<string | undefined>();
-  const [selectedFinaDeviceId, setSelectedFinaDeviceId] = useState<string | undefined>();
+  const [selectedFinaBusinessPremiseName, setSelectedFinaBusinessPremiseName] = useState<string | undefined>();
+  const [selectedFinaElectronicDeviceName, setSelectedFinaElectronicDeviceName] = useState<string | undefined>();
 
   // UI-only state (not part of API schema)
   const [markAsPaid, setMarkAsPaid] = useState(false);
@@ -201,22 +203,24 @@ export default function CreateCreditNoteForm({
 
   // Get active FINA devices for selected premise
   const activeFinaDevices = useMemo(() => {
-    if (!selectedFinaPremiseId) return [];
-    const premise = activeFinaPremises.find((p: any) => p.premise_id === selectedFinaPremiseId);
+    if (!selectedFinaBusinessPremiseName) return [];
+    const premise = activeFinaPremises.find((p: any) => p.business_premise_name === selectedFinaBusinessPremiseName);
     return premise?.Devices?.filter((d: any) => d.is_active) || [];
-  }, [activeFinaPremises, selectedFinaPremiseId]);
+  }, [activeFinaPremises, selectedFinaBusinessPremiseName]);
 
   // Initialize FINA selection from localStorage or first active combo
   useEffect(() => {
-    if (!isFinaEnabled || !hasFinaPremises || selectedFinaPremiseId) return;
+    if (!isFinaEnabled || !hasFinaPremises || selectedFinaBusinessPremiseName) return;
 
     const lastUsed = getLastUsedFinaCombo(entityId);
     if (lastUsed) {
-      const premise = activeFinaPremises.find((p: any) => p.premise_id === lastUsed.premise_id);
-      const device = premise?.Devices?.find((d: any) => d.device_id === lastUsed.device_id && d.is_active);
+      const premise = activeFinaPremises.find((p: any) => p.business_premise_name === lastUsed.business_premise_name);
+      const device = premise?.Devices?.find(
+        (d: any) => d.electronic_device_name === lastUsed.electronic_device_name && d.is_active,
+      );
       if (premise && device) {
-        setSelectedFinaPremiseId(lastUsed.premise_id);
-        setSelectedFinaDeviceId(lastUsed.device_id);
+        setSelectedFinaBusinessPremiseName(lastUsed.business_premise_name);
+        setSelectedFinaElectronicDeviceName(lastUsed.electronic_device_name);
         return;
       }
     }
@@ -224,30 +228,31 @@ export default function CreateCreditNoteForm({
     const firstPremise = activeFinaPremises[0];
     const firstDevice = firstPremise?.Devices?.find((d: any) => d.is_active);
     if (firstPremise && firstDevice) {
-      setSelectedFinaPremiseId(firstPremise.premise_id);
-      setSelectedFinaDeviceId(firstDevice.device_id);
+      setSelectedFinaBusinessPremiseName(firstPremise.business_premise_name);
+      setSelectedFinaElectronicDeviceName(firstDevice.electronic_device_name);
     }
-  }, [isFinaEnabled, hasFinaPremises, activeFinaPremises, entityId, selectedFinaPremiseId]);
+  }, [isFinaEnabled, hasFinaPremises, activeFinaPremises, entityId, selectedFinaBusinessPremiseName]);
 
   // When FINA premise changes, select first active device
   useEffect(() => {
-    if (!selectedFinaPremiseId) return;
-    const premise = activeFinaPremises.find((p: any) => p.premise_id === selectedFinaPremiseId);
+    if (!selectedFinaBusinessPremiseName) return;
+    const premise = activeFinaPremises.find((p: any) => p.business_premise_name === selectedFinaBusinessPremiseName);
     const firstDevice = premise?.Devices?.find((d: any) => d.is_active);
-    if (firstDevice && selectedFinaDeviceId !== firstDevice.device_id) {
+    if (firstDevice && selectedFinaElectronicDeviceName !== firstDevice.electronic_device_name) {
       const currentDeviceInPremise = premise?.Devices?.find(
-        (d: any) => d.device_id === selectedFinaDeviceId && d.is_active,
+        (d: any) => d.electronic_device_name === selectedFinaElectronicDeviceName && d.is_active,
       );
       if (!currentDeviceInPremise) {
-        setSelectedFinaDeviceId(firstDevice.device_id);
+        setSelectedFinaElectronicDeviceName(firstDevice.electronic_device_name);
       }
     }
-  }, [selectedFinaPremiseId, activeFinaPremises, selectedFinaDeviceId]);
+  }, [selectedFinaBusinessPremiseName, activeFinaPremises, selectedFinaElectronicDeviceName]);
 
   // FINA selection ready and active checks
   const isFinaSelectionReady =
-    !isFinaEnabled || !hasFinaPremises || (!!selectedFinaPremiseId && !!selectedFinaDeviceId);
-  const isFinaActive = isFinaEnabled && hasFinaPremises && selectedFinaPremiseId && selectedFinaDeviceId;
+    !isFinaEnabled || !hasFinaPremises || (!!selectedFinaBusinessPremiseName && !!selectedFinaElectronicDeviceName);
+  const isFinaActive =
+    isFinaEnabled && hasFinaPremises && selectedFinaBusinessPremiseName && selectedFinaElectronicDeviceName;
 
   // ============================================================================
   // Next Credit Note Number Preview
@@ -264,8 +269,9 @@ export default function CreateCreditNoteForm({
 
   // No header action for credit notes - FINA can't be skipped
 
-  // Get default payment terms from entity settings
+  // Get default payment terms and footer from entity settings
   const defaultPaymentTerms = (activeEntity?.settings as any)?.default_credit_note_payment_terms || "";
+  const defaultFooter = (activeEntity?.settings as any)?.document_footer || "";
 
   const form = useForm<CreateCreditNoteFormValues>({
     // Cast resolver to accept extended form type (includes UI-only fields)
@@ -300,9 +306,11 @@ export default function CreateCreditNoteForm({
             },
           ],
       currency_code: initialValues?.currency_code || activeEntity?.currency_code || "EUR",
+      reference: (initialValues as any)?.reference ?? "",
       note: initialValues?.note ?? "",
       tax_clause: (initialValues as any)?.tax_clause ?? "",
       payment_terms: initialValues?.payment_terms ?? defaultPaymentTerms,
+      footer: (initialValues as any)?.footer ?? defaultFooter,
     },
   });
 
@@ -374,10 +382,10 @@ export default function CreateCreditNoteForm({
         });
       }
       // Save FINA combo to localStorage on successful creation
-      if (isFinaActive && selectedFinaPremiseId && selectedFinaDeviceId) {
+      if (isFinaActive && selectedFinaBusinessPremiseName && selectedFinaElectronicDeviceName) {
         setLastUsedFinaCombo(entityId, {
-          premise_id: selectedFinaPremiseId,
-          device_id: selectedFinaDeviceId,
+          business_premise_name: selectedFinaBusinessPremiseName,
+          electronic_device_name: selectedFinaElectronicDeviceName,
         });
       }
       // Invalidate customers cache when a customer was created/linked
@@ -400,8 +408,16 @@ export default function CreateCreditNoteForm({
 
       // Build FINA options (skip for drafts; FINA can't be skipped)
       const finaOptions =
-        !isDraft && isFinaEnabled && !isFinaNonDomestic && selectedFinaPremiseId && selectedFinaDeviceId
-          ? { premise_id: selectedFinaPremiseId, device_id: selectedFinaDeviceId, payment_type: paymentTypes[0] }
+        !isDraft &&
+        isFinaEnabled &&
+        !isFinaNonDomestic &&
+        selectedFinaBusinessPremiseName &&
+        selectedFinaElectronicDeviceName
+          ? {
+              business_premise_name: selectedFinaBusinessPremiseName,
+              electronic_device_name: selectedFinaElectronicDeviceName,
+              payment_type: paymentTypes[0],
+            }
           : undefined;
 
       const payload = prepareDocumentSubmission(values, {
@@ -435,8 +451,8 @@ export default function CreateCreditNoteForm({
       originalCustomer,
       paymentTypes,
       selectedDeviceName,
-      selectedFinaDeviceId,
-      selectedFinaPremiseId,
+      selectedFinaElectronicDeviceName,
+      selectedFinaBusinessPremiseName,
       selectedPremiseName,
       showCustomerForm,
     ],
@@ -478,6 +494,14 @@ export default function CreateCreditNoteForm({
     if (entityDefaultPaymentTerms && !form.getValues("payment_terms")) {
       form.setValue("payment_terms", entityDefaultPaymentTerms);
     }
+    const entityDefaultFooter = (activeEntity?.settings as any)?.document_footer;
+    if (entityDefaultFooter && !form.getValues("footer")) {
+      form.setValue("footer", entityDefaultFooter);
+    }
+    const entityDefaultSignature = (activeEntity?.settings as any)?.default_document_signature;
+    if (entityDefaultSignature && !form.getValues("signature")) {
+      form.setValue("signature", entityDefaultSignature);
+    }
   }, [activeEntity, form]);
 
   // Auto-add tax field for tax subject entities
@@ -512,8 +536,10 @@ export default function CreateCreditNoteForm({
         customer: formValues.customer,
         items: transformedItems,
         currency_code: formValues.currency_code,
+        reference: formValues.reference,
         note: formValues.note,
         payment_terms: formValues.payment_terms,
+        signature: formValues.signature,
       };
       onChange(payload);
     }
@@ -607,12 +633,18 @@ export default function CreateCreditNoteForm({
             finaInline={
               isFinaEnabled && hasFinaPremises && !isFinaNonDomestic
                 ? {
-                    premises: activeFinaPremises.map((p: any) => ({ id: p.id, premise_id: p.premise_id })),
-                    devices: activeFinaDevices.map((d: any) => ({ id: d.id, device_id: d.device_id })),
-                    selectedPremise: selectedFinaPremiseId,
-                    selectedDevice: selectedFinaDeviceId,
-                    onPremiseChange: setSelectedFinaPremiseId,
-                    onDeviceChange: setSelectedFinaDeviceId,
+                    premises: activeFinaPremises.map((p: any) => ({
+                      id: p.id,
+                      business_premise_name: p.business_premise_name,
+                    })),
+                    devices: activeFinaDevices.map((d: any) => ({
+                      id: d.id,
+                      electronic_device_name: d.electronic_device_name,
+                    })),
+                    selectedPremise: selectedFinaBusinessPremiseName,
+                    selectedDevice: selectedFinaElectronicDeviceName,
+                    onPremiseChange: setSelectedFinaBusinessPremiseName,
+                    onDeviceChange: setSelectedFinaElectronicDeviceName,
                   }
                 : undefined
             }
@@ -675,6 +707,30 @@ export default function CreateCreditNoteForm({
         />
 
         <DocumentPaymentTermsField
+          control={form.control}
+          t={t}
+          entity={activeEntity}
+          document={{
+            number: formValues.number,
+            date: formValues.date,
+            currency_code: formValues.currency_code,
+            customer: formValues.customer as any,
+          }}
+        />
+
+        <DocumentSignatureField
+          control={form.control}
+          t={t}
+          entity={activeEntity}
+          document={{
+            number: formValues.number,
+            date: formValues.date,
+            currency_code: formValues.currency_code,
+            customer: formValues.customer as any,
+          }}
+        />
+
+        <DocumentFooterField
           control={form.control}
           t={t}
           entity={activeEntity}

@@ -35,6 +35,7 @@ export default {
   "Service period": "Razdoblje usluge",
   "Valid until": "Vrijedi do",
   Customer: "Kupac",
+  Discount: "Popust",
   Subtotal: "Međuzbroj",
   Tax: "Porez",
   of: "od",

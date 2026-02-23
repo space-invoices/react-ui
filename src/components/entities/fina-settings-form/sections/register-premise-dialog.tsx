@@ -24,7 +24,7 @@ import { Input } from "@/ui/components/ui/input";
 import { useCreateFinaPremise } from "../fina-settings.hooks";
 
 const createPremiseSchema = z.object({
-  premise_id: z
+  business_premise_name: z
     .string()
     .min(1, "Premise ID is required")
     .max(20)
@@ -53,7 +53,7 @@ export const RegisterFinaPremiseDialog: FC<RegisterFinaPremiseDialogProps> = ({
   const form = useForm<CreatePremiseForm>({
     resolver: zodResolver(createPremiseSchema),
     defaultValues: {
-      premise_id: "",
+      business_premise_name: "",
     },
   });
 
@@ -88,7 +88,7 @@ export const RegisterFinaPremiseDialog: FC<RegisterFinaPremiseDialogProps> = ({
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
             <FormField
               control={form.control}
-              name="premise_id"
+              name="business_premise_name"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>{t("Premise ID")}</FormLabel>

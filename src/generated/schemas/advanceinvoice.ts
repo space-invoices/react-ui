@@ -96,6 +96,7 @@ const createAdvanceInvoiceSchemaDefinition = z.object({
   ).optional(),
   note: z.union([z.string(), z.null()]).optional(),
   tax_clause: z.union([z.string(), z.null()]).optional(),
+  footer: z.union([z.string(), z.null()]).optional(),
   currency_code: z.string().max(3).optional(),
   metadata: z.union([z.record(z.string(), z.any()), z.null()]).optional(),
   date_due: z.union([z.string(), z.null()]).optional(),
@@ -228,6 +229,7 @@ const updateAdvanceInvoiceSchemaDefinition = z
       )
       .min(1),
     note: z.union([z.string(), z.null()]),
+    footer: z.union([z.string(), z.null()]),
     currency_code: z.string(),
     metadata: z.union([z.object({}).partial().passthrough(), z.null()]),
     change_reason: z.string().max(500),

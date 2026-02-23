@@ -39,6 +39,9 @@ export default {
   "Insert variable": "Variabele invoegen",
   "Add payment instructions, terms, or other notes...":
     "Voeg betalingsinstructies, voorwaarden of andere notities toe...",
+  // Signature field
+  Signature: "Handtekening",
+  "Add signature text...": "Handtekeningtekst toevoegen...",
   "Payment Terms": "Betalingsvoorwaarden",
   "Add payment terms...": "Voeg betalingsvoorwaarden toe...",
   Entity: "Bedrijf",
@@ -107,6 +110,14 @@ export default {
   "Advance invoice": "Voorschotfactuur",
   "FINA fiscalized invoices always use the current date":
     "FINA-gefiscaliseerde facturen gebruiken altijd de huidige datum",
+  // Due days selector
+  "On receipt": "Bij ontvangst",
+  "7 days": "7 dagen",
+  "14 days": "14 dagen",
+  "30 days": "30 dagen",
+  "60 days": "60 dagen",
+  "90 days": "90 dagen",
+  Custom: "Aangepast",
   "Service Date": "Servicedatum",
   "Single Date": "Enkele datum",
   "Date Range": "Datumbereik",
@@ -127,4 +138,6 @@ export default {
     "Deze factuur wordt niet gefiscaliseerd (niet-binnenlandse transactie)",
   "Tax Clause": "Belastingclausule",
   "Add tax clause...": "Belastingclausule toevoegen...",
+  Footer: "Voettekst",
+  "Add document footer...": "Documentvoettekst toevoegen...",
 } as const;

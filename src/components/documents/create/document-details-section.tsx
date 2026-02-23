@@ -3,11 +3,12 @@
  * Handles: number, date, and document-type-specific date field (date_due or date_valid_till)
  */
 import type { Entity, Estimate, Invoice, ViesCheckResponse } from "@spaceinvoices/js-sdk";
-import { CalendarIcon, Globe, Info, Loader2 } from "lucide-react";
+import { CalendarIcon, ChevronDown, Globe, Info, Loader2 } from "lucide-react";
 import { useRef, useState } from "react";
 import { Badge } from "@/ui/components/ui/badge";
 import { Button } from "@/ui/components/ui/button";
 import { Calendar } from "@/ui/components/ui/calendar";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/ui/components/ui/collapsible";
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/ui/components/ui/form";
 import { Input } from "@/ui/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/ui/components/ui/popover";
@@ -15,6 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/ui/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/ui/components/ui/tooltip";
 import { CURRENCY_CODES } from "@/ui/lib/constants";
+import { replaceTemplateVariablesForPreview } from "@/ui/lib/template-variables";
 import { cn } from "@/ui/lib/utils";
 import type { DocumentTypes } from "../types";
 import type { AnyControl } from "./form-types";
@@ -42,12 +44,12 @@ type FursInlineProps = {
 
 type FinaPremise = {
   id: string;
-  premise_id: string;
+  business_premise_name: string;
 };
 
 type FinaDevice = {
   id: string;
-  device_id: string;
+  electronic_device_name: string;
 };
 
 type FinaInlineProps = {
@@ -64,6 +66,22 @@ type ServiceDateProps = {
   onDateTypeChange: (type: "single" | "range") => void;
 };
 
+const DUE_DAYS_PRESETS = [0, 7, 14, 30, 60, 90] as const;
+
+type DueDaysProps = {
+  dueDaysType: number | "custom";
+  onDueDaysTypeChange: (type: number | "custom") => void;
+};
+
+const LABEL_WIDTH = "w-[6.5rem] shrink-0";
+
+function extractSequenceNumber(fullNumber: string, premise?: string, device?: string): string {
+  if (!fullNumber || (!premise && !device)) return fullNumber;
+  const parts = fullNumber.split(/[-/]/);
+  const filtered = parts.filter((part) => !(premise && part === premise) && !(device && part === device));
+  return filtered.join("") || fullNumber;
+}
+
 type DocumentDetailsSectionProps = {
   control: AnyControl;
   documentType: DocumentTypes;
@@ -72,6 +90,7 @@ type DocumentDetailsSectionProps = {
   fursInline?: FursInlineProps; // FURS premise/device inline with number
   finaInline?: FinaInlineProps; // FINA premise/device inline with number
   serviceDate?: ServiceDateProps; // Service date section (invoice only)
+  dueDays?: DueDaysProps; // Due days selector (invoice only)
 };
 
 export function DocumentDetailsSection({
@@ -82,6 +101,7 @@ export function DocumentDetailsSection({
   fursInline,
   finaInline,
   serviceDate,
+  dueDays,
 }: DocumentDetailsSectionProps) {
   // Determine the date field name based on document type
   // Delivery notes don't have a secondary date field
@@ -94,49 +114,124 @@ export function DocumentDetailsSection({
   const showFinaSelects = !!finaInline;
 
   return (
-    <div className="flex-1 space-y-4">
+    <div className="flex-1 space-y-3">
       <h2 className="font-bold text-xl">{t("Details")}</h2>
 
-      {/* Number field - with optional FURS premise/device inline (Premise | Device | Number) */}
+      {/* Number field - inline with optional FURS/FINA premise/device + sequence number */}
       <FormField
         control={control}
         name="number"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>{t("Number")} *</FormLabel>
-            {showFursSelects ? (
-              <div className="flex gap-2">
-                <Select
-                  value={fursInline.selectedPremise || ""}
-                  onValueChange={(v) => fursInline.onPremiseChange(v ?? undefined)}
-                >
-                  <SelectTrigger className="w-24">
-                    <SelectValue placeholder={t("Premise")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {fursInline.premises.map((premise) => (
-                      <SelectItem key={premise.id} value={premise.business_premise_name}>
-                        {premise.business_premise_name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Select
-                  value={fursInline.selectedDevice || ""}
-                  onValueChange={(v) => fursInline.onDeviceChange(v ?? undefined)}
-                  disabled={!fursInline.selectedPremise || fursInline.devices.length === 0}
-                >
-                  <SelectTrigger className="w-24">
-                    <SelectValue placeholder={t("Device")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {fursInline.devices.map((device) => (
-                      <SelectItem key={device.id} value={device.electronic_device_name}>
-                        {device.electronic_device_name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+            <div className="flex items-center gap-3">
+              <FormLabel className={LABEL_WIDTH}>{t("Number")} *</FormLabel>
+              {showFursSelects ? (
+                <div className="flex flex-1 items-center gap-2">
+                  <Select
+                    value={fursInline.selectedPremise || ""}
+                    onValueChange={(v) => fursInline.onPremiseChange(v ?? undefined)}
+                  >
+                    <SelectTrigger className="w-24">
+                      <SelectValue placeholder={t("Premise")} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {fursInline.premises.map((premise) => (
+                        <SelectItem key={premise.id} value={premise.business_premise_name}>
+                          {premise.business_premise_name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select
+                    value={fursInline.selectedDevice || ""}
+                    onValueChange={(v) => fursInline.onDeviceChange(v ?? undefined)}
+                    disabled={!fursInline.selectedPremise || fursInline.devices.length === 0}
+                  >
+                    <SelectTrigger className="w-24">
+                      <SelectValue placeholder={t("Device")} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {fursInline.devices.map((device) => (
+                        <SelectItem key={device.id} value={device.electronic_device_name}>
+                          {device.electronic_device_name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <FormControl>
+                        <Input
+                          disabled
+                          readOnly
+                          className="flex-1 text-right"
+                          value={extractSequenceNumber(
+                            field.value || "",
+                            fursInline.selectedPremise,
+                            fursInline.selectedDevice,
+                          )}
+                        />
+                      </FormControl>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{field.value || t("Number format can be changed in settings")}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+              ) : showFinaSelects ? (
+                <div className="flex flex-1 items-center gap-2">
+                  <Select
+                    value={finaInline.selectedPremise || ""}
+                    onValueChange={(v) => finaInline.onPremiseChange(v ?? undefined)}
+                  >
+                    <SelectTrigger className="w-24">
+                      <SelectValue placeholder={t("Premise")} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {finaInline.premises.map((premise) => (
+                        <SelectItem key={premise.id} value={premise.business_premise_name}>
+                          {premise.business_premise_name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select
+                    value={finaInline.selectedDevice || ""}
+                    onValueChange={(v) => finaInline.onDeviceChange(v ?? undefined)}
+                    disabled={!finaInline.selectedPremise || finaInline.devices.length === 0}
+                  >
+                    <SelectTrigger className="w-24">
+                      <SelectValue placeholder={t("Device")} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {finaInline.devices.map((device) => (
+                        <SelectItem key={device.id} value={device.electronic_device_name}>
+                          {device.electronic_device_name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <FormControl>
+                        <Input
+                          disabled
+                          readOnly
+                          className="flex-1 text-right"
+                          value={extractSequenceNumber(
+                            field.value || "",
+                            finaInline.selectedPremise,
+                            finaInline.selectedDevice,
+                          )}
+                        />
+                      </FormControl>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{field.value || t("Number format can be changed in settings")}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+              ) : (
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <FormControl>
@@ -147,63 +242,9 @@ export function DocumentDetailsSection({
                     <p>{t("Number format can be changed in settings")}</p>
                   </TooltipContent>
                 </Tooltip>
-              </div>
-            ) : showFinaSelects ? (
-              <div className="flex gap-2">
-                <Select
-                  value={finaInline.selectedPremise || ""}
-                  onValueChange={(v) => finaInline.onPremiseChange(v ?? undefined)}
-                >
-                  <SelectTrigger className="w-24">
-                    <SelectValue placeholder={t("Premise")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {finaInline.premises.map((premise) => (
-                      <SelectItem key={premise.id} value={premise.premise_id}>
-                        {premise.premise_id}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Select
-                  value={finaInline.selectedDevice || ""}
-                  onValueChange={(v) => finaInline.onDeviceChange(v ?? undefined)}
-                  disabled={!finaInline.selectedPremise || finaInline.devices.length === 0}
-                >
-                  <SelectTrigger className="w-24">
-                    <SelectValue placeholder={t("Device")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {finaInline.devices.map((device) => (
-                      <SelectItem key={device.id} value={device.device_id}>
-                        {device.device_id}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <FormControl>
-                      <Input {...field} disabled className="flex-1" />
-                    </FormControl>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>{t("Number format can be changed in settings")}</p>
-                  </TooltipContent>
-                </Tooltip>
-              </div>
-            ) : (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <FormControl>
-                    <Input {...field} disabled />
-                  </FormControl>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>{t("Number format can be changed in settings")}</p>
-                </TooltipContent>
-              </Tooltip>
-            )}
+              )}
+            </div>
+
             <FormMessage />
           </FormItem>
         )}
@@ -214,80 +255,29 @@ export function DocumentDetailsSection({
         name="date"
         render={({ field }) => (
           <FormItem>
-            <FormLabel className="">{t("Date")} *</FormLabel>
-            {showFinaSelects ? (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <FormControl>
-                    <Button variant="outline" disabled className="w-full pl-3 text-left font-normal">
-                      {new Date().toLocaleDateString()}
-                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                    </Button>
-                  </FormControl>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>{t("FINA fiscalized invoices always use the current date")}</p>
-                </TooltipContent>
-              </Tooltip>
-            ) : (
-              <Popover>
-                <PopoverTrigger asChild>
-                  <FormControl>
-                    <Button
-                      variant="outline"
-                      className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
-                    >
-                      {field.value ? new Date(field.value).toLocaleDateString() : <span>{t("Pick a date")}</span>}
-                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                    </Button>
-                  </FormControl>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={field.value ? new Date(field.value) : undefined}
-                    onSelect={(date) => field.onChange(date?.toISOString())}
-                    disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-            )}
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
-      {/* Service Date - Invoice only */}
-      {serviceDate && (
-        <FormField
-          control={control}
-          name="date_service"
-          render={({ field }) => (
-            <FormItem>
-              <div className="flex items-center justify-between">
-                <FormLabel>{t("Service Date")}</FormLabel>
-                <Select
-                  value={serviceDate.dateType}
-                  onValueChange={(v) => serviceDate.onDateTypeChange(v as "single" | "range")}
-                >
-                  <SelectTrigger className="h-7 w-auto gap-1 border-none px-2 font-normal text-xs shadow-none">
-                    <SelectValue>{serviceDate.dateType === "single" ? t("Single Date") : t("Date Range")}</SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="single">{t("Single Date")}</SelectItem>
-                    <SelectItem value="range">{t("Date Range")}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {serviceDate.dateType === "single" ? (
+            <div className="flex items-center gap-3">
+              <FormLabel className={LABEL_WIDTH}>{t("Date")} *</FormLabel>
+              {showFinaSelects ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <FormControl>
+                      <Button variant="outline" disabled className="flex-1 pl-3 text-left font-normal">
+                        {new Date().toLocaleDateString()}
+                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                      </Button>
+                    </FormControl>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{t("FINA fiscalized invoices always use the current date")}</p>
+                  </TooltipContent>
+                </Tooltip>
+              ) : (
                 <Popover>
                   <PopoverTrigger asChild>
                     <FormControl>
                       <Button
                         variant="outline"
-                        className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
+                        className={cn("flex-1 pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
                       >
                         {field.value ? new Date(field.value).toLocaleDateString() : <span>{t("Pick a date")}</span>}
                         <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
@@ -299,20 +289,52 @@ export function DocumentDetailsSection({
                       mode="single"
                       selected={field.value ? new Date(field.value) : undefined}
                       onSelect={(date) => field.onChange(date?.toISOString())}
+                      disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
                       initialFocus
                     />
                   </PopoverContent>
                 </Popover>
-              ) : (
-                <div className="grid grid-cols-2 gap-2">
+              )}
+            </div>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      {/* Service Date - select replaces label */}
+      {serviceDate && (
+        <FormField
+          control={control}
+          name="date_service"
+          render={({ field }) => (
+            <FormItem>
+              <div className="flex items-center gap-3">
+                <Select
+                  value={serviceDate.dateType}
+                  onValueChange={(v) => serviceDate.onDateTypeChange(v as "single" | "range")}
+                >
+                  <SelectTrigger
+                    className={cn(
+                      LABEL_WIDTH,
+                      "h-auto border-none p-0 font-medium text-sm shadow-none [&>svg]:ml-1 [&>svg]:size-3.5",
+                    )}
+                  >
+                    <SelectValue>{serviceDate.dateType === "single" ? t("Single Date") : t("Date Range")}</SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="single">{t("Single Date")}</SelectItem>
+                    <SelectItem value="range">{t("Date Range")}</SelectItem>
+                  </SelectContent>
+                </Select>
+                {serviceDate.dateType === "single" ? (
                   <Popover>
                     <PopoverTrigger asChild>
                       <FormControl>
                         <Button
                           variant="outline"
-                          className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
+                          className={cn("flex-1 pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
                         >
-                          {field.value ? new Date(field.value).toLocaleDateString() : <span>{t("From")}</span>}
+                          {field.value ? new Date(field.value).toLocaleDateString() : <span>{t("Pick a date")}</span>}
                           <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                         </Button>
                       </FormControl>
@@ -326,37 +348,61 @@ export function DocumentDetailsSection({
                       />
                     </PopoverContent>
                   </Popover>
-
-                  <FormField
-                    control={control}
-                    name="date_service_to"
-                    render={({ field: toField }) => (
-                      <Popover>
-                        <PopoverTrigger asChild>
+                ) : (
+                  <div className="grid flex-1 grid-cols-2 gap-2">
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
                           <Button
                             variant="outline"
-                            className={cn(
-                              "w-full pl-3 text-left font-normal",
-                              !toField.value && "text-muted-foreground",
-                            )}
+                            className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
                           >
-                            {toField.value ? new Date(toField.value).toLocaleDateString() : <span>{t("To")}</span>}
+                            {field.value ? new Date(field.value).toLocaleDateString() : <span>{t("From")}</span>}
                             <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                           </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={toField.value ? new Date(toField.value) : undefined}
-                            onSelect={(date) => toField.onChange(date?.toISOString())}
-                            initialFocus
-                          />
-                        </PopoverContent>
-                      </Popover>
-                    )}
-                  />
-                </div>
-              )}
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={field.value ? new Date(field.value) : undefined}
+                          onSelect={(date) => field.onChange(date?.toISOString())}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+
+                    <FormField
+                      control={control}
+                      name="date_service_to"
+                      render={({ field: toField }) => (
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              className={cn(
+                                "w-full pl-3 text-left font-normal",
+                                !toField.value && "text-muted-foreground",
+                              )}
+                            >
+                              {toField.value ? new Date(toField.value).toLocaleDateString() : <span>{t("To")}</span>}
+                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={toField.value ? new Date(toField.value) : undefined}
+                              onSelect={(date) => toField.onChange(date?.toISOString())}
+                              initialFocus
+                            />
+                          </PopoverContent>
+                        </Popover>
+                      )}
+                    />
+                  </div>
+                )}
+              </div>
               <FormMessage />
             </FormItem>
           )}
@@ -369,29 +415,60 @@ export function DocumentDetailsSection({
           name={dateFieldName}
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="">{dateFieldLabel}</FormLabel>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <FormControl>
-                    <Button
-                      variant="outline"
-                      className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
-                    >
-                      {field.value ? new Date(field.value).toLocaleDateString() : <span>{t("Pick a date")}</span>}
-                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                    </Button>
-                  </FormControl>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={field.value ? new Date(field.value) : undefined}
-                    onSelect={(date) => field.onChange(date?.toISOString())}
-                    disabled={(date) => date < new Date("1900-01-01")}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
+              <div className="flex items-center gap-3">
+                <FormLabel className={LABEL_WIDTH}>{dateFieldLabel}</FormLabel>
+                {documentType === "invoice" && dueDays && (
+                  <Select
+                    value={String(dueDays.dueDaysType)}
+                    onValueChange={(v) => dueDays.onDueDaysTypeChange(v === "custom" ? "custom" : Number(v))}
+                  >
+                    <SelectTrigger className="h-8 w-auto shrink-0 gap-1 border-none px-2 text-xs shadow-none">
+                      <SelectValue>
+                        {dueDays.dueDaysType === "custom"
+                          ? t("Custom")
+                          : dueDays.dueDaysType === 0
+                            ? t("On receipt")
+                            : t(`${dueDays.dueDaysType} days`)}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {DUE_DAYS_PRESETS.map((days) => (
+                        <SelectItem key={days} value={String(days)}>
+                          {days === 0 ? t("On receipt") : t(`${days} days`)}
+                        </SelectItem>
+                      ))}
+                      <SelectItem value="custom">{t("Custom")}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <FormControl>
+                      <Button
+                        variant="outline"
+                        className={cn("flex-1 pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
+                      >
+                        {field.value ? new Date(field.value).toLocaleDateString() : <span>{t("Pick a date")}</span>}
+                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                      </Button>
+                    </FormControl>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={field.value ? new Date(field.value) : undefined}
+                      onSelect={(date) => {
+                        field.onChange(date?.toISOString());
+                        if (dueDays && dueDays.dueDaysType !== "custom") {
+                          dueDays.onDueDaysTypeChange("custom");
+                        }
+                      }}
+                      disabled={(date) => date < new Date("1900-01-01")}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
               <FormMessage />
             </FormItem>
           )}
@@ -400,24 +477,42 @@ export function DocumentDetailsSection({
 
       <FormField
         control={control}
+        name="reference"
+        render={({ field }) => (
+          <FormItem>
+            <div className="flex items-center gap-3">
+              <FormLabel className={LABEL_WIDTH}>{t("Reference")}</FormLabel>
+              <FormControl>
+                <Input {...field} value={field.value || ""} placeholder={t("e.g., PO-2024-001")} />
+              </FormControl>
+            </div>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={control}
         name="currency_code"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>{t("Currency")} *</FormLabel>
-            <Select onValueChange={(value) => value && field.onChange(value)} value={field.value || ""}>
-              <FormControl>
-                <SelectTrigger className="h-10">
-                  <SelectValue placeholder={t("Select currency")} />
-                </SelectTrigger>
-              </FormControl>
-              <SelectContent>
-                {CURRENCY_CODES.map((currency) => (
-                  <SelectItem key={currency.value} value={currency.value}>
-                    {currency.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="flex items-center gap-3">
+              <FormLabel className={LABEL_WIDTH}>{t("Currency")} *</FormLabel>
+              <Select onValueChange={(value) => value && field.onChange(value)} value={field.value || ""}>
+                <FormControl>
+                  <SelectTrigger className="h-10 flex-1">
+                    <SelectValue placeholder={t("Select currency")} />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {CURRENCY_CODES.map((currency) => (
+                    <SelectItem key={currency.value} value={currency.value}>
+                      {currency.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <FormMessage />
           </FormItem>
         )}
@@ -433,122 +528,6 @@ export function DocumentDetailsSection({
  * Note field component with smart code insertion button
  * Exported for use in document forms (placed after items section)
  */
-// Helper functions for template variable replacement (shared with InputWithPreview)
-function formatVariableName(varName: string): string {
-  return varName
-    .split("_")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-    .join(" ");
-}
-
-function getVariableValue(
-  varName: string,
-  entity?: Entity | null,
-  document?: Partial<Invoice | Estimate> | null,
-): string | null {
-  if (!entity) return null;
-
-  // Entity-related variables
-  if (varName === "entity_name") return entity.name || null;
-  if (varName === "entity_email") return (entity.settings as any)?.email || null;
-
-  // Date variables
-  if (varName === "current_date") {
-    return new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
-  }
-  if (varName === "current_year") return new Date().getFullYear().toString();
-
-  // Document-specific variables
-  if (document) {
-    if (varName === "document_number") return (document as any).number || null;
-    if (varName === "document_date" && (document as any).date) {
-      return new Date((document as any).date).toLocaleDateString("en-US", {
-        month: "long",
-        day: "numeric",
-        year: "numeric",
-      });
-    }
-    if (varName === "document_total" && (document as any).total_with_tax) {
-      return new Intl.NumberFormat("en-US", {
-        style: "currency",
-        currency: (document as any).currency_code || "USD",
-      }).format(Number((document as any).total_with_tax));
-    }
-    if (varName === "document_currency") return (document as any).currency_code || null;
-
-    // Invoice due date
-    if (varName === "document_due_date" && (document as any).date_due) {
-      return new Date((document as any).date_due).toLocaleDateString("en-US", {
-        month: "long",
-        day: "numeric",
-        year: "numeric",
-      });
-    }
-
-    // Estimate valid until
-    if (varName === "document_valid_until" && (document as any).date_valid_till) {
-      return new Date((document as any).date_valid_till).toLocaleDateString("en-US", {
-        month: "long",
-        day: "numeric",
-        year: "numeric",
-      });
-    }
-
-    // Customer variables
-    if ((document as any).customer) {
-      if (varName === "customer_name") return (document as any).customer.name || null;
-      if (varName === "customer_email") return (document as any).customer.email || null;
-    }
-  }
-
-  return null;
-}
-
-function replaceTemplateVariablesForPreview(
-  template: string,
-  entity?: Entity | null,
-  document?: Partial<Invoice | Estimate> | null,
-): React.ReactNode[] {
-  if (!template) return [];
-
-  const parts: React.ReactNode[] = [];
-  const regex = /\{([^}]+)\}/g;
-  let lastIndex = 0;
-  let match: RegExpExecArray | null = null;
-
-  match = regex.exec(template);
-  while (match !== null) {
-    if (match.index > lastIndex) {
-      parts.push(template.slice(lastIndex, match.index));
-    }
-
-    const varName = match[1];
-    const actualValue = getVariableValue(varName, entity, document);
-    const displayValue = actualValue || formatVariableName(varName);
-
-    parts.push(
-      <span
-        key={match.index}
-        className={cn(
-          "rounded px-1.5 py-0.5 font-medium text-xs",
-          actualValue ? "bg-secondary text-secondary-foreground" : "bg-primary/10 text-primary",
-        )}
-      >
-        {displayValue}
-      </span>,
-    );
-
-    lastIndex = regex.lastIndex;
-    match = regex.exec(template);
-  }
-
-  if (lastIndex < template.length) {
-    parts.push(template.slice(lastIndex));
-  }
-
-  return parts;
-}
-
 export function DocumentNoteField({
   control,
   t,
@@ -733,6 +712,74 @@ export function DocumentTaxClauseField({
 }
 
 /**
+ * Signature field component with smart code insertion button
+ * Wrapped in a collapsible for a clean form layout
+ */
+export function DocumentSignatureField({
+  control,
+  t,
+  entity,
+  document,
+}: {
+  control: AnyControl;
+  t: (key: string) => string;
+  entity?: Entity | null;
+  document?: Partial<Invoice | Estimate> | null;
+}) {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [isFocused, setIsFocused] = useState(false);
+
+  return (
+    <FormField
+      control={control}
+      name="signature"
+      render={({ field }) => {
+        const hasContent = field.value;
+        const showPreview = !isFocused && hasContent && entity;
+        const preview = showPreview ? replaceTemplateVariablesForPreview(field.value || "", entity, document) : null;
+
+        return (
+          <FormItem>
+            <div className="flex items-center justify-between">
+              <FormLabel>{t("Signature")}</FormLabel>
+              <SmartCodeInsertButton
+                textareaRef={textareaRef}
+                value={field.value || ""}
+                onInsert={(newValue) => field.onChange(newValue)}
+                t={t}
+              />
+            </div>
+            <FormControl>
+              <div className="relative">
+                <Textarea
+                  {...field}
+                  ref={(e) => {
+                    field.ref(e);
+                    (textareaRef as React.MutableRefObject<HTMLTextAreaElement | null>).current = e;
+                  }}
+                  value={field.value || ""}
+                  placeholder={showPreview ? "" : t("Add signature text...")}
+                  rows={2}
+                  className={cn("resize-y", showPreview && "text-transparent caret-transparent")}
+                  onFocus={() => setIsFocused(true)}
+                  onBlur={() => setIsFocused(false)}
+                />
+                {showPreview && (
+                  <div className="pointer-events-none absolute inset-0 z-10 flex items-start overflow-hidden rounded-md border border-input bg-background px-3 py-2 shadow-xs">
+                    <div className="w-full whitespace-pre-wrap text-base md:text-sm">{preview}</div>
+                  </div>
+                )}
+              </div>
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        );
+      }}
+    />
+  );
+}
+
+/**
  * Payment terms field component with smart code insertion button
  * Similar to DocumentNoteField, exported for use in document forms
  */
@@ -793,6 +840,85 @@ export function DocumentPaymentTermsField({
               </div>
             </FormControl>
             <FormMessage />
+          </FormItem>
+        );
+      }}
+    />
+  );
+}
+
+/**
+ * Footer field component with collapsible wrapper and smart code insertion button
+ * Collapsed by default, opens if content exists
+ */
+export function DocumentFooterField({
+  control,
+  t,
+  entity,
+  document,
+}: {
+  control: AnyControl;
+  t: (key: string) => string;
+  entity?: Entity | null;
+  document?: Partial<Invoice | Estimate> | null;
+}) {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [isFocused, setIsFocused] = useState(false);
+
+  return (
+    <FormField
+      control={control}
+      name="footer"
+      render={({ field }) => {
+        const hasContent = field.value;
+        const showPreview = !isFocused && hasContent && entity;
+        const preview = showPreview ? replaceTemplateVariablesForPreview(field.value || "", entity, document) : null;
+
+        return (
+          <FormItem>
+            <Collapsible defaultOpen={!!hasContent}>
+              <div className="flex items-center justify-between">
+                <CollapsibleTrigger asChild>
+                  <button type="button" className="flex items-center gap-1 font-medium text-sm">
+                    <ChevronDown className="size-4 transition-transform [[data-panel-hidden]_&]:-rotate-90 [[data-panel-open]_&]:rotate-0" />
+                    {t("Footer")}
+                  </button>
+                </CollapsibleTrigger>
+                <div className="[[data-panel-hidden]_&]:hidden">
+                  <SmartCodeInsertButton
+                    textareaRef={textareaRef}
+                    value={field.value || ""}
+                    onInsert={(newValue) => field.onChange(newValue)}
+                    t={t}
+                  />
+                </div>
+              </div>
+              <CollapsibleContent className="mt-2">
+                <FormControl>
+                  <div className="relative">
+                    <Textarea
+                      {...field}
+                      ref={(e) => {
+                        field.ref(e);
+                        (textareaRef as React.MutableRefObject<HTMLTextAreaElement | null>).current = e;
+                      }}
+                      value={field.value || ""}
+                      placeholder={showPreview ? "" : t("Add document footer...")}
+                      rows={2}
+                      className={cn("resize-y", showPreview && "text-transparent caret-transparent")}
+                      onFocus={() => setIsFocused(true)}
+                      onBlur={() => setIsFocused(false)}
+                    />
+                    {showPreview && (
+                      <div className="pointer-events-none absolute inset-0 z-10 flex items-start overflow-hidden rounded-md border border-input bg-background px-3 py-2 shadow-xs">
+                        <div className="w-full whitespace-pre-wrap text-base md:text-sm">{preview}</div>
+                      </div>
+                    )}
+                  </div>
+                </FormControl>
+                <FormMessage />
+              </CollapsibleContent>
+            </Collapsible>
           </FormItem>
         );
       }}

@@ -161,12 +161,14 @@ export function prepareDocumentSubmission<T extends BaseDocumentValues>(
 
   // Build payload with date conversions
   // Destructure to exclude fields we handle explicitly (number is always server-generated)
-  const { number: _number, note, payment_terms, ...restValues } = values as any;
+  const { number: _number, note, payment_terms, reference, signature, ...restValues } = values as any;
   const payload: any = {
     ...restValues,
     ...(note?.trim() && { note: note.trim() }),
+    ...(reference?.trim() && { reference: reference.trim() }),
     // Advance invoices don't have payment terms - they are documents requesting payment
     ...(options.documentType !== "advance_invoice" && payment_terms?.trim() && { payment_terms: payment_terms.trim() }),
+    ...(signature?.trim() && { signature: signature.trim() }),
     date: values.date ? new Date(values.date) : undefined,
   };
 

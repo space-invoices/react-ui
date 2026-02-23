@@ -51,6 +51,7 @@ const defaultsSettingsSchema = z.object({
   default_credit_note_payment_terms: z.union([z.string(), z.null()]).optional(),
   // Shared
   document_footer: z.union([z.string(), z.null()]).optional(),
+  default_document_signature: z.union([z.string(), z.null()]).optional(),
 });
 
 type DefaultsSettingsSchema = z.infer<typeof defaultsSettingsSchema>;
@@ -89,6 +90,8 @@ export function DefaultsSettingsForm({
   const creditNotePaymentTermsRef = useRef<HTMLTextAreaElement>(null);
   // Ref for document footer (shared)
   const documentFooterRef = useRef<HTMLTextAreaElement>(null);
+  // Ref for document signature (shared)
+  const documentSignatureRef = useRef<HTMLTextAreaElement>(null);
 
   const form = useForm<DefaultsSettingsSchema>({
     resolver: zodResolver(defaultsSettingsSchema),
@@ -106,6 +109,7 @@ export function DefaultsSettingsForm({
       default_credit_note_payment_terms: currentSettings.default_credit_note_payment_terms || null,
       // Shared
       document_footer: currentSettings.document_footer || null,
+      default_document_signature: currentSettings.default_document_signature || null,
     },
   });
 
@@ -140,6 +144,7 @@ export function DefaultsSettingsForm({
         default_credit_note_payment_terms: values.default_credit_note_payment_terms || null,
         // Shared
         document_footer: values.document_footer || null,
+        default_document_signature: values.default_document_signature || null,
       },
     };
 
@@ -452,7 +457,39 @@ export function DefaultsSettingsForm({
 
   // Footer section content
   const footerContent = (
-    <div className="border-t pt-6">
+    <div className="space-y-6 border-t pt-6">
+      <FormField
+        control={form.control}
+        name="default_document_signature"
+        render={({ field }) => (
+          <FormItem>
+            <div className="flex items-center justify-between">
+              <FormLabel className="font-medium text-sm">{t("Document Signature")}</FormLabel>
+              <SmartCodeInsertButton
+                textareaRef={documentSignatureRef}
+                value={field.value || ""}
+                onInsert={(newValue) => field.onChange(newValue)}
+                t={t}
+              />
+            </div>
+            <FormControl>
+              <InputWithPreview
+                ref={documentSignatureRef}
+                value={field.value || ""}
+                onChange={field.onChange}
+                placeholder={t("{entity_name}")}
+                entity={entity}
+                multiline
+                rows={2}
+                className="resize-y"
+              />
+            </FormControl>
+            <FormDescription className="text-xs">{t("Signature text displayed on all PDF documents")}</FormDescription>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
       <FormField
         control={form.control}
         name="document_footer"

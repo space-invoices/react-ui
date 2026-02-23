@@ -29,6 +29,9 @@ export default {
   Device: "Apparaat",
   "FINA fiscalized invoices always use the current date":
     "FINA-gefiscaliseerde documenten gebruiken altijd de huidige datum",
+  // Signature field
+  Signature: "Handtekening",
+  "Add signature text...": "Handtekeningtekst toevoegen...",
   // Separator items
   "Add separator": "Scheidingslijn toevoegen",
   "Section header": "Sectiekop",
@@ -44,4 +47,6 @@ export default {
     "Deze factuur wordt niet gefiscaliseerd (niet-binnenlandse transactie)",
   "Tax Clause": "Belastingclausule",
   "Add tax clause...": "Belastingclausule toevoegen...",
+  Footer: "Voettekst",
+  "Add document footer...": "Documentvoettekst toevoegen...",
 } as const;

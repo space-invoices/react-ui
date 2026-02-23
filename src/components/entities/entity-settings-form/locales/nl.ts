@@ -105,6 +105,10 @@ export default {
   "Footer text displayed at the bottom of all PDF documents": "Voettekst weergegeven onderaan alle PDF-documenten",
   "{entity_name} | Due Date: {document_due_date} | Invoice #{document_number}":
     "{entity_name} | Vervaldatum: {document_due_date} | Factuur #{document_number}",
+  // Document signature
+  "Document Signature": "Documenthandtekening",
+  "Signature text displayed on all PDF documents": "Handtekeningtekst weergegeven op alle PDF-documenten",
+  "Add signature text...": "Handtekeningtekst toevoegen...",
   // Overdue Notifications section
   "Overdue Notifications": "Herinneringen voor achterstallige betalingen",
   "Automatically remind customers about overdue invoices": "Klanten automatisch herinneren aan achterstallige facturen",

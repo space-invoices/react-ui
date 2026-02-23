@@ -35,6 +35,7 @@ export default {
   "Service period": "Obdobje storitve",
   "Valid until": "Veljavno do",
   Customer: "Stranka",
+  Discount: "Popust",
   Subtotal: "Vmesni seštevek",
   Tax: "DDV",
   of: "od",

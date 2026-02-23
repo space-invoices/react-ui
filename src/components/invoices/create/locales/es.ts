@@ -38,6 +38,9 @@ export default {
   Note: "Nota",
   "Insert variable": "Insertar variable",
   "Add payment instructions, terms, or other notes...": "Añada instrucciones de pago, condiciones u otras notas...",
+  // Signature field
+  Signature: "Firma",
+  "Add signature text...": "Añadir texto de firma...",
   "Payment Terms": "Condiciones de pago",
   "Add payment terms...": "Añada condiciones de pago...",
   Entity: "Empresa",
@@ -106,6 +109,14 @@ export default {
   "Advance invoice": "Factura anticipada",
   "FINA fiscalized invoices always use the current date":
     "Las facturas fiscalizadas con FINA siempre usan la fecha actual",
+  // Due days selector
+  "On receipt": "Al recibir",
+  "7 days": "7 días",
+  "14 days": "14 días",
+  "30 days": "30 días",
+  "60 days": "60 días",
+  "90 days": "90 días",
+  Custom: "Personalizado",
   "Service Date": "Fecha de servicio",
   "Single Date": "Fecha única",
   "Date Range": "Rango de fechas",
@@ -126,4 +137,6 @@ export default {
     "Esta factura no será fiscalizada (transacción no nacional)",
   "Tax Clause": "Cláusula fiscal",
   "Add tax clause...": "Agregar cláusula fiscal...",
+  Footer: "Pie de página",
+  "Add document footer...": "Añadir pie de página del documento...",
 } as const;

@@ -148,6 +148,12 @@ export function DocumentDetailsCard({
 
       {/* Totals */}
       <div className="space-y-2 text-sm">
+        {document.total_discount != null && document.total_discount !== 0 && (
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">{t("Discount")}</span>
+            <span>{fmt(document.total_discount * sign)}</span>
+          </div>
+        )}
         <div className="flex justify-between">
           <span className="text-muted-foreground">{t("Subtotal")}</span>
           <span>{fmt(document.total * sign)}</span>

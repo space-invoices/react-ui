@@ -106,6 +106,10 @@ export default {
     "Testo del piè di pagina mostrato in fondo a tutti i documenti PDF",
   "{entity_name} | Due Date: {document_due_date} | Invoice #{document_number}":
     "{entity_name} | Scadenza: {document_due_date} | Fattura #{document_number}",
+  // Document signature
+  "Document Signature": "Firma del documento",
+  "Signature text displayed on all PDF documents": "Testo della firma visualizzato su tutti i documenti PDF",
+  "Add signature text...": "Aggiungi testo della firma...",
   // Overdue Notifications section
   "Overdue Notifications": "Notifiche di scadenza",
   "Automatically remind customers about overdue invoices": "Ricorda automaticamente ai clienti le fatture scadute",

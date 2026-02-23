@@ -3,7 +3,6 @@ import type {
   Entity,
   EntitySettings,
   EntitySettingsTaxClauseDefaults,
-  GetEntities200DataItem,
   TaxRules,
 } from "@spaceinvoices/js-sdk";
 import { ChevronDown, Globe, MessageSquareText } from "lucide-react";
@@ -50,7 +49,7 @@ type TaxRulesSettingsSchema = z.infer<typeof taxRulesSettingsSchema>;
 type SectionType = "tax-rules" | "tax-clauses";
 
 /** Entity type with country_rules included (from getEntities response) */
-type EntityWithRules = GetEntities200DataItem;
+type EntityWithRules = Entity;
 
 export type TaxRulesSettingsFormProps = {
   entity: EntityWithRules;

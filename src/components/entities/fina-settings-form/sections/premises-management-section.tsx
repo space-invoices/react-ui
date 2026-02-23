@@ -5,7 +5,7 @@ import type { FinaSectionType } from "../fina-settings-form";
 type FinaBusinessPremise = {
   id: string;
   entity_id: string;
-  premise_id: string;
+  business_premise_name: string;
   type: string;
   is_active: boolean;
   registered_at: Date | string | null;
@@ -13,7 +13,7 @@ type FinaBusinessPremise = {
   created_at: Date | string;
   Devices?: Array<{
     id: string;
-    device_id?: string;
+    electronic_device_name?: string;
   }>;
 };
 
@@ -174,7 +174,7 @@ export const PremisesManagementSection: FC<PremisesManagementSectionProps> = ({
                   <div className="flex items-start justify-between">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
-                        <CardTitle className="text-base">{premise.premise_id}</CardTitle>
+                        <CardTitle className="text-base">{premise.business_premise_name}</CardTitle>
                         <Badge variant={premise.is_active ? "default" : "secondary"}>
                           {premise.is_active ? t("Active") : t("Inactive")}
                         </Badge>
@@ -219,7 +219,7 @@ export const PremisesManagementSection: FC<PremisesManagementSectionProps> = ({
                           {premise.Devices.map((d) => (
                             <div key={d.id} className="flex items-center gap-1 rounded border px-2 py-1 text-xs">
                               <Cpu className="h-3 w-3 text-muted-foreground" />
-                              <span>{d.device_id || "?"}</span>
+                              <span>{d.electronic_device_name || "?"}</span>
                               {premise.is_active && (
                                 <button
                                   type="button"

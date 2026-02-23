@@ -27,6 +27,9 @@ export default {
   Premise: "Prostor",
   Device: "Uredaj",
   "FINA fiscalized invoices always use the current date": "FINA fiskalizirani dokumenti uvijek koriste trenutni datum",
+  // Signature field
+  Signature: "Potpis",
+  "Add signature text...": "Dodaj tekst potpisa...",
   // Separator items
   "Add separator": "Dodaj separator",
   "Section header": "Naslov odjeljka",
@@ -42,4 +45,6 @@ export default {
     "Ovaj račun neće biti fiskaliziran (nedomaća transakcija)",
   "Tax Clause": "Porezna klauzula",
   "Add tax clause...": "Dodajte poreznu klauzulu...",
+  Footer: "Podnožje",
+  "Add document footer...": "Dodajte podnožje dokumenta...",
 } as const;

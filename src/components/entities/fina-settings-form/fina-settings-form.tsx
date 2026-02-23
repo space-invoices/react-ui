@@ -178,6 +178,7 @@ export const FinaSettingsForm: FC<FinaSettingsFormProps> = ({
   const [formData, setFormData] = useState({
     enabled: false,
     numbering_sequence: "P" as "N" | "P",
+    unified_numbering: true,
     operator_oib: "",
     operator_label: "",
     u_sust_pdv: true,
@@ -189,6 +190,7 @@ export const FinaSettingsForm: FC<FinaSettingsFormProps> = ({
       setFormData({
         enabled: finaSettings.enabled || false,
         numbering_sequence: finaSettings.numbering_sequence || "P",
+        unified_numbering: finaSettings.unified_numbering !== false,
         operator_oib: finaSettings.operator_oib || "",
         operator_label: finaSettings.operator_label || "",
         u_sust_pdv: finaSettings.u_sust_pdv ?? true,
@@ -531,6 +533,19 @@ export const FinaSettingsForm: FC<FinaSettingsFormProps> = ({
                   <Label htmlFor="seq-n">{translate("Per Device (N)")}</Label>
                 </div>
               </RadioGroup>
+
+              <div className="mt-4 space-y-2">
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    checked={formData.unified_numbering}
+                    onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, unified_numbering: checked }))}
+                  />
+                  <Label>{translate("Unified document numbering")}</Label>
+                </div>
+                <p className="text-muted-foreground text-sm">
+                  {translate("Use the same numbering sequence for all documents, including non-fiscalized ones")}
+                </p>
+              </div>
             </div>,
           )}
 

@@ -174,7 +174,11 @@ export function useRegisterFinaElectronicDevice(
     ...options,
     mutationFn: async ({ entityId, premiseId, deviceId }) => {
       if (!sdk) throw new Error("SDK not initialized");
-      return sdk.finaDevices.registerFinaDevice(premiseId, { device_id: deviceId }, { entity_id: entityId });
+      return sdk.finaDevices.registerFinaDevice(
+        premiseId,
+        { electronic_device_name: deviceId },
+        { entity_id: entityId },
+      );
     },
     onSuccess: (data, variables, context) => {
       queryClient.invalidateQueries({

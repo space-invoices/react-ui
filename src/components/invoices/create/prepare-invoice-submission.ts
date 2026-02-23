@@ -9,8 +9,8 @@ type FursData = {
 };
 
 type FinaData = {
-  premise_id?: string;
-  device_id?: string;
+  business_premise_name?: string;
+  electronic_device_name?: string;
   payment_type?: string;
 };
 
@@ -77,10 +77,10 @@ export function prepareInvoiceSubmission(values: CreateInvoiceSchema, options: P
   }
 
   // Add FINA data if provided (FINA can't be skipped - all invoices must be fiscalized)
-  if (options.fina?.premise_id && options.fina.device_id) {
+  if (options.fina?.business_premise_name && options.fina.electronic_device_name) {
     (payload as any).fina = {
-      premise_id: options.fina.premise_id,
-      device_id: options.fina.device_id,
+      business_premise_name: options.fina.business_premise_name,
+      electronic_device_name: options.fina.electronic_device_name,
       ...(options.fina.payment_type && { payment_type: options.fina.payment_type }),
     };
   }

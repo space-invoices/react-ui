@@ -35,6 +35,7 @@ export default {
   "Service period": "Período de serviço",
   "Valid until": "Válido até",
   Customer: "Cliente",
+  Discount: "Desconto",
   Subtotal: "Subtotal",
   Tax: "Imposto",
   of: "de",

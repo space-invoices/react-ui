@@ -105,6 +105,10 @@ export default {
   "Footer text displayed at the bottom of all PDF documents": "Tekst podnožja prikazan na dnu svih PDF dokumenata",
   "{entity_name} | Due Date: {document_due_date} | Invoice #{document_number}":
     "{entity_name} | Dospijeće: {document_due_date} | Račun #{document_number}",
+  // Document signature
+  "Document Signature": "Potpis dokumenta",
+  "Signature text displayed on all PDF documents": "Tekst potpisa prikazan na svim PDF dokumentima",
+  "Add signature text...": "Dodaj tekst potpisa...",
   // Overdue Notifications section
   "Overdue Notifications": "Obavijesti o dospjelim računima",
   "Automatically remind customers about overdue invoices": "Automatski podsjećajte kupce o dospjelim računima",

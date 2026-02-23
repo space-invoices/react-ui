@@ -30,6 +30,9 @@ export default {
   Device: "Gerät",
   "FINA fiscalized invoices always use the current date":
     "FINA-fiskalisierte Dokumente verwenden immer das aktuelle Datum",
+  // Signature field
+  Signature: "Unterschrift",
+  "Add signature text...": "Unterschriftstext hinzufügen...",
   // Separator items
   "Add separator": "Trennzeile hinzufügen",
   "Section header": "Abschnittsüberschrift",
@@ -45,4 +48,6 @@ export default {
     "Diese Rechnung wird nicht fiskalisiert (nicht-inländische Transaktion)",
   "Tax Clause": "Steuerklausel",
   "Add tax clause...": "Steuerklausel hinzufügen...",
+  Footer: "Fußzeile",
+  "Add document footer...": "Dokumentfußzeile hinzufügen...",
 } as const;

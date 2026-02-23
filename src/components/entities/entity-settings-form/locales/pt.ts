@@ -105,6 +105,10 @@ export default {
     "Texto do rodapé apresentado na parte inferior de todos os documentos PDF",
   "{entity_name} | Due Date: {document_due_date} | Invoice #{document_number}":
     "{entity_name} | Vencimento: {document_due_date} | Fatura #{document_number}",
+  // Document signature
+  "Document Signature": "Assinatura do documento",
+  "Signature text displayed on all PDF documents": "Texto de assinatura exibido em todos os documentos PDF",
+  "Add signature text...": "Adicionar texto de assinatura...",
   // Overdue Notifications section
   "Overdue Notifications": "Notificações de atraso",
   "Automatically remind customers about overdue invoices":

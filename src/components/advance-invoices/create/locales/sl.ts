@@ -25,6 +25,9 @@ export default {
   Premise: "Poslovni prostor",
   Device: "Naprava",
   "FINA fiscalized invoices always use the current date": "FINA fiskalizirani dokumenti vedno uporabijo trenutni datum",
+  // Signature field
+  Signature: "Podpis",
+  "Add signature text...": "Dodaj besedilo podpisa...",
   // Separator items
   "Add separator": "Dodaj ločilnik",
   "Section header": "Naslov razdelka",
@@ -40,4 +43,6 @@ export default {
     "Ta račun ne bo fiskaliziran (nedomača transakcija)",
   "Tax Clause": "Davčna klavzula",
   "Add tax clause...": "Dodajte davčno klavzulo...",
+  Footer: "Noga dokumenta",
+  "Add document footer...": "Dodajte nogo dokumenta...",
 } as const;

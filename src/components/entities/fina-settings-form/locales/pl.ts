@@ -158,4 +158,7 @@ export default {
   "Your FINA operator information is needed to fiscalize this document. Please enter your operator details.":
     "Your FINA operator information is needed to fiscalize this document. Please enter your operator details.",
   "Save & Retry": "Save & Retry",
+  "Unified document numbering": "Jednolita numeracja dokumentów",
+  "Use the same numbering sequence for all documents, including non-fiscalized ones":
+    "Użyj tej samej sekwencji numeracji dla wszystkich dokumentów, w tym niefiskalizowanych",
 } as const;

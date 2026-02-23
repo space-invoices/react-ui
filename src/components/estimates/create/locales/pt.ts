@@ -34,6 +34,9 @@ export default {
   "Insert variable": "Inserir variável",
   "Add payment instructions, terms, or other notes...":
     "Adicione instruções de pagamento, condições ou outras notas...",
+  // Signature field
+  Signature: "Assinatura",
+  "Add signature text...": "Adicionar texto de assinatura...",
   "Payment Terms": "Condições de pagamento",
   "Add payment terms...": "Adicione condições de pagamento...",
   Quantity: "Quantidade",
@@ -70,5 +73,7 @@ export default {
     "Esta fatura não será fiscalizada (transação não nacional)",
   "Tax Clause": "Cláusula fiscal",
   "Add tax clause...": "Adicionar cláusula fiscal...",
+  Footer: "Rodapé",
+  "Add document footer...": "Adicionar rodapé do documento...",
   "Reverse charge - tax exempt EU B2B sale": "Autoliquidação - venda B2B UE isenta de imposto",
 } as const;

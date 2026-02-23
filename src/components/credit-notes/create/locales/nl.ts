@@ -39,6 +39,9 @@ export default {
   "Insert variable": "Variabele invoegen",
   "Add payment instructions, terms, or other notes...":
     "Voeg betalingsinstructies, voorwaarden of andere opmerkingen toe...",
+  // Signature field
+  Signature: "Handtekening",
+  "Add signature text...": "Handtekeningtekst toevoegen...",
   // Payment terms field
   "Payment Terms": "Betalingsvoorwaarden",
   "Add payment terms...": "Voeg betalingsvoorwaarden toe...",
@@ -90,5 +93,7 @@ export default {
     "Deze factuur wordt niet gefiscaliseerd (niet-binnenlandse transactie)",
   "Tax Clause": "Belastingclausule",
   "Add tax clause...": "Belastingclausule toevoegen...",
+  Footer: "Voettekst",
+  "Add document footer...": "Documentvoettekst toevoegen...",
   "Reverse charge - tax exempt EU B2B sale": "Verlegging - belastingvrijgestelde EU B2B verkoop",
 } as const;

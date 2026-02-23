@@ -27,6 +27,9 @@ export default {
   "Insert variable": "Variable einfügen",
   "Add payment instructions, terms, or other notes...":
     "Zahlungsanweisungen, Bedingungen oder andere Notizen hinzufügen...",
+  // Signature field
+  Signature: "Unterschrift",
+  "Add signature text...": "Unterschriftstext hinzufügen...",
   Quantity: "Menge",
   Price: "Preis",
   Unit: "Einheit",
@@ -62,5 +65,7 @@ export default {
     "Diese Rechnung wird nicht fiskalisiert (nicht-inländische Transaktion)",
   "Tax Clause": "Steuerklausel",
   "Add tax clause...": "Steuerklausel hinzufügen...",
+  Footer: "Fußzeile",
+  "Add document footer...": "Dokumentfußzeile hinzufügen...",
   "Reverse charge - tax exempt EU B2B sale": "Umkehrung der Steuerschuldnerschaft - steuerbefreiter EU B2B Verkauf",
 } as const;

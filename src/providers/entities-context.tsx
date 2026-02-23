@@ -1,9 +1,9 @@
-import type { GetEntities200DataItem } from "@spaceinvoices/js-sdk";
+import type { Entity as SDKEntity } from "@spaceinvoices/js-sdk";
 
 import { createContext, useContext } from "react";
 
 /** Entity type with country_rules included (from getEntities response) */
-export type Entity = GetEntities200DataItem;
+export type Entity = SDKEntity;
 
 export type EntityEnvironment = "live" | "sandbox";
 

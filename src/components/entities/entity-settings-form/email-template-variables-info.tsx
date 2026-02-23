@@ -12,6 +12,12 @@ const TEMPLATE_VARIABLES = [
     variables: [
       { name: "{entity_name}", description: "Your company or entity name" },
       { name: "{entity_email}", description: "Entity email address" },
+      { name: "{entity_address}", description: "Entity address" },
+      { name: "{entity_post_code}", description: "Entity post code" },
+      { name: "{entity_city}", description: "Entity city" },
+      { name: "{entity_country}", description: "Entity country" },
+      { name: "{entity_tax_number}", description: "Entity tax number" },
+      { name: "{entity_company_number}", description: "Entity company number" },
     ],
   },
   {

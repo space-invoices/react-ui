@@ -106,6 +106,10 @@ export default {
     "Tekst stopki wyświetlany na dole wszystkich dokumentów PDF",
   "{entity_name} | Due Date: {document_due_date} | Invoice #{document_number}":
     "{entity_name} | Termin: {document_due_date} | Faktura #{document_number}",
+  // Document signature
+  "Document Signature": "Podpis dokumentu",
+  "Signature text displayed on all PDF documents": "Tekst podpisu wyświetlany na wszystkich dokumentach PDF",
+  "Add signature text...": "Dodaj tekst podpisu...",
   // Overdue Notifications section
   "Overdue Notifications": "Powiadomienia o zaległych płatnościach",
   "Automatically remind customers about overdue invoices": "Automatycznie przypominaj klientom o zaległych fakturach",

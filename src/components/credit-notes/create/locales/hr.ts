@@ -38,6 +38,9 @@ export default {
   Note: "Napomena",
   "Insert variable": "Umetni varijablu",
   "Add payment instructions, terms, or other notes...": "Dodajte upute za placanje, uvjete ili druge napomene...",
+  // Signature field
+  Signature: "Potpis",
+  "Add signature text...": "Dodaj tekst potpisa...",
   // Payment terms field
   "Payment Terms": "Uvjeti placanja",
   "Add payment terms...": "Dodajte uvjete placanja...",
@@ -88,5 +91,7 @@ export default {
     "Ovaj račun neće biti fiskaliziran (nedomaća transakcija)",
   "Tax Clause": "Porezna klauzula",
   "Add tax clause...": "Dodajte poreznu klauzulu...",
+  Footer: "Podnožje",
+  "Add document footer...": "Dodajte podnožje dokumenta...",
   "Reverse charge - tax exempt EU B2B sale": "Prijenos porezne obveze - porezno oslobođena EU B2B prodaja",
 } as const;

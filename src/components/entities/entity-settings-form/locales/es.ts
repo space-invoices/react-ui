@@ -106,6 +106,10 @@ export default {
     "Texto del pie de página mostrado en la parte inferior de todos los documentos PDF",
   "{entity_name} | Due Date: {document_due_date} | Invoice #{document_number}":
     "{entity_name} | Vencimiento: {document_due_date} | Factura #{document_number}",
+  // Document signature
+  "Document Signature": "Firma del documento",
+  "Signature text displayed on all PDF documents": "Texto de firma mostrado en todos los documentos PDF",
+  "Add signature text...": "Añadir texto de firma...",
   // Overdue Notifications section
   "Overdue Notifications": "Notificaciones de vencimiento",
   "Automatically remind customers about overdue invoices":

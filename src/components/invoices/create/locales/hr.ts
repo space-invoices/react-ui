@@ -38,6 +38,9 @@ export default {
   Note: "Napomena",
   "Insert variable": "Umetni varijablu",
   "Add payment instructions, terms, or other notes...": "Dodajte upute za plaćanje, uvjete ili druge napomene...",
+  // Signature field
+  Signature: "Potpis",
+  "Add signature text...": "Dodaj tekst potpisa...",
   "Payment Terms": "Uvjeti plaćanja",
   "Add payment terms...": "Dodajte uvjete plaćanja...",
   Entity: "Tvrtka",
@@ -105,6 +108,14 @@ export default {
   "Credit note": "Odobrenje",
   "Advance invoice": "Avansni račun",
   "FINA fiscalized invoices always use the current date": "FINA fiskalizirani računi uvijek koriste trenutni datum",
+  // Due days selector
+  "On receipt": "Po primitku",
+  "7 days": "7 dana",
+  "14 days": "14 dana",
+  "30 days": "30 dana",
+  "60 days": "60 dana",
+  "90 days": "90 dana",
+  Custom: "Prilagođeno",
   "Service Date": "Datum usluge",
   "Single Date": "Datum",
   "Date Range": "Raspon datuma",
@@ -125,4 +136,6 @@ export default {
     "Ovaj račun neće biti fiskaliziran (nedomaća transakcija)",
   "Tax Clause": "Porezna klauzula",
   "Add tax clause...": "Dodajte poreznu klauzulu...",
+  Footer: "Podnožje",
+  "Add document footer...": "Dodajte podnožje dokumenta...",
 } as const;

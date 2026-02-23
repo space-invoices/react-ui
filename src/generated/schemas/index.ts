@@ -16,6 +16,7 @@ export * from './customestimate';
 export * from './custominvoice';
 export * from './deliverynote';
 export * from './entity';
+export * from './entityapikey';
 export * from './entityuserrole';
 export * from './estimate';
 export * from './finasettings';

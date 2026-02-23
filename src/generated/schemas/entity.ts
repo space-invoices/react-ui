@@ -30,7 +30,7 @@ const createEntitySchemaDefinition = z.object({
   settings: z
     .object({
       pdf_template: z.union([
-        z.enum(["modern", "classic", "minimal", "fashion"]),
+        z.enum(["modern", "classic", "condensed", "minimal", "fashion"]),
         z.null(),
       ]),
       number_formats: z.union([
@@ -90,7 +90,7 @@ const createEntitySchemaDefinition = z.object({
             operator_oib: z.string().min(11).max(11),
             operator_label: z.string(),
             u_sust_pdv: z.boolean().default(true),
-            numbering_sequence: z.enum(["N", "P"]).default("N"),
+            numbering_sequence: z.enum(["N", "P"]).default("P"),
             certificate_expiry: z.string(),
           })
           .partial()
@@ -181,7 +181,7 @@ const patchEntitySchemaDefinition = z
     settings: z
       .object({
         pdf_template: z.union([
-          z.enum(["modern", "classic", "minimal", "fashion"]),
+          z.enum(["modern", "classic", "condensed", "minimal", "fashion"]),
           z.null(),
         ]),
         number_formats: z.union([
@@ -241,7 +241,7 @@ const patchEntitySchemaDefinition = z
               operator_oib: z.string().min(11).max(11),
               operator_label: z.string(),
               u_sust_pdv: z.boolean().default(true),
-              numbering_sequence: z.enum(["N", "P"]).default("N"),
+              numbering_sequence: z.enum(["N", "P"]).default("P"),
               certificate_expiry: z.string(),
             })
             .partial()

@@ -29,6 +29,9 @@ export default {
   Premise: "Estabelecimento",
   Device: "Dispositivo",
   "FINA fiscalized invoices always use the current date": "Os documentos fiscalizados FINA usam sempre a data atual",
+  // Signature field
+  Signature: "Assinatura",
+  "Add signature text...": "Adicionar texto de assinatura...",
   // Separator items
   "Add separator": "Adicionar separador",
   "Section header": "Cabeçalho da secção",
@@ -44,4 +47,6 @@ export default {
     "Esta fatura não será fiscalizada (transação não nacional)",
   "Tax Clause": "Cláusula fiscal",
   "Add tax clause...": "Adicionar cláusula fiscal...",
+  Footer: "Rodapé",
+  "Add document footer...": "Adicionar rodapé do documento...",
 } as const;

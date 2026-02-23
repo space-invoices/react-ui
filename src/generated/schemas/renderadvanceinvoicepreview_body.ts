@@ -162,7 +162,7 @@ const CreateDocumentItem = z
     description: z.union([z.string(), z.null()]),
     price: z.number(),
     gross_price: z.number(),
-    quantity: z.union([z.number(), z.null()]),
+    quantity: z.number().gte(-140737488355328).lte(140737488355327),
     unit: z.union([z.string(), z.null()]),
     taxes: z.array(DocumentItemTax),
     discounts: z.array(LineDiscount).max(5),

@@ -19,8 +19,10 @@ import { useFormFooterRegistration } from "@/ui/providers/form-footer-context";
 import { CUSTOMERS_CACHE_KEY } from "../../customers/customers.hooks";
 import {
   DocumentDetailsSection,
+  DocumentFooterField,
   DocumentNoteField,
   DocumentPaymentTermsField,
+  DocumentSignatureField,
   DocumentTaxClauseField,
 } from "../../documents/create/document-details-section";
 import { DocumentItemsSection, type PriceModesMap } from "../../documents/create/document-items-section";
@@ -116,8 +118,9 @@ export default function CreateEstimateForm({
     enabled: !!entityId,
   });
 
-  // Get default payment terms from entity settings
+  // Get default payment terms and footer from entity settings
   const defaultPaymentTerms = (activeEntity?.settings as any)?.default_estimate_payment_terms || "";
+  const defaultFooter = (activeEntity?.settings as any)?.document_footer || "";
 
   const form = useForm<CreateEstimateFormValues>({
     resolver: zodResolver(createEstimateSchema) as Resolver<CreateEstimateFormValues>,
@@ -151,9 +154,11 @@ export default function CreateEstimateForm({
             },
           ],
       currency_code: initialValues?.currency_code || activeEntity?.currency_code || "EUR",
+      reference: (initialValues as any)?.reference ?? "",
       note: initialValues?.note ?? defaultEstimateNote,
       tax_clause: (initialValues as any)?.tax_clause ?? "",
       payment_terms: initialValues?.payment_terms ?? defaultPaymentTerms,
+      footer: (initialValues as any)?.footer ?? defaultFooter,
       date_valid_till:
         initialValues?.date_valid_till ||
         calculateDueDate(initialValues?.date || new Date().toISOString(), defaultEstimateValidDays),
@@ -188,6 +193,10 @@ export default function CreateEstimateForm({
     const entityDefaultNote = (activeEntity?.settings as any)?.default_estimate_note;
     if (entityDefaultNote && !form.getValues("note")) {
       form.setValue("note", entityDefaultNote);
+    }
+    const entityDefaultSignature = (activeEntity?.settings as any)?.default_document_signature;
+    if (entityDefaultSignature && !form.getValues("signature")) {
+      form.setValue("signature", entityDefaultSignature);
     }
     if (!initialValues?.date_valid_till) {
       const validDays = (activeEntity?.settings as any)?.default_estimate_valid_days ?? 30;
@@ -348,11 +357,15 @@ export default function CreateEstimateForm({
     secondaryAction,
   });
 
-  // Set default payment terms from entity settings when entity data is available
+  // Set default payment terms and footer from entity settings when entity data is available
   useEffect(() => {
     const entityDefaultPaymentTerms = (activeEntity?.settings as any)?.default_estimate_payment_terms;
     if (entityDefaultPaymentTerms && !form.getValues("payment_terms")) {
       form.setValue("payment_terms", entityDefaultPaymentTerms);
+    }
+    const entityDefaultFooter = (activeEntity?.settings as any)?.document_footer;
+    if (entityDefaultFooter && !form.getValues("footer")) {
+      form.setValue("footer", entityDefaultFooter);
     }
   }, [activeEntity, form]);
 
@@ -389,8 +402,10 @@ export default function CreateEstimateForm({
       customer: formValues.customer,
       items: transformedItems,
       currency_code: formValues.currency_code,
+      reference: formValues.reference,
       note: formValues.note,
       payment_terms: formValues.payment_terms,
+      signature: formValues.signature,
       title_type: titleType,
     };
     callback(payload);
@@ -466,6 +481,32 @@ export default function CreateEstimateForm({
         />
 
         <DocumentPaymentTermsField
+          control={form.control}
+          t={t}
+          entity={activeEntity}
+          document={{
+            number: formValues.number,
+            date: formValues.date,
+            date_valid_till: formValues.date_valid_till,
+            currency_code: formValues.currency_code,
+            customer: formValues.customer as any,
+          }}
+        />
+
+        <DocumentSignatureField
+          control={form.control}
+          t={t}
+          entity={activeEntity}
+          document={{
+            number: formValues.number,
+            date: formValues.date,
+            date_valid_till: formValues.date_valid_till,
+            currency_code: formValues.currency_code,
+            customer: formValues.customer as any,
+          }}
+        />
+
+        <DocumentFooterField
           control={form.control}
           t={t}
           entity={activeEntity}

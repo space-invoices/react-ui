@@ -116,8 +116,8 @@ export function setLastUsedFursCombo(entityId: string, combo: FursCombo): void {
 const FINA_LAST_USED_KEY = "hr:fina:last-used";
 
 export type FinaCombo = {
-  premise_id: string;
-  device_id: string;
+  business_premise_name: string;
+  electronic_device_name: string;
 };
 
 export function getLastUsedFinaCombo(entityId: string): FinaCombo | null {

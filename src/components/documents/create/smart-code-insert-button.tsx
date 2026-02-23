@@ -22,6 +22,12 @@ const TEMPLATE_VARIABLES = [
     variables: [
       { code: "{entity_name}", label: "Company name" },
       { code: "{entity_email}", label: "Email address" },
+      { code: "{entity_address}", label: "Address" },
+      { code: "{entity_post_code}", label: "Post code" },
+      { code: "{entity_city}", label: "City" },
+      { code: "{entity_country}", label: "Country" },
+      { code: "{entity_tax_number}", label: "Tax number" },
+      { code: "{entity_company_number}", label: "Company number" },
     ],
   },
   {

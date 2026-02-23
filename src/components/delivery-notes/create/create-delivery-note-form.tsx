@@ -18,7 +18,9 @@ import { useFormFooterRegistration } from "@/ui/providers/form-footer-context";
 import { CUSTOMERS_CACHE_KEY } from "../../customers/customers.hooks";
 import {
   DocumentDetailsSection,
+  DocumentFooterField,
   DocumentNoteField,
+  DocumentSignatureField,
   DocumentTaxClauseField,
 } from "../../documents/create/document-details-section";
 import { DocumentItemsSection, type PriceModesMap } from "../../documents/create/document-items-section";
@@ -95,6 +97,7 @@ export default function CreateDeliveryNoteForm({
 
   // Hide prices state (delivery note specific)
   const defaultHidePrices = (activeEntity?.settings as any)?.delivery_note_hide_prices ?? false;
+  const defaultFooter = (activeEntity?.settings as any)?.document_footer || "";
   const [hidePrices, setHidePrices] = useState<boolean>((initialValues as any)?.hide_prices ?? defaultHidePrices);
 
   // Fetch next delivery note number
@@ -134,8 +137,10 @@ export default function CreateDeliveryNoteForm({
             },
           ],
       currency_code: initialValues?.currency_code || activeEntity?.currency_code || "EUR",
+      reference: (initialValues as any)?.reference ?? "",
       note: initialValues?.note ?? "",
       tax_clause: (initialValues as any)?.tax_clause ?? "",
+      footer: (initialValues as any)?.footer ?? defaultFooter,
     },
   });
 
@@ -159,6 +164,14 @@ export default function CreateDeliveryNoteForm({
     }
   }, [nextNumberData?.number, form]);
 
+  // Set default footer from entity settings when entity data is available
+  useEffect(() => {
+    const entityDefaultFooter = (activeEntity?.settings as any)?.document_footer;
+    if (entityDefaultFooter && !form.getValues("footer")) {
+      form.setValue("footer", entityDefaultFooter);
+    }
+  }, [activeEntity, form]);
+
   // Auto-add tax field for tax subject entities
   useEffect(() => {
     if (activeEntity?.is_tax_subject) {
@@ -168,6 +181,14 @@ export default function CreateDeliveryNoteForm({
       }
     }
   }, [activeEntity?.is_tax_subject, form]);
+
+  // Set default signature from entity settings
+  useEffect(() => {
+    const entityDefaultSignature = (activeEntity?.settings as any)?.default_document_signature;
+    if (entityDefaultSignature && !form.getValues("signature")) {
+      form.setValue("signature", entityDefaultSignature);
+    }
+  }, [activeEntity, form]);
 
   const formValues = useWatch({
     control: form.control,
@@ -302,7 +323,9 @@ export default function CreateDeliveryNoteForm({
       customer: formValues.customer,
       items: transformedItems,
       currency_code: formValues.currency_code,
+      reference: formValues.reference,
       note: formValues.note,
+      signature: formValues.signature,
       hide_prices: hidePrices,
     };
     callback(payload);
@@ -385,6 +408,30 @@ export default function CreateDeliveryNoteForm({
           }}
           transactionType={transactionType}
           isTransactionTypeFetching={isViesFetching}
+        />
+
+        <DocumentSignatureField
+          control={form.control}
+          t={t}
+          entity={activeEntity}
+          document={{
+            number: formValues.number,
+            date: formValues.date,
+            currency_code: formValues.currency_code,
+            customer: formValues.customer as any,
+          }}
+        />
+
+        <DocumentFooterField
+          control={form.control}
+          t={t}
+          entity={activeEntity}
+          document={{
+            number: formValues.number,
+            date: formValues.date,
+            currency_code: formValues.currency_code,
+            customer: formValues.customer as any,
+          }}
         />
       </form>
     </Form>

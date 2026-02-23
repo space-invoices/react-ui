@@ -106,6 +106,10 @@ export default {
   "Footer text displayed at the bottom of all PDF documents": "Fußzeilentext am unteren Rand aller PDF-Dokumente",
   "{entity_name} | Due Date: {document_due_date} | Invoice #{document_number}":
     "{entity_name} | Fällig am: {document_due_date} | Rechnung #{document_number}",
+  // Document signature
+  "Document Signature": "Dokumentunterschrift",
+  "Signature text displayed on all PDF documents": "Unterschriftstext auf allen PDF-Dokumenten",
+  "Add signature text...": "Unterschriftstext hinzufügen...",
   // Overdue Notifications section
   "Overdue Notifications": "Überfälligkeits-Benachrichtigungen",
   "Automatically remind customers about overdue invoices": "Erinnern Sie Kunden automatisch an überfällige Rechnungen",

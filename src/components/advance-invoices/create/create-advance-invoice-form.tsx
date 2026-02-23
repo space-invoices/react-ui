@@ -21,7 +21,9 @@ import { useEntities } from "@/ui/providers/entities-context";
 import { useFormFooterRegistration } from "@/ui/providers/form-footer-context";
 import {
   DocumentDetailsSection,
+  DocumentFooterField,
   DocumentNoteField,
+  DocumentSignatureField,
   DocumentTaxClauseField,
 } from "../../documents/create/document-details-section";
 import { DocumentItemsSection, type PriceModesMap } from "../../documents/create/document-items-section";
@@ -107,6 +109,7 @@ export default function CreateAdvanceInvoiceForm({
   // Get default note from entity settings (use invoice defaults)
   // Note: Advance invoices don't have payment terms - they are documents requesting payment
   const defaultNote = (activeEntity?.settings as any)?.default_invoice_note || "";
+  const defaultFooter = (activeEntity?.settings as any)?.document_footer || "";
 
   // ============================================================================
   // FURS Settings & Premises
@@ -143,8 +146,8 @@ export default function CreateAdvanceInvoiceForm({
   const hasFinaPremises = activeFinaPremises.length > 0;
 
   // FINA premise/device selection state (no skip - all FINA invoices must be fiscalized)
-  const [selectedFinaPremiseId, setSelectedFinaPremiseId] = useState<string | undefined>();
-  const [selectedFinaDeviceId, setSelectedFinaDeviceId] = useState<string | undefined>();
+  const [selectedFinaBusinessPremiseName, setSelectedFinaBusinessPremiseName] = useState<string | undefined>();
+  const [selectedFinaElectronicDeviceName, setSelectedFinaElectronicDeviceName] = useState<string | undefined>();
 
   // UI-only state (not part of API schema)
   const [markAsPaid, setMarkAsPaid] = useState(true);
@@ -239,22 +242,24 @@ export default function CreateAdvanceInvoiceForm({
 
   // Get active FINA devices for selected premise
   const activeFinaDevices = useMemo(() => {
-    if (!selectedFinaPremiseId) return [];
-    const premise = activeFinaPremises.find((p: any) => p.premise_id === selectedFinaPremiseId);
+    if (!selectedFinaBusinessPremiseName) return [];
+    const premise = activeFinaPremises.find((p: any) => p.business_premise_name === selectedFinaBusinessPremiseName);
     return premise?.Devices?.filter((d: any) => d.is_active) || [];
-  }, [activeFinaPremises, selectedFinaPremiseId]);
+  }, [activeFinaPremises, selectedFinaBusinessPremiseName]);
 
   // Initialize FINA selection from localStorage or first active combo
   useEffect(() => {
-    if (!isFinaEnabled || !hasFinaPremises || selectedFinaPremiseId) return;
+    if (!isFinaEnabled || !hasFinaPremises || selectedFinaBusinessPremiseName) return;
 
     const lastUsed = getLastUsedFinaCombo(entityId);
     if (lastUsed) {
-      const premise = activeFinaPremises.find((p: any) => p.premise_id === lastUsed.premise_id);
-      const device = premise?.Devices?.find((d: any) => d.device_id === lastUsed.device_id && d.is_active);
+      const premise = activeFinaPremises.find((p: any) => p.business_premise_name === lastUsed.business_premise_name);
+      const device = premise?.Devices?.find(
+        (d: any) => d.electronic_device_name === lastUsed.electronic_device_name && d.is_active,
+      );
       if (premise && device) {
-        setSelectedFinaPremiseId(lastUsed.premise_id);
-        setSelectedFinaDeviceId(lastUsed.device_id);
+        setSelectedFinaBusinessPremiseName(lastUsed.business_premise_name);
+        setSelectedFinaElectronicDeviceName(lastUsed.electronic_device_name);
         return;
       }
     }
@@ -262,25 +267,25 @@ export default function CreateAdvanceInvoiceForm({
     const firstPremise = activeFinaPremises[0];
     const firstDevice = firstPremise?.Devices?.find((d: any) => d.is_active);
     if (firstPremise && firstDevice) {
-      setSelectedFinaPremiseId(firstPremise.premise_id);
-      setSelectedFinaDeviceId(firstDevice.device_id);
+      setSelectedFinaBusinessPremiseName(firstPremise.business_premise_name);
+      setSelectedFinaElectronicDeviceName(firstDevice.electronic_device_name);
     }
-  }, [isFinaEnabled, hasFinaPremises, activeFinaPremises, entityId, selectedFinaPremiseId]);
+  }, [isFinaEnabled, hasFinaPremises, activeFinaPremises, entityId, selectedFinaBusinessPremiseName]);
 
   // When FINA premise changes, select first active device
   useEffect(() => {
-    if (!selectedFinaPremiseId) return;
-    const premise = activeFinaPremises.find((p: any) => p.premise_id === selectedFinaPremiseId);
+    if (!selectedFinaBusinessPremiseName) return;
+    const premise = activeFinaPremises.find((p: any) => p.business_premise_name === selectedFinaBusinessPremiseName);
     const firstDevice = premise?.Devices?.find((d: any) => d.is_active);
-    if (firstDevice && selectedFinaDeviceId !== firstDevice.device_id) {
+    if (firstDevice && selectedFinaElectronicDeviceName !== firstDevice.electronic_device_name) {
       const currentDeviceInPremise = premise?.Devices?.find(
-        (d: any) => d.device_id === selectedFinaDeviceId && d.is_active,
+        (d: any) => d.electronic_device_name === selectedFinaElectronicDeviceName && d.is_active,
       );
       if (!currentDeviceInPremise) {
-        setSelectedFinaDeviceId(firstDevice.device_id);
+        setSelectedFinaElectronicDeviceName(firstDevice.electronic_device_name);
       }
     }
-  }, [selectedFinaPremiseId, activeFinaPremises, selectedFinaDeviceId]);
+  }, [selectedFinaBusinessPremiseName, activeFinaPremises, selectedFinaElectronicDeviceName]);
 
   const form = useForm<CreateAdvanceInvoiceFormValues>({
     // Cast resolver to accept extended form type (includes UI-only fields)
@@ -315,8 +320,10 @@ export default function CreateAdvanceInvoiceForm({
             },
           ],
       currency_code: initialValues?.currency_code || activeEntity?.currency_code || "EUR",
+      reference: (initialValues as any)?.reference ?? "",
       note: initialValues?.note ?? defaultNote,
       tax_clause: "",
+      footer: (initialValues as any)?.footer ?? defaultFooter,
     },
   });
 
@@ -339,8 +346,9 @@ export default function CreateAdvanceInvoiceForm({
 
   // FINA selection ready and active checks
   const isFinaSelectionReady =
-    !isFinaEnabled || !hasFinaPremises || (!!selectedFinaPremiseId && !!selectedFinaDeviceId);
-  const isFinaActive = isFinaEnabled && hasFinaPremises && selectedFinaPremiseId && selectedFinaDeviceId;
+    !isFinaEnabled || !hasFinaPremises || (!!selectedFinaBusinessPremiseName && !!selectedFinaElectronicDeviceName);
+  const isFinaActive =
+    isFinaEnabled && hasFinaPremises && selectedFinaBusinessPremiseName && selectedFinaElectronicDeviceName;
 
   // ============================================================================
   // Next Advance Invoice Number Preview
@@ -531,10 +539,10 @@ export default function CreateAdvanceInvoiceForm({
           electronic_device_name: selectedDeviceName,
         });
       }
-      if (isFinaActive && selectedFinaPremiseId && selectedFinaDeviceId) {
+      if (isFinaActive && selectedFinaBusinessPremiseName && selectedFinaElectronicDeviceName) {
         setLastUsedFinaCombo(entityId, {
-          premise_id: selectedFinaPremiseId,
-          device_id: selectedFinaDeviceId,
+          business_premise_name: selectedFinaBusinessPremiseName,
+          electronic_device_name: selectedFinaElectronicDeviceName,
         });
       }
       onSuccess?.(data);
@@ -580,8 +588,16 @@ export default function CreateAdvanceInvoiceForm({
 
       // Build FINA options (skip for drafts; FINA can't be skipped)
       const finaOptions =
-        !isDraft && isFinaEnabled && !isFinaNonDomestic && selectedFinaPremiseId && selectedFinaDeviceId
-          ? { premise_id: selectedFinaPremiseId, device_id: selectedFinaDeviceId, payment_type: paymentTypes[0] }
+        !isDraft &&
+        isFinaEnabled &&
+        !isFinaNonDomestic &&
+        selectedFinaBusinessPremiseName &&
+        selectedFinaElectronicDeviceName
+          ? {
+              business_premise_name: selectedFinaBusinessPremiseName,
+              electronic_device_name: selectedFinaElectronicDeviceName,
+              payment_type: paymentTypes[0],
+            }
           : undefined;
 
       const payload = prepareAdvanceInvoiceSubmission(values, {
@@ -612,8 +628,8 @@ export default function CreateAdvanceInvoiceForm({
       paymentTypes,
       selectedDeviceName,
       selectedPremiseName,
-      selectedFinaPremiseId,
-      selectedFinaDeviceId,
+      selectedFinaBusinessPremiseName,
+      selectedFinaElectronicDeviceName,
       showCustomerForm,
       skipFiscalization,
     ],
@@ -645,11 +661,19 @@ export default function CreateAdvanceInvoiceForm({
     },
   });
 
-  // Set default note from entity settings (advance invoices don't have payment terms)
+  // Set default note, footer, and signature from entity settings (advance invoices don't have payment terms)
   useEffect(() => {
     const entityDefaultNote = (activeEntity?.settings as any)?.default_invoice_note;
     if (entityDefaultNote && !form.getValues("note")) {
       form.setValue("note", entityDefaultNote);
+    }
+    const entityDefaultFooter = (activeEntity?.settings as any)?.document_footer;
+    if (entityDefaultFooter && !form.getValues("footer")) {
+      form.setValue("footer", entityDefaultFooter);
+    }
+    const entityDefaultSignature = (activeEntity?.settings as any)?.default_document_signature;
+    if (entityDefaultSignature && !form.getValues("signature")) {
+      form.setValue("signature", entityDefaultSignature);
     }
   }, [activeEntity, form]);
 
@@ -684,7 +708,9 @@ export default function CreateAdvanceInvoiceForm({
         customer: formValues.customer,
         items: transformedItems,
         currency_code: formValues.currency_code,
+        reference: formValues.reference,
         note: formValues.note,
+        signature: formValues.signature,
       };
       onChange(payload);
     }
@@ -797,12 +823,18 @@ export default function CreateAdvanceInvoiceForm({
             finaInline={
               isFinaEnabled && hasFinaPremises && !isFinaNonDomestic
                 ? {
-                    premises: activeFinaPremises.map((p: any) => ({ id: p.id, premise_id: p.premise_id })),
-                    devices: activeFinaDevices.map((d: any) => ({ id: d.id, device_id: d.device_id })),
-                    selectedPremise: selectedFinaPremiseId,
-                    selectedDevice: selectedFinaDeviceId,
-                    onPremiseChange: setSelectedFinaPremiseId,
-                    onDeviceChange: setSelectedFinaDeviceId,
+                    premises: activeFinaPremises.map((p: any) => ({
+                      id: p.id,
+                      business_premise_name: p.business_premise_name,
+                    })),
+                    devices: activeFinaDevices.map((d: any) => ({
+                      id: d.id,
+                      electronic_device_name: d.electronic_device_name,
+                    })),
+                    selectedPremise: selectedFinaBusinessPremiseName,
+                    selectedDevice: selectedFinaElectronicDeviceName,
+                    onPremiseChange: setSelectedFinaBusinessPremiseName,
+                    onDeviceChange: setSelectedFinaElectronicDeviceName,
                   }
                 : undefined
             }
@@ -863,6 +895,30 @@ export default function CreateAdvanceInvoiceForm({
           transactionType={transactionType}
           isTransactionTypeFetching={isViesFetching}
           isFinaNonDomestic={isFinaNonDomestic}
+        />
+
+        <DocumentSignatureField
+          control={form.control}
+          t={t}
+          entity={activeEntity}
+          document={{
+            number: formValues.number,
+            date: formValues.date,
+            currency_code: formValues.currency_code,
+            customer: formValues.customer as any,
+          }}
+        />
+
+        <DocumentFooterField
+          control={form.control}
+          t={t}
+          entity={activeEntity}
+          document={{
+            number: formValues.number,
+            date: formValues.date,
+            currency_code: formValues.currency_code,
+            customer: formValues.customer as any,
+          }}
         />
       </form>
     </Form>

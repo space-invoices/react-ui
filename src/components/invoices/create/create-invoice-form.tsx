@@ -22,8 +22,10 @@ import { useFormFooterRegistration } from "@/ui/providers/form-footer-context";
 import { CUSTOMERS_CACHE_KEY } from "../../customers/customers.hooks";
 import {
   DocumentDetailsSection,
+  DocumentFooterField,
   DocumentNoteField,
   DocumentPaymentTermsField,
+  DocumentSignatureField,
   DocumentTaxClauseField,
 } from "../../documents/create/document-details-section";
 import { DocumentItemsSection, type PriceModesMap } from "../../documents/create/document-items-section";
@@ -60,6 +62,8 @@ function calculateDueDate(dateIso: string, days: number): string {
   date.setDate(date.getDate() + days);
   return date.toISOString();
 }
+
+const DUE_DAYS_PRESETS = [0, 7, 14, 30, 60, 90] as const;
 
 const translations = {
   sl,
@@ -132,6 +136,7 @@ export default function CreateInvoiceForm({
   // Get default invoice note and payment terms from entity settings
   const defaultInvoiceNote = (activeEntity?.settings as any)?.default_invoice_note || "";
   const defaultPaymentTerms = (activeEntity?.settings as any)?.default_invoice_payment_terms || "";
+  const defaultFooter = (activeEntity?.settings as any)?.document_footer || "";
   const defaultInvoiceDueDays = (activeEntity?.settings as any)?.default_invoice_due_days ?? 30;
 
   // ============================================================================
@@ -169,8 +174,8 @@ export default function CreateInvoiceForm({
   const hasFinaPremises = activeFinaPremises.length > 0;
 
   // FINA premise/device selection state (no skip - all FINA invoices must be fiscalized)
-  const [selectedFinaPremiseId, setSelectedFinaPremiseId] = useState<string | undefined>();
-  const [selectedFinaDeviceId, setSelectedFinaDeviceId] = useState<string | undefined>();
+  const [selectedFinaBusinessPremiseName, setSelectedFinaBusinessPremiseName] = useState<string | undefined>();
+  const [selectedFinaElectronicDeviceName, setSelectedFinaElectronicDeviceName] = useState<string | undefined>();
 
   // UI-only state (not part of API schema)
   const [markAsPaid, setMarkAsPaid] = useState(false);
@@ -179,6 +184,12 @@ export default function CreateInvoiceForm({
 
   // Service date type state (single date or range)
   const [serviceDateType, setServiceDateType] = useState<"single" | "range">("single");
+
+  // Due days type state for invoice due date selector
+  const [dueDaysType, setDueDaysType] = useState<number | "custom">(() => {
+    if (mode === "edit" || initialValues?.date_due) return "custom";
+    return (DUE_DAYS_PRESETS as readonly number[]).includes(defaultInvoiceDueDays) ? defaultInvoiceDueDays : "custom";
+  });
 
   // Price modes per item (gross vs net) - collected from component state at submit
   // Initialize from initialValues for duplicated documents
@@ -269,22 +280,24 @@ export default function CreateInvoiceForm({
 
   // Get active FINA devices for selected premise
   const activeFinaDevices = useMemo(() => {
-    if (!selectedFinaPremiseId) return [];
-    const premise = activeFinaPremises.find((p: any) => p.premise_id === selectedFinaPremiseId);
+    if (!selectedFinaBusinessPremiseName) return [];
+    const premise = activeFinaPremises.find((p: any) => p.business_premise_name === selectedFinaBusinessPremiseName);
     return premise?.Devices?.filter((d: any) => d.is_active) || [];
-  }, [activeFinaPremises, selectedFinaPremiseId]);
+  }, [activeFinaPremises, selectedFinaBusinessPremiseName]);
 
   // Initialize FINA selection from localStorage or first active combo
   useEffect(() => {
-    if (!isFinaEnabled || !hasFinaPremises || selectedFinaPremiseId) return;
+    if (!isFinaEnabled || !hasFinaPremises || selectedFinaBusinessPremiseName) return;
 
     const lastUsed = getLastUsedFinaCombo(entityId);
     if (lastUsed) {
-      const premise = activeFinaPremises.find((p: any) => p.premise_id === lastUsed.premise_id);
-      const device = premise?.Devices?.find((d: any) => d.device_id === lastUsed.device_id && d.is_active);
+      const premise = activeFinaPremises.find((p: any) => p.business_premise_name === lastUsed.business_premise_name);
+      const device = premise?.Devices?.find(
+        (d: any) => d.electronic_device_name === lastUsed.electronic_device_name && d.is_active,
+      );
       if (premise && device) {
-        setSelectedFinaPremiseId(lastUsed.premise_id);
-        setSelectedFinaDeviceId(lastUsed.device_id);
+        setSelectedFinaBusinessPremiseName(lastUsed.business_premise_name);
+        setSelectedFinaElectronicDeviceName(lastUsed.electronic_device_name);
         return;
       }
     }
@@ -292,25 +305,25 @@ export default function CreateInvoiceForm({
     const firstPremise = activeFinaPremises[0];
     const firstDevice = firstPremise?.Devices?.find((d: any) => d.is_active);
     if (firstPremise && firstDevice) {
-      setSelectedFinaPremiseId(firstPremise.premise_id);
-      setSelectedFinaDeviceId(firstDevice.device_id);
+      setSelectedFinaBusinessPremiseName(firstPremise.business_premise_name);
+      setSelectedFinaElectronicDeviceName(firstDevice.electronic_device_name);
     }
-  }, [isFinaEnabled, hasFinaPremises, activeFinaPremises, entityId, selectedFinaPremiseId]);
+  }, [isFinaEnabled, hasFinaPremises, activeFinaPremises, entityId, selectedFinaBusinessPremiseName]);
 
   // When FINA premise changes, select first active device
   useEffect(() => {
-    if (!selectedFinaPremiseId) return;
-    const premise = activeFinaPremises.find((p: any) => p.premise_id === selectedFinaPremiseId);
+    if (!selectedFinaBusinessPremiseName) return;
+    const premise = activeFinaPremises.find((p: any) => p.business_premise_name === selectedFinaBusinessPremiseName);
     const firstDevice = premise?.Devices?.find((d: any) => d.is_active);
-    if (firstDevice && selectedFinaDeviceId !== firstDevice.device_id) {
+    if (firstDevice && selectedFinaElectronicDeviceName !== firstDevice.electronic_device_name) {
       const currentDeviceInPremise = premise?.Devices?.find(
-        (d: any) => d.device_id === selectedFinaDeviceId && d.is_active,
+        (d: any) => d.electronic_device_name === selectedFinaElectronicDeviceName && d.is_active,
       );
       if (!currentDeviceInPremise) {
-        setSelectedFinaDeviceId(firstDevice.device_id);
+        setSelectedFinaElectronicDeviceName(firstDevice.electronic_device_name);
       }
     }
-  }, [selectedFinaPremiseId, activeFinaPremises, selectedFinaDeviceId]);
+  }, [selectedFinaBusinessPremiseName, activeFinaPremises, selectedFinaElectronicDeviceName]);
 
   const form = useForm<CreateInvoiceFormValues>({
     // Cast resolver to accept extended form type (includes UI-only fields)
@@ -345,9 +358,11 @@ export default function CreateInvoiceForm({
             },
           ],
       currency_code: initialValues?.currency_code || activeEntity?.currency_code || "EUR",
+      reference: (initialValues as any)?.reference ?? "",
       note: initialValues?.note ?? defaultInvoiceNote,
       tax_clause: (initialValues as any)?.tax_clause ?? "",
       payment_terms: initialValues?.payment_terms ?? defaultPaymentTerms,
+      footer: (initialValues as any)?.footer ?? defaultFooter,
       date_due:
         initialValues?.date_due ||
         calculateDueDate(initialValues?.date || new Date().toISOString(), defaultInvoiceDueDays),
@@ -373,6 +388,20 @@ export default function CreateInvoiceForm({
     }
   }, [serviceDateType, form]);
 
+  // Handle due days type change - recalculate due date for presets
+  const handleDueDaysTypeChange = useCallback(
+    (type: number | "custom") => {
+      setDueDaysType(type);
+      if (type !== "custom") {
+        const currentDate = form.getValues("date");
+        if (currentDate) {
+          form.setValue("date_due", calculateDueDate(currentDate, type));
+        }
+      }
+    },
+    [form],
+  );
+
   // Check if FURS selection is ready (needed to prevent number flashing)
   // Selection is ready when: FURS not enabled, OR no premises, OR we have a valid selection
   const isFursSelectionReady = !isFursEnabled || !hasFursPremises || (!!selectedPremiseName && !!selectedDeviceName);
@@ -383,8 +412,9 @@ export default function CreateInvoiceForm({
 
   // FINA selection ready and active checks
   const isFinaSelectionReady =
-    !isFinaEnabled || !hasFinaPremises || (!!selectedFinaPremiseId && !!selectedFinaDeviceId);
-  const isFinaActive = isFinaEnabled && hasFinaPremises && selectedFinaPremiseId && selectedFinaDeviceId;
+    !isFinaEnabled || !hasFinaPremises || (!!selectedFinaBusinessPremiseName && !!selectedFinaElectronicDeviceName);
+  const isFinaActive =
+    isFinaEnabled && hasFinaPremises && selectedFinaBusinessPremiseName && selectedFinaElectronicDeviceName;
 
   // ============================================================================
   // Next Invoice Number Preview
@@ -552,7 +582,10 @@ export default function CreateInvoiceForm({
   });
 
   // FINA non-domestic guard: hide FINA selectors for non-domestic transactions
-  const isFinaNonDomestic = isFinaEnabled && viesCustomerCountryCode != null && viesCustomerCountryCode !== "HR";
+  // When unified_numbering is enabled (default: true), show FINA selectors for all transactions
+  const finaUnifiedNumbering = finaSettings?.unified_numbering !== false;
+  const isFinaNonDomestic =
+    isFinaEnabled && !finaUnifiedNumbering && viesCustomerCountryCode != null && viesCustomerCountryCode !== "HR";
 
   // Auto-populate tax_clause from entity settings when transaction type changes
   const effectiveTransactionType = transactionType ?? "domestic";
@@ -590,10 +623,10 @@ export default function CreateInvoiceForm({
         });
       }
       // Save FINA combo to localStorage on successful creation
-      if (isFinaActive && selectedFinaPremiseId && selectedFinaDeviceId) {
+      if (isFinaActive && selectedFinaBusinessPremiseName && selectedFinaElectronicDeviceName) {
         setLastUsedFinaCombo(entityId, {
-          premise_id: selectedFinaPremiseId,
-          device_id: selectedFinaDeviceId,
+          business_premise_name: selectedFinaBusinessPremiseName,
+          electronic_device_name: selectedFinaElectronicDeviceName,
         });
       }
       // Invalidate customers cache when a customer was created/linked
@@ -656,8 +689,17 @@ export default function CreateInvoiceForm({
 
       // Build FINA options (skip for drafts, edit mode, and non-domestic transactions)
       const finaOptions =
-        !isDraft && !isEditMode && isFinaEnabled && !isFinaNonDomestic && selectedFinaPremiseId && selectedFinaDeviceId
-          ? { premise_id: selectedFinaPremiseId, device_id: selectedFinaDeviceId, payment_type: paymentTypes[0] }
+        !isDraft &&
+        !isEditMode &&
+        isFinaEnabled &&
+        !isFinaNonDomestic &&
+        selectedFinaBusinessPremiseName &&
+        selectedFinaElectronicDeviceName
+          ? {
+              business_premise_name: selectedFinaBusinessPremiseName,
+              electronic_device_name: selectedFinaElectronicDeviceName,
+              payment_type: paymentTypes[0],
+            }
           : undefined;
 
       // Build e-SLOG options (skip for drafts and edit mode)
@@ -710,8 +752,8 @@ export default function CreateInvoiceForm({
       paymentTypes,
       selectedDeviceName,
       selectedPremiseName,
-      selectedFinaPremiseId,
-      selectedFinaDeviceId,
+      selectedFinaBusinessPremiseName,
+      selectedFinaElectronicDeviceName,
       showCustomerForm,
       skipFiscalization,
     ],
@@ -776,14 +818,23 @@ export default function CreateInvoiceForm({
     if (entityDefaultPaymentTerms && !form.getValues("payment_terms")) {
       form.setValue("payment_terms", entityDefaultPaymentTerms);
     }
+    const entityDefaultFooter = (activeEntity.settings as any)?.document_footer;
+    if (entityDefaultFooter && !form.getValues("footer")) {
+      form.setValue("footer", entityDefaultFooter);
+    }
+    const entityDefaultSignature = (activeEntity.settings as any)?.default_document_signature;
+    if (entityDefaultSignature && !form.getValues("signature")) {
+      form.setValue("signature", entityDefaultSignature);
+    }
 
-    // Auto-populate due date from entity settings when entity loads async
+    // Auto-populate due date and due days type from entity settings when entity loads async
     if (!isEditMode && !initialValues?.date_due) {
       const dueDays = (activeEntity.settings as any)?.default_invoice_due_days ?? 30;
       const currentDate = form.getValues("date");
       if (currentDate) {
         form.setValue("date_due", calculateDueDate(currentDate, dueDays));
       }
+      setDueDaysType((DUE_DAYS_PRESETS as readonly number[]).includes(dueDays) ? dueDays : "custom");
     }
 
     // Auto-add tax field for tax subject entities
@@ -797,15 +848,16 @@ export default function CreateInvoiceForm({
     initialSetupDoneRef.current = true;
   }, [activeEntity, form, isEditMode, initialValues?.date_due]);
 
-  // Recalculate due date when document date changes (skip in edit mode)
+  // Recalculate due date when document date changes (skip in edit mode and custom due days)
   const prevDateRef = useRef(form.getValues("date"));
   useEffect(() => {
     if (isEditMode) return;
     if (!watchedDate || watchedDate === prevDateRef.current) return;
     prevDateRef.current = watchedDate;
-    const dueDays = (activeEntity?.settings as any)?.default_invoice_due_days ?? 30;
-    form.setValue("date_due", calculateDueDate(watchedDate, dueDays));
-  }, [watchedDate, activeEntity, isEditMode, form]);
+    if (dueDaysType !== "custom") {
+      form.setValue("date_due", calculateDueDate(watchedDate, dueDaysType));
+    }
+  }, [watchedDate, isEditMode, form, dueDaysType]);
 
   // Use form.watch subscription for onChange callback (avoids re-render loops)
   const prevPayloadRef = useRef<string>("");
@@ -827,8 +879,10 @@ export default function CreateInvoiceForm({
         customer: formValues.customer,
         items: transformedItems,
         currency_code: formValues.currency_code,
+        reference: formValues.reference,
         note: formValues.note,
         payment_terms: formValues.payment_terms,
+        signature: formValues.signature,
       };
     };
 
@@ -965,18 +1019,28 @@ export default function CreateInvoiceForm({
             finaInline={
               !isEditMode && isFinaEnabled && hasFinaPremises && !isFinaNonDomestic
                 ? {
-                    premises: activeFinaPremises.map((p: any) => ({ id: p.id, premise_id: p.premise_id })),
-                    devices: activeFinaDevices.map((d: any) => ({ id: d.id, device_id: d.device_id })),
-                    selectedPremise: selectedFinaPremiseId,
-                    selectedDevice: selectedFinaDeviceId,
-                    onPremiseChange: setSelectedFinaPremiseId,
-                    onDeviceChange: setSelectedFinaDeviceId,
+                    premises: activeFinaPremises.map((p: any) => ({
+                      id: p.id,
+                      business_premise_name: p.business_premise_name,
+                    })),
+                    devices: activeFinaDevices.map((d: any) => ({
+                      id: d.id,
+                      electronic_device_name: d.electronic_device_name,
+                    })),
+                    selectedPremise: selectedFinaBusinessPremiseName,
+                    selectedDevice: selectedFinaElectronicDeviceName,
+                    onPremiseChange: setSelectedFinaBusinessPremiseName,
+                    onDeviceChange: setSelectedFinaElectronicDeviceName,
                   }
                 : undefined
             }
             serviceDate={{
               dateType: serviceDateType,
               onDateTypeChange: setServiceDateType,
+            }}
+            dueDays={{
+              dueDaysType,
+              onDueDaysTypeChange: handleDueDaysTypeChange,
             }}
           >
             {/* Invoice-specific: Mark as paid section (UI-only state, not in form schema) */}
@@ -1042,6 +1106,32 @@ export default function CreateInvoiceForm({
         />
 
         <DocumentPaymentTermsField
+          control={form.control}
+          t={t}
+          entity={activeEntity}
+          document={{
+            number: watchedNumber,
+            date: watchedDate,
+            date_due: watchedDateDue,
+            currency_code: watchedCurrencyCode,
+            customer: watchedCustomer as any,
+          }}
+        />
+
+        <DocumentSignatureField
+          control={form.control}
+          t={t}
+          entity={activeEntity}
+          document={{
+            number: watchedNumber,
+            date: watchedDate,
+            date_due: watchedDateDue,
+            currency_code: watchedCurrencyCode,
+            customer: watchedCustomer as any,
+          }}
+        />
+
+        <DocumentFooterField
           control={form.control}
           t={t}
           entity={activeEntity}

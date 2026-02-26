@@ -188,9 +188,12 @@ export default {
   "tax-clauses.intra_eu_b2b.description":
     "Pour les ventes à des entreprises UE avec des numéros de TVA valides. Inclut généralement une déclaration d'autoliquidation.",
   "Enter reverse charge clause...": "Entrez la clause d'autoliquidation...",
-  "tax-clauses.export.label": "Exportation (hors UE)",
-  "tax-clauses.export.description":
-    "Pour les ventes à des clients hors UE. Indique généralement l'exonération de TVA à l'exportation.",
+  "tax-clauses.3w_b2b.label": "Hors UE B2B (exportation)",
+  "tax-clauses.3w_b2b.description":
+    "Pour les ventes à des entreprises hors UE. Indique généralement l'exonération de TVA à l'exportation.",
+  "tax-clauses.3w_b2c.label": "Hors UE B2C (exportation)",
+  "tax-clauses.3w_b2c.description":
+    "Pour les ventes à des consommateurs hors UE. Indique généralement l'exonération de TVA à l'exportation.",
   "Enter export exemption clause...": "Entrez la clause d'exonération à l'exportation...",
   "tax-clauses.domestic.label": "Par défaut / National",
   "tax-clauses.domestic.description":

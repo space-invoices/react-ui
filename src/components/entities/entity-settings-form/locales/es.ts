@@ -189,9 +189,12 @@ export default {
   "tax-clauses.intra_eu_b2b.description":
     "Para ventas a empresas de la UE con números de IVA válidos. Normalmente incluye una declaración de inversión del sujeto pasivo.",
   "Enter reverse charge clause...": "Introduzca la cláusula de inversión del sujeto pasivo...",
-  "tax-clauses.export.label": "Exportación (fuera de la UE)",
-  "tax-clauses.export.description":
-    "Para ventas a clientes fuera de la UE. Normalmente indica la exención de IVA por exportación.",
+  "tax-clauses.3w_b2b.label": "Fuera de UE B2B (exportación)",
+  "tax-clauses.3w_b2b.description":
+    "Para ventas a empresas fuera de la UE. Normalmente indica la exención de IVA por exportación.",
+  "tax-clauses.3w_b2c.label": "Fuera de UE B2C (exportación)",
+  "tax-clauses.3w_b2c.description":
+    "Para ventas a consumidores fuera de la UE. Normalmente indica la exención de IVA por exportación.",
   "Enter export exemption clause...": "Introduzca la cláusula de exención de exportación...",
   "tax-clauses.domestic.label": "Predeterminado / Nacional",
   "tax-clauses.domestic.description":

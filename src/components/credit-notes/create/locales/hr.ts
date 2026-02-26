@@ -85,7 +85,8 @@ export default {
   Domestic: "Domaća",
   "EU B2B": "EU B2B",
   "EU B2C": "EU B2C",
-  Export: "Izvoz",
+  "3W B2B": "3W B2B",
+  "3W B2C": "3W B2C",
   "Determining transaction type...": "Određivanje vrste transakcije...",
   "This invoice will not be fiscalized (non-domestic transaction)":
     "Ovaj račun neće biti fiskaliziran (nedomaća transakcija)",

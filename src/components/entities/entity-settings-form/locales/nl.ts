@@ -184,9 +184,12 @@ export default {
   "tax-clauses.intra_eu_b2b.description":
     "Voor verkopen aan EU-bedrijven met geldige btw-nummers. Bevat meestal een verklaring van verlegging.",
   "Enter reverse charge clause...": "Voer de verleggingsclausule in...",
-  "tax-clauses.export.label": "Export (buiten EU)",
-  "tax-clauses.export.description":
-    "Voor verkopen aan klanten buiten de EU. Vermeldt meestal de btw-vrijstelling voor export.",
+  "tax-clauses.3w_b2b.label": "Niet-EU B2B (export)",
+  "tax-clauses.3w_b2b.description":
+    "Voor verkopen aan bedrijven buiten de EU. Vermeldt meestal de btw-vrijstelling voor export.",
+  "tax-clauses.3w_b2c.label": "Niet-EU B2C (export)",
+  "tax-clauses.3w_b2c.description":
+    "Voor verkopen aan consumenten buiten de EU. Vermeldt meestal de btw-vrijstelling voor export.",
   "Enter export exemption clause...": "Voer de exportvrijstellingsclausule in...",
   "tax-clauses.domestic.label": "Standaard / Binnenlands",
   "tax-clauses.domestic.description":

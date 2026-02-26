@@ -182,8 +182,10 @@ export default {
   "tax-clauses.intra_eu_b2b.description":
     "Za prodaju EU tvrtkama s valjanim PDV brojevima. Obično uključuje izjavu o prijenosu porezne obveze.",
   "Enter reverse charge clause...": "Unesite klauzulu o prijenosu porezne obveze...",
-  "tax-clauses.export.label": "Izvoz (izvan EU)",
-  "tax-clauses.export.description": "Za prodaju kupcima izvan EU. Obično navodi oslobođenje od PDV-a za izvoz.",
+  "tax-clauses.3w_b2b.label": "Izvan EU B2B (izvoz)",
+  "tax-clauses.3w_b2b.description": "Za prodaju poduzećima izvan EU. Obično navodi oslobođenje od PDV-a za izvoz.",
+  "tax-clauses.3w_b2c.label": "Izvan EU B2C (izvoz)",
+  "tax-clauses.3w_b2c.description": "Za prodaju potrošačima izvan EU. Obično navodi oslobođenje od PDV-a za izvoz.",
   "Enter export exemption clause...": "Unesite klauzulu o oslobođenju od izvoza...",
   "tax-clauses.domestic.label": "Zadano / Domaće",
   "tax-clauses.domestic.description":

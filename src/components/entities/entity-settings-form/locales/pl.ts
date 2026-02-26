@@ -186,8 +186,12 @@ export default {
   "tax-clauses.intra_eu_b2b.description":
     "Dla sprzedaży firmom w UE z ważnymi numerami VAT. Zwykle zawiera oświadczenie o odwrotnym obciążeniu.",
   "Enter reverse charge clause...": "Wprowadź klauzulę odwrotnego obciążenia...",
-  "tax-clauses.export.label": "Eksport (poza UE)",
-  "tax-clauses.export.description": "Dla sprzedaży klientom poza UE. Zwykle wskazuje zwolnienie z VAT na eksport.",
+  "tax-clauses.3w_b2b.label": "Poza UE B2B (eksport)",
+  "tax-clauses.3w_b2b.description":
+    "Dla sprzedaży do przedsiębiorstw spoza UE. Zwykle wskazuje zwolnienie z VAT na eksport.",
+  "tax-clauses.3w_b2c.label": "Poza UE B2C (eksport)",
+  "tax-clauses.3w_b2c.description":
+    "Dla sprzedaży do konsumentów spoza UE. Zwykle wskazuje zwolnienie z VAT na eksport.",
   "Enter export exemption clause...": "Wprowadź klauzulę zwolnienia eksportowego...",
   "tax-clauses.domestic.label": "Domyślne / Krajowe",
   "tax-clauses.domestic.description":

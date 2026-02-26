@@ -184,9 +184,12 @@ export default {
   "tax-clauses.intra_eu_b2b.description":
     "Für Verkäufe an EU-Unternehmen mit gültiger USt-IdNr. Enthält typischerweise eine Reverse-Charge-Erklärung.",
   "Enter reverse charge clause...": "Reverse-Charge-Klausel eingeben...",
-  "tax-clauses.export.label": "Export (Nicht-EU)",
-  "tax-clauses.export.description":
-    "Für Verkäufe an Kunden außerhalb der EU. Enthält typischerweise die Steuerbefreiung für Exporte.",
+  "tax-clauses.3w_b2b.label": "Nicht-EU B2B (Export)",
+  "tax-clauses.3w_b2b.description":
+    "Für Verkäufe an Unternehmen außerhalb der EU. Enthält typischerweise die Steuerbefreiung für Exporte.",
+  "tax-clauses.3w_b2c.label": "Nicht-EU B2C (Export)",
+  "tax-clauses.3w_b2c.description":
+    "Für Verkäufe an Verbraucher außerhalb der EU. Enthält typischerweise die Steuerbefreiung für Exporte.",
   "Enter export exemption clause...": "Exportbefreiungsklausel eingeben...",
   "tax-clauses.domestic.label": "Standard / Inländisch",
   "tax-clauses.domestic.description":

@@ -59,7 +59,8 @@ export default {
   Domestic: "Nationale",
   "EU B2B": "EU B2B",
   "EU B2C": "EU B2C",
-  Export: "Exportation",
+  "3W B2B": "3W B2B",
+  "3W B2C": "3W B2C",
   "Determining transaction type...": "Détermination du type de transaction...",
   "This invoice will not be fiscalized (non-domestic transaction)":
     "Cette facture ne sera pas fiscalisée (transaction non nationale)",

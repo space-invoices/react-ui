@@ -186,9 +186,12 @@ export default {
   "tax-clauses.intra_eu_b2b.description":
     "Para vendas a empresas da UE com números de IVA válidos. Normalmente inclui uma declaração de autoliquidação.",
   "Enter reverse charge clause...": "Introduza a cláusula de autoliquidação...",
-  "tax-clauses.export.label": "Exportação (fora da UE)",
-  "tax-clauses.export.description":
-    "Para vendas a clientes fora da UE. Normalmente indica a isenção de IVA por exportação.",
+  "tax-clauses.3w_b2b.label": "Fora da UE B2B (exportação)",
+  "tax-clauses.3w_b2b.description":
+    "Para vendas a empresas fora da UE. Normalmente indica a isenção de IVA por exportação.",
+  "tax-clauses.3w_b2c.label": "Fora da UE B2C (exportação)",
+  "tax-clauses.3w_b2c.description":
+    "Para vendas a consumidores fora da UE. Normalmente indica a isenção de IVA por exportação.",
   "Enter export exemption clause...": "Introduza a cláusula de isenção de exportação...",
   "tax-clauses.domestic.label": "Predefinido / Nacional",
   "tax-clauses.domestic.description":

@@ -59,7 +59,8 @@ export default {
   Domestic: "Binnenland",
   "EU B2B": "EU B2B",
   "EU B2C": "EU B2C",
-  Export: "Export",
+  "3W B2B": "3W B2B",
+  "3W B2C": "3W B2C",
   "Determining transaction type...": "Transactietype bepalen...",
   "This invoice will not be fiscalized (non-domestic transaction)":
     "Deze factuur wordt niet gefiscaliseerd (niet-binnenlandse transactie)",

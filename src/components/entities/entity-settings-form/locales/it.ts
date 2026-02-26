@@ -187,9 +187,12 @@ export default {
   "tax-clauses.intra_eu_b2b.description":
     "Per vendite a imprese UE con numeri IVA validi. Di solito include una dichiarazione di inversione contabile.",
   "Enter reverse charge clause...": "Inserisci la clausola di inversione contabile...",
-  "tax-clauses.export.label": "Esportazione (extra-UE)",
-  "tax-clauses.export.description":
-    "Per vendite a clienti extra-UE. Di solito indica l'esenzione IVA per esportazione.",
+  "tax-clauses.3w_b2b.label": "Extra-UE B2B (esportazione)",
+  "tax-clauses.3w_b2b.description":
+    "Per vendite a imprese extra-UE. Di solito indica l'esenzione IVA per esportazione.",
+  "tax-clauses.3w_b2c.label": "Extra-UE B2C (esportazione)",
+  "tax-clauses.3w_b2c.description":
+    "Per vendite a consumatori extra-UE. Di solito indica l'esenzione IVA per esportazione.",
   "Enter export exemption clause...": "Inserisci la clausola di esenzione per esportazione...",
   "tax-clauses.domestic.label": "Predefinito / Nazionale",
   "tax-clauses.domestic.description":

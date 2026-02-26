@@ -22,6 +22,7 @@ const createCustomerSchemaDefinition = z.object({
   company_number: z.union([z.string(), z.null()]).optional(),
   email: z.union([z.string(), z.null()]).optional(),
   is_tax_subject: z.boolean().optional(),
+  is_end_consumer: z.union([z.boolean(), z.null()]).optional(),
   metadata: z.union([z.record(z.string(), z.any()), z.null()]).optional(),
 });
 
@@ -44,6 +45,7 @@ const updateCustomerSchemaDefinition = z
     company_number: z.union([z.string(), z.null()]),
     email: z.union([z.string(), z.null()]),
     is_tax_subject: z.boolean(),
+    is_end_consumer: z.union([z.boolean(), z.null()]),
     metadata: z.union([z.record(z.string(), z.any()), z.null()]),
   })
   .partial();

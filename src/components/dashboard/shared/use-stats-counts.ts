@@ -1,10 +1,10 @@
 /**
  * Stats counts hook using the entity stats API.
  * Server-side counting for accurate totals.
+ * Sends 4 queries in a single batch request.
  */
-import { useQueries } from "@tanstack/react-query";
-import { useSDK } from "@/ui/providers/sdk-provider";
-import { STATS_QUERY_CACHE_KEY } from "./use-stats-query";
+import type { StatsQueryRequest } from "@spaceinvoices/js-sdk";
+import { useStatsBatchQuery } from "./use-stats-query";
 
 export const STATS_COUNTS_CACHE_KEY = "dashboard-stats-counts";
 
@@ -16,74 +16,24 @@ export type StatsCountsData = {
 };
 
 export function useStatsCountsData(entityId: string | undefined) {
-  const { sdk } = useSDK();
+  const queries: StatsQueryRequest[] = [
+    { metrics: [{ type: "count", alias: "total" }], table: "invoices" },
+    { metrics: [{ type: "count", alias: "total" }], table: "estimates" },
+    { metrics: [{ type: "count", alias: "total" }], table: "customers" },
+    { metrics: [{ type: "count", alias: "total" }], table: "items" },
+  ];
 
-  const queries = useQueries({
-    queries: [
-      // Invoices count
-      {
-        queryKey: [STATS_QUERY_CACHE_KEY, entityId, "count-invoices"],
-        queryFn: async () => {
-          if (!entityId || !sdk) throw new Error("Missing entity or SDK");
-          return sdk.entityStats.queryEntityStats(
-            { metrics: [{ type: "count", alias: "total" }], table: "invoices" },
-            { entity_id: entityId },
-          );
-        },
-        enabled: !!entityId && !!sdk,
-        staleTime: 120_000,
-      },
-      // Estimates count
-      {
-        queryKey: [STATS_QUERY_CACHE_KEY, entityId, "count-estimates"],
-        queryFn: async () => {
-          if (!entityId || !sdk) throw new Error("Missing entity or SDK");
-          return sdk.entityStats.queryEntityStats(
-            { metrics: [{ type: "count", alias: "total" }], table: "estimates" },
-            { entity_id: entityId },
-          );
-        },
-        enabled: !!entityId && !!sdk,
-        staleTime: 120_000,
-      },
-      // Customers count
-      {
-        queryKey: [STATS_QUERY_CACHE_KEY, entityId, "count-customers"],
-        queryFn: async () => {
-          if (!entityId || !sdk) throw new Error("Missing entity or SDK");
-          return sdk.entityStats.queryEntityStats(
-            { metrics: [{ type: "count", alias: "total" }], table: "customers" },
-            { entity_id: entityId },
-          );
-        },
-        enabled: !!entityId && !!sdk,
-        staleTime: 120_000,
-      },
-      // Items count
-      {
-        queryKey: [STATS_QUERY_CACHE_KEY, entityId, "count-items"],
-        queryFn: async () => {
-          if (!entityId || !sdk) throw new Error("Missing entity or SDK");
-          return sdk.entityStats.queryEntityStats(
-            { metrics: [{ type: "count", alias: "total" }], table: "items" },
-            { entity_id: entityId },
-          );
-        },
-        enabled: !!entityId && !!sdk,
-        staleTime: 120_000,
-      },
-    ],
+  const { data: results, isLoading } = useStatsBatchQuery(entityId, "stats-counts", queries, {
+    select: (batch) => ({
+      invoices: Number(batch[0].data?.[0]?.total) || 0,
+      estimates: Number(batch[1].data?.[0]?.total) || 0,
+      customers: Number(batch[2].data?.[0]?.total) || 0,
+      items: Number(batch[3].data?.[0]?.total) || 0,
+    }),
   });
 
-  const [invoicesQuery, estimatesQuery, customersQuery, itemsQuery] = queries;
-
   return {
-    data: {
-      invoices: Number(invoicesQuery.data?.data?.[0]?.total) || 0,
-      estimates: Number(estimatesQuery.data?.data?.[0]?.total) || 0,
-      customers: Number(customersQuery.data?.data?.[0]?.total) || 0,
-      items: Number(itemsQuery.data?.data?.[0]?.total) || 0,
-    } as StatsCountsData,
-    isLoading: queries.some((q) => q.isLoading),
+    data: (results ?? { invoices: 0, estimates: 0, customers: 0, items: 0 }) as StatsCountsData,
+    isLoading,
   };
 }

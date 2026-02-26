@@ -66,7 +66,7 @@ export function useNextInvoiceNumber(
       return response as NextInvoiceNumberResponse;
     },
     enabled: options?.enabled !== false && !!entityId && !!sdk?.documents,
-    staleTime: 5000, // 5 seconds - short to catch concurrent creates
+    staleTime: 0, // Always refetch when form opens or params change
   });
 }
 

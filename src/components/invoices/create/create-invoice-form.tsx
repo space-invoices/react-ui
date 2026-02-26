@@ -13,7 +13,7 @@ import { Form } from "@/ui/components/ui/form";
 import { Skeleton } from "@/ui/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/ui/components/ui/tooltip";
 import { createInvoiceSchema } from "@/ui/generated/schemas";
-import { useViesCheck } from "@/ui/hooks/use-vies-check";
+import { useTransactionTypeCheck } from "@/ui/hooks/use-transaction-type-check";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
 import { cn } from "@/ui/lib/utils";
@@ -417,13 +417,55 @@ export default function CreateInvoiceForm({
     isFinaEnabled && hasFinaPremises && selectedFinaBusinessPremiseName && selectedFinaElectronicDeviceName;
 
   // ============================================================================
+  // VIES Check - determine transaction type early (needed for number preview)
+  // ============================================================================
+  const customerCountry = useWatch({ control: form.control, name: "customer.country" });
+  const customerCountryCode = useWatch({ control: form.control, name: "customer.country_code" });
+  const customerTaxNumber = useWatch({ control: form.control, name: "customer.tax_number" });
+  const customerIsEndConsumerWatch =
+    useWatch({ control: form.control, name: "customer.is_end_consumer" as any }) === true;
+
+  const {
+    reverseChargeApplies,
+    transactionType,
+    isFetching: isViesFetching,
+    warning: viesWarning,
+  } = useTransactionTypeCheck({
+    issuerCountryCode: activeEntity?.country_code,
+    isTaxSubject: activeEntity?.is_tax_subject ?? true,
+    customerCountry,
+    customerCountryCode,
+    customerTaxNumber,
+    customerIsEndConsumer: customerIsEndConsumerWatch,
+    enabled: !!activeEntity,
+  });
+
+  // FINA numbering guard: use FINA numbering for domestic transactions (or all if unified numbering is on)
+  const finaUnifiedNumbering = finaSettings?.unified_numbering !== false;
+  const useFinaNumbering =
+    !!isFinaActive && (finaUnifiedNumbering || transactionType == null || transactionType === "domestic");
+  const isFinaNonDomestic = !!isFinaActive && !useFinaNumbering;
+
+  // ============================================================================
   // Next Invoice Number Preview
   // ============================================================================
   // Wait for FURS selection to be ready before querying to prevent number flashing
   // Skip in edit mode - we use the existing document number
+  // Use the same premise/device params for both FURS and FINA (an entity is either one, never both)
+  const activePremiseName = isFursActive
+    ? selectedPremiseName
+    : useFinaNumbering
+      ? selectedFinaBusinessPremiseName
+      : undefined;
+  const activeDeviceNameForNumber = isFursActive
+    ? selectedDeviceName
+    : useFinaNumbering
+      ? selectedFinaElectronicDeviceName
+      : undefined;
+
   const { data: nextNumberData, isLoading: isNextNumberLoading } = useNextInvoiceNumber(entityId, {
-    business_premise_name: isFursActive ? selectedPremiseName : undefined,
-    electronic_device_name: isFursActive ? selectedDeviceName : undefined,
+    business_premise_name: activePremiseName,
+    electronic_device_name: activeDeviceNameForNumber,
     enabled:
       !!entityId && !isFursLoading && isFursSelectionReady && !isFinaLoading && isFinaSelectionReady && !isEditMode,
   });
@@ -551,11 +593,6 @@ export default function CreateInvoiceForm({
     }
   }, [nextNumberData?.number, form]);
 
-  // Watch specific fields for VIES check (stable references)
-  const customerCountry = useWatch({ control: form.control, name: "customer.country" });
-  const customerCountryCode = useWatch({ control: form.control, name: "customer.country_code" });
-  const customerTaxNumber = useWatch({ control: form.control, name: "customer.tax_number" });
-
   // Watch fields needed for document note/payment terms preview
   const watchedNumber = useWatch({ control: form.control, name: "number" });
   const watchedDate = useWatch({ control: form.control, name: "date" });
@@ -563,29 +600,45 @@ export default function CreateInvoiceForm({
   const watchedCurrencyCode = useWatch({ control: form.control, name: "currency_code" });
   const watchedCustomer = useWatch({ control: form.control, name: "customer" });
 
-  // ============================================================================
-  // VIES Check - determine if reverse charge applies
-  // ============================================================================
-  const {
-    reverseChargeApplies,
-    transactionType,
-    customerCountryCode: viesCustomerCountryCode,
-    isFetching: isViesFetching,
-    warning: viesWarning,
-  } = useViesCheck({
-    issuerCountryCode: activeEntity?.country_code,
-    isTaxSubject: activeEntity?.is_tax_subject ?? true,
-    customerCountry,
-    customerCountryCode,
-    customerTaxNumber,
-    enabled: !!activeEntity,
-  });
+  // Croatian invoice validation:
+  // - Domestic/3w B2C requires FINA
+  // - Domestic B2B (customer has tax number and NOT end consumer) is blocked
+  const isCroatianEntity = activeEntity?.country_code === "HR";
+  const customerHasTaxNumber = !!customerTaxNumber?.trim();
+  const isDomesticTransaction = transactionType === "domestic";
+  const requiresFinaFiscalization = isDomesticTransaction || transactionType === "3w_b2c";
+  const is3wTransaction = transactionType === "3w_b2b" || transactionType === "3w_b2c";
 
-  // FINA non-domestic guard: hide FINA selectors for non-domestic transactions
-  // When unified_numbering is enabled (default: true), show FINA selectors for all transactions
-  const finaUnifiedNumbering = finaSettings?.unified_numbering !== false;
-  const isFinaNonDomestic =
-    isFinaEnabled && !finaUnifiedNumbering && viesCustomerCountryCode != null && viesCustomerCountryCode !== "HR";
+  // Auto-toggle is_end_consumer based on tax number for Croatian domestic/3w customers
+  // Default: checked (end consumer). When tax number is entered: uncheck (business). User can override.
+  const prevAutoSetTaxRef = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    if (!isCroatianEntity || !(isDomesticTransaction || is3wTransaction)) return;
+    const hasTaxNumber = !!customerTaxNumber?.trim();
+    const hadTaxNumber = !!prevAutoSetTaxRef.current?.trim();
+    prevAutoSetTaxRef.current = customerTaxNumber ?? undefined;
+
+    // Auto-uncheck when tax number goes from empty to filled (likely a business)
+    if (hasTaxNumber && !hadTaxNumber && customerIsEndConsumerWatch) {
+      form.setValue("customer.is_end_consumer" as any, false);
+    }
+    // Auto-check when tax number goes from filled to empty (likely an individual)
+    if (!hasTaxNumber && hadTaxNumber && !customerIsEndConsumerWatch) {
+      form.setValue("customer.is_end_consumer" as any, true);
+    }
+  }, [customerTaxNumber, isCroatianEntity, isDomesticTransaction, is3wTransaction, customerIsEndConsumerWatch, form]);
+
+  const finaValidationError = (() => {
+    if (!isCroatianEntity || !requiresFinaFiscalization) return undefined;
+    // Domestic B2B is always blocked (3w B2B never reaches here since requiresFinaFiscalization is false for 3w B2B)
+    if (isDomesticTransaction && customerHasTaxNumber && !customerIsEndConsumerWatch) {
+      return t("Domestic B2B invoicing in Croatia is not supported");
+    }
+    if (!isFinaEnabled) {
+      return t("FINA fiscalization must be enabled for domestic invoices");
+    }
+    return undefined;
+  })();
 
   // Auto-populate tax_clause from entity settings when transaction type changes
   const effectiveTransactionType = transactionType ?? "domestic";
@@ -658,6 +711,9 @@ export default function CreateInvoiceForm({
   // Shared submit logic for both regular save and save as draft
   const submitInvoice = useCallback(
     (values: CreateInvoiceFormValues, isDraft: boolean) => {
+      // Block Croatian domestic B2B and domestic B2C without FINA
+      if (finaValidationError) return;
+
       // Skip e-SLOG validation for drafts and edit mode
       if (!isDraft && !isEditMode && eslogValidationEnabled) {
         const validationErrors = validateEslogForm(values as any, activeEntity);
@@ -691,8 +747,7 @@ export default function CreateInvoiceForm({
       const finaOptions =
         !isDraft &&
         !isEditMode &&
-        isFinaEnabled &&
-        !isFinaNonDomestic &&
+        useFinaNumbering &&
         selectedFinaBusinessPremiseName &&
         selectedFinaElectronicDeviceName
           ? {
@@ -740,13 +795,13 @@ export default function CreateInvoiceForm({
       updateInvoice,
       documentId,
       eslogValidationEnabled,
+      finaValidationError,
       forceLinkedDocuments,
       form,
       isEditMode,
       isEslogAvailable,
       isFursEnabled,
-      isFinaEnabled,
-      isFinaNonDomestic,
+      useFinaNumbering,
       markAsPaid,
       originalCustomer,
       paymentTypes,
@@ -916,25 +971,36 @@ export default function CreateInvoiceForm({
         <div className="flex w-full flex-col md:flex-row md:gap-6">
           {/* Recipient section skeleton */}
           <div className="flex-1 space-y-4">
-            <Skeleton className="h-7 w-24" /> {/* "Recipient" title */}
-            <Skeleton className="h-10 w-full" /> {/* Customer autocomplete */}
+            <Skeleton className="h-7 w-24" />
+            <Skeleton className="h-10 w-full" />
           </div>
-          {/* Details section skeleton */}
-          <div className="flex-1 space-y-4">
-            <Skeleton className="h-7 w-20" /> {/* "Details" title */}
-            <Skeleton className="h-5 w-16" /> {/* "Number *" label */}
-            <Skeleton className="h-10 w-full" /> {/* Number field */}
-            <Skeleton className="h-5 w-12" /> {/* "Date *" label */}
-            <Skeleton className="h-10 w-full" /> {/* Date picker */}
-            <Skeleton className="h-5 w-16" /> {/* "Due Date" label */}
-            <Skeleton className="h-10 w-full" /> {/* Due date picker */}
-            <Skeleton className="h-5 w-20" /> {/* "Currency *" label */}
-            <Skeleton className="h-10 w-full" /> {/* Currency select */}
-            {/* Mark as paid section */}
+          {/* Details section skeleton — inline label rows */}
+          <div className="flex-1 space-y-3">
+            <Skeleton className="h-7 w-20" />
+            <div className="flex items-center gap-3">
+              <Skeleton className="h-5 w-[6.5rem] shrink-0" />
+              <Skeleton className="h-10 flex-1" />
+            </div>
+            <div className="flex items-center gap-3">
+              <Skeleton className="h-5 w-[6.5rem] shrink-0" />
+              <Skeleton className="h-10 flex-1" />
+            </div>
+            <div className="flex items-center gap-3">
+              <Skeleton className="h-5 w-[6.5rem] shrink-0" />
+              <Skeleton className="h-10 flex-1" />
+            </div>
+            <div className="flex items-center gap-3">
+              <Skeleton className="h-5 w-[6.5rem] shrink-0" />
+              <Skeleton className="h-10 flex-1" />
+            </div>
+            <div className="flex items-center gap-3">
+              <Skeleton className="h-5 w-[6.5rem] shrink-0" />
+              <Skeleton className="h-10 flex-1" />
+            </div>
             <div className="space-y-3 rounded-md border p-4">
               <div className="flex items-center gap-3">
-                <Skeleton className="h-4 w-4 rounded" /> {/* Checkbox */}
-                <Skeleton className="h-5 w-28" /> {/* "Mark as Paid" */}
+                <Skeleton className="h-4 w-4 rounded" />
+                <Skeleton className="h-5 w-28" />
               </div>
             </div>
           </div>
@@ -942,25 +1008,22 @@ export default function CreateInvoiceForm({
 
         {/* Items section skeleton */}
         <div className="space-y-4">
-          <Skeleton className="h-7 w-16" /> {/* "Items" title */}
+          <Skeleton className="h-7 w-16" />
           <div className="space-y-4 rounded-lg border p-4">
-            <Skeleton className="h-10 w-full" /> {/* Item name */}
+            <Skeleton className="h-10 w-full" />
             <div className="flex gap-4">
-              <Skeleton className="h-10 w-24" /> {/* Quantity */}
-              <Skeleton className="h-10 flex-1" /> {/* Price */}
+              <Skeleton className="h-10 w-24" />
+              <Skeleton className="h-10 flex-1" />
             </div>
           </div>
-          <Skeleton className="h-9 w-24" /> {/* Add item button */}
+          <Skeleton className="h-9 w-24" />
         </div>
 
         {/* Note field skeleton */}
         <div className="space-y-2">
-          <Skeleton className="h-5 w-12" /> {/* "Note" label */}
-          <Skeleton className="h-24 w-full" /> {/* Textarea */}
+          <Skeleton className="h-5 w-12" />
+          <Skeleton className="h-24 w-full" />
         </div>
-
-        {/* Save button skeleton */}
-        <Skeleton className="h-10 w-24" />
       </div>
     );
   }
@@ -968,6 +1031,14 @@ export default function CreateInvoiceForm({
   return (
     <Form {...form}>
       <form id="create-invoice-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        {/* Croatian domestic invoice validation errors */}
+        {finaValidationError && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>{finaValidationError}</AlertTitle>
+          </Alert>
+        )}
+
         {/* e-SLOG entity-level validation errors */}
         {eslogEntityErrors.length > 0 && (
           <Alert variant="destructive">
@@ -996,6 +1067,7 @@ export default function CreateInvoiceForm({
             shouldFocusName={shouldFocusName}
             selectedCustomerId={selectedCustomerId}
             initialCustomerName={initialCustomerName}
+            showEndConsumerToggle={isCroatianEntity && (isDomesticTransaction || is3wTransaction)}
             t={t}
           />
           <DocumentDetailsSection
@@ -1017,7 +1089,7 @@ export default function CreateInvoiceForm({
                 : undefined
             }
             finaInline={
-              !isEditMode && isFinaEnabled && hasFinaPremises && !isFinaNonDomestic
+              !isEditMode && useFinaNumbering
                 ? {
                     premises: activeFinaPremises.map((p: any) => ({
                       id: p.id,
@@ -1052,7 +1124,7 @@ export default function CreateInvoiceForm({
                 paymentTypes={paymentTypes}
                 onPaymentTypesChange={setPaymentTypes}
                 t={t}
-                alwaysShowPaymentType={!!isFinaActive}
+                alwaysShowPaymentType={!!isFinaActive && requiresFinaFiscalization}
               />
             )}
           </DocumentDetailsSection>

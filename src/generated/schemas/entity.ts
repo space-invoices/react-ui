@@ -70,6 +70,7 @@ const createEntitySchemaDefinition = z.object({
       default_credit_note_note: z.union([z.string(), z.null()]),
       default_credit_note_payment_terms: z.union([z.string(), z.null()]),
       document_footer: z.union([z.string(), z.null()]),
+      default_document_signature: z.union([z.string(), z.null()]),
       furs: z.union([
         z
           .object({
@@ -78,6 +79,7 @@ const createEntitySchemaDefinition = z.object({
             operator_tax_number: z.string(),
             operator_label: z.string(),
             foreign_operator: z.boolean(),
+            environment: z.enum(["test", "production"]),
           })
           .partial()
           .passthrough(),
@@ -91,6 +93,7 @@ const createEntitySchemaDefinition = z.object({
             operator_label: z.string(),
             u_sust_pdv: z.boolean().default(true),
             numbering_sequence: z.enum(["N", "P"]).default("P"),
+            unified_numbering: z.union([z.boolean(), z.null()]),
             certificate_expiry: z.string(),
           })
           .partial()
@@ -144,6 +147,8 @@ const createEntitySchemaDefinition = z.object({
             domestic: z.union([z.string(), z.null()]),
             intra_eu_b2b: z.union([z.string(), z.null()]),
             intra_eu_b2c: z.union([z.string(), z.null()]),
+            "3w_b2b": z.union([z.string(), z.null()]),
+            "3w_b2c": z.union([z.string(), z.null()]),
             export: z.union([z.string(), z.null()]),
           })
           .partial()
@@ -221,6 +226,7 @@ const patchEntitySchemaDefinition = z
         default_credit_note_note: z.union([z.string(), z.null()]),
         default_credit_note_payment_terms: z.union([z.string(), z.null()]),
         document_footer: z.union([z.string(), z.null()]),
+        default_document_signature: z.union([z.string(), z.null()]),
         furs: z.union([
           z
             .object({
@@ -229,6 +235,7 @@ const patchEntitySchemaDefinition = z
               operator_tax_number: z.string(),
               operator_label: z.string(),
               foreign_operator: z.boolean(),
+              environment: z.enum(["test", "production"]),
             })
             .partial()
             .passthrough(),
@@ -242,6 +249,7 @@ const patchEntitySchemaDefinition = z
               operator_label: z.string(),
               u_sust_pdv: z.boolean().default(true),
               numbering_sequence: z.enum(["N", "P"]).default("P"),
+              unified_numbering: z.union([z.boolean(), z.null()]),
               certificate_expiry: z.string(),
             })
             .partial()
@@ -295,6 +303,8 @@ const patchEntitySchemaDefinition = z
               domestic: z.union([z.string(), z.null()]),
               intra_eu_b2b: z.union([z.string(), z.null()]),
               intra_eu_b2c: z.union([z.string(), z.null()]),
+              "3w_b2b": z.union([z.string(), z.null()]),
+              "3w_b2c": z.union([z.string(), z.null()]),
               export: z.union([z.string(), z.null()]),
             })
             .partial()

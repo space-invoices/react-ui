@@ -14,6 +14,7 @@ export type CustomerData = {
   state?: string | null;
   country?: string | null;
   tax_number?: string | null;
+  is_end_consumer?: boolean | null;
 };
 
 /**
@@ -97,6 +98,7 @@ export function useDocumentCustomerForm<TForm extends DocumentFormWithCustomer>(
           state: toFormValue(customer.state),
           country: toFormValue(customer.country),
           tax_number: toFormValue(customer.tax_number),
+          is_end_consumer: customer.is_end_consumer ?? undefined,
         } as PathValue<TForm, Path<TForm>>,
       );
       setOriginalCustomer(null);
@@ -115,6 +117,7 @@ export function useDocumentCustomerForm<TForm extends DocumentFormWithCustomer>(
         state: toFormValue(customer.state),
         country: toFormValue(customer.country),
         tax_number: toFormValue(customer.tax_number),
+        is_end_consumer: customer.is_end_consumer ?? undefined,
       };
 
       setValue("customer" as Path<TForm>, customerData as PathValue<TForm, Path<TForm>>);
@@ -140,6 +143,7 @@ export function useDocumentCustomerForm<TForm extends DocumentFormWithCustomer>(
         state: undefined,
         country: undefined,
         tax_number: undefined,
+        is_end_consumer: true,
       } as PathValue<TForm, Path<TForm>>,
     );
     setOriginalCustomer(null);

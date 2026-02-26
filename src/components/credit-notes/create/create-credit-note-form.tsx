@@ -9,7 +9,7 @@ import { Form } from "@/ui/components/ui/form";
 import { Skeleton } from "@/ui/components/ui/skeleton";
 import { createCreditNoteSchema } from "@/ui/generated/schemas";
 import { useNextDocumentNumber } from "@/ui/hooks/use-next-document-number";
-import { useViesCheck } from "@/ui/hooks/use-vies-check";
+import { useTransactionTypeCheck } from "@/ui/hooks/use-transaction-type-check";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
 import { useEntities } from "@/ui/providers/entities-context";
@@ -254,19 +254,6 @@ export default function CreateCreditNoteForm({
   const isFinaActive =
     isFinaEnabled && hasFinaPremises && selectedFinaBusinessPremiseName && selectedFinaElectronicDeviceName;
 
-  // ============================================================================
-  // Next Credit Note Number Preview
-  // ============================================================================
-  const { data: nextNumberData, isLoading: isNextNumberLoading } = useNextDocumentNumber(entityId, "credit_note", {
-    businessPremiseName: isFursActive ? selectedPremiseName : undefined,
-    electronicDeviceName: isFursActive ? selectedDeviceName : undefined,
-    enabled: !!entityId && !isFursLoading && isFursSelectionReady && !isFinaLoading && isFinaSelectionReady,
-  });
-
-  // Overall loading state
-  const isFormDataLoading =
-    isFursLoading || !isFursSelectionReady || isFinaLoading || !isFinaSelectionReady || isNextNumberLoading;
-
   // No header action for credit notes - FINA can't be skipped
 
   // Get default payment terms and footer from entity settings
@@ -324,20 +311,48 @@ export default function CreateCreditNoteForm({
   const {
     reverseChargeApplies,
     transactionType,
-    customerCountryCode: viesCustomerCountryCode,
     isFetching: isViesFetching,
     warning: viesWarning,
-  } = useViesCheck({
+  } = useTransactionTypeCheck({
     issuerCountryCode: activeEntity?.country_code,
     isTaxSubject: activeEntity?.is_tax_subject ?? true,
     customerCountry: formValues.customer?.country,
     customerCountryCode: formValues.customer?.country_code,
     customerTaxNumber: formValues.customer?.tax_number,
+    customerIsEndConsumer: (formValues.customer as any)?.is_end_consumer,
     enabled: !!activeEntity,
   });
 
-  // FINA non-domestic guard: hide FINA selectors for non-domestic transactions
-  const isFinaNonDomestic = isFinaEnabled && viesCustomerCountryCode != null && viesCustomerCountryCode !== "HR";
+  // FINA numbering guard: use FINA numbering for domestic transactions (or all if unified numbering is on)
+  const finaUnifiedNumbering = finaSettings?.unified_numbering !== false;
+  const useFinaNumbering =
+    !!isFinaActive && (finaUnifiedNumbering || transactionType == null || transactionType === "domestic");
+  const isFinaNonDomestic = !!isFinaActive && !useFinaNumbering;
+
+  // ============================================================================
+  // Next Credit Note Number Preview
+  // ============================================================================
+  // Use same premise/device params for both FURS and FINA (entity is either one, never both)
+  const activePremiseNameForNumber = isFursActive
+    ? selectedPremiseName
+    : useFinaNumbering
+      ? selectedFinaBusinessPremiseName
+      : undefined;
+  const activeDeviceNameForNumber = isFursActive
+    ? selectedDeviceName
+    : useFinaNumbering
+      ? selectedFinaElectronicDeviceName
+      : undefined;
+
+  const { data: nextNumberData, isLoading: isNextNumberLoading } = useNextDocumentNumber(entityId, "credit_note", {
+    businessPremiseName: activePremiseNameForNumber,
+    electronicDeviceName: activeDeviceNameForNumber,
+    enabled: !!entityId && !isFursLoading && isFursSelectionReady && !isFinaLoading && isFinaSelectionReady,
+  });
+
+  // Overall loading state
+  const isFormDataLoading =
+    isFursLoading || !isFursSelectionReady || isFinaLoading || !isFinaSelectionReady || isNextNumberLoading;
 
   // Auto-populate tax_clause from entity settings when transaction type changes
   const effectiveTransactionType = transactionType ?? "domestic";
@@ -408,11 +423,7 @@ export default function CreateCreditNoteForm({
 
       // Build FINA options (skip for drafts; FINA can't be skipped)
       const finaOptions =
-        !isDraft &&
-        isFinaEnabled &&
-        !isFinaNonDomestic &&
-        selectedFinaBusinessPremiseName &&
-        selectedFinaElectronicDeviceName
+        !isDraft && useFinaNumbering && selectedFinaBusinessPremiseName && selectedFinaElectronicDeviceName
           ? {
               business_premise_name: selectedFinaBusinessPremiseName,
               electronic_device_name: selectedFinaElectronicDeviceName,
@@ -445,8 +456,7 @@ export default function CreateCreditNoteForm({
     [
       createCreditNote,
       isFursEnabled,
-      isFinaEnabled,
-      isFinaNonDomestic,
+      useFinaNumbering,
       markAsPaid,
       originalCustomer,
       paymentTypes,
@@ -558,21 +568,23 @@ export default function CreateCreditNoteForm({
             <Skeleton className="h-7 w-24" />
             <Skeleton className="h-10 w-full" />
           </div>
-          <div className="flex-1 space-y-4">
+          <div className="flex-1 space-y-3">
             <Skeleton className="h-7 w-20" />
-            <Skeleton className="h-5 w-16" />
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-5 w-12" />
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-5 w-16" />
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-5 w-20" />
-            <Skeleton className="h-10 w-full" />
-            <div className="space-y-3 rounded-md border p-4">
-              <div className="flex items-center gap-3">
-                <Skeleton className="h-4 w-4 rounded" />
-                <Skeleton className="h-5 w-28" />
-              </div>
+            <div className="flex items-center gap-3">
+              <Skeleton className="h-5 w-[6.5rem] shrink-0" />
+              <Skeleton className="h-10 flex-1" />
+            </div>
+            <div className="flex items-center gap-3">
+              <Skeleton className="h-5 w-[6.5rem] shrink-0" />
+              <Skeleton className="h-10 flex-1" />
+            </div>
+            <div className="flex items-center gap-3">
+              <Skeleton className="h-5 w-[6.5rem] shrink-0" />
+              <Skeleton className="h-10 flex-1" />
+            </div>
+            <div className="flex items-center gap-3">
+              <Skeleton className="h-5 w-[6.5rem] shrink-0" />
+              <Skeleton className="h-10 flex-1" />
             </div>
           </div>
         </div>
@@ -593,8 +605,6 @@ export default function CreateCreditNoteForm({
           <Skeleton className="h-5 w-12" />
           <Skeleton className="h-24 w-full" />
         </div>
-
-        <Skeleton className="h-10 w-24" />
       </div>
     );
   }
@@ -631,7 +641,7 @@ export default function CreateCreditNoteForm({
                 : undefined
             }
             finaInline={
-              isFinaEnabled && hasFinaPremises && !isFinaNonDomestic
+              useFinaNumbering
                 ? {
                     premises: activeFinaPremises.map((p: any) => ({
                       id: p.id,

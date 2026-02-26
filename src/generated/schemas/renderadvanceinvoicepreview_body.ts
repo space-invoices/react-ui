@@ -23,6 +23,7 @@ const DocumentEntity = z
     tax_number: z.union([z.string(), z.null()]),
     tax_number_2: z.union([z.string(), z.null()]),
     company_number: z.union([z.string(), z.null()]),
+    is_end_consumer: z.union([z.boolean(), z.null()]),
     bank_account: z.union([
       z
         .object({
@@ -62,18 +63,17 @@ const CreateDocumentCustomer = DocumentEntity.and(
 const CreateFinaInvoiceData = z.union([
   z
     .object({
-      premise_id: z
+      business_premise_name: z
         .string()
         .min(1)
         .max(20)
         .regex(/^[0-9a-zA-Z]{1,20}$/),
-      device_id: z
+      electronic_device_name: z
         .string()
         .min(1)
         .max(20)
         .regex(/^\d{1,20}$/),
       operator_oib: z.string().min(11).max(11),
-      is_end_consumer: z.boolean(),
       payment_type: z.enum([
         "cash",
         "card",
@@ -103,8 +103,11 @@ const PartialAdvanceInvoicePreview = z.object({
   customer: CreateDocumentCustomer.optional(),
   note: z.union([z.string(), z.null()]).optional(),
   tax_clause: z.union([z.string(), z.null()]).optional(),
+  footer: z.union([z.string(), z.null()]).optional(),
+  signature: z.union([z.string(), z.null()]).optional(),
   currency_code: z.string().max(3).optional(),
   metadata: z.union([z.record(z.string(), z.any()), z.null()]).optional(),
+  reference: z.union([z.string(), z.null()]).optional(),
   date_due: z.union([z.string(), z.null()]).optional(),
   date_service: z.union([z.string(), z.null()]).optional(),
   date_service_to: z.union([z.string(), z.null()]).optional(),
@@ -139,10 +142,10 @@ const PartialAdvanceInvoicePreview = z.object({
 const DocumentItemTax = z
   .object({
     rate: z.number(),
-    tax_id: z.string(),
-    classification: z.string(),
-    reverse_charge: z.boolean(),
-    amount: z.number(),
+    tax_id: z.union([z.string(), z.null()]),
+    classification: z.union([z.string(), z.null()]),
+    reverse_charge: z.union([z.boolean(), z.null()]),
+    amount: z.union([z.number(), z.null()]),
   })
   .partial();
 
@@ -157,16 +160,16 @@ const LineDiscount = z.object({
 // Dependency schema for renderadvanceinvoicepreview_body
 const CreateDocumentItem = z
   .object({
-    type: z.literal("separator"),
+    type: z.union([z.literal("separator"), z.null()]),
     name: z.string().min(1),
     description: z.union([z.string(), z.null()]),
     price: z.number(),
-    gross_price: z.number(),
+    gross_price: z.union([z.number(), z.null()]),
     quantity: z.number().gte(-140737488355328).lte(140737488355327),
     unit: z.union([z.string(), z.null()]),
     taxes: z.array(DocumentItemTax),
     discounts: z.array(LineDiscount).max(5),
-    item_id: z.string(),
+    item_id: z.union([z.string(), z.null()]),
     metadata: z.union([z.record(z.string(), z.any()), z.null()]),
     save_item: z.boolean().default(true),
   })
@@ -185,8 +188,11 @@ const CompleteAdvanceInvoicePreview = z.object({
   customer: CreateDocumentCustomer.optional(),
   note: z.union([z.string(), z.null()]).optional(),
   tax_clause: z.union([z.string(), z.null()]).optional(),
+  footer: z.union([z.string(), z.null()]).optional(),
+  signature: z.union([z.string(), z.null()]).optional(),
   currency_code: z.string().max(3).optional(),
   metadata: z.union([z.record(z.string(), z.any()), z.null()]).optional(),
+  reference: z.union([z.string(), z.null()]).optional(),
   date_due: z.union([z.string(), z.null()]).optional(),
   date_service: z.union([z.string(), z.null()]).optional(),
   date_service_to: z.union([z.string(), z.null()]).optional(),

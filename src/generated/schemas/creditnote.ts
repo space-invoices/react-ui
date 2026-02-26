@@ -111,6 +111,8 @@ const updateCreditNoteSchemaDefinition = z
       .min(1),
     note: z.union([z.string(), z.null()]),
     footer: z.union([z.string(), z.null()]),
+    signature: z.union([z.string(), z.null()]),
+    reference: z.union([z.string(), z.null()]),
     payment_terms: z.union([z.string(), z.null()]),
     currency_code: z.string(),
     metadata: z.union([z.object({}).partial().passthrough(), z.null()]),

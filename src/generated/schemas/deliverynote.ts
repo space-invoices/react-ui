@@ -85,6 +85,8 @@ const createDeliveryNoteSchemaDefinition = z.object({
   payment_terms: z.union([z.string(), z.null()]).optional(),
   tax_clause: z.union([z.string(), z.null()]).optional(),
   footer: z.union([z.string(), z.null()]).optional(),
+  signature: z.union([z.string(), z.null()]).optional(),
+  reference: z.union([z.string(), z.null()]).optional(),
   currency_code: z.string().max(3).optional(),
   metadata: z.union([z.record(z.string(), z.any()), z.null()]).optional(),
   hide_prices: z.boolean().optional(),

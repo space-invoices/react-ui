@@ -26,9 +26,21 @@ async function main() {
   await fs.mkdir(SCHEMAS_DIR, { recursive: true });
   await fs.mkdir(GENERATED_DIR, { recursive: true });
 
-  // Generate initial schemas with openapi-zod-client
+  // Fetch OpenAPI spec from running API and generate schemas
+  const API_URL = "http://localhost:3000/openapi.json";
+  const openApiPath = path.resolve(GENERATED_DIR, "openapi.json");
+
   try {
-    const openApiPath = path.resolve(__dirname, "../../../apps/api/openapi.json");
+    const res = await fetch(API_URL);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    await fs.writeFile(openApiPath, await res.text());
+    console.log(`Fetched OpenAPI spec from ${API_URL}`);
+  } catch (_error) {
+    console.error(`Failed to fetch OpenAPI spec from ${API_URL}. Is the API running?`);
+    process.exit(1);
+  }
+
+  try {
     execSync(
       `bunx openapi-zod-client ${openApiPath} ` +
         "--output " +
@@ -299,6 +311,7 @@ export { createInvoiceSchema as createCreditNoteSchema, type CreateInvoiceSchema
 
   // Clean up temporary files
   await fs.unlink(`${GENERATED_DIR}/schemas.ts`);
+  await fs.unlink(`${GENERATED_DIR}/openapi.json`);
 }
 
 main().catch(console.error);

@@ -23,6 +23,7 @@ const DocumentEntity = z
     tax_number: z.union([z.string(), z.null()]),
     tax_number_2: z.union([z.string(), z.null()]),
     company_number: z.union([z.string(), z.null()]),
+    is_end_consumer: z.union([z.boolean(), z.null()]),
     bank_account: z.union([
       z
         .object({
@@ -71,8 +72,11 @@ const PartialDeliveryNotePreview = z.object({
   note: z.union([z.string(), z.null()]).optional(),
   payment_terms: z.union([z.string(), z.null()]).optional(),
   tax_clause: z.union([z.string(), z.null()]).optional(),
+  footer: z.union([z.string(), z.null()]).optional(),
+  signature: z.union([z.string(), z.null()]).optional(),
   currency_code: z.string().max(3).optional(),
   metadata: z.union([z.record(z.string(), z.any()), z.null()]).optional(),
+  reference: z.union([z.string(), z.null()]).optional(),
   hide_prices: z.boolean().optional(),
   date_due: z.union([z.string(), z.null()]).optional(),
   date_service: z.union([z.string(), z.null()]).optional(),
@@ -108,10 +112,10 @@ const PartialDeliveryNotePreview = z.object({
 const DocumentItemTax = z
   .object({
     rate: z.number(),
-    tax_id: z.string(),
-    classification: z.string(),
-    reverse_charge: z.boolean(),
-    amount: z.number(),
+    tax_id: z.union([z.string(), z.null()]),
+    classification: z.union([z.string(), z.null()]),
+    reverse_charge: z.union([z.boolean(), z.null()]),
+    amount: z.union([z.number(), z.null()]),
   })
   .partial();
 
@@ -126,16 +130,16 @@ const LineDiscount = z.object({
 // Dependency schema for renderdeliverynotepreview_body
 const CreateDocumentItem = z
   .object({
-    type: z.literal("separator"),
+    type: z.union([z.literal("separator"), z.null()]),
     name: z.string().min(1),
     description: z.union([z.string(), z.null()]),
     price: z.number(),
-    gross_price: z.number(),
+    gross_price: z.union([z.number(), z.null()]),
     quantity: z.number().gte(-140737488355328).lte(140737488355327),
     unit: z.union([z.string(), z.null()]),
     taxes: z.array(DocumentItemTax),
     discounts: z.array(LineDiscount).max(5),
-    item_id: z.string(),
+    item_id: z.union([z.string(), z.null()]),
     metadata: z.union([z.record(z.string(), z.any()), z.null()]),
     save_item: z.boolean().default(true),
   })
@@ -155,8 +159,11 @@ const CompleteDeliveryNotePreview = z.object({
   note: z.union([z.string(), z.null()]).optional(),
   payment_terms: z.union([z.string(), z.null()]).optional(),
   tax_clause: z.union([z.string(), z.null()]).optional(),
+  footer: z.union([z.string(), z.null()]).optional(),
+  signature: z.union([z.string(), z.null()]).optional(),
   currency_code: z.string().max(3).optional(),
   metadata: z.union([z.record(z.string(), z.any()), z.null()]).optional(),
+  reference: z.union([z.string(), z.null()]).optional(),
   hide_prices: z.boolean().optional(),
   date_due: z.union([z.string(), z.null()]).optional(),
   date_service: z.union([z.string(), z.null()]).optional(),

@@ -7,6 +7,7 @@ type CustomerData = {
   state?: string | null;
   country?: string | null;
   tax_number?: string | null;
+  is_end_consumer?: boolean | null;
   save_customer?: boolean;
 };
 

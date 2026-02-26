@@ -2,7 +2,7 @@
  * Shared document details section for invoices and estimates
  * Handles: number, date, and document-type-specific date field (date_due or date_valid_till)
  */
-import type { Entity, Estimate, Invoice, ViesCheckResponse } from "@spaceinvoices/js-sdk";
+import type { Entity, Estimate, Invoice, TransactionTypeCheckResponse } from "@spaceinvoices/js-sdk";
 import { CalendarIcon, ChevronDown, Globe, Info, Loader2 } from "lucide-react";
 import { useRef, useState } from "react";
 import { Badge } from "@/ui/components/ui/badge";
@@ -596,20 +596,22 @@ export function DocumentNoteField({
  * Tax clause field component with smart code insertion button
  * Similar to DocumentNoteField, auto-populated from entity settings based on transaction type
  */
-type TransactionType = ViesCheckResponse["transaction_type"];
+type TransactionType = TransactionTypeCheckResponse["transaction_type"];
 
 const TRANSACTION_TYPE_LABELS: Record<NonNullable<TransactionType>, string> = {
   domestic: "Domestic",
   intra_eu_b2b: "EU B2B",
   intra_eu_b2c: "EU B2C",
-  export: "Export",
+  "3w_b2b": "3W B2B",
+  "3w_b2c": "3W B2C",
 };
 
 const TRANSACTION_TYPE_VARIANTS: Record<NonNullable<TransactionType>, "secondary" | "default" | "outline"> = {
   domestic: "secondary",
   intra_eu_b2b: "default",
   intra_eu_b2c: "outline",
-  export: "outline",
+  "3w_b2b": "outline",
+  "3w_b2c": "outline",
 };
 
 export function DocumentTaxClauseField({

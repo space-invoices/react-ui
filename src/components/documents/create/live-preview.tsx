@@ -1,11 +1,11 @@
 "use client";
 
 import type { CreateInvoiceRequest } from "@spaceinvoices/js-sdk";
-import { Loader2 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "@/ui/lib/utils";
 import { useEntities } from "@/ui/providers/entities-context";
 import { useSDK } from "@/ui/providers/sdk-provider";
+import { DocumentPreviewSkeleton } from "../shared/document-preview-skeleton";
 import { ScaledDocumentPreview } from "../shared/scaled-document-preview";
 import { useA4Scaling } from "../shared/use-a4-scaling";
 import type { DocumentTypes } from "../types";
@@ -58,7 +58,7 @@ export function LiveInvoicePreview({
   locale: _locale,
   fixedScale,
   t: tProp,
-  documentTypeLabel,
+  documentTypeLabel: _documentTypeLabel,
   documentType = "invoice",
   qrOverrides,
 }: LiveInvoicePreviewProps) {
@@ -235,18 +235,10 @@ export function LiveInvoicePreview({
     };
   }, []);
 
+  const showSkeleton = (!previewHtml && !error) || (isLoading && !previewHtml);
+
   return (
     <div ref={containerRef} className={cn("relative", className)}>
-      {/* Loading overlay */}
-      {isLoading && (
-        <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-          <div className="flex flex-col items-center gap-2">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <p className="text-muted-foreground text-sm">{t("Generating preview...")}</p>
-          </div>
-        </div>
-      )}
-
       {/* Error state */}
       {error && !isLoading && (
         <div className="flex min-h-[200px] items-center justify-center rounded-lg border border-destructive/50 bg-destructive/10 p-8">
@@ -257,25 +249,20 @@ export function LiveInvoicePreview({
         </div>
       )}
 
-      {/* Empty state */}
-      {!previewHtml && !isLoading && !error && (
-        <div className="flex min-h-[200px] items-center justify-center rounded-lg border border-dashed p-8">
-          <div className="text-center">
-            <p className="font-semibold text-muted-foreground">{documentTypeLabel || t("Document Preview")}</p>
-            <p className="text-muted-foreground text-sm">{t("Start filling the form to see a live preview")}</p>
-          </div>
-        </div>
-      )}
+      {/* Skeleton: shown on initial load and when loading without existing preview */}
+      {showSkeleton && <DocumentPreviewSkeleton />}
 
       {/* Preview - Scoped HTML injection with A4 scaling */}
       {previewHtml && !error && (
-        <ScaledDocumentPreview
-          htmlContent={previewHtml}
-          scale={scale}
-          contentHeight={contentHeight}
-          A4_WIDTH_PX={A4_WIDTH_PX}
-          contentRef={contentRef}
-        />
+        <div className={cn(isLoading && "opacity-50 transition-opacity duration-200")}>
+          <ScaledDocumentPreview
+            htmlContent={previewHtml}
+            scale={scale}
+            contentHeight={contentHeight}
+            A4_WIDTH_PX={A4_WIDTH_PX}
+            contentRef={contentRef}
+          />
+        </div>
       )}
     </div>
   );

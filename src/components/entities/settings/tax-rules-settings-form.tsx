@@ -1,10 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import type {
-  Entity,
-  EntitySettings,
-  EntitySettingsTaxClauseDefaults,
-  TaxRules,
-} from "@spaceinvoices/js-sdk";
+import type { Entity, EntitySettings, EntitySettingsTaxClauseDefaults, TaxRules } from "@spaceinvoices/js-sdk";
 import { ChevronDown, Globe, MessageSquareText } from "lucide-react";
 import type { ReactNode } from "react";
 import { useState } from "react";
@@ -39,7 +34,8 @@ const taxRulesSettingsSchema = z.object({
   require_gross_prices: z.boolean(),
   // Tax clause defaults per transaction type
   tax_clause_intra_eu_b2b: z.string().optional(),
-  tax_clause_export: z.string().optional(),
+  tax_clause_3w_b2b: z.string().optional(),
+  tax_clause_3w_b2c: z.string().optional(),
   tax_clause_domestic: z.string().optional(),
   tax_clause_intra_eu_b2c: z.string().optional(),
 });
@@ -92,7 +88,8 @@ export function TaxRulesSettingsForm({
       auto_remove_tax_export: currentTaxRules.auto_remove_tax_export ?? false,
       require_gross_prices: currentTaxRules.require_gross_prices ?? false,
       tax_clause_intra_eu_b2b: currentTaxClauseDefaults.intra_eu_b2b ?? "",
-      tax_clause_export: currentTaxClauseDefaults.export ?? "",
+      tax_clause_3w_b2b: (currentTaxClauseDefaults as any)["3w_b2b"] ?? currentTaxClauseDefaults.export ?? "",
+      tax_clause_3w_b2c: (currentTaxClauseDefaults as any)["3w_b2c"] ?? currentTaxClauseDefaults.export ?? "",
       tax_clause_domestic: currentTaxClauseDefaults.domestic ?? "",
       tax_clause_intra_eu_b2c: currentTaxClauseDefaults.intra_eu_b2c ?? "",
     },
@@ -127,7 +124,8 @@ export function TaxRulesSettingsForm({
       },
       tax_clause_defaults: {
         intra_eu_b2b: values.tax_clause_intra_eu_b2b || null,
-        export: values.tax_clause_export || null,
+        "3w_b2b": values.tax_clause_3w_b2b || null,
+        "3w_b2c": values.tax_clause_3w_b2c || null,
         domestic: values.tax_clause_domestic || null,
         intra_eu_b2c: values.tax_clause_intra_eu_b2c || null,
       },
@@ -288,14 +286,34 @@ export function TaxRulesSettingsForm({
             )}
           />
 
-          {/* Export */}
+          {/* 3W B2B (non-EU business) */}
           <FormField
             control={form.control}
-            name="tax_clause_export"
+            name="tax_clause_3w_b2b"
             render={({ field }) => (
               <FormItem className="rounded-lg border p-4">
-                <FormLabel>{t("tax-clauses.export.label")}</FormLabel>
-                <FormDescription>{t("tax-clauses.export.description")}</FormDescription>
+                <FormLabel>{t("tax-clauses.3w_b2b.label")}</FormLabel>
+                <FormDescription>{t("tax-clauses.3w_b2b.description")}</FormDescription>
+                <FormControl>
+                  <Textarea
+                    placeholder={t("Enter export exemption clause...")}
+                    className="min-h-[80px] resize-y"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* 3W B2C (non-EU consumer) */}
+          <FormField
+            control={form.control}
+            name="tax_clause_3w_b2c"
+            render={({ field }) => (
+              <FormItem className="rounded-lg border p-4">
+                <FormLabel>{t("tax-clauses.3w_b2c.label")}</FormLabel>
+                <FormDescription>{t("tax-clauses.3w_b2c.description")}</FormDescription>
                 <FormControl>
                   <Textarea
                     placeholder={t("Enter export exemption clause...")}

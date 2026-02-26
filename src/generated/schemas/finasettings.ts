@@ -11,11 +11,12 @@ import { z } from 'zod';
 // Schema for update finasettings operation
 const updateFinaSettingsSchemaDefinition = z
   .object({
-    enabled: z.boolean(),
+    enabled: z.boolean().default(false),
     operator_oib: z.string().min(11).max(11),
     operator_label: z.string(),
-    u_sust_pdv: z.boolean(),
-    numbering_sequence: z.enum(["N", "P"]),
+    u_sust_pdv: z.boolean().default(true),
+    numbering_sequence: z.enum(["N", "P"]).default("P"),
+    unified_numbering: z.union([z.boolean(), z.null()]),
   })
   .partial();
 

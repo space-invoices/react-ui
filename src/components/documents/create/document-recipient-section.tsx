@@ -4,8 +4,10 @@
  */
 import { X } from "lucide-react";
 import { useEffect, useRef } from "react";
+import { useController } from "react-hook-form";
 import { FormInput } from "@/ui/components/form";
 import { Button } from "@/ui/components/ui/button";
+import { Checkbox } from "@/ui/components/ui/checkbox";
 import { Label } from "@/ui/components/ui/label";
 import { cn } from "@/ui/lib/utils";
 import { CustomerAutocomplete } from "../../customers/customer-autocomplete";
@@ -22,6 +24,8 @@ type DocumentRecipientSectionProps = {
   selectedCustomerId?: string;
   /** Initial customer name for display (used when duplicating documents) */
   initialCustomerName?: string;
+  /** Show end consumer (B2C) toggle next to tax number (Croatian entity + domestic transaction) */
+  showEndConsumerToggle?: boolean;
   t: (key: string) => string;
 };
 
@@ -34,9 +38,15 @@ export function DocumentRecipientSection({
   shouldFocusName,
   selectedCustomerId,
   initialCustomerName,
+  showEndConsumerToggle,
   t,
 }: DocumentRecipientSectionProps) {
   const nameInputRef = useRef<HTMLInputElement>(null);
+
+  const endConsumerController = useController({
+    control: control as any,
+    name: "customer.is_end_consumer" as any,
+  });
 
   useEffect(() => {
     if (showCustomerForm && shouldFocusName) {
@@ -93,7 +103,26 @@ export function DocumentRecipientSection({
             <FormInput control={control} name="customer.country" placeholder={t("Country")} label="" />
           </div>
 
-          <FormInput control={control} name="customer.tax_number" placeholder={t("Tax Number")} label="" />
+          <div className="flex items-center gap-3">
+            <div className="flex-1">
+              <FormInput control={control} name="customer.tax_number" placeholder={t("Tax Number")} label="" />
+            </div>
+            {showEndConsumerToggle && (
+              <div className="flex items-center gap-1.5 pt-0.5">
+                <Checkbox
+                  id="is_end_consumer"
+                  checked={endConsumerController.field.value === true}
+                  onCheckedChange={(checked) => endConsumerController.field.onChange(checked === true)}
+                />
+                <Label
+                  htmlFor="is_end_consumer"
+                  className="cursor-pointer whitespace-nowrap font-normal text-muted-foreground text-sm"
+                >
+                  {t("End consumer")}
+                </Label>
+              </div>
+            )}
+          </div>
         </>
       )}
     </div>

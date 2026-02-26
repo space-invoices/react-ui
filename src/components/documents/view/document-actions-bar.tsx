@@ -81,8 +81,10 @@ interface DocumentActionsBarProps extends ComponentTranslationProps {
   onDuplicate?: (targetType: DocumentType) => void;
   /** Called when user wants to edit the document */
   onEdit?: () => void;
-  /** Whether the document is editable (not voided, not FURS fiscalized) */
+  /** Whether the document is editable (not voided, not fiscalized) */
   isEditable?: boolean;
+  /** Reason why editing is disabled (shown as tooltip) */
+  editDisabledReason?: string;
   /** Called when user wants to finalize a draft document */
   onFinalize?: () => void;
   /** Whether finalization is in progress */
@@ -119,6 +121,7 @@ export function DocumentActionsBar({
   onDuplicate,
   onEdit,
   isEditable,
+  editDisabledReason,
   onFinalize,
   isFinalizing,
   onDeleteDraft,
@@ -233,12 +236,31 @@ export function DocumentActionsBar({
       )}
 
       {/* Edit */}
-      {onEdit && isEditable && (
-        <Button variant="outline" size="sm" onClick={onEdit} className="cursor-pointer">
-          <Pencil className="mr-2 h-4 w-4" />
-          {t("Edit")}
-        </Button>
-      )}
+      {onEdit &&
+        (isEditable ? (
+          <Button variant="outline" size="sm" onClick={onEdit} className="cursor-pointer">
+            <Pencil className="mr-2 h-4 w-4" />
+            {t("Edit")}
+          </Button>
+        ) : (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                aria-disabled="true"
+                className="pointer-events-auto opacity-50"
+                onClick={(e) => e.preventDefault()}
+              >
+                <Pencil className="mr-2 h-4 w-4" />
+                {t("Edit")}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{editDisabledReason}</p>
+            </TooltipContent>
+          </Tooltip>
+        ))}
 
       {/* Share Link */}
       {shareUrl ? (

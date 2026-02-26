@@ -11,7 +11,7 @@ import { Form } from "@/ui/components/ui/form";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/ui/components/ui/tooltip";
 import { createEstimateSchema } from "@/ui/generated/schemas";
 import { useNextDocumentNumber } from "@/ui/hooks/use-next-document-number";
-import { useViesCheck } from "@/ui/hooks/use-vies-check";
+import { useTransactionTypeCheck } from "@/ui/hooks/use-transaction-type-check";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
 import { useEntities } from "@/ui/providers/entities-context";
@@ -259,12 +259,13 @@ export default function CreateEstimateForm({
     transactionType,
     isFetching: isViesFetching,
     warning: viesWarning,
-  } = useViesCheck({
+  } = useTransactionTypeCheck({
     issuerCountryCode: activeEntity?.country_code,
     isTaxSubject: activeEntity?.is_tax_subject ?? true,
     customerCountry: formValues.customer?.country,
     customerCountryCode: formValues.customer?.country_code,
     customerTaxNumber: formValues.customer?.tax_number,
+    customerIsEndConsumer: (formValues.customer as any)?.is_end_consumer,
     enabled: !!activeEntity,
   });
 

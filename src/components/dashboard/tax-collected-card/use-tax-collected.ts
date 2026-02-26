@@ -1,10 +1,10 @@
 /**
  * Tax collected hook - uses stats API to aggregate tax amounts by rate.
  * Shows tax breakdown for previous month and current year.
+ * Sends 2 queries in a single batch request.
  */
-import type { StatsQueryDataItem } from "@spaceinvoices/js-sdk";
-import { useQueries } from "@tanstack/react-query";
-import { useSDK } from "@/ui/providers/sdk-provider";
+import type { StatsQueryDataItem, StatsQueryRequest } from "@spaceinvoices/js-sdk";
+import { useStatsBatchQuery } from "../shared/use-stats-query";
 
 export const TAX_COLLECTED_CACHE_KEY = "dashboard-tax-collected";
 
@@ -55,91 +55,73 @@ function transformTaxData(data: StatsQueryDataItem[]): TaxByRate[] {
   return data
     .filter((row) => row.rate != null && row.tax_total != null)
     .map((row) => ({
-      name: "Tax", // Could be enhanced to include tax name if available
+      name: "Tax",
       rate: Number(row.rate),
       amount: Number(row.tax_total),
     }))
-    .sort((a, b) => b.rate - a.rate); // Sort by rate descending
+    .sort((a, b) => b.rate - a.rate);
 }
 
 export function useTaxCollectedData(entityId: string | undefined) {
-  const { sdk } = useSDK();
   const prevMonthRange = getPreviousMonthDateRange();
   const yearRange = getYearDateRange();
 
-  const queries = useQueries({
-    queries: [
-      // Previous month taxes - aggregated by rate using stats API
-      {
-        queryKey: [TAX_COLLECTED_CACHE_KEY, entityId, "prev-month", prevMonthRange.from],
-        queryFn: async () => {
-          if (!entityId || !sdk) throw new Error("Missing entity or SDK");
-          // Use invoice_taxes virtual table to aggregate taxes by rate
-          return sdk.entityStats.queryEntityStats(
-            {
-              table: "invoice_taxes",
-              metrics: [{ type: "sum", field: "tax", alias: "tax_total" }],
-              group_by: ["rate", "quote_currency"],
-              date_from: prevMonthRange.from,
-              date_to: prevMonthRange.to,
-              filters: { is_draft: false, voided_at: null },
-            },
-            { entity_id: entityId },
-          );
+  const queries: StatsQueryRequest[] = [
+    // [0] Previous month taxes
+    {
+      table: "invoice_taxes",
+      metrics: [{ type: "sum", field: "tax", alias: "tax_total" }],
+      group_by: ["rate", "quote_currency"],
+      date_from: prevMonthRange.from,
+      date_to: prevMonthRange.to,
+      filters: { is_draft: false, voided_at: null },
+    },
+    // [1] Current year taxes
+    {
+      table: "invoice_taxes",
+      metrics: [{ type: "sum", field: "tax", alias: "tax_total" }],
+      group_by: ["rate", "quote_currency"],
+      date_from: yearRange.from,
+      date_to: yearRange.to,
+      filters: { is_draft: false, voided_at: null },
+    },
+  ];
+
+  const {
+    data: results,
+    isLoading,
+    error,
+  } = useStatsBatchQuery(entityId, "tax-collected", queries, {
+    select: (batch) => {
+      const prevMonthTaxes = transformTaxData(batch[0].data || []);
+      const yearTaxes = transformTaxData(batch[1].data || []);
+
+      const currency =
+        (batch[0].data?.[0]?.quote_currency as string) || (batch[1].data?.[0]?.quote_currency as string) || "EUR";
+
+      return {
+        previousMonth: {
+          label: prevMonthRange.label,
+          taxes: prevMonthTaxes,
+          total: prevMonthTaxes.reduce((sum, t) => sum + t.amount, 0),
         },
-        enabled: !!entityId && !!sdk,
-        staleTime: 120_000, // 1 minute
-      },
-      // Current year taxes - aggregated by rate using stats API
-      {
-        queryKey: [TAX_COLLECTED_CACHE_KEY, entityId, "year", yearRange.from],
-        queryFn: async () => {
-          if (!entityId || !sdk) throw new Error("Missing entity or SDK");
-          return sdk.entityStats.queryEntityStats(
-            {
-              table: "invoice_taxes",
-              metrics: [{ type: "sum", field: "tax", alias: "tax_total" }],
-              group_by: ["rate", "quote_currency"],
-              date_from: yearRange.from,
-              date_to: yearRange.to,
-              filters: { is_draft: false, voided_at: null },
-            },
-            { entity_id: entityId },
-          );
+        currentYear: {
+          label: yearRange.label,
+          taxes: yearTaxes,
+          total: yearTaxes.reduce((sum, t) => sum + t.amount, 0),
         },
-        enabled: !!entityId && !!sdk,
-        staleTime: 120_000,
-      },
-    ],
+        currency,
+      } as TaxCollectedData;
+    },
   });
 
-  const [prevMonthQuery, yearQuery] = queries;
-
-  // Transform stats data to TaxByRate arrays
-  const prevMonthTaxes = transformTaxData(prevMonthQuery.data?.data || []);
-  const yearTaxes = transformTaxData(yearQuery.data?.data || []);
-
-  // Get currency from first result or default
-  const currency =
-    (prevMonthQuery.data?.data?.[0]?.quote_currency as string) ||
-    (yearQuery.data?.data?.[0]?.quote_currency as string) ||
-    "EUR";
-
   return {
-    data: {
-      previousMonth: {
-        label: prevMonthRange.label,
-        taxes: prevMonthTaxes,
-        total: prevMonthTaxes.reduce((sum, t) => sum + t.amount, 0),
-      },
-      currentYear: {
-        label: yearRange.label,
-        taxes: yearTaxes,
-        total: yearTaxes.reduce((sum, t) => sum + t.amount, 0),
-      },
-      currency,
-    } as TaxCollectedData,
-    isLoading: queries.some((q) => q.isLoading),
-    error: queries.find((q) => q.error)?.error,
+    data: results ?? {
+      previousMonth: { label: prevMonthRange.label, taxes: [], total: 0 },
+      currentYear: { label: yearRange.label, taxes: [], total: 0 },
+      currency: "EUR",
+    },
+    isLoading,
+    error,
   };
 }

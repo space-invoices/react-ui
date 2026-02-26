@@ -10,29 +10,24 @@ import { z } from 'zod';
 
 // Dependency schema for startpdfexport_body
 const PdfExportByDocumentIds = z
-  .object({
-    type: z.enum([
-      "invoice",
-      "estimate",
-      "credit_note",
-      "advance_invoice",
-      "delivery_note",
-    ]),
-    document_ids: z.array(z.string()).min(1),
-  })
+  .object({ document_ids: z.array(z.string()).min(1) })
   .passthrough();
 
 
 // Dependency schema for startpdfexport_body
 const PdfExportByDateRange = z
   .object({
-    type: z.enum([
-      "invoice",
-      "estimate",
-      "credit_note",
-      "advance_invoice",
-      "delivery_note",
-    ]),
+    types: z
+      .array(
+        z.enum([
+          "invoice",
+          "estimate",
+          "credit_note",
+          "advance_invoice",
+          "delivery_note",
+        ])
+      )
+      .min(1),
     date_from: z.string().optional(),
     date_to: z.string().optional(),
   })

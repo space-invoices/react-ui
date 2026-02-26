@@ -139,4 +139,10 @@ export default {
   "Add tax clause...": "Agregar cláusula fiscal...",
   Footer: "Pie de página",
   "Add document footer...": "Añadir pie de página del documento...",
+  // Croatian domestic invoice validation
+  "End consumer": "Consumidor final",
+  "Domestic B2B invoicing in Croatia is not supported":
+    "La facturación B2B doméstica en Croacia no está soportada. Croacia requiere conformidad con Fiskalizacija 2.0 para facturación B2B.",
+  "FINA fiscalization must be enabled for domestic invoices":
+    "La fiscalización FINA debe estar habilitada para facturas domésticas. Habilítela en la configuración de la entidad.",
 } as const;

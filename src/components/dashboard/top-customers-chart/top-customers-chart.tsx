@@ -6,18 +6,26 @@ import { type ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } f
 import { createTranslation } from "@/ui/lib/translation";
 import { ChartEmptyState } from "../chart-empty-state";
 import { LoadingCard } from "../loading-card";
+import bg from "./locales/bg";
+import cs from "./locales/cs";
 import de from "./locales/de";
+import et from "./locales/et";
 import es from "./locales/es";
+import fi from "./locales/fi";
 import fr from "./locales/fr";
 import hr from "./locales/hr";
+import is from "./locales/is";
 import it from "./locales/it";
+import nb from "./locales/nb";
 import nl from "./locales/nl";
 import pl from "./locales/pl";
 import pt from "./locales/pt";
+import sk from "./locales/sk";
 import sl from "./locales/sl";
+import sv from "./locales/sv";
 import { useTopCustomersData } from "./use-top-customers";
 
-const translations = { sl, de, it, fr, es, pt, nl, pl, hr } as const;
+const translations = { bg, cs, de, et, es, fi, fr, hr, is, it, nb, nl, pl, pt, sk, sl, sv } as const;
 
 export type TopCustomersChartData = { name: string; revenue: number }[];
 
@@ -40,13 +48,6 @@ type TurnkeyProps = BaseProps & {
 };
 
 export type TopCustomersChartProps = DataProps | TurnkeyProps;
-
-const chartConfig = {
-  revenue: {
-    label: "Revenue",
-    color: "var(--chart-1)",
-  },
-} satisfies ChartConfig;
 
 function formatCurrency(value: number, currency: string, locale?: string): string {
   return new Intl.NumberFormat(locale, {
@@ -74,6 +75,12 @@ export function TopCustomersChart(props: TopCustomersChartProps) {
   }
 
   const hasData = data.length > 0;
+  const chartConfig = {
+    revenue: {
+      label: t("Revenue"),
+      color: "var(--chart-1)",
+    },
+  } satisfies ChartConfig;
 
   // Placeholder data for empty state
   const placeholderData = [
@@ -86,10 +93,14 @@ export function TopCustomersChart(props: TopCustomersChartProps) {
 
   // Truncate long names for display
   const chartData = hasData
-    ? data.map((d) => ({
-        ...d,
-        displayName: d.name.length > 18 ? `${d.name.substring(0, 18)}...` : d.name,
-      }))
+    ? data.map((d) => {
+        const localizedName = d.name === "Unknown" ? t("Unknown") : d.name;
+        return {
+          ...d,
+          name: localizedName,
+          displayName: localizedName.length > 18 ? `${localizedName.substring(0, 18)}...` : localizedName,
+        };
+      })
     : placeholderData;
 
   const chartContent = (

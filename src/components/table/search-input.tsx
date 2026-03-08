@@ -9,12 +9,21 @@ type SearchInputProps = {
   onSearch: (value: string | null) => void;
   placeholder?: string;
   debounceMs?: number;
+  ariaLabel?: string;
+  clearAriaLabel?: string;
 };
 
 /**
  * Search input with optional clear button and form submission
  */
-export function SearchInput({ initialValue = "", onSearch, placeholder = "Search...", debounceMs }: SearchInputProps) {
+export function SearchInput({
+  initialValue = "",
+  onSearch,
+  placeholder = "Search...",
+  debounceMs,
+  ariaLabel = "Search",
+  clearAriaLabel = "Clear search",
+}: SearchInputProps) {
   const [value, setValue] = useState(initialValue);
   const [isFocused, setIsFocused] = useState(false);
 
@@ -66,7 +75,7 @@ export function SearchInput({ initialValue = "", onSearch, placeholder = "Search
       <Input
         type="search"
         role="searchbox"
-        aria-label="Search"
+        aria-label={ariaLabel}
         placeholder={placeholder}
         value={value}
         onChange={handleChange}
@@ -92,7 +101,7 @@ export function SearchInput({ initialValue = "", onSearch, placeholder = "Search
           size="sm"
           onClick={handleClear}
           className="absolute top-1/2 right-1 z-10 h-6 w-6 -translate-y-1/2 p-0 hover:bg-transparent"
-          aria-label="Clear search"
+          aria-label={clearAriaLabel}
         >
           <X className="h-3 w-3 text-muted-foreground" />
         </Button>

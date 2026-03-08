@@ -116,12 +116,13 @@ const demoDataByLocale: Record<string, LocaleDemoData> = {
   },
 };
 
+import { getFullLocale } from "@/ui/lib/locale";
+
 /**
  * Get demo invoice data for template preview based on locale
  */
 export function getDemoInvoiceData(locale: string): DemoInvoiceData {
-  // Normalize locale (e.g., "en" -> "en-US", "sl" -> "sl-SI")
-  const normalizedLocale = normalizeLocale(locale);
+  const normalizedLocale = getFullLocale(locale);
   const data = demoDataByLocale[normalizedLocale] || demoDataByLocale["en-US"];
 
   const today = new Date();
@@ -141,24 +142,4 @@ export function getDemoInvoiceData(locale: string): DemoInvoiceData {
     })),
     note: data.note,
   };
-}
-
-function normalizeLocale(locale: string): string {
-  const mapping: Record<string, string> = {
-    en: "en-US",
-    sl: "sl-SI",
-    de: "de-DE",
-    fr: "fr-FR",
-    es: "es-ES",
-    it: "it-IT",
-  };
-
-  // If already full locale, return as-is if supported
-  if (demoDataByLocale[locale]) {
-    return locale;
-  }
-
-  // Try to match short code
-  const shortCode = locale.split("-")[0].toLowerCase();
-  return mapping[shortCode] || "en-US";
 }

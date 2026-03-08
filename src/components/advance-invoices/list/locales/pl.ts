@@ -48,6 +48,7 @@ export default {
   "Retry Fiscalization": "Retry Fiscalization",
   "Some selected documents don't have failed fiscalization": "Some selected documents don't have failed fiscalization",
   "Copy to Invoice": "Kopiuj do faktury",
+  "Finalize draft documents before copying to invoice": "Sfinalizuj wersje robocze przed skopiowaniem do faktury",
   Void: "Anuluj",
   "Cannot void an advance invoice linked to an invoice": "Nie można anulować faktury zaliczkowej powiązanej z fakturą",
 } as const;

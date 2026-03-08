@@ -188,7 +188,14 @@ export const RegisterPremiseDialog: FC<RegisterPremiseDialogProps> = ({
                   <FormItem>
                     <FormLabel>{t("Cadastral Number")} *</FormLabel>
                     <FormControl>
-                      <Input type="text" inputMode="numeric" pattern="[0-9]*" placeholder="123" {...field} />
+                      <Input
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        placeholder="123"
+                        {...field}
+                        data-testid="furs-real-estate-cadastral-number"
+                      />
                     </FormControl>
                     <FormDescription>{t("Required by FURS (must be numeric)")}</FormDescription>
                     <FormMessage />
@@ -205,7 +212,14 @@ export const RegisterPremiseDialog: FC<RegisterPremiseDialogProps> = ({
                     <FormItem>
                       <FormLabel>{t("Building Number")} *</FormLabel>
                       <FormControl>
-                        <Input type="text" inputMode="numeric" pattern="[0-9]*" placeholder="456" {...field} />
+                        <Input
+                          type="text"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          placeholder="456"
+                          {...field}
+                          data-testid="furs-real-estate-building-number"
+                        />
                       </FormControl>
                       <FormDescription className="text-xs">{t("Numeric, use 0 if not applicable")}</FormDescription>
                       <FormMessage />
@@ -219,7 +233,14 @@ export const RegisterPremiseDialog: FC<RegisterPremiseDialogProps> = ({
                     <FormItem>
                       <FormLabel>{t("Building Section")} *</FormLabel>
                       <FormControl>
-                        <Input type="text" inputMode="numeric" pattern="[0-9]*" placeholder="1" {...field} />
+                        <Input
+                          type="text"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          placeholder="1"
+                          {...field}
+                          data-testid="furs-real-estate-building-section"
+                        />
                       </FormControl>
                       <FormDescription className="text-xs">{t("Numeric, use 0 if not applicable")}</FormDescription>
                       <FormMessage />
@@ -236,7 +257,7 @@ export const RegisterPremiseDialog: FC<RegisterPremiseDialogProps> = ({
                   <FormItem>
                     <FormLabel>{t("Community")} *</FormLabel>
                     <FormControl>
-                      <Input placeholder="Ljubljana" {...field} />
+                      <Input placeholder="Ljubljana" {...field} data-testid="furs-real-estate-community" />
                     </FormControl>
                     <FormDescription>{t("Slovenian administrative community (občina) name")}</FormDescription>
                     <FormMessage />
@@ -252,7 +273,7 @@ export const RegisterPremiseDialog: FC<RegisterPremiseDialogProps> = ({
                   <FormItem>
                     <FormLabel>{t("Street")} *</FormLabel>
                     <FormControl>
-                      <Input placeholder="Dunajska cesta" {...field} />
+                      <Input placeholder="Dunajska cesta" {...field} data-testid="furs-real-estate-street" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -267,7 +288,7 @@ export const RegisterPremiseDialog: FC<RegisterPremiseDialogProps> = ({
                     <FormItem>
                       <FormLabel>{t("House Number")} *</FormLabel>
                       <FormControl>
-                        <Input placeholder="22" {...field} />
+                        <Input placeholder="22" {...field} data-testid="furs-real-estate-house-number" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -280,7 +301,12 @@ export const RegisterPremiseDialog: FC<RegisterPremiseDialogProps> = ({
                     <FormItem>
                       <FormLabel>{t("Additional")}</FormLabel>
                       <FormControl>
-                        <Input placeholder="A" {...field} value={field.value || ""} />
+                        <Input
+                          placeholder="A"
+                          {...field}
+                          value={field.value || ""}
+                          data-testid="furs-real-estate-house-number-additional"
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -296,7 +322,7 @@ export const RegisterPremiseDialog: FC<RegisterPremiseDialogProps> = ({
                     <FormItem>
                       <FormLabel>{t("City")} *</FormLabel>
                       <FormControl>
-                        <Input placeholder="Ljubljana" {...field} />
+                        <Input placeholder="Ljubljana" {...field} data-testid="furs-real-estate-city" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -309,7 +335,7 @@ export const RegisterPremiseDialog: FC<RegisterPremiseDialogProps> = ({
                     <FormItem>
                       <FormLabel>{t("Postal Code")} *</FormLabel>
                       <FormControl>
-                        <Input placeholder="1000" {...field} />
+                        <Input placeholder="1000" {...field} data-testid="furs-real-estate-postal-code" />
                       </FormControl>
                       <FormDescription className="text-xs">{t("Exactly 4 digits")}</FormDescription>
                       <FormMessage />
@@ -322,7 +348,7 @@ export const RegisterPremiseDialog: FC<RegisterPremiseDialogProps> = ({
                 <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>
                   {t("Cancel")}
                 </Button>
-                <Button type="submit" disabled={isPending}>
+                <Button type="submit" disabled={isPending} data-testid="furs-register-premise-submit">
                   {isPending ? t("Registering...") : t("Register Premise")}
                 </Button>
               </DialogFooter>
@@ -345,7 +371,7 @@ export const RegisterPremiseDialog: FC<RegisterPremiseDialogProps> = ({
                   <FormItem>
                     <FormLabel>{t("Premise Name")}</FormLabel>
                     <FormControl>
-                      <Input placeholder="P1" {...field} />
+                      <Input placeholder="P1" {...field} data-testid="furs-movable-premise-name" />
                     </FormControl>
                     <FormDescription>{t("Unique identifier for this premise (e.g., P1, P2)")}</FormDescription>
                     <FormMessage />
@@ -382,7 +408,7 @@ export const RegisterPremiseDialog: FC<RegisterPremiseDialogProps> = ({
                 <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>
                   {t("Cancel")}
                 </Button>
-                <Button type="submit" disabled={isPending}>
+                <Button type="submit" disabled={isPending} data-testid="furs-register-premise-submit">
                   {isPending ? t("Registering...") : t("Register Premise")}
                 </Button>
               </DialogFooter>

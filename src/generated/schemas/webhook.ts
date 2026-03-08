@@ -91,6 +91,11 @@ const createWebhookSchemaDefinition = z.object({
         "delivery_note.voided",
         "delivery_note.deleted",
         "delivery_note.restored",
+        "e_invoicing.submission.created",
+        "e_invoicing.submission.delivered",
+        "e_invoicing.submission.failed",
+        "e_invoicing.supplier.onboarded",
+        "e_invoicing.supplier.rejected",
       ])
     )
     .min(1),
@@ -186,6 +191,11 @@ const updateWebhookSchemaDefinition = z
           "delivery_note.voided",
           "delivery_note.deleted",
           "delivery_note.restored",
+          "e_invoicing.submission.created",
+          "e_invoicing.submission.delivered",
+          "e_invoicing.submission.failed",
+          "e_invoicing.supplier.onboarded",
+          "e_invoicing.supplier.rejected",
         ])
       )
       .min(1),

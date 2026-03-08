@@ -35,7 +35,12 @@ export function StickyFormFooter({
   return (
     <div className={cn("sticky bottom-0 z-10 border-t bg-sidebar px-4 py-3", className)}>
       <div className="flex gap-2">
-        <Button {...buttonProps} className="cursor-pointer px-8" disabled={isPending || !isDirty}>
+        <Button
+          {...buttonProps}
+          className="cursor-pointer px-8"
+          disabled={isPending || !isDirty}
+          data-testid={`${formId}-submit`}
+        >
           {isPending ? <ButtonLoader /> : label}
         </Button>
         {secondaryAction && (
@@ -45,6 +50,7 @@ export function StickyFormFooter({
             className="cursor-pointer px-8"
             disabled={secondaryAction.isPending || !isDirty}
             onClick={secondaryAction.onClick}
+            data-testid={`${formId}-secondary-submit`}
           >
             {secondaryAction.isPending ? <ButtonLoader /> : secondaryAction.label}
           </Button>

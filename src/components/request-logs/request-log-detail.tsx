@@ -5,17 +5,20 @@ import { Check, Copy } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/ui/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/ui/components/ui/tabs";
+import { getDateFnsLocale } from "@/ui/lib/date-fns-locale";
 import { cn } from "../../lib/utils";
 import type { RequestLogResponse } from "./request-log-list-table";
 
-type TranslationFn = (key: string, fallback: string) => string;
+type TranslationFn = (key: string) => string;
 
-const defaultT: TranslationFn = (_key, fallback) => fallback;
+const defaultT: TranslationFn = (key) => key;
 
 export interface RequestLogDetailProps {
   log: RequestLogResponse;
-  /** Translation function - defaults to returning fallback */
+  /** Translation function - defaults to identity */
   t?: TranslationFn;
+  /** Locale used for relative date formatting */
+  locale?: string;
 }
 
 /**
@@ -39,7 +42,7 @@ function unwrapResponseData(data: unknown): unknown {
   return data;
 }
 
-function JsonViewer({ data, label }: { data: unknown; label: string }) {
+function JsonViewer({ data, noDataLabel, t }: { data: unknown; noDataLabel: string; t: TranslationFn }) {
   const [copied, setCopied] = useState(false);
   // Unwrap { text: "json" } format if present
   const unwrappedData = unwrapResponseData(data);
@@ -59,7 +62,7 @@ function JsonViewer({ data, label }: { data: unknown; label: string }) {
   ) {
     return (
       <div className="rounded-lg border bg-muted/30 p-4 text-center text-muted-foreground text-sm">
-        No {label.toLowerCase()} data
+        {t(noDataLabel)}
       </div>
     );
   }
@@ -71,7 +74,7 @@ function JsonViewer({ data, label }: { data: unknown; label: string }) {
         size="sm"
         className="absolute top-2 right-2 h-8 w-8 p-0"
         onClick={handleCopy}
-        title="Copy to clipboard"
+        title={t("Copy to clipboard")}
       >
         {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
       </Button>
@@ -140,8 +143,9 @@ function JsonHighlight({ json }: { json: string }) {
   );
 }
 
-export function RequestLogDetail({ log, t = defaultT }: RequestLogDetailProps) {
+export function RequestLogDetail({ log, t = defaultT, locale }: RequestLogDetailProps) {
   const createdAt = new Date(log.created_at);
+  const dateLocale = getDateFnsLocale(locale);
   const statusCode = log.res_status ? Number.parseInt(log.res_status, 10) : 0;
 
   let statusColor = "text-gray-500";
@@ -166,7 +170,7 @@ export function RequestLogDetail({ log, t = defaultT }: RequestLogDetailProps) {
         </span>
         <div className="text-muted-foreground text-sm">
           <time dateTime={log.created_at} title={format(createdAt, "PPpp")}>
-            {formatDistanceToNow(createdAt, { addSuffix: true })}
+            {formatDistanceToNow(createdAt, { addSuffix: true, locale: dateLocale })}
           </time>
           <span className="mx-2">•</span>
           <span>{format(createdAt, "PPpp")}</span>
@@ -178,19 +182,19 @@ export function RequestLogDetail({ log, t = defaultT }: RequestLogDetailProps) {
         <div className="flex flex-wrap gap-4 text-sm">
           {log.resource_type && (
             <div>
-              <span className="text-muted-foreground">{t("request-logs.detail.resource-type", "Resource")}:</span>{" "}
+              <span className="text-muted-foreground">{t("Resource")}:</span>{" "}
               <span className="font-medium">{log.resource_type}</span>
             </div>
           )}
           {log.resource_id && (
             <div>
-              <span className="text-muted-foreground">{t("request-logs.detail.resource-id", "ID")}:</span>{" "}
+              <span className="text-muted-foreground">{t("ID")}:</span>{" "}
               <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">{log.resource_id}</code>
             </div>
           )}
           {log.action && (
             <div>
-              <span className="text-muted-foreground">{t("request-logs.detail.action", "Action")}:</span>{" "}
+              <span className="text-muted-foreground">{t("Action")}:</span>{" "}
               <span className="font-medium">{log.action}</span>
             </div>
           )}
@@ -200,18 +204,18 @@ export function RequestLogDetail({ log, t = defaultT }: RequestLogDetailProps) {
       {/* Tabs for Request/Response/Headers */}
       <Tabs defaultValue="request" className="w-full">
         <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="request">{t("request-logs.detail.request", "Request")}</TabsTrigger>
-          <TabsTrigger value="response">{t("request-logs.detail.response", "Response")}</TabsTrigger>
-          <TabsTrigger value="headers">{t("request-logs.detail.headers", "Headers")}</TabsTrigger>
+          <TabsTrigger value="request">{t("Request")}</TabsTrigger>
+          <TabsTrigger value="response">{t("Response")}</TabsTrigger>
+          <TabsTrigger value="headers">{t("Headers")}</TabsTrigger>
         </TabsList>
         <TabsContent value="request" className="mt-4">
-          <JsonViewer data={log.req_body} label="Request body" />
+          <JsonViewer data={log.req_body} noDataLabel="No request body data" t={t} />
         </TabsContent>
         <TabsContent value="response" className="mt-4">
-          <JsonViewer data={log.res_body} label="Response body" />
+          <JsonViewer data={log.res_body} noDataLabel="No response body data" t={t} />
         </TabsContent>
         <TabsContent value="headers" className="mt-4">
-          <JsonViewer data={log.headers} label="Headers" />
+          <JsonViewer data={log.headers} noDataLabel="No headers data" t={t} />
         </TabsContent>
       </Tabs>
 
@@ -221,7 +225,7 @@ export function RequestLogDetail({ log, t = defaultT }: RequestLogDetailProps) {
   );
 }
 
-function RequestIdDisplay({ requestId, t }: { requestId: string; t: (key: string, fallback: string) => string }) {
+function RequestIdDisplay({ requestId, t }: { requestId: string; t: TranslationFn }) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -232,9 +236,15 @@ function RequestIdDisplay({ requestId, t }: { requestId: string; t: (key: string
 
   return (
     <div className="flex items-center gap-2 border-t pt-4 text-muted-foreground text-xs">
-      <span>{t("request-logs.detail.request-id", "Request ID")}:</span>
+      <span>{t("Request ID")}:</span>
       <code className="font-mono">{requestId}</code>
-      <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={handleCopy} title="Copy to clipboard">
+      <Button
+        variant="ghost"
+        size="sm"
+        className="h-6 w-6 p-0"
+        onClick={handleCopy}
+        title={t("Copy to clipboard")}
+      >
         {copied ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
       </Button>
     </div>

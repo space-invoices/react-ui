@@ -58,7 +58,11 @@ export function FiscalizationStatusCard({
     switch (fiscalizationData.status) {
       case "success":
         return (
-          <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100">
+          <Badge
+            className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100"
+            data-testid={`${fiscalizationType}-fiscalization-status-badge`}
+            data-status="success"
+          >
             <CheckCircle2 className="mr-1 h-3 w-3" />
             {t("Fiscalized")}
           </Badge>
@@ -120,7 +124,7 @@ export function FiscalizationStatusCard({
 
   if (variant === "inline") {
     return (
-      <div className="space-y-3">
+      <div className="space-y-3" data-testid={`${fiscalizationType}-fiscalization-status-card`}>
         <div className="flex items-center justify-between font-medium text-sm">
           <span>{t("Fiscalization")}</span>
           {getStatusBadge()}
@@ -131,7 +135,7 @@ export function FiscalizationStatusCard({
   }
 
   return (
-    <Card>
+    <Card data-testid={`${fiscalizationType}-fiscalization-status-card`}>
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center justify-between text-lg">
           <span>{t("Fiscalization")}</span>

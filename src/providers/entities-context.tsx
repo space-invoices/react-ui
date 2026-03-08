@@ -12,6 +12,7 @@ export type EntitiesContextType = {
   activeEntity: Entity | null;
   setActiveEntity: (entity: Entity | null) => void;
   environment: EntityEnvironment;
+  /** @deprecated Use URL-based sandbox routing instead of calling setEnvironment directly */
   setEnvironment: (environment: EntityEnvironment) => void;
   isLoading: boolean;
   refetchEntities: () => Promise<void>;

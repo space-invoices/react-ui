@@ -6,9 +6,13 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/ui/components/ui
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/ui/components/ui/tooltip";
 import { AUTH_COOKIES } from "@/ui/lib/auth";
 import { getCookie } from "@/ui/lib/browser-cookies";
+import { getDateFnsLocale } from "@/ui/lib/date-fns-locale";
+import { createTranslation } from "@/ui/lib/translation";
 import { cn } from "@/ui/lib/utils";
 import { DataTable } from "../table/data-table";
+import { withTableTranslations } from "../table/locales";
 import type { Column, FilterConfig, ListTableProps, TableQueryParams, TableQueryResponse } from "../table/types";
+import translations from "./locales";
 import { RequestLogDetail } from "./request-log-detail";
 
 // Request log response type (internal endpoint, not in SDK)
@@ -38,6 +42,7 @@ const getApiBaseUrl = () => {
 };
 
 export const REQUEST_LOGS_CACHE_KEY = "request-logs";
+const mergedTranslations = withTableTranslations(translations);
 
 const METHOD_COLORS: Record<string, string> = {
   GET: "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300",
@@ -82,6 +87,10 @@ type RequestLogListTableProps = ListTableProps<RequestLogResponse> & {
   selectedLog?: RequestLogResponse | null;
   /** Callback when a log is selected */
   onSelectLog?: (log: RequestLogResponse | null) => void;
+  /** Translation function */
+  t?: (key: string) => string;
+  /** Locale used for relative date formatting */
+  locale?: string;
 };
 
 export function RequestLogListTable({
@@ -92,7 +101,11 @@ export function RequestLogListTable({
   showEntityColumn = false,
   selectedLog,
   onSelectLog,
+  t = (key) => key,
+  locale,
 }: RequestLogListTableProps) {
+  const translate = createTranslation({ t, locale, translations: mergedTranslations });
+
   // Custom fetch function that handles both entity-scoped and account-scoped queries
   // Don't use useTableFetch since we need special handling for environment
   const handleFetch = useCallback(
@@ -147,6 +160,7 @@ export function RequestLogListTable({
   );
 
   const columns: Column<RequestLogResponse>[] = useMemo(() => {
+    const dateLocale = getDateFnsLocale(locale);
     const cols: Column<RequestLogResponse>[] = [
       {
         id: "status_dot",
@@ -156,19 +170,19 @@ export function RequestLogListTable({
       },
       {
         id: "res_status",
-        header: "Status",
+        header: translate("Status"),
         className: "w-16",
         cell: (log) => <span className="font-mono text-muted-foreground text-sm">{log.res_status || "—"}</span>,
       },
       {
         id: "method",
-        header: "Method",
+        header: translate("Method"),
         className: "w-20",
         cell: (log) => <MethodBadge method={log.method} />,
       },
       {
         id: "path",
-        header: "Path",
+        header: translate("Path"),
         cell: (log) => <span className="truncate font-mono text-sm">{log.path}</span>,
       },
     ];
@@ -176,7 +190,7 @@ export function RequestLogListTable({
     if (showEntityColumn) {
       cols.push({
         id: "entity_id",
-        header: "Entity",
+        header: translate("Entity"),
         className: "hidden md:table-cell",
         cell: (log) => (
           <Tooltip>
@@ -192,14 +206,14 @@ export function RequestLogListTable({
                 {log.entity_id}
               </button>
             </TooltipTrigger>
-            <TooltipContent>Copy</TooltipContent>
+            <TooltipContent>{translate("Copy")}</TooltipContent>
           </Tooltip>
         ),
       });
     } else {
       cols.push({
         id: "resource_id",
-        header: "Resource",
+        header: translate("Resource"),
         className: "hidden sm:table-cell",
         cell: (log) => <span className="text-muted-foreground text-xs">{log.resource_id || "—"}</span>,
       });
@@ -207,20 +221,20 @@ export function RequestLogListTable({
 
     cols.push({
       id: "created_at",
-      header: "Time",
+      header: translate("Time"),
       align: "right",
       cell: (log) => (
         <span className="text-muted-foreground text-xs">
-          {formatDistanceToNow(new Date(log.created_at), { addSuffix: true })}
+          {formatDistanceToNow(new Date(log.created_at), { addSuffix: true, locale: dateLocale })}
         </span>
       ),
     });
 
     return cols;
-  }, [showEntityColumn]);
+  }, [locale, showEntityColumn, translate]);
 
   const filterConfig: FilterConfig = {
-    dateFields: [{ id: "created_at", label: "Date" }],
+    dateFields: [{ id: "created_at", label: translate("Date") }],
     httpMethodFilter: true,
     httpStatusCodeFilter: true,
   };
@@ -241,6 +255,7 @@ export function RequestLogListTable({
         entityId={entityId}
         filterConfig={filterConfig}
         onRowClick={(log) => onSelectLog?.(log)}
+        t={translate}
       />
 
       <Sheet open={!!selectedLog} onOpenChange={(open) => !open && onSelectLog?.(null)}>
@@ -255,7 +270,7 @@ export function RequestLogListTable({
               )}
             </SheetTitle>
           </SheetHeader>
-          {selectedLog && <RequestLogDetail log={selectedLog} />}
+          {selectedLog && <RequestLogDetail log={selectedLog} t={translate} locale={locale} />}
         </SheetContent>
       </Sheet>
     </>

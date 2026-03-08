@@ -48,6 +48,7 @@ export default {
   "Retry Fiscalization": "Retry Fiscalization",
   "Some selected documents don't have failed fiscalization": "Some selected documents don't have failed fiscalization",
   "Copy to Invoice": "Kopieer naar factuur",
+  "Finalize draft documents before copying to invoice": "Rond conceptdocumenten af voordat u naar factuur kopieert",
   Void: "Nietig verklaren",
   "Cannot void an advance invoice linked to an invoice":
     "Kan een voorschotfactuur gekoppeld aan een factuur niet ongeldig maken",

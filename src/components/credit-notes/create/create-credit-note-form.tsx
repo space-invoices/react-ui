@@ -9,7 +9,9 @@ import { Form } from "@/ui/components/ui/form";
 import { Skeleton } from "@/ui/components/ui/skeleton";
 import { createCreditNoteSchema } from "@/ui/generated/schemas";
 import { useNextDocumentNumber } from "@/ui/hooks/use-next-document-number";
+import { usePremiseSelection } from "@/ui/hooks/use-premise-selection";
 import { useTransactionTypeCheck } from "@/ui/hooks/use-transaction-type-check";
+import { buildFinaOptions, buildFursOptions } from "@/ui/lib/fiscalization-options";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
 import { useEntities } from "@/ui/providers/entities-context";
@@ -29,15 +31,7 @@ import { MarkAsPaidSection } from "../../documents/create/mark-as-paid-section";
 import { prepareDocumentSubmission } from "../../documents/create/prepare-document-submission";
 import { useDocumentCustomerForm } from "../../documents/create/use-document-customer-form";
 import type { DocumentTypes } from "../../documents/types";
-import { useFinaPremises, useFinaSettings } from "../../entities/fina-settings-form/fina-settings.hooks";
-import { useFursPremises, useFursSettings } from "../../entities/furs-settings-form/furs-settings.hooks";
-import {
-  getLastUsedFinaCombo,
-  getLastUsedFursCombo,
-  setLastUsedFinaCombo,
-  setLastUsedFursCombo,
-  useCreateCreditNote,
-} from "../credit-notes.hooks";
+import { useCreateCreditNote } from "../credit-notes.hooks";
 import de from "./locales/de";
 import es from "./locales/es";
 import fr from "./locales/fr";
@@ -102,43 +96,20 @@ export default function CreateCreditNoteForm({
   const queryClient = useQueryClient();
 
   // ============================================================================
-  // FURS Settings & Premises
+  // FURS & FINA Premise Selection (shared hook)
   // ============================================================================
-  const { data: fursSettings, isLoading: isFursSettingsLoading } = useFursSettings(entityId);
-  const { data: fursPremises, isLoading: isFursPremisesLoading } = useFursPremises(entityId, {
-    enabled: fursSettings?.enabled === true,
-  });
-
-  const isFursLoading = isFursSettingsLoading || (fursSettings?.enabled && isFursPremisesLoading);
-  const isFursEnabled = fursSettings?.enabled === true;
-  const activePremises = useMemo(() => fursPremises?.filter((p) => p.is_active) || [], [fursPremises]);
-  const hasFursPremises = activePremises.length > 0;
-
-  // FURS premise/device selection state
-  const [selectedPremiseName, setSelectedPremiseName] = useState<string | undefined>();
-  const [selectedDeviceName, setSelectedDeviceName] = useState<string | undefined>();
-
-  // ============================================================================
-  // FINA Settings & Premises
-  // ============================================================================
-  const { data: finaSettings, isLoading: isFinaSettingsLoading } = useFinaSettings(entityId);
-  const { data: finaPremises, isLoading: isFinaPremisesLoading } = useFinaPremises(entityId, {
-    enabled: finaSettings?.enabled === true,
-  });
-
-  const isFinaLoading = isFinaSettingsLoading || (finaSettings?.enabled && isFinaPremisesLoading);
-  const isFinaEnabled = finaSettings?.enabled === true;
-  const activeFinaPremises = useMemo(() => finaPremises?.filter((p: any) => p.is_active) || [], [finaPremises]);
-  const hasFinaPremises = activeFinaPremises.length > 0;
-
-  // FINA premise/device selection state (no skip - all FINA credit notes must be fiscalized)
-  const [selectedFinaBusinessPremiseName, setSelectedFinaBusinessPremiseName] = useState<string | undefined>();
-  const [selectedFinaElectronicDeviceName, setSelectedFinaElectronicDeviceName] = useState<string | undefined>();
+  const furs = usePremiseSelection({ entityId, type: "furs" });
+  const fina = usePremiseSelection({ entityId, type: "fina" });
 
   // UI-only state (not part of API schema)
   const [markAsPaid, setMarkAsPaid] = useState(false);
   const [paymentTypes, setPaymentTypes] = useState<string[]>(["bank_transfer"]);
   const [isDraftPending, setIsDraftPending] = useState(false);
+
+  // Service date type state (single date or range)
+  const [serviceDateType, setServiceDateType] = useState<"single" | "range">(
+    initialValues && (initialValues as any).date_service_to ? "range" : "single",
+  );
 
   // Price modes per item (gross vs net) - collected from component state at submit
   const initialPriceModes = useMemo(() => {
@@ -149,112 +120,6 @@ export default function CreateCreditNoteForm({
     }, {} as PriceModesMap);
   }, [initialValues?.items]);
   const priceModesRef = useRef<PriceModesMap>(initialPriceModes);
-
-  // Get active FURS devices for selected premise
-  const activeDevices = useMemo(() => {
-    if (!selectedPremiseName) return [];
-    const premise = activePremises.find((p) => p.business_premise_name === selectedPremiseName);
-    return premise?.Devices?.filter((d) => d.is_active) || [];
-  }, [activePremises, selectedPremiseName]);
-
-  // Initialize FURS selection from localStorage or first active combo
-  useEffect(() => {
-    if (!isFursEnabled || !hasFursPremises || selectedPremiseName) return;
-
-    const lastUsed = getLastUsedFursCombo(entityId);
-    if (lastUsed) {
-      const premise = activePremises.find((p) => p.business_premise_name === lastUsed.business_premise_name);
-      const device = premise?.Devices?.find(
-        (d) => d.electronic_device_name === lastUsed.electronic_device_name && d.is_active,
-      );
-      if (premise && device) {
-        setSelectedPremiseName(lastUsed.business_premise_name);
-        setSelectedDeviceName(lastUsed.electronic_device_name);
-        return;
-      }
-    }
-
-    const firstPremise = activePremises[0];
-    const firstDevice = firstPremise?.Devices?.find((d) => d.is_active);
-    if (firstPremise && firstDevice) {
-      setSelectedPremiseName(firstPremise.business_premise_name);
-      setSelectedDeviceName(firstDevice.electronic_device_name);
-    }
-  }, [isFursEnabled, hasFursPremises, activePremises, entityId, selectedPremiseName]);
-
-  // When FURS premise changes, select first active device
-  useEffect(() => {
-    if (!selectedPremiseName) return;
-    const premise = activePremises.find((p) => p.business_premise_name === selectedPremiseName);
-    const firstDevice = premise?.Devices?.find((d) => d.is_active);
-    if (firstDevice && selectedDeviceName !== firstDevice.electronic_device_name) {
-      const currentDeviceInPremise = premise?.Devices?.find(
-        (d) => d.electronic_device_name === selectedDeviceName && d.is_active,
-      );
-      if (!currentDeviceInPremise) {
-        setSelectedDeviceName(firstDevice.electronic_device_name);
-      }
-    }
-  }, [selectedPremiseName, activePremises, selectedDeviceName]);
-
-  // FURS selection ready and active checks
-  const isFursSelectionReady = !isFursEnabled || !hasFursPremises || (!!selectedPremiseName && !!selectedDeviceName);
-  const isFursActive = isFursEnabled && hasFursPremises && selectedPremiseName && selectedDeviceName;
-
-  // Get active FINA devices for selected premise
-  const activeFinaDevices = useMemo(() => {
-    if (!selectedFinaBusinessPremiseName) return [];
-    const premise = activeFinaPremises.find((p: any) => p.business_premise_name === selectedFinaBusinessPremiseName);
-    return premise?.Devices?.filter((d: any) => d.is_active) || [];
-  }, [activeFinaPremises, selectedFinaBusinessPremiseName]);
-
-  // Initialize FINA selection from localStorage or first active combo
-  useEffect(() => {
-    if (!isFinaEnabled || !hasFinaPremises || selectedFinaBusinessPremiseName) return;
-
-    const lastUsed = getLastUsedFinaCombo(entityId);
-    if (lastUsed) {
-      const premise = activeFinaPremises.find((p: any) => p.business_premise_name === lastUsed.business_premise_name);
-      const device = premise?.Devices?.find(
-        (d: any) => d.electronic_device_name === lastUsed.electronic_device_name && d.is_active,
-      );
-      if (premise && device) {
-        setSelectedFinaBusinessPremiseName(lastUsed.business_premise_name);
-        setSelectedFinaElectronicDeviceName(lastUsed.electronic_device_name);
-        return;
-      }
-    }
-
-    const firstPremise = activeFinaPremises[0];
-    const firstDevice = firstPremise?.Devices?.find((d: any) => d.is_active);
-    if (firstPremise && firstDevice) {
-      setSelectedFinaBusinessPremiseName(firstPremise.business_premise_name);
-      setSelectedFinaElectronicDeviceName(firstDevice.electronic_device_name);
-    }
-  }, [isFinaEnabled, hasFinaPremises, activeFinaPremises, entityId, selectedFinaBusinessPremiseName]);
-
-  // When FINA premise changes, select first active device
-  useEffect(() => {
-    if (!selectedFinaBusinessPremiseName) return;
-    const premise = activeFinaPremises.find((p: any) => p.business_premise_name === selectedFinaBusinessPremiseName);
-    const firstDevice = premise?.Devices?.find((d: any) => d.is_active);
-    if (firstDevice && selectedFinaElectronicDeviceName !== firstDevice.electronic_device_name) {
-      const currentDeviceInPremise = premise?.Devices?.find(
-        (d: any) => d.electronic_device_name === selectedFinaElectronicDeviceName && d.is_active,
-      );
-      if (!currentDeviceInPremise) {
-        setSelectedFinaElectronicDeviceName(firstDevice.electronic_device_name);
-      }
-    }
-  }, [selectedFinaBusinessPremiseName, activeFinaPremises, selectedFinaElectronicDeviceName]);
-
-  // FINA selection ready and active checks
-  const isFinaSelectionReady =
-    !isFinaEnabled || !hasFinaPremises || (!!selectedFinaBusinessPremiseName && !!selectedFinaElectronicDeviceName);
-  const isFinaActive =
-    isFinaEnabled && hasFinaPremises && selectedFinaBusinessPremiseName && selectedFinaElectronicDeviceName;
-
-  // No header action for credit notes - FINA can't be skipped
 
   // Get default payment terms and footer from entity settings
   const defaultPaymentTerms = (activeEntity?.settings as any)?.default_credit_note_payment_terms || "";
@@ -292,6 +157,7 @@ export default function CreateCreditNoteForm({
               taxes: [],
             },
           ],
+      date_service: (initialValues as any)?.date_service || new Date().toISOString(),
       currency_code: initialValues?.currency_code || activeEntity?.currency_code || "EUR",
       reference: (initialValues as any)?.reference ?? "",
       note: initialValues?.note ?? "",
@@ -304,6 +170,9 @@ export default function CreateCreditNoteForm({
   const formValues = useWatch({
     control: form.control,
   });
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
+  const prevPayloadRef = useRef("");
 
   // ============================================================================
   // VIES Check - determine if reverse charge applies
@@ -324,35 +193,35 @@ export default function CreateCreditNoteForm({
   });
 
   // FINA numbering guard: use FINA numbering for domestic transactions (or all if unified numbering is on)
-  const finaUnifiedNumbering = finaSettings?.unified_numbering !== false;
+  const finaUnifiedNumbering = fina.settings?.unified_numbering !== false;
   const useFinaNumbering =
-    !!isFinaActive && (finaUnifiedNumbering || transactionType == null || transactionType === "domestic");
-  const isFinaNonDomestic = !!isFinaActive && !useFinaNumbering;
+    !!fina.isActive && (finaUnifiedNumbering || transactionType == null || transactionType === "domestic");
+  const isFinaNonDomestic = !!fina.isActive && !useFinaNumbering;
 
   // ============================================================================
   // Next Credit Note Number Preview
   // ============================================================================
   // Use same premise/device params for both FURS and FINA (entity is either one, never both)
-  const activePremiseNameForNumber = isFursActive
-    ? selectedPremiseName
+  const activePremiseNameForNumber = furs.isActive
+    ? furs.selectedPremiseName
     : useFinaNumbering
-      ? selectedFinaBusinessPremiseName
+      ? fina.selectedPremiseName
       : undefined;
-  const activeDeviceNameForNumber = isFursActive
-    ? selectedDeviceName
+  const activeDeviceNameForNumber = furs.isActive
+    ? furs.selectedDeviceName
     : useFinaNumbering
-      ? selectedFinaElectronicDeviceName
+      ? fina.selectedDeviceName
       : undefined;
 
   const { data: nextNumberData, isLoading: isNextNumberLoading } = useNextDocumentNumber(entityId, "credit_note", {
     businessPremiseName: activePremiseNameForNumber,
     electronicDeviceName: activeDeviceNameForNumber,
-    enabled: !!entityId && !isFursLoading && isFursSelectionReady && !isFinaLoading && isFinaSelectionReady,
+    enabled: !!entityId && !furs.isLoading && furs.isSelectionReady && !fina.isLoading && fina.isSelectionReady,
   });
 
   // Overall loading state
   const isFormDataLoading =
-    isFursLoading || !isFursSelectionReady || isFinaLoading || !isFinaSelectionReady || isNextNumberLoading;
+    furs.isLoading || !furs.isSelectionReady || fina.isLoading || !fina.isSelectionReady || isNextNumberLoading;
 
   // Auto-populate tax_clause from entity settings when transaction type changes
   const effectiveTransactionType = transactionType ?? "domestic";
@@ -367,6 +236,13 @@ export default function CreateCreditNoteForm({
     const clause = taxClauseDefaults[effectiveTransactionType] ?? "";
     form.setValue("tax_clause", clause);
   }, [effectiveTransactionType, activeEntity, form]);
+
+  // Clear date_service_to when switching from range to single
+  useEffect(() => {
+    if (serviceDateType === "single") {
+      form.setValue("date_service_to", undefined);
+    }
+  }, [serviceDateType, form]);
 
   // Extract customer management logic into a shared hook
   const {
@@ -389,20 +265,9 @@ export default function CreateCreditNoteForm({
   const { mutate: createCreditNote, isPending } = useCreateCreditNote({
     entityId,
     onSuccess: (data) => {
-      // Save FURS combo to localStorage on successful creation
-      if (isFursActive && selectedPremiseName && selectedDeviceName) {
-        setLastUsedFursCombo(entityId, {
-          business_premise_name: selectedPremiseName,
-          electronic_device_name: selectedDeviceName,
-        });
-      }
-      // Save FINA combo to localStorage on successful creation
-      if (isFinaActive && selectedFinaBusinessPremiseName && selectedFinaElectronicDeviceName) {
-        setLastUsedFinaCombo(entityId, {
-          business_premise_name: selectedFinaBusinessPremiseName,
-          electronic_device_name: selectedFinaElectronicDeviceName,
-        });
-      }
+      // Save FURS/FINA combos to localStorage on successful creation
+      furs.saveCombo();
+      fina.saveCombo();
       // Invalidate customers cache when a customer was created/linked
       if (data.customer_id) {
         queryClient.invalidateQueries({ queryKey: [CUSTOMERS_CACHE_KEY] });
@@ -416,20 +281,21 @@ export default function CreateCreditNoteForm({
   const submitCreditNote = useCallback(
     (values: CreateCreditNoteFormValues, isDraft: boolean) => {
       // Build FURS options (skip for drafts; no skip toggle for credit notes)
-      const fursOptions =
-        !isDraft && isFursEnabled && selectedPremiseName && selectedDeviceName
-          ? { business_premise_name: selectedPremiseName, electronic_device_name: selectedDeviceName }
-          : undefined;
+      const fursOptions = buildFursOptions({
+        isDraft,
+        isEnabled: furs.isEnabled,
+        premiseName: furs.selectedPremiseName,
+        deviceName: furs.selectedDeviceName,
+      });
 
       // Build FINA options (skip for drafts; FINA can't be skipped)
-      const finaOptions =
-        !isDraft && useFinaNumbering && selectedFinaBusinessPremiseName && selectedFinaElectronicDeviceName
-          ? {
-              business_premise_name: selectedFinaBusinessPremiseName,
-              electronic_device_name: selectedFinaElectronicDeviceName,
-              payment_type: paymentTypes[0],
-            }
-          : undefined;
+      const finaOptions = buildFinaOptions({
+        isDraft,
+        useFinaNumbering,
+        premiseName: fina.selectedPremiseName,
+        deviceName: fina.selectedDeviceName,
+        paymentType: paymentTypes[0],
+      });
 
       const payload = prepareDocumentSubmission(values, {
         originalCustomer,
@@ -453,19 +319,7 @@ export default function CreateCreditNoteForm({
 
       createCreditNote(payload as CreateCreditNoteRequest);
     },
-    [
-      createCreditNote,
-      isFursEnabled,
-      useFinaNumbering,
-      markAsPaid,
-      originalCustomer,
-      paymentTypes,
-      selectedDeviceName,
-      selectedFinaElectronicDeviceName,
-      selectedFinaBusinessPremiseName,
-      selectedPremiseName,
-      showCustomerForm,
-    ],
+    [createCreditNote, furs, fina, useFinaNumbering, markAsPaid, originalCustomer, paymentTypes, showCustomerForm],
   );
 
   // Handle save as draft
@@ -524,36 +378,49 @@ export default function CreateCreditNoteForm({
     }
   }, [activeEntity?.is_tax_subject, form]);
 
+  const buildPreviewPayload = useCallback((values: CreateCreditNoteFormValues): CreditNotePreviewPayload => {
+    const currentItems = values.items || [];
+
+    const transformedItems = currentItems.map((item: any, index: number) => {
+      const { price, ...rest } = item;
+      const isGross = priceModesRef.current[index] ?? false;
+      return isGross ? { ...rest, gross_price: price } : { ...rest, price };
+    });
+
+    return {
+      number: values.number,
+      date: values.date,
+      date_service: (values as any).date_service,
+      date_service_to: (values as any).date_service_to,
+      customer_id: values.customer_id,
+      customer: values.customer,
+      items: transformedItems,
+      currency_code: values.currency_code,
+      reference: values.reference,
+      note: values.note,
+      payment_terms: values.payment_terms,
+      signature: values.signature,
+    };
+  }, []);
+
+  const emitPreviewPayload = useCallback((payload: CreditNotePreviewPayload) => {
+    const callback = onChangeRef.current;
+    if (!callback) return;
+
+    const payloadStr = JSON.stringify(payload);
+    if (payloadStr === prevPayloadRef.current) return;
+    prevPayloadRef.current = payloadStr;
+
+    callback(payload);
+  }, []);
+
   useEffect(() => {
-    if (onChange) {
-      const currentItems = form.getValues("items") || [];
+    emitPreviewPayload(buildPreviewPayload(formValues as CreateCreditNoteFormValues));
+  }, [buildPreviewPayload, emitPreviewPayload, formValues]);
 
-      // Transform items to use gross_price when price mode is gross
-      const transformedItems = currentItems.map((item: any, index: number) => {
-        const { price, ...rest } = item;
-        const isGross = priceModesRef.current[index] ?? false;
-        if (isGross) {
-          return { ...rest, gross_price: price };
-        }
-        return { ...rest, price };
-      });
-
-      // Build preview payload (includes number for display)
-      const payload: CreditNotePreviewPayload = {
-        number: formValues.number,
-        date: formValues.date,
-        customer_id: formValues.customer_id,
-        customer: formValues.customer,
-        items: transformedItems,
-        currency_code: formValues.currency_code,
-        reference: formValues.reference,
-        note: formValues.note,
-        payment_terms: formValues.payment_terms,
-        signature: formValues.signature,
-      };
-      onChange(payload);
-    }
-  }, [formValues, onChange, form]);
+  const emitCurrentPreviewPayload = useCallback(() => {
+    emitPreviewPayload(buildPreviewPayload(form.getValues()));
+  }, [buildPreviewPayload, emitPreviewPayload, form]);
 
   const onSubmit = (values: CreateCreditNoteFormValues) => {
     submitCreditNote(values, false);
@@ -629,32 +496,42 @@ export default function CreateCreditNoteForm({
             documentType={_type}
             t={t}
             fursInline={
-              isFursEnabled && hasFursPremises
+              furs.isEnabled && furs.hasPremises
                 ? {
-                    premises: activePremises.map((p) => ({ id: p.id, business_premise_name: p.business_premise_name })),
-                    devices: activeDevices.map((d) => ({ id: d.id, electronic_device_name: d.electronic_device_name })),
-                    selectedPremise: selectedPremiseName,
-                    selectedDevice: selectedDeviceName,
-                    onPremiseChange: setSelectedPremiseName,
-                    onDeviceChange: setSelectedDeviceName,
-                  }
-                : undefined
-            }
-            finaInline={
-              useFinaNumbering
-                ? {
-                    premises: activeFinaPremises.map((p: any) => ({
+                    premises: furs.activePremises.map((p) => ({
                       id: p.id,
                       business_premise_name: p.business_premise_name,
                     })),
-                    devices: activeFinaDevices.map((d: any) => ({
+                    devices: furs.activeDevices.map((d) => ({
+                      id: (d as any).id,
+                      electronic_device_name: d.electronic_device_name,
+                    })),
+                    selectedPremise: furs.selectedPremiseName,
+                    selectedDevice: furs.selectedDeviceName,
+                    onPremiseChange: furs.setSelectedPremiseName,
+                    onDeviceChange: furs.setSelectedDeviceName,
+                  }
+                : undefined
+            }
+            serviceDate={{
+              dateType: serviceDateType,
+              onDateTypeChange: setServiceDateType,
+            }}
+            finaInline={
+              useFinaNumbering
+                ? {
+                    premises: fina.activePremises.map((p: any) => ({
+                      id: p.id,
+                      business_premise_name: p.business_premise_name,
+                    })),
+                    devices: fina.activeDevices.map((d: any) => ({
                       id: d.id,
                       electronic_device_name: d.electronic_device_name,
                     })),
-                    selectedPremise: selectedFinaBusinessPremiseName,
-                    selectedDevice: selectedFinaElectronicDeviceName,
-                    onPremiseChange: setSelectedFinaBusinessPremiseName,
-                    onDeviceChange: setSelectedFinaElectronicDeviceName,
+                    selectedPremise: fina.selectedPremiseName,
+                    selectedDevice: fina.selectedDeviceName,
+                    onPremiseChange: fina.setSelectedPremiseName,
+                    onDeviceChange: fina.setSelectedDeviceName,
                   }
                 : undefined
             }
@@ -666,7 +543,7 @@ export default function CreateCreditNoteForm({
               paymentTypes={paymentTypes}
               onPaymentTypesChange={setPaymentTypes}
               t={t}
-              alwaysShowPaymentType={!!isFinaActive}
+              alwaysShowPaymentType={!!fina.isActive}
             />
           </DocumentDetailsSection>
         </div>
@@ -683,6 +560,7 @@ export default function CreateCreditNoteForm({
           maxTaxesPerItem={activeEntity?.country_rules?.max_taxes_per_item}
           priceModesRef={priceModesRef}
           initialPriceModes={initialPriceModes}
+          onItemsStateChange={emitCurrentPreviewPayload}
           taxesDisabled={reverseChargeApplies}
           taxesDisabledMessage={
             reverseChargeApplies ? t("Reverse charge - tax exempt EU B2B sale") : viesWarning ? viesWarning : undefined

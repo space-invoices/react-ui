@@ -8,14 +8,14 @@ import { useStatsBatchQuery } from "../shared/use-stats-query";
 
 export const TAX_COLLECTED_CACHE_KEY = "dashboard-tax-collected";
 
-function getPreviousMonthDateRange() {
+function getPreviousMonthDateRange(locale?: string) {
   const now = new Date();
   const firstDay = new Date(now.getFullYear(), now.getMonth() - 1, 1);
   const lastDay = new Date(now.getFullYear(), now.getMonth(), 0);
   return {
     from: firstDay.toISOString().split("T")[0],
     to: lastDay.toISOString().split("T")[0],
-    label: firstDay.toLocaleDateString("en-US", { month: "short", year: "numeric" }),
+    label: firstDay.toLocaleDateString(locale, { month: "short", year: "numeric" }),
   };
 }
 
@@ -62,8 +62,8 @@ function transformTaxData(data: StatsQueryDataItem[]): TaxByRate[] {
     .sort((a, b) => b.rate - a.rate);
 }
 
-export function useTaxCollectedData(entityId: string | undefined) {
-  const prevMonthRange = getPreviousMonthDateRange();
+export function useTaxCollectedData(entityId: string | undefined, locale?: string) {
+  const prevMonthRange = getPreviousMonthDateRange(locale);
   const yearRange = getYearDateRange();
 
   const queries: StatsQueryRequest[] = [

@@ -175,6 +175,7 @@ export const GeneralSettingsSection: FC<GeneralSettingsSectionProps> = ({
           onClick={handleSaveEntityInfo}
           disabled={isEntityUpdatePending}
           className="cursor-pointer"
+          data-testid="furs-entity-info-save"
         >
           {isEntityUpdatePending ? t("Saving...") : t("Save Entity Info")}
         </Button>
@@ -240,6 +241,7 @@ export const GeneralSettingsSection: FC<GeneralSettingsSectionProps> = ({
           onClick={handleSaveUserSettings}
           disabled={isUserSettingsPending || userSettingsLoading}
           className="cursor-pointer"
+          data-testid="furs-operator-settings-save"
         >
           {isUserSettingsPending ? t("Saving...") : t("Save Operator Settings")}
         </Button>
@@ -320,6 +322,7 @@ export const GeneralSettingsSection: FC<GeneralSettingsSectionProps> = ({
         type="button"
         onClick={() => setIsAdvancedOpen(!isAdvancedOpen)}
         className="flex w-full items-center gap-2 py-2 text-muted-foreground hover:text-foreground"
+        data-testid="furs-advanced-toggle"
       >
         <ChevronRight className={cn("h-4 w-4 transition-transform", isAdvancedOpen && "rotate-90")} />
         <span className="font-medium text-sm">{t("Advanced Settings")}</span>
@@ -342,7 +345,12 @@ export const GeneralSettingsSection: FC<GeneralSettingsSectionProps> = ({
                   <FormItem>
                     <FormLabel className="text-sm">{t("Operator Tax Number")}</FormLabel>
                     <FormControl>
-                      <Input placeholder="12345678" {...field} className="h-10" />
+                      <Input
+                        placeholder="12345678"
+                        {...field}
+                        className="h-10"
+                        data-testid="furs-api-operator-tax-number-input"
+                      />
                     </FormControl>
                     <FormDescription className="text-xs">
                       {t("Tax number for API key usage (optional)")}
@@ -359,7 +367,12 @@ export const GeneralSettingsSection: FC<GeneralSettingsSectionProps> = ({
                   <FormItem>
                     <FormLabel className="text-sm">{t("Operator Label")}</FormLabel>
                     <FormControl>
-                      <Input placeholder="API Default" {...field} className="h-10" />
+                      <Input
+                        placeholder="API Default"
+                        {...field}
+                        className="h-10"
+                        data-testid="furs-api-operator-label-input"
+                      />
                     </FormControl>
                     <FormDescription className="text-xs">
                       {t("Operator label for API key usage (optional)")}

@@ -54,14 +54,6 @@ export function prepareInvoiceSubmission(values: CreateInvoiceSchema, options: P
     isDraft: options.isDraft,
   }) as CreateInvoiceRequest;
 
-  // Add service date fields if provided
-  if ((values as any).date_service) {
-    (payload as any).date_service = new Date((values as any).date_service);
-  }
-  if ((values as any).date_service_to) {
-    (payload as any).date_service_to = new Date((values as any).date_service_to);
-  }
-
   // Add FURS data if provided
   if (options.furs) {
     if (options.furs.skip) {

@@ -1,4 +1,4 @@
-import { FileX } from "lucide-react";
+import { SearchX } from "lucide-react";
 
 import { Button } from "@/ui/components/ui/button";
 import { TableCell, TableRow } from "@/ui/components/ui/table";
@@ -31,9 +31,9 @@ export function TableNoResults({ search, onClear, rows = 10, t = (key) => key }:
     <TableRow className="hover:bg-transparent">
       <TableCell colSpan={100} className="text-center align-middle" style={{ height }}>
         <div className="flex flex-col items-center gap-3">
-          <FileX size={32} strokeWidth={1.5} className="text-muted-foreground" />
+          <SearchX size={70} strokeWidth={0.35} className="text-muted-foreground" />
           <div className="space-y-1">
-            <p className="font-medium text-muted-foreground">{t("No results found")}</p>
+            <p className="font-light text-lg text-muted-foreground">{t("No results found")}</p>
             {handleClear && <p className="text-muted-foreground text-sm">{t("Try adjusting your search criteria")}</p>}
           </div>
           {handleClear && (

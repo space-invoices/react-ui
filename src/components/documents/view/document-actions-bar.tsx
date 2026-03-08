@@ -6,6 +6,7 @@ import {
   ChevronDown,
   Copy,
   Download,
+  Ellipsis,
   FileCode2,
   Link2Off,
   Loader2,
@@ -22,6 +23,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/ui/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/ui/components/ui/tooltip";
@@ -56,6 +58,14 @@ const PDF_LANGUAGE_CODES = [
   { label: "Dutch", code: "nl-NL" },
   { label: "Polish", code: "pl-PL" },
   { label: "Croatian", code: "hr-HR" },
+  { label: "Swedish", code: "sv-SE" },
+  { label: "Finnish", code: "fi-FI" },
+  { label: "Estonian", code: "et-EE" },
+  { label: "Bulgarian", code: "bg-BG" },
+  { label: "Czech", code: "cs-CZ" },
+  { label: "Slovak", code: "sk-SK" },
+  { label: "Norwegian", code: "nb-NO" },
+  { label: "Icelandic", code: "is-IS" },
 ] as const;
 
 interface DocumentActionsBarProps extends ComponentTranslationProps {
@@ -132,7 +142,7 @@ export function DocumentActionsBar({
   isVoiding,
   ...i18nProps
 }: DocumentActionsBarProps) {
-  const t = createTranslation({ translations, locale: currentLocale, ...i18nProps });
+  const t = createTranslation({ ...i18nProps, translations, locale: currentLocale });
   const [linkCopied, setLinkCopied] = useState(false);
 
   const { isDownloadingPdf, isDownloadingEslog, downloadPdf, downloadEslog } = useDocumentDownload({
@@ -168,207 +178,299 @@ export function DocumentActionsBar({
 
   const isDraft = (document as any).is_draft === true;
 
-  return (
-    <div className="flex flex-wrap items-center gap-2">
-      {/* PDF Download */}
-      <div className="flex">
-        <Button
-          variant="outline"
-          size="sm"
-          disabled={isDownloadingPdf}
-          onClick={() => handleDownloadPdf()}
-          className="cursor-pointer rounded-r-none"
-        >
-          {isDownloadingPdf ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
-          {t("PDF")}
-        </Button>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={isDownloadingPdf}
-              className="cursor-pointer rounded-l-none border-l-0 px-2"
-            >
-              <ChevronDown className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {PDF_LANGUAGE_CODES.map((lang) => (
-              <DropdownMenuItem key={lang.code} onClick={() => handleDownloadPdf(lang.code)} className="cursor-pointer">
-                {t(lang.label)}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-
-      {/* e-SLOG Download */}
-      {showEslogDownload && (
-        <Button
-          variant="outline"
-          size="sm"
-          disabled={isDownloadingEslog}
-          onClick={handleDownloadEslog}
-          className="cursor-pointer"
-        >
-          {isDownloadingEslog ? (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          ) : (
-            <FileCode2 className="mr-2 h-4 w-4" />
-          )}
-          e-SLOG
-        </Button>
-      )}
-
-      {/* Send Email */}
-      <Button variant="outline" size="sm" onClick={onSendEmail} className="cursor-pointer">
-        <Mail className="mr-2 h-4 w-4" />
-        {t("Send")}
+  // --- Primary actions (always visible) ---
+  const pdfButton = (
+    <div className="flex">
+      <Button
+        variant="outline"
+        size="sm"
+        disabled={isDownloadingPdf}
+        onClick={() => handleDownloadPdf()}
+        className="cursor-pointer rounded-r-none"
+      >
+        {isDownloadingPdf ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+        {t("PDF")}
       </Button>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={isDownloadingPdf}
+            className="cursor-pointer rounded-l-none border-l-0 px-2"
+          >
+            <ChevronDown className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          {PDF_LANGUAGE_CODES.map((lang) => (
+            <DropdownMenuItem key={lang.code} onClick={() => handleDownloadPdf(lang.code)} className="cursor-pointer">
+              {t(lang.label)}
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  );
 
-      {/* Add Payment */}
-      {supportsPayments && (
-        <Button variant="outline" size="sm" onClick={onAddPayment} className="cursor-pointer">
-          <Plus className="mr-2 h-4 w-4" />
-          {t("Payment")}
-        </Button>
-      )}
+  const eslogButton = showEslogDownload ? (
+    <Button
+      variant="outline"
+      size="sm"
+      disabled={isDownloadingEslog}
+      onClick={handleDownloadEslog}
+      className="cursor-pointer"
+    >
+      {isDownloadingEslog ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileCode2 className="mr-2 h-4 w-4" />}
+      e-SLOG
+    </Button>
+  ) : null;
 
-      {/* Edit */}
-      {onEdit &&
-        (isEditable ? (
-          <Button variant="outline" size="sm" onClick={onEdit} className="cursor-pointer">
+  const sendButton = (
+    <Button variant="outline" size="sm" onClick={onSendEmail} className="cursor-pointer">
+      <Mail className="mr-2 h-4 w-4" />
+      {t("Send")}
+    </Button>
+  );
+
+  const paymentButton = supportsPayments ? (
+    <Button variant="outline" size="sm" onClick={onAddPayment} className="cursor-pointer">
+      <Plus className="mr-2 h-4 w-4" />
+      {t("Payment")}
+    </Button>
+  ) : null;
+
+  // --- Secondary actions (desktop: inline buttons, mobile: overflow menu) ---
+  const editButton = onEdit ? (
+    isEditable ? (
+      <Button variant="outline" size="sm" onClick={onEdit} className="cursor-pointer">
+        <Pencil className="mr-2 h-4 w-4" />
+        {t("Edit")}
+      </Button>
+    ) : (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="outline"
+            size="sm"
+            aria-disabled="true"
+            className="pointer-events-auto opacity-50"
+            onClick={(e) => e.preventDefault()}
+          >
             <Pencil className="mr-2 h-4 w-4" />
             {t("Edit")}
           </Button>
-        ) : (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                aria-disabled="true"
-                className="pointer-events-auto opacity-50"
-                onClick={(e) => e.preventDefault()}
-              >
-                <Pencil className="mr-2 h-4 w-4" />
-                {t("Edit")}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>{editDisabledReason}</p>
-            </TooltipContent>
-          </Tooltip>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>{editDisabledReason}</p>
+        </TooltipContent>
+      </Tooltip>
+    )
+  ) : null;
+
+  const shareButton = shareUrl ? (
+    <div className="flex">
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button variant="outline" size="sm" onClick={handleCopyShareLink} className="cursor-pointer rounded-r-none">
+            {linkCopied ? <Check className="mr-2 h-4 w-4 text-green-600" /> : <Share2 className="mr-2 h-4 w-4" />}
+            {linkCopied ? t("Copied") : t("Share")}
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>{t("Copy shareable link")}</p>
+        </TooltipContent>
+      </Tooltip>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" size="sm" className="cursor-pointer rounded-l-none border-l-0 px-2">
+            <ChevronDown className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={handleCopyShareLink} className="cursor-pointer">
+            <Share2 className="mr-2 h-4 w-4" />
+            {t("Copy shareable link")}
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={onUnshare}
+            disabled={isUnsharing}
+            className="hover:!bg-destructive hover:!text-destructive-foreground focus:!bg-destructive focus:!text-destructive-foreground cursor-pointer text-destructive"
+          >
+            {isUnsharing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Link2Off className="mr-2 h-4 w-4" />}
+            {t("Unshare")}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  ) : onShare ? (
+    <Button variant="outline" size="sm" onClick={onShare} disabled={isSharing} className="cursor-pointer">
+      {isSharing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Share2 className="mr-2 h-4 w-4" />}
+      {t("Share")}
+    </Button>
+  ) : null;
+
+  const recurringButton = onCreateRecurring ? (
+    <Button variant="outline" size="sm" onClick={onCreateRecurring} className="cursor-pointer">
+      <RefreshCw className="mr-2 h-4 w-4" />
+      {recurringLabel || t("Recurring")}
+    </Button>
+  ) : null;
+
+  const duplicateButton = onDuplicate ? (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline" size="sm" className="cursor-pointer">
+          <Copy className="mr-2 h-4 w-4" />
+          {t("Duplicate")}
+          <ChevronDown className="ml-1 h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        {getAllowedDuplicateTargets(documentType).map((targetType) => (
+          <DropdownMenuItem key={targetType} onClick={() => onDuplicate(targetType)} className="cursor-pointer">
+            {targetType === documentType ? t(`Duplicate ${documentType}`) : t(`Create ${targetType}`)}
+          </DropdownMenuItem>
         ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  ) : null;
 
-      {/* Share Link */}
-      {shareUrl ? (
-        <div className="flex">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleCopyShareLink}
-                className="cursor-pointer rounded-r-none"
-              >
-                {linkCopied ? <Check className="mr-2 h-4 w-4 text-green-600" /> : <Share2 className="mr-2 h-4 w-4" />}
-                {linkCopied ? t("Copied") : t("Share")}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>{t("Copy shareable link")}</p>
-            </TooltipContent>
-          </Tooltip>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="cursor-pointer rounded-l-none border-l-0 px-2">
-                <ChevronDown className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={handleCopyShareLink} className="cursor-pointer">
-                <Share2 className="mr-2 h-4 w-4" />
-                {t("Copy shareable link")}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={onUnshare}
-                disabled={isUnsharing}
-                className="hover:!bg-destructive hover:!text-destructive-foreground focus:!bg-destructive focus:!text-destructive-foreground cursor-pointer text-destructive"
-              >
-                {isUnsharing ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <Link2Off className="mr-2 h-4 w-4" />
-                )}
-                {t("Unshare")}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      ) : onShare ? (
-        <Button variant="outline" size="sm" onClick={onShare} disabled={isSharing} className="cursor-pointer">
-          {isSharing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Share2 className="mr-2 h-4 w-4" />}
-          {t("Share")}
-        </Button>
-      ) : null}
+  const voidButton =
+    !isDraft && onVoid ? (
+      <Button variant="destructive" size="sm" onClick={onVoid} disabled={isVoiding} className="cursor-pointer">
+        {isVoiding ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Ban className="mr-2 h-4 w-4" />}
+        {isVoiding ? t("Voiding...") : t("Void")}
+      </Button>
+    ) : null;
 
-      {/* Recurring */}
-      {onCreateRecurring && (
-        <Button variant="outline" size="sm" onClick={onCreateRecurring} className="cursor-pointer">
-          <RefreshCw className="mr-2 h-4 w-4" />
-          {recurringLabel || t("Recurring")}
-        </Button>
-      )}
+  const finalizeButton =
+    isDraft && onFinalize ? (
+      <Button variant="default" size="sm" onClick={onFinalize} disabled={isFinalizing} className="cursor-pointer">
+        {isFinalizing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle className="mr-2 h-4 w-4" />}
+        {t("Finalize")}
+      </Button>
+    ) : null;
 
-      {/* Duplicate/Convert */}
-      {onDuplicate && (
+  const deleteDraftButton =
+    isDraft && onDeleteDraft ? (
+      <Button
+        variant="destructive"
+        size="sm"
+        onClick={onDeleteDraft}
+        disabled={isDeletingDraft}
+        className="cursor-pointer"
+      >
+        {isDeletingDraft ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
+        {t("Delete Draft")}
+      </Button>
+    ) : null;
+
+  // Collect secondary items for the mobile overflow menu
+  const hasSecondaryActions =
+    editButton ||
+    shareButton ||
+    recurringButton ||
+    duplicateButton ||
+    voidButton ||
+    finalizeButton ||
+    deleteDraftButton;
+
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      {/* Primary actions — always visible */}
+      {pdfButton}
+      {eslogButton}
+      {sendButton}
+      {paymentButton}
+
+      {/* Secondary actions — visible on md+ screens as inline buttons */}
+      <div className="hidden flex-wrap items-center gap-2 md:flex">
+        {editButton}
+        {shareButton}
+        {recurringButton}
+        {duplicateButton}
+        {voidButton}
+        {finalizeButton}
+        {deleteDraftButton}
+      </div>
+
+      {/* Mobile overflow — visible on small screens only */}
+      {hasSecondaryActions && (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="cursor-pointer">
-              <Copy className="mr-2 h-4 w-4" />
-              {t("Duplicate")}
-              <ChevronDown className="ml-1 h-4 w-4" />
+            <Button variant="outline" size="sm" className="cursor-pointer md:hidden">
+              <Ellipsis className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            {getAllowedDuplicateTargets(documentType).map((targetType) => (
-              <DropdownMenuItem key={targetType} onClick={() => onDuplicate(targetType)} className="cursor-pointer">
-                {targetType === documentType ? t(`Duplicate ${documentType}`) : t(`Create ${targetType}`)}
+            {onEdit && (
+              <DropdownMenuItem
+                onClick={isEditable ? onEdit : undefined}
+                disabled={!isEditable}
+                className="cursor-pointer"
+              >
+                <Pencil className="mr-2 h-4 w-4" />
+                {t("Edit")}
               </DropdownMenuItem>
-            ))}
+            )}
+            {shareUrl ? (
+              <DropdownMenuItem onClick={handleCopyShareLink} className="cursor-pointer">
+                <Share2 className="mr-2 h-4 w-4" />
+                {linkCopied ? t("Copied") : t("Share")}
+              </DropdownMenuItem>
+            ) : onShare ? (
+              <DropdownMenuItem onClick={onShare} disabled={isSharing} className="cursor-pointer">
+                <Share2 className="mr-2 h-4 w-4" />
+                {t("Share")}
+              </DropdownMenuItem>
+            ) : null}
+            {onCreateRecurring && (
+              <DropdownMenuItem onClick={onCreateRecurring} className="cursor-pointer">
+                <RefreshCw className="mr-2 h-4 w-4" />
+                {recurringLabel || t("Recurring")}
+              </DropdownMenuItem>
+            )}
+            {onDuplicate && (
+              <>
+                <DropdownMenuSeparator />
+                {getAllowedDuplicateTargets(documentType).map((targetType) => (
+                  <DropdownMenuItem key={targetType} onClick={() => onDuplicate(targetType)} className="cursor-pointer">
+                    <Copy className="mr-2 h-4 w-4" />
+                    {targetType === documentType ? t(`Duplicate ${documentType}`) : t(`Create ${targetType}`)}
+                  </DropdownMenuItem>
+                ))}
+              </>
+            )}
+            {(voidButton || finalizeButton || deleteDraftButton) && <DropdownMenuSeparator />}
+            {isDraft && onFinalize && (
+              <DropdownMenuItem onClick={onFinalize} disabled={isFinalizing} className="cursor-pointer">
+                <CheckCircle className="mr-2 h-4 w-4" />
+                {t("Finalize")}
+              </DropdownMenuItem>
+            )}
+            {!isDraft && onVoid && (
+              <DropdownMenuItem
+                onClick={onVoid}
+                disabled={isVoiding}
+                className="hover:!bg-destructive hover:!text-destructive-foreground focus:!bg-destructive focus:!text-destructive-foreground cursor-pointer text-destructive"
+              >
+                <Ban className="mr-2 h-4 w-4" />
+                {t("Void")}
+              </DropdownMenuItem>
+            )}
+            {isDraft && onDeleteDraft && (
+              <DropdownMenuItem
+                onClick={onDeleteDraft}
+                disabled={isDeletingDraft}
+                className="hover:!bg-destructive hover:!text-destructive-foreground focus:!bg-destructive focus:!text-destructive-foreground cursor-pointer text-destructive"
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                {t("Delete Draft")}
+              </DropdownMenuItem>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
-      )}
-
-      {/* Void */}
-      {!isDraft && onVoid && (
-        <Button variant="destructive" size="sm" onClick={onVoid} disabled={isVoiding} className="cursor-pointer">
-          {isVoiding ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Ban className="mr-2 h-4 w-4" />}
-          {isVoiding ? t("Voiding...") : t("Void")}
-        </Button>
-      )}
-
-      {/* Draft Actions */}
-      {isDraft && onFinalize && (
-        <Button variant="default" size="sm" onClick={onFinalize} disabled={isFinalizing} className="cursor-pointer">
-          {isFinalizing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle className="mr-2 h-4 w-4" />}
-          {t("Finalize")}
-        </Button>
-      )}
-
-      {isDraft && onDeleteDraft && (
-        <Button
-          variant="destructive"
-          size="sm"
-          onClick={onDeleteDraft}
-          disabled={isDeletingDraft}
-          className="cursor-pointer"
-        >
-          {isDeletingDraft ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
-          {t("Delete Draft")}
-        </Button>
       )}
     </div>
   );

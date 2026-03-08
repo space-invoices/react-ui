@@ -3,6 +3,7 @@ import { useMemo } from "react";
 import { DataTable } from "@/ui/components/table/data-table";
 import { FormattedDate } from "@/ui/components/table/date-cell";
 import { useTableFetch } from "@/ui/components/table/hooks/use-table-fetch";
+import { withTableTranslations } from "@/ui/components/table/locales";
 import type { Column, ListTableProps, TableQueryParams, TableQueryResponse } from "@/ui/components/table/types";
 import { Badge } from "@/ui/components/ui/badge";
 import { createTranslation } from "@/ui/lib/translation";
@@ -20,7 +21,7 @@ import pl from "./locales/pl";
 import pt from "./locales/pt";
 import sl from "./locales/sl";
 
-const translations = {
+const translations = withTableTranslations({
   en,
   sl,
   de,
@@ -31,7 +32,7 @@ const translations = {
   nl,
   pl,
   hr,
-} as const;
+} as const);
 
 function statusVariant(status: string): "default" | "secondary" | "outline" {
   switch (status) {
@@ -48,6 +49,7 @@ type RecurringInvoiceListTableProps = {
   t?: (key: string) => string;
   namespace?: string;
   locale?: string;
+  translationLocale?: string;
   entityId?: string;
   onViewSourceInvoice?: (documentId: string) => void;
   onDeleteSuccess?: () => void;
@@ -65,6 +67,7 @@ export default function RecurringInvoiceListTable({
 }: RecurringInvoiceListTableProps) {
   const t = createTranslation({
     translations,
+    locale: i18nProps.translationLocale ?? i18nProps.locale,
     ...i18nProps,
   });
 
@@ -120,7 +123,7 @@ export default function RecurringInvoiceListTable({
         header: t("Next Run"),
         cell: (ri) =>
           ri.next_run_date ? (
-            <FormattedDate date={ri.next_run_date} />
+            <FormattedDate date={ri.next_run_date} locale={i18nProps.locale} />
           ) : (
             <span className="text-muted-foreground">-</span>
           ),
@@ -134,7 +137,7 @@ export default function RecurringInvoiceListTable({
       {
         id: "created_at",
         header: t("Created"),
-        cell: (ri) => <FormattedDate date={ri.created_at} />,
+        cell: (ri) => <FormattedDate date={ri.created_at} locale={i18nProps.locale} />,
       },
       {
         id: "actions",

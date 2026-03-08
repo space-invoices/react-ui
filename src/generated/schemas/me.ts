@@ -12,7 +12,26 @@ import { z } from 'zod';
 const patchMeSchemaDefinition = z
   .object({
     name: z.union([z.string(), z.null()]),
-    locale: z.enum(["en", "de", "sl"]),
+    locale: z.enum([
+      "en",
+      "de",
+      "sl",
+      "it",
+      "fr",
+      "es",
+      "pt",
+      "nl",
+      "pl",
+      "hr",
+      "sv",
+      "fi",
+      "et",
+      "bg",
+      "cs",
+      "sk",
+      "nb",
+      "is",
+    ]),
   })
   .partial();
 

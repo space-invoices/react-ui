@@ -1,19 +1,18 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Entity } from "@spaceinvoices/js-sdk";
-import { AlertCircle, CheckCircle2, Info } from "lucide-react";
-import { type FC, type ReactNode, useCallback, useEffect, useState } from "react";
+import { AlertCircle, Info } from "lucide-react";
+import type { FC, ReactNode } from "react";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
 import { Alert, AlertDescription, AlertTitle } from "@/ui/components/ui/alert";
 import { Form } from "@/ui/components/ui/form";
 import { PageLoadingSpinner } from "@/ui/components/ui/loading-spinner";
-import { Tabs, TabsList, TabsTrigger } from "@/ui/components/ui/tabs";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/ui/components/ui/tooltip";
 import { updateFursSettingsSchema } from "@/ui/generated/schemas";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
-import { cn } from "@/ui/lib/utils";
 import { useFormFooterRegistration } from "@/ui/providers/form-footer-context";
+import { type FiscalizationStepConfig, useFiscalizationStepFlow } from "../shared/fiscalization-step-flow";
+import { FiscalizationStepTabs } from "../shared/fiscalization-step-tabs";
 import { useFursPremises, useFursSettings, useUpdateFursSettings, useUserFursSettings } from "./furs-settings.hooks";
 // Import locale files
 import de from "./locales/de";
@@ -99,10 +98,6 @@ export const FursSettingsForm: FC<FursSettingsFormProps> = ({
   renderSection,
   hideUserOperatorSection,
 }) => {
-  // Step navigation state (can be controlled via props for URL sync)
-  const [activeStep, setActiveStep] = useState<StepType>(initialStep);
-  const [hasInitializedStep, setHasInitializedStep] = useState(false);
-
   // Create a guaranteed translation function using the createTranslation utility
   const translate = createTranslation({
     t: translateFn,
@@ -110,15 +105,6 @@ export const FursSettingsForm: FC<FursSettingsFormProps> = ({
     locale,
     translations,
   });
-
-  // Handle step changes
-  const handleStepChange = useCallback(
-    (newStep: StepType) => {
-      setActiveStep(newStep);
-      onStepChange?.(newStep); // Notify parent (e.g., for URL updates)
-    },
-    [onStepChange],
-  );
 
   // Fetch FURS settings and premises
   const { data: fursSettings, isLoading: settingsLoading } = useFursSettings(entity.id);
@@ -178,7 +164,7 @@ export const FursSettingsForm: FC<FursSettingsFormProps> = ({
   const canAccessEnable =
     hasEntityTaxNumber && hasOperatorSettings && certificateValid && hasPremises && hasPremiseWithDevice;
 
-  const steps = [
+  const steps: FiscalizationStepConfig<StepType>[] = [
     {
       id: "settings" as const,
       title: translate("General Settings"),
@@ -194,14 +180,14 @@ export const FursSettingsForm: FC<FursSettingsFormProps> = ({
     {
       id: "premises" as const,
       title: translate("Business Premises"),
-      complete: hasPremiseWithDevice,
-      unlocked: canAccessPremises,
+      complete: Boolean(hasPremiseWithDevice),
+      unlocked: Boolean(canAccessPremises),
     },
     {
       id: "enable" as const,
       title: translate("Enable Fiscalization"),
-      complete: fursEnabled,
-      unlocked: canAccessEnable,
+      complete: Boolean(fursEnabled),
+      unlocked: Boolean(canAccessEnable),
     },
   ];
 
@@ -222,30 +208,13 @@ export const FursSettingsForm: FC<FursSettingsFormProps> = ({
     return "settings";
   };
 
-  // Smart initial step selection on first load (when data is ready)
-  // biome-ignore lint/correctness/useExhaustiveDependencies: Intentionally run only when data loads, not on every dep change
-  useEffect(() => {
-    if (!hasInitializedStep && !settingsLoading && !premisesLoading) {
-      const smartStep = getDefaultStep();
-      if (smartStep !== activeStep) {
-        handleStepChange(smartStep);
-      }
-      setHasInitializedStep(true);
-    }
-  }, [settingsLoading, premisesLoading, hasInitializedStep]);
-
-  // Validate step and redirect if current step becomes locked
-  // biome-ignore lint/correctness/useExhaustiveDependencies: steps is recreated on each render but values are stable
-  useEffect(() => {
-    const currentStepInfo = steps.find((s) => s.id === activeStep);
-    if (currentStepInfo && !currentStepInfo.unlocked) {
-      // If current step is locked, redirect to first unlocked step
-      const firstUnlockedStep = steps.find((s) => s.unlocked);
-      if (firstUnlockedStep) {
-        handleStepChange(firstUnlockedStep.id);
-      }
-    }
-  }, [activeStep, handleStepChange]);
+  const { activeStep, handleStepChange } = useFiscalizationStepFlow({
+    initialStep,
+    isReady: !settingsLoading && !premisesLoading,
+    steps,
+    getDefaultStep,
+    onStepChange,
+  });
 
   // Check if entity is Slovenian
   if (entity.country_code !== "SI") {
@@ -274,88 +243,39 @@ export const FursSettingsForm: FC<FursSettingsFormProps> = ({
   // Check if entity is in sandbox (test) mode
   const isSandboxMode = entity.environment === "sandbox";
 
-  // Shared tabs navigation component - in left column only
-  const tabsNavigation = (
-    <div className="grid items-start gap-6 lg:grid-cols-[1fr_280px]">
-      <Tabs
-        value={activeStep}
-        onValueChange={(value) => handleStepChange(value as typeof activeStep)}
-        className="w-full"
-      >
-        <TabsList className="grid w-full grid-cols-4 rounded-none p-0">
-          {steps.map((step, index) => {
-            const isLocked = !step.unlocked;
-            let tooltipText = "";
+  const getStepTooltipText = (step: (typeof steps)[number]) => {
+    if (step.id === "certificate") {
+      if (!hasEntityTaxNumber) {
+        return translate("Set entity tax number in General Settings first");
+      }
+      return translate("Set operator tax number and label in General Settings first");
+    }
 
-            if (isLocked) {
-              if (step.id === "certificate") {
-                if (!hasEntityTaxNumber) {
-                  tooltipText = translate("Set entity tax number in General Settings first");
-                } else {
-                  tooltipText = translate("Set operator tax number and label in General Settings first");
-                }
-              } else if (step.id === "premises") {
-                if (!hasEntityTaxNumber) {
-                  tooltipText = translate("Set entity tax number in General Settings first");
-                } else if (!hasOperatorSettings) {
-                  tooltipText = translate("Set operator tax number and label in General Settings first");
-                } else {
-                  tooltipText = translate("Upload and validate digital certificate first");
-                }
-              } else if (step.id === "enable") {
-                if (!hasEntityTaxNumber || !hasOperatorSettings) {
-                  tooltipText = translate("Complete General Settings first");
-                } else if (!certificateValid) {
-                  tooltipText = translate("Upload and validate digital certificate first");
-                } else if (!hasPremises) {
-                  tooltipText = translate("Register at least one business premise first");
-                } else {
-                  tooltipText = translate("Register at least one electronic device first");
-                }
-              }
-            }
+    if (step.id === "premises") {
+      if (!hasEntityTaxNumber) {
+        return translate("Set entity tax number in General Settings first");
+      }
+      if (!hasOperatorSettings) {
+        return translate("Set operator tax number and label in General Settings first");
+      }
+      return translate("Upload and validate digital certificate first");
+    }
 
-            const trigger = (
-              <TabsTrigger
-                value={step.id}
-                disabled={isLocked}
-                className={cn("cursor-pointer justify-center", !step.unlocked && "opacity-50")}
-              >
-                <span className="flex items-center gap-2">
-                  {step.complete ? (
-                    <CheckCircle2 className="h-4 w-4 text-green-500" />
-                  ) : (
-                    <span className="text-xs">{index + 1}</span>
-                  )}
-                  {step.title}
-                </span>
-              </TabsTrigger>
-            );
+    if (step.id === "enable") {
+      if (!hasEntityTaxNumber || !hasOperatorSettings) {
+        return translate("Complete General Settings first");
+      }
+      if (!certificateValid) {
+        return translate("Upload and validate digital certificate first");
+      }
+      if (!hasPremises) {
+        return translate("Register at least one business premise first");
+      }
+      return translate("Register at least one electronic device first");
+    }
 
-            if (isLocked) {
-              return (
-                <Tooltip key={step.id} delayDuration={0}>
-                  <TooltipTrigger asChild>
-                    <span className="flex cursor-not-allowed justify-center">{trigger}</span>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>{tooltipText}</p>
-                  </TooltipContent>
-                </Tooltip>
-              );
-            }
-
-            return (
-              <span key={step.id} className="flex justify-center">
-                {trigger}
-              </span>
-            );
-          })}
-        </TabsList>
-      </Tabs>
-      <div className="hidden lg:block" />
-    </div>
-  );
+    return "";
+  };
 
   // Helper to wrap section content with render prop if provided
   const wrapSection = (section: SectionType, content: ReactNode) => {
@@ -385,7 +305,13 @@ export const FursSettingsForm: FC<FursSettingsFormProps> = ({
         )}
 
         {/* Tabs navigation */}
-        {tabsNavigation}
+        <FiscalizationStepTabs
+          activeStep={activeStep}
+          steps={steps}
+          onStepChange={handleStepChange}
+          getTooltipText={getStepTooltipText}
+          testIdPrefix="furs-tab"
+        />
 
         {/* Step content - each section wrapped with its own help */}
         {activeStep === "settings" && (

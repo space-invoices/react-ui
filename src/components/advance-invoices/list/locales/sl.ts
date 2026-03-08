@@ -48,6 +48,7 @@ export default {
   "Retry Fiscalization": "Ponovi fiskalizacijo",
   "Some selected documents don't have failed fiscalization": "Nekateri izbrani dokumenti nimajo neuspele fiskalizacije",
   "Copy to Invoice": "Kopiraj v račun",
+  "Finalize draft documents before copying to invoice": "Dokončajte osnutke dokumentov pred kopiranjem v račun",
   Void: "Storniraj",
   "Cannot void an advance invoice linked to an invoice": "Ni mogoče razveljaviti predračuna, ki je povezan z računom",
 } as const;

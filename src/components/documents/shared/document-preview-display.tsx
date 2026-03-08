@@ -1,13 +1,21 @@
 "use client";
 
 import type { AdvanceInvoice, CreditNote, Estimate, Invoice } from "@spaceinvoices/js-sdk";
-import { AlertCircle, FileText, Loader2 } from "lucide-react";
+import { AlertCircle, FileText } from "lucide-react";
 import { useEffect, useState } from "react";
 import { cn } from "@/ui/lib/utils";
 import { useEntitiesOptional } from "@/ui/providers/entities-context";
 import { useSDK } from "@/ui/providers/sdk-provider";
+import { DocumentPreviewSkeleton } from "./document-preview-skeleton";
 import { ScaledDocumentPreview } from "./scaled-document-preview";
 import { useA4Scaling } from "./use-a4-scaling";
+
+const SAVED_PREVIEW_TIMING_EVENT = "si:saved-preview-timing";
+
+function emitSavedPreviewDebug(detail: Record<string, unknown>) {
+  if (!import.meta.env.DEV || typeof window === "undefined") return;
+  window.dispatchEvent(new CustomEvent(SAVED_PREVIEW_TIMING_EVENT, { detail }));
+}
 
 type Document = Invoice | Estimate | CreditNote | AdvanceInvoice;
 
@@ -97,6 +105,13 @@ export function DocumentPreviewDisplay({
 
       // Authenticated view - require entity context and SDK
       if (!document?.id || !activeEntity?.id || !sdk) {
+        emitSavedPreviewDebug({
+          stage: "skipped",
+          reason: "missing_context",
+          documentId: document?.id,
+          hasEntityId: !!activeEntity?.id,
+          hasSdk: !!sdk,
+        });
         return;
       }
 
@@ -104,6 +119,11 @@ export function DocumentPreviewDisplay({
       setError(null);
 
       try {
+        const startedAt = performance.now();
+        emitSavedPreviewDebug({
+          stage: "request_started",
+          documentId: document.id,
+        });
         // Fetch the rendered HTML by document ID using SDK wrapper
         // Document type is auto-detected from ID prefix (inv_, est_, cre_, adv_)
         // Don't send locale — let entity locale drive formatting (decimal separators, date format)
@@ -111,9 +131,19 @@ export function DocumentPreviewDisplay({
 
         setPreviewHtml(html);
         setError(null);
+        emitSavedPreviewDebug({
+          stage: "request_succeeded",
+          documentId: document.id,
+          elapsedMs: Number((performance.now() - startedAt).toFixed(1)),
+        });
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load preview");
         setPreviewHtml("");
+        emitSavedPreviewDebug({
+          stage: "request_failed",
+          documentId: document.id,
+          message: err instanceof Error ? err.message : "Failed to load preview",
+        });
       } finally {
         setIsLoading(false);
       }
@@ -133,16 +163,9 @@ export function DocumentPreviewDisplay({
   ]);
 
   return (
-    <div ref={containerRef} className={cn("relative h-full", className)}>
+    <div ref={containerRef} className={cn("relative min-h-full", className)}>
       {/* Loading state */}
-      {isLoading && (
-        <div className="flex h-full items-center justify-center rounded-lg border bg-muted/50">
-          <div className="flex flex-col items-center gap-2">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <p className="text-muted-foreground text-sm">{t("Loading preview...")}</p>
-          </div>
-        </div>
-      )}
+      {isLoading && <DocumentPreviewSkeleton />}
 
       {/* Error state */}
       {error && !isLoading && (

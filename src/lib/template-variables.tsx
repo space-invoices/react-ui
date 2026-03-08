@@ -26,7 +26,7 @@ export function getVariableValue(
 
   // Entity-related variables
   if (varName === "entity_name") return entity.name || null;
-  if (varName === "entity_email") return (entity.settings as any)?.email || null;
+  if (varName === "entity_email") return entity.email || null;
   if (varName === "entity_address") return entity.address || null;
   if (varName === "entity_post_code") return entity.post_code || null;
   if (varName === "entity_city") return entity.city || null;

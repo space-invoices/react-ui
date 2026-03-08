@@ -28,6 +28,8 @@ export default {
   "Export PDFs": "PDFs exportieren",
   "Deselect all": "Alle abwählen",
   "Copy to Invoice": "In Rechnung kopieren",
+  "Finalize draft documents before copying to invoice":
+    "Entwurfsdokumente abschließen, bevor Sie in eine Rechnung kopieren",
   Void: "Stornieren",
   Voided: "Storniert",
   // Row action translations

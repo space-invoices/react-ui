@@ -9,6 +9,8 @@ import { useAccessToken } from "./sdk-provider";
 
 export type PlanLimits = {
   documents_per_month: number | null;
+  invoices_per_month: number | null;
+  overage_price_cents: number | null;
 } | null;
 
 export type WhiteLabelPlan = {
@@ -26,6 +28,8 @@ export type WhiteLabelPlan = {
 export type UsageStats = {
   documents_count: number;
   documents_limit: number | null;
+  invoices_count: number;
+  invoices_limit: number | null;
   period_start: string;
   period_end: string;
 };
@@ -36,6 +40,14 @@ export type CurrentSubscription = {
   billing_interval: string | null;
   current_period_start: string;
   current_period_end: string;
+  trial_ends_at: string | null;
+  trial_days_remaining: number | null;
+  cancel_at: string | null;
+  payment_method: {
+    last4: string | null;
+    brand: string | null;
+    has_card: boolean;
+  } | null;
   usage: UsageStats;
 };
 
@@ -49,7 +61,8 @@ export type GatedFeature =
   | "custom_templates"
   | "api_access"
   | "webhooks"
-  | "priority_support";
+  | "priority_support"
+  | "e_invoicing";
 
 // ============================================
 // CONTEXT
@@ -63,12 +76,19 @@ type WLSubscriptionContextType = {
   isLoading: boolean;
   error: string | null;
 
+  // Trial state
+  isTrialActive: boolean;
+  isTrialExpired: boolean;
+  trialDaysRemaining: number | null;
+  needsPayment: boolean;
+
   // Feature/limit checks
   hasFeature: (feature: GatedFeature | string) => boolean;
   isOverLimit: (resource: "documents") => boolean;
   getUsagePercentage: (resource: "documents") => number;
 
-  // Refresh data
+  // Actions
+  createCheckout: (planSlug: string, billingInterval?: "monthly" | "yearly") => Promise<string>;
   refresh: () => Promise<void>;
 };
 
@@ -97,9 +117,19 @@ const DEFAULT_SUBSCRIPTION: CurrentSubscription = {
   billing_interval: null,
   current_period_start: new Date().toISOString(),
   current_period_end: new Date().toISOString(),
+  trial_ends_at: null,
+  trial_days_remaining: null,
+  cancel_at: null,
+  payment_method: {
+    last4: null,
+    brand: null,
+    has_card: false,
+  },
   usage: {
     documents_count: 0,
     documents_limit: null,
+    invoices_count: 0,
+    invoices_limit: null,
     period_start: new Date().toISOString(),
     period_end: new Date().toISOString(),
   },
@@ -232,6 +262,42 @@ export function WLSubscriptionProvider({ children, apiBaseUrl }: WLSubscriptionP
     [subscription],
   );
 
+  // Return the in-app billing page URL for plan activation.
+  const createCheckout = useCallback(
+    async (planSlug: string, billingInterval: "monthly" | "yearly" = "monthly"): Promise<string> => {
+      if (!entityId || !accessToken) {
+        throw new Error("Not authenticated");
+      }
+
+      const url = new URL(`/app/${entityId}/settings/billing`, window.location.origin);
+      url.searchParams.set("plan", planSlug);
+      url.searchParams.set("interval", billingInterval);
+      return url.toString();
+    },
+    [entityId, accessToken],
+  );
+
+  // Compute trial state
+  const isTrialActive =
+    subscription.status === "trialing" &&
+    subscription.trial_ends_at != null &&
+    new Date(subscription.trial_ends_at) > new Date();
+
+  const isTrialExpiredState =
+    subscription.status === "trialing" &&
+    subscription.trial_ends_at != null &&
+    new Date(subscription.trial_ends_at) <= new Date();
+
+  const trialDaysRemaining = subscription.trial_days_remaining;
+
+  // needsPayment: trial expired, or no free plan and no active Stripe subscription
+  const needsPayment =
+    isTrialExpiredState ||
+    (subscription.status === "active" &&
+      !subscription.plan.is_free &&
+      subscription.billing_interval === null &&
+      subscription.plan.slug !== "unlimited");
+
   const value = useMemo(
     () => ({
       subscription,
@@ -240,12 +306,31 @@ export function WLSubscriptionProvider({ children, apiBaseUrl }: WLSubscriptionP
       availablePlans,
       isLoading,
       error,
+      isTrialActive,
+      isTrialExpired: isTrialExpiredState,
+      trialDaysRemaining,
+      needsPayment,
       hasFeature,
       isOverLimit,
       getUsagePercentage,
+      createCheckout,
       refresh: fetchSubscription,
     }),
-    [subscription, availablePlans, isLoading, error, hasFeature, isOverLimit, getUsagePercentage, fetchSubscription],
+    [
+      subscription,
+      availablePlans,
+      isLoading,
+      error,
+      isTrialActive,
+      isTrialExpiredState,
+      trialDaysRemaining,
+      needsPayment,
+      hasFeature,
+      isOverLimit,
+      getUsagePercentage,
+      createCheckout,
+      fetchSubscription,
+    ],
   );
 
   return <WLSubscriptionContext.Provider value={value}>{children}</WLSubscriptionContext.Provider>;

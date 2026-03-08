@@ -16,7 +16,7 @@ type CookieOptions = {
  * Sets a cookie with the given name, value, and options
  */
 export function setCookie(name: string, value: string, options: CookieOptions = {}) {
-  if (typeof window === "undefined") {
+  if (typeof document === "undefined") {
     console.warn("setCookie called on server");
     return;
   }
@@ -41,7 +41,7 @@ export function setCookie(name: string, value: string, options: CookieOptions = 
  * Gets a cookie value by name
  */
 export function getCookie(name: string): string | undefined {
-  if (typeof window === "undefined") {
+  if (typeof document === "undefined") {
     return undefined;
   }
 
@@ -52,7 +52,7 @@ export function getCookie(name: string): string | undefined {
  * Removes a cookie by name, clearing both host-only and domain-scoped versions
  */
 export function deleteCookie(name: string, path = "/") {
-  if (typeof window === "undefined") {
+  if (typeof document === "undefined") {
     console.warn("deleteCookie called on server");
     return;
   }
@@ -64,7 +64,7 @@ export function deleteCookie(name: string, path = "/") {
   });
 
   // Also delete domain cookie (e.g. .spaceinvoices.com) if on spaceinvoices.com
-  const hostname = window.location.hostname;
+  const hostname = typeof window !== "undefined" ? window.location.hostname : globalThis.location?.hostname ?? "";
   if (hostname === "spaceinvoices.com" || hostname.endsWith(".spaceinvoices.com")) {
     setCookie(name, "", {
       path,

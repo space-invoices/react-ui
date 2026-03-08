@@ -28,6 +28,7 @@ export default {
   "Export PDFs": "Izvezi PDF-ove",
   "Deselect all": "Poništi odabir",
   "Copy to Invoice": "Kopiraj u račun",
+  "Finalize draft documents before copying to invoice": "Dovršite skice dokumenata prije kopiranja u račun",
   Void: "Storniraj",
   Voided: "Poništeno",
   // Row action translations

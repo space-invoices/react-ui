@@ -48,6 +48,7 @@ export default {
   "Retry Fiscalization": "Retry Fiscalization",
   "Some selected documents don't have failed fiscalization": "Some selected documents don't have failed fiscalization",
   "Copy to Invoice": "Copiar para fatura",
+  "Finalize draft documents before copying to invoice": "Finalize os rascunhos antes de copiar para fatura",
   Void: "Anular",
   "Cannot void an advance invoice linked to an invoice":
     "Não é possível anular uma fatura antecipada vinculada a uma fatura",

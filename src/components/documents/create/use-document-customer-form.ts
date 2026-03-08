@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { FieldValues, Path, PathValue, UseFormReturn } from "react-hook-form";
 
 /**
@@ -67,9 +67,20 @@ export function useDocumentCustomerForm<TForm extends DocumentFormWithCustomer>(
   const [shouldFocusName, setShouldFocusName] = useState(false);
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | undefined>(initialCustomerId);
 
+  useEffect(() => {
+    const defaultCustomerId = form.formState.defaultValues?.customer_id as string | undefined;
+    const defaultCustomer = form.formState.defaultValues?.customer as CustomerData | undefined;
+    const hasDefaultCustomer = !!(defaultCustomerId || defaultCustomer?.name);
+
+    setOriginalCustomer(hasDefaultCustomer && defaultCustomer ? defaultCustomer : null);
+    setSelectedCustomerId(defaultCustomerId);
+    setShowCustomerForm(hasDefaultCustomer);
+    setShouldFocusName(false);
+  }, [form.formState.defaultValues]);
+
   // Type-safe setValue that works with the generic form type
   const setValue = <K extends Path<TForm>>(name: K, value: PathValue<TForm, K>) => {
-    form.setValue(name, value);
+    form.setValue(name, value, { shouldDirty: true, shouldTouch: true });
   };
 
   const handleCustomerSelect = (customerId: string, customer: CustomerData) => {
@@ -158,7 +169,7 @@ export function useDocumentCustomerForm<TForm extends DocumentFormWithCustomer>(
     shouldFocusName,
     selectedCustomerId,
     /** Initial customer name from form defaults (for duplication display) */
-    initialCustomerName: initialCustomer?.name ?? undefined,
+    initialCustomerName: (form.formState.defaultValues?.customer as CustomerData | undefined)?.name ?? undefined,
     handleCustomerSelect,
     handleCustomerClear,
   };

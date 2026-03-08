@@ -54,7 +54,13 @@ export function FilterBar({
     // No filters configured, just show search
     return (
       <div className="px-4 pt-4">
-        <SearchInput initialValue={searchValue} onSearch={onSearch} placeholder={t("Search...")} />
+        <SearchInput
+          initialValue={searchValue}
+          onSearch={onSearch}
+          placeholder={t("Search...")}
+          ariaLabel={t("Search")}
+          clearAriaLabel={t("Clear search")}
+        />
       </div>
     );
   }
@@ -62,7 +68,13 @@ export function FilterBar({
   return (
     <Collapsible open={isOpen} onOpenChange={onToggle} className="px-4 pt-4">
       <div className="flex items-center gap-2">
-        <SearchInput initialValue={searchValue} onSearch={onSearch} placeholder={t("Search...")} />
+        <SearchInput
+          initialValue={searchValue}
+          onSearch={onSearch}
+          placeholder={t("Search...")}
+          ariaLabel={t("Search")}
+          clearAriaLabel={t("Clear search")}
+        />
         <CollapsibleTrigger asChild>
           <Button variant="outline" size="sm" className="h-8 gap-1.5">
             <FilterIcon className="h-3.5 w-3.5" />

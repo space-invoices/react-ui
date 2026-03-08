@@ -150,11 +150,21 @@ export const PremisesManagementSection: FC<PremisesManagementSectionProps> = ({
       <div className="space-y-6">
         {/* Add Premise Buttons */}
         <div className="flex gap-3">
-          <Button onClick={() => handleAddPremise("real-estate")} variant="default" className="flex-1 cursor-pointer">
+          <Button
+            onClick={() => handleAddPremise("real-estate")}
+            variant="default"
+            className="flex-1 cursor-pointer"
+            data-testid="furs-add-real-estate-premise"
+          >
             <Building2 className="mr-2 h-4 w-4" />
             {t("Add Real Estate")}
           </Button>
-          <Button onClick={() => handleAddPremise("movable")} variant="outline" className="flex-1 cursor-pointer">
+          <Button
+            onClick={() => handleAddPremise("movable")}
+            variant="outline"
+            className="flex-1 cursor-pointer"
+            data-testid="furs-add-movable-premise"
+          >
             <Truck className="mr-2 h-4 w-4" />
             {t("Add Movable")}
           </Button>
@@ -196,7 +206,11 @@ export const PremisesManagementSection: FC<PremisesManagementSectionProps> = ({
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleAddDevice(premise.id)} className="cursor-pointer">
+                          <DropdownMenuItem
+                            onClick={() => handleAddDevice(premise.id)}
+                            className="cursor-pointer"
+                            data-testid={`furs-add-device-${premise.business_premise_name}`}
+                          >
                             <Cpu className="mr-2 h-4 w-4" />
                             {t("Add Electronic Device")}
                           </DropdownMenuItem>
@@ -274,6 +288,7 @@ export const PremisesManagementSection: FC<PremisesManagementSectionProps> = ({
                             variant="outline"
                             onClick={() => handleAddDevice(premise.id)}
                             className="cursor-pointer"
+                            data-testid={`furs-add-device-${premise.business_premise_name}`}
                           >
                             <Cpu className="mr-2 h-4 w-4" />
                             {t("Add Electronic Device")}
@@ -337,6 +352,7 @@ export const PremisesManagementSection: FC<PremisesManagementSectionProps> = ({
                       handleRegisterDevice();
                     }
                   }}
+                  data-testid="furs-device-name-input"
                 />
                 <p className="text-muted-foreground text-sm">
                   {t("Enter a unique name for this device (e.g., E1, E2, POS1, DEVICE1)")}
@@ -357,6 +373,7 @@ export const PremisesManagementSection: FC<PremisesManagementSectionProps> = ({
                 onClick={handleRegisterDevice}
                 disabled={!deviceName.trim() || isRegisteringDevice}
                 className="cursor-pointer"
+                data-testid="furs-register-device-submit"
               >
                 {isRegisteringDevice ? t("Registering...") : t("Register Device")}
               </Button>

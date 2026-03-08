@@ -3,6 +3,7 @@ import { useCallback, useMemo, useState } from "react";
 import { DataTable } from "@/ui/components/table/data-table";
 import { FormattedDate } from "@/ui/components/table/date-cell";
 import { useTableFetch } from "@/ui/components/table/hooks/use-table-fetch";
+import { withTableTranslations } from "@/ui/components/table/locales";
 import { SelectionToolbar } from "@/ui/components/table/selection-toolbar";
 import type {
   Column,
@@ -28,7 +29,7 @@ import pl from "./locales/pl";
 import pt from "./locales/pt";
 import sl from "./locales/sl";
 
-const translations = {
+const translations = withTableTranslations({
   en,
   sl,
   de,
@@ -39,12 +40,13 @@ const translations = {
   nl,
   pl,
   hr,
-} as const;
+} as const);
 
 type DeliveryNoteListTableProps = {
   t?: (key: string) => string;
   namespace?: string;
   locale?: string;
+  translationLocale?: string;
   entityId?: string;
   onView?: (deliveryNote: DeliveryNote) => void;
   onDuplicate?: (deliveryNote: DeliveryNote) => void;
@@ -77,6 +79,7 @@ export default function DeliveryNoteListTable({
 }: DeliveryNoteListTableProps) {
   const t = createTranslation({
     translations,
+    locale: i18nProps.translationLocale ?? i18nProps.locale,
     ...i18nProps,
   });
 
@@ -127,16 +130,22 @@ export default function DeliveryNoteListTable({
   }, []);
 
   const selectionToolbar = useCallback(
-    (count: number) => (
-      <SelectionToolbar
-        selectedCount={count}
-        onExportPdfs={onExportSelected ? handleExportPdfs : undefined}
-        onCopyToInvoice={onCopyToInvoice ? handleCopyToInvoice : undefined}
-        onDeselectAll={handleDeselectAll}
-        t={t}
-      />
-    ),
-    [handleExportPdfs, handleCopyToInvoice, handleDeselectAll, onExportSelected, onCopyToInvoice, t],
+    (count: number, data: DeliveryNote[]) => {
+      const hasDrafts = data.some((d) => selectedIds.has(d.id) && (d as any).is_draft);
+
+      return (
+        <SelectionToolbar
+          selectedCount={count}
+          onExportPdfs={onExportSelected ? handleExportPdfs : undefined}
+          onCopyToInvoice={onCopyToInvoice ? handleCopyToInvoice : undefined}
+          copyToInvoiceDisabled={hasDrafts}
+          copyToInvoiceTooltip={hasDrafts ? t("Finalize draft documents before copying to invoice") : undefined}
+          onDeselectAll={handleDeselectAll}
+          t={t}
+        />
+      );
+    },
+    [handleExportPdfs, handleCopyToInvoice, handleDeselectAll, onExportSelected, onCopyToInvoice, selectedIds, t],
   );
 
   const columns: Column<DeliveryNote>[] = useMemo(
@@ -168,7 +177,7 @@ export default function DeliveryNoteListTable({
       {
         id: "date",
         header: t("Date"),
-        cell: (deliveryNote) => <FormattedDate date={deliveryNote.date} />,
+        cell: (deliveryNote) => <FormattedDate date={deliveryNote.date} locale={i18nProps.locale} />,
       },
       {
         id: "total",

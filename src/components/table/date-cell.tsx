@@ -1,6 +1,7 @@
 type FormattedDateProps = {
   date: string | number | Date | null | undefined;
   format?: Intl.DateTimeFormatOptions;
+  locale?: string;
 };
 
 /**
@@ -13,6 +14,7 @@ export function FormattedDate({
     month: "short",
     day: "numeric",
   },
+  locale,
 }: FormattedDateProps) {
   if (!date) {
     return <span className="text-muted-foreground">—</span>;
@@ -27,7 +29,7 @@ export function FormattedDate({
       return <span className="text-destructive">{String(date)}</span>;
     }
 
-    return <>{dateObj.toLocaleDateString(undefined, format)}</>;
+    return <>{dateObj.toLocaleDateString(locale, format)}</>;
   } catch (error) {
     console.error("Error formatting date:", error);
     return <span className="text-destructive">{String(date)}</span>;

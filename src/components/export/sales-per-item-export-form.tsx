@@ -1,7 +1,7 @@
-type TFunction = (key: string, options?: Record<string, unknown>) => string;
-
 import { Calendar, Download, Loader2 } from "lucide-react";
 import { useState } from "react";
+import type { ComponentTranslationProps } from "@/ui/lib/translation";
+import { createTranslation } from "@/ui/lib/translation";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
@@ -41,23 +41,39 @@ export type SalesPerItemExportFormProps = {
   token: string;
   accountId?: string | null;
   language: string;
-  t: TFunction;
   /** Base URL for API calls (required in embed context where relative paths don't reach the API) */
   apiBaseUrl?: string;
   onSuccess?: (fileName: string) => void;
   onError?: (error: Error) => void;
-};
+} & ComponentTranslationProps;
+
+const translations = {
+  en: {
+    "sales-per-item-export.error.dates-required": "Select both a start and end date.",
+    "export-page.error.date-range-exceeded": "Date range cannot exceed one year.",
+    "export-page.format": "Format",
+    "export-page.formats.xlsx": "Excel (.xlsx)",
+    "export-page.formats.csv": "CSV (.csv)",
+    "export-page.date-from": "Date from",
+    "export-page.date-to": "Date to",
+    "export-page.exporting": "Exporting...",
+    "export-page.export-button": "Export sales per item",
+  },
+} as const;
 
 export function SalesPerItemExportForm({
   entityId,
   token,
   accountId,
   language,
-  t,
+  t: translateFn,
+  namespace,
+  locale,
   apiBaseUrl = "",
   onSuccess,
   onError,
 }: SalesPerItemExportFormProps) {
+  const t = createTranslation({ t: translateFn, namespace, locale, translations });
   const defaultDates = getPreviousMonthRange();
   const [exportFormat, setExportFormat] = useState<ExportFormat>("xlsx");
   const [dateFrom, setDateFrom] = useState(defaultDates.from);
@@ -85,12 +101,10 @@ export function SalesPerItemExportForm({
     setIsExporting(true);
 
     try {
-      const exportLanguage = language === "sl" ? "sl" : "en";
       const queryParams: Record<string, string> = {
         format: exportFormat,
         date_from: dateFrom,
         date_to: dateTo,
-        language: exportLanguage,
       };
 
       const response = await fetch(

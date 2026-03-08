@@ -93,7 +93,7 @@ export const RegisterFinaPremiseDialog: FC<RegisterFinaPremiseDialogProps> = ({
                 <FormItem>
                   <FormLabel>{t("Premise ID")}</FormLabel>
                   <FormControl>
-                    <Input placeholder="PP1" {...field} />
+                    <Input placeholder="PP1" {...field} data-testid="fina-premise-name-input" />
                   </FormControl>
                   <FormDescription>{t("Unique identifier for this premise (e.g., PP1, OFFICE1)")}</FormDescription>
                   <FormMessage />
@@ -111,7 +111,12 @@ export const RegisterFinaPremiseDialog: FC<RegisterFinaPremiseDialogProps> = ({
               >
                 {t("Cancel")}
               </Button>
-              <Button type="submit" disabled={isPending} className="cursor-pointer">
+              <Button
+                type="submit"
+                disabled={isPending}
+                className="cursor-pointer"
+                data-testid="fina-register-premise-submit"
+              >
                 {isPending ? t("Adding...") : t("Add Premise")}
               </Button>
             </DialogFooter>

@@ -15,6 +15,13 @@ import { useQuery } from "@tanstack/react-query";
 import { useEntities } from "@/ui/providers/entities-context";
 import { useSDK } from "@/ui/providers/sdk-provider";
 
+const DUPLICATE_TIMING_EVENT = "si:duplicate-timing";
+
+function emitDuplicateDebug(detail: Record<string, unknown>) {
+  if (!import.meta.env.DEV || typeof window === "undefined") return;
+  window.dispatchEvent(new CustomEvent(DUPLICATE_TIMING_EVENT, { detail }));
+}
+
 export type DocumentType = "invoice" | "estimate" | "credit_note" | "advance_invoice" | "delivery_note";
 type Document = Invoice | Estimate | CreditNote | AdvanceInvoice | DeliveryNote;
 type CreateRequest =
@@ -127,8 +134,20 @@ function transformDocumentForDuplication(source: Document, targetType: DocumentT
     // Number - leave empty for auto-generation
     // Do NOT copy: number, totals, taxes, payments, furs, eslog, vies, shareable_id
     // Link back to source document when converting (e.g., delivery note → invoice)
-    ...(isConversion ? { linked_documents: [source.id] } : {}),
+    // Skip linking if source is a draft (drafts have no number/fiscalization)
+    ...(isConversion && !(source as any).is_draft ? { linked_documents: [source.id] } : {}),
   };
+
+  // Copy service dates when source is an invoice (available on invoices and credit notes)
+  if (sourceType === "invoice" || sourceType === "credit_note") {
+    const sourceDoc = source as any;
+    if (sourceDoc.date_service) {
+      (baseData as any).date_service = sourceDoc.date_service;
+    }
+    if (sourceDoc.date_service_to) {
+      (baseData as any).date_service_to = sourceDoc.date_service_to;
+    }
+  }
 
   return baseData;
 }
@@ -192,6 +211,13 @@ export function useDuplicateDocument({
         throw new Error("Source document ID and entity ID are required");
       }
 
+      const startedAt = performance.now();
+      emitDuplicateDebug({
+        stage: "request_started",
+        sourceId,
+        sourceType,
+        targetType,
+      });
       // Fetch source document based on its type
       let source: Document;
       if (sourceType === "invoice") {
@@ -215,18 +241,27 @@ export function useDuplicateDocument({
 
       // Build source document summaries for conversions (different source → target type)
       const isConversion = sourceType !== targetType;
-      const sourceDocuments: LinkedDocumentSummary[] = isConversion
-        ? [
-            {
-              id: source.id,
-              type: sourceType,
-              number: (source as any).number || "",
-              date: (source as any).date || "",
-              total_with_tax: (source as any).total_with_tax ?? 0,
-              currency_code: (source as any).currency_code || "",
-            },
-          ]
-        : [];
+      const sourceDocuments: LinkedDocumentSummary[] =
+        isConversion && !(source as any).is_draft
+          ? [
+              {
+                id: source.id,
+                type: sourceType,
+                number: (source as any).number || "",
+                date: (source as any).date || "",
+                total_with_tax: (source as any).total_with_tax ?? 0,
+                currency_code: (source as any).currency_code || "",
+              },
+            ]
+          : [];
+
+      emitDuplicateDebug({
+        stage: "request_succeeded",
+        sourceId,
+        sourceType,
+        targetType,
+        elapsedMs: Number((performance.now() - startedAt).toFixed(1)),
+      });
 
       return { initialValues, sourceDocuments };
     },

@@ -37,4 +37,6 @@ export default {
   "Export PDFs": "PDFs exportieren",
   "Deselect all": "Auswahl aufheben",
   "Copy to Invoice": "In Rechnung kopieren",
+  "Finalize draft documents before copying to invoice":
+    "Entwurfsdokumente abschließen, bevor Sie in eine Rechnung kopieren",
 } as const;

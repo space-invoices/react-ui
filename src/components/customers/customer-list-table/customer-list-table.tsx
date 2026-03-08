@@ -1,6 +1,7 @@
 import type { Customer } from "@spaceinvoices/js-sdk";
 import { User } from "lucide-react";
 import { useMemo } from "react";
+import { withTableTranslations } from "../../table/locales";
 import { Button } from "@/ui/components/ui/button";
 import { createTranslation } from "@/ui/lib/translation";
 import { useSDK } from "@/ui/providers/sdk-provider";
@@ -20,7 +21,7 @@ import pl from "./locales/pl";
 import pt from "./locales/pt";
 import sl from "./locales/sl";
 
-const translations = {
+const translations = withTableTranslations({
   en,
   sl,
   de,
@@ -31,7 +32,7 @@ const translations = {
   nl,
   pl,
   hr,
-} as const;
+} as const);
 
 type CustomerListTableProps = {
   t?: (key: string) => string;

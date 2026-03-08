@@ -16,6 +16,8 @@ export type SDKContextType = {
   isLoading: boolean;
   error: Error | null;
   reinitialize: () => Promise<void>;
+  /** Optional explicit access token (used by embed mode where cookies aren't available) */
+  accessToken?: string | null;
 };
 
 /**
@@ -154,13 +156,16 @@ export function useSDKOptional() {
 
 /**
  * Get access token from SDK context (helper for WLSubscriptionProvider)
+ * Checks context.accessToken first (set by embed mode), then falls back to cookies
  */
 export function useAccessToken(): string | null {
   const context = useContext(SDKContext);
   if (!context?.sdk) return null;
 
-  // Access token is stored in SDK configuration
-  // We need to get it from the auth cookie since SDK doesn't expose it directly
+  // Embed mode passes token explicitly via context
+  if (context.accessToken) return context.accessToken;
+
+  // Normal mode: read from auth cookie
   const token = getCookie(AUTH_COOKIES.TOKEN);
   return token ?? null;
 }

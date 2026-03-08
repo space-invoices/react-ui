@@ -7,6 +7,22 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/ui/
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
 
+const translations = {
+  en: {
+    Valid: "Valid",
+    Invalid: "Invalid",
+    "Not validated": "Not validated",
+    "e-SLOG 2.0": "e-SLOG 2.0",
+    "Slovenian electronic invoice format (EN 16931)": "Slovenian electronic invoice format (EN 16931)",
+    "Validation Errors": "Validation Errors",
+    "Downloading...": "Downloading...",
+    "Download e-SLOG XML": "Download e-SLOG XML",
+    "This document has not been validated for e-SLOG. Enable validation in entity settings or on the document to validate.":
+      "This document has not been validated for e-SLOG. Enable validation in entity settings or on the document to validate.",
+    "Validated at": "Validated at",
+  },
+} as const;
+
 // Type for eslog data
 interface EslogData {
   validation_enabled?: boolean | null;
@@ -46,7 +62,7 @@ export function EslogInfoDisplay({
     t: translateFn,
     namespace,
     locale,
-    translations: {},
+    translations,
   });
 
   // Cast eslog to the proper type

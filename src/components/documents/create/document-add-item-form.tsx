@@ -1,6 +1,6 @@
 import type { Item } from "@spaceinvoices/js-sdk";
 import { ChevronDown, ChevronUp, DollarSign, Minus, Percent, Plus, PlusIcon, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Control, UseFormReturn } from "react-hook-form";
 import { useWatch } from "react-hook-form";
 
@@ -77,9 +77,12 @@ export default function DocumentAddItemForm({
     control,
     name: `items.${index}.taxes`,
   });
-
   // Component-local state for gross/net price mode (not in form schema)
   const [isGrossPrice, setIsGrossPrice] = useState(initialIsGrossPrice);
+
+  useEffect(() => {
+    setIsGrossPrice(initialIsGrossPrice);
+  }, [initialIsGrossPrice]);
 
   const setPriceMode = (mode: string) => {
     const isGross = mode === "gross";
@@ -91,12 +94,16 @@ export default function DocumentAddItemForm({
     const currentTaxes = taxes || [];
     if (currentTaxes.length >= maxTaxesPerItem) return;
 
-    form.setValue(`items.${index}.taxes`, [
-      ...currentTaxes,
-      {
-        rate: 22,
-      },
-    ]);
+    form.setValue(
+      `items.${index}.taxes`,
+      [
+        ...currentTaxes,
+        {
+          rate: 22,
+        },
+      ],
+      { shouldDirty: true, shouldTouch: true },
+    );
   };
 
   const removeTax = (taxIndex: number) => {
@@ -104,6 +111,7 @@ export default function DocumentAddItemForm({
     form.setValue(
       `items.${index}.taxes`,
       currentTaxes.filter((_: any, i: number) => i !== taxIndex),
+      { shouldDirty: true, shouldTouch: true },
     );
   };
 
@@ -111,23 +119,23 @@ export default function DocumentAddItemForm({
   const handleItemSelect = (item: Item | null, customName?: string) => {
     if (item) {
       // Selected a saved item - set item_id and prefill fields for visual feedback
-      form.setValue(`items.${index}.item_id`, item.id);
-      form.setValue(`items.${index}.name`, item.name);
+      form.setValue(`items.${index}.item_id`, item.id, { shouldDirty: true, shouldTouch: true });
+      form.setValue(`items.${index}.name`, item.name, { shouldDirty: true, shouldTouch: true });
 
       // Prefill price (use gross_price if available, otherwise price)
       if (item.gross_price !== null && item.gross_price !== undefined) {
-        form.setValue(`items.${index}.price`, item.gross_price);
+        form.setValue(`items.${index}.price`, item.gross_price, { shouldDirty: true, shouldTouch: true });
         setIsGrossPrice(true);
         onPriceModeChange?.(true);
       } else if (item.price !== null && item.price !== undefined) {
-        form.setValue(`items.${index}.price`, item.price);
+        form.setValue(`items.${index}.price`, item.price, { shouldDirty: true, shouldTouch: true });
         setIsGrossPrice(false);
         onPriceModeChange?.(false);
       }
 
       // Prefill description
       if (item.description) {
-        form.setValue(`items.${index}.description`, item.description);
+        form.setValue(`items.${index}.description`, item.description, { shouldDirty: true, shouldTouch: true });
       }
 
       // Prefill taxes from item's tax_ids (or clear if item has no taxes)
@@ -135,14 +143,15 @@ export default function DocumentAddItemForm({
         form.setValue(
           `items.${index}.taxes`,
           item.tax_ids.map((tax_id) => ({ tax_id })),
+          { shouldDirty: true, shouldTouch: true },
         );
       } else {
-        form.setValue(`items.${index}.taxes`, []);
+        form.setValue(`items.${index}.taxes`, [], { shouldDirty: true, shouldTouch: true });
       }
     } else if (customName) {
       // Custom name entered - clear item_id, just use the name
-      form.setValue(`items.${index}.item_id`, undefined);
-      form.setValue(`items.${index}.name`, customName);
+      form.setValue(`items.${index}.item_id`, undefined, { shouldDirty: true, shouldTouch: true });
+      form.setValue(`items.${index}.name`, customName, { shouldDirty: true, shouldTouch: true });
     }
   };
 
@@ -225,7 +234,10 @@ export default function DocumentAddItemForm({
                     entityId={entityId}
                     value={field.value}
                     onSelect={handleItemSelect}
+                    onCommitInlineName={(nextName) => form.setValue(`items.${index}.name`, nextName)}
+                    commitOnBlurMode={field.value ? "update-inline" : "create"}
                     placeholder={t("Search or enter item name...")}
+                    inputTestId={`document-item-input-${index}`}
                   />
                 </FormControl>
                 <FormMessage />

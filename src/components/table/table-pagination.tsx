@@ -6,12 +6,13 @@ type PaginationProps = {
   prevCursor?: string | null;
   nextCursor?: string | null;
   onPageChange: (cursor: { prev?: string; next?: string }) => void;
+  t?: (key: string) => string;
 };
 
 /**
  * Cursor-based pagination controls
  */
-export function Pagination({ prevCursor, nextCursor, onPageChange }: PaginationProps) {
+export function Pagination({ prevCursor, nextCursor, onPageChange, t = (key) => key }: PaginationProps) {
   const hasPrevious = Boolean(prevCursor);
   const hasNext = Boolean(nextCursor);
 
@@ -23,7 +24,7 @@ export function Pagination({ prevCursor, nextCursor, onPageChange }: PaginationP
         className="h-8 w-8 cursor-pointer p-0"
         onClick={() => onPageChange({ prev: prevCursor ?? undefined })}
         disabled={!hasPrevious}
-        aria-label="Previous page"
+        aria-label={t("Previous page")}
       >
         <ChevronLeft className="h-4 w-4" />
       </Button>
@@ -33,7 +34,7 @@ export function Pagination({ prevCursor, nextCursor, onPageChange }: PaginationP
         className="h-8 w-8 cursor-pointer p-0"
         onClick={() => onPageChange({ next: nextCursor ?? undefined })}
         disabled={!hasNext}
-        aria-label="Next page"
+        aria-label={t("Next page")}
       >
         <ChevronRight className="h-4 w-4" />
       </Button>

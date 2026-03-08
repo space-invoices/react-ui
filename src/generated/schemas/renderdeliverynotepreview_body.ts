@@ -23,6 +23,7 @@ const DocumentEntity = z
     tax_number: z.union([z.string(), z.null()]),
     tax_number_2: z.union([z.string(), z.null()]),
     company_number: z.union([z.string(), z.null()]),
+    peppol_id: z.union([z.string(), z.null()]),
     is_end_consumer: z.union([z.boolean(), z.null()]),
     bank_account: z.union([
       z
@@ -30,13 +31,13 @@ const DocumentEntity = z
           type: z
             .enum(["iban", "us_domestic", "uk_domestic", "other"])
             .default("iban"),
-          name: z.string(),
-          bank_name: z.string(),
-          iban: z.string(),
-          account_number: z.string(),
-          bic: z.string(),
-          routing_number: z.string(),
-          sort_code: z.string(),
+          name: z.union([z.string(), z.null()]),
+          bank_name: z.union([z.string(), z.null()]),
+          iban: z.union([z.string(), z.null()]),
+          account_number: z.union([z.string(), z.null()]),
+          bic: z.union([z.string(), z.null()]),
+          routing_number: z.union([z.string(), z.null()]),
+          sort_code: z.union([z.string(), z.null()]),
         })
         .partial()
         .passthrough(),
@@ -51,7 +52,7 @@ const DocumentEntity = z
 const CreateDocumentCustomer = DocumentEntity.and(
   z.union([
     z
-      .object({ save_customer: z.boolean().default(true) })
+      .object({ save_customer: z.union([z.boolean(), z.null()]) })
       .partial()
       .passthrough(),
     z.null(),
@@ -91,6 +92,15 @@ const PartialDeliveryNotePreview = z.object({
           price: z.number(),
           gross_price: z.number(),
           description: z.string(),
+          unit: z.string(),
+          discounts: z.array(
+            z
+              .object({
+                value: z.number(),
+                type: z.enum(["percent", "amount"]).optional(),
+              })
+              .passthrough()
+          ),
           taxes: z.array(
             z
               .object({ rate: z.number(), tax_id: z.string() })
@@ -111,7 +121,7 @@ const PartialDeliveryNotePreview = z.object({
 // Dependency schema for renderdeliverynotepreview_body
 const DocumentItemTax = z
   .object({
-    rate: z.number(),
+    rate: z.union([z.number(), z.null()]),
     tax_id: z.union([z.string(), z.null()]),
     classification: z.union([z.string(), z.null()]),
     reverse_charge: z.union([z.boolean(), z.null()]),
@@ -131,17 +141,17 @@ const LineDiscount = z.object({
 const CreateDocumentItem = z
   .object({
     type: z.union([z.literal("separator"), z.null()]),
-    name: z.string().min(1),
+    name: z.union([z.string(), z.null()]),
     description: z.union([z.string(), z.null()]),
-    price: z.number(),
+    price: z.union([z.number(), z.null()]),
     gross_price: z.union([z.number(), z.null()]),
-    quantity: z.number().gte(-140737488355328).lte(140737488355327),
+    quantity: z.union([z.number(), z.null()]),
     unit: z.union([z.string(), z.null()]),
     taxes: z.array(DocumentItemTax),
     discounts: z.array(LineDiscount).max(5),
     item_id: z.union([z.string(), z.null()]),
     metadata: z.union([z.record(z.string(), z.any()), z.null()]),
-    save_item: z.boolean().default(true),
+    save_item: z.union([z.boolean(), z.null()]),
   })
   .partial();
 

@@ -13,7 +13,10 @@ import { Form } from "@/ui/components/ui/form";
 import { Skeleton } from "@/ui/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/ui/components/ui/tooltip";
 import { createInvoiceSchema } from "@/ui/generated/schemas";
+import { useEslogValidation } from "@/ui/hooks/use-eslog-validation";
+import { usePremiseSelection } from "@/ui/hooks/use-premise-selection";
 import { useTransactionTypeCheck } from "@/ui/hooks/use-transaction-type-check";
+import { buildEslogOptions, buildFinaOptions, buildFursOptions } from "@/ui/lib/fiscalization-options";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
 import { cn } from "@/ui/lib/utils";
@@ -33,17 +36,7 @@ import { DocumentRecipientSection } from "../../documents/create/document-recipi
 import { type LinkedDocumentSummary, LinkedDocumentsInfo } from "../../documents/create/linked-documents-info";
 import { MarkAsPaidSection } from "../../documents/create/mark-as-paid-section";
 import type { DocumentTypes } from "../../documents/types";
-import { useFinaPremises, useFinaSettings } from "../../entities/fina-settings-form/fina-settings.hooks";
-import { useFursPremises, useFursSettings } from "../../entities/furs-settings-form/furs-settings.hooks";
-import {
-  getLastUsedFinaCombo,
-  getLastUsedFursCombo,
-  setLastUsedFinaCombo,
-  setLastUsedFursCombo,
-  useCreateInvoice,
-  useNextInvoiceNumber,
-  useUpdateInvoice,
-} from "../invoices.hooks";
+import { useCreateInvoice, useNextInvoiceNumber, useUpdateInvoice } from "../invoices.hooks";
 import { getEntityErrors, getFormFieldErrors, validateEslogForm } from "./eslog-validation";
 import de from "./locales/de";
 import es from "./locales/es";
@@ -77,6 +70,13 @@ const translations = {
   hr,
 } as const;
 
+const DUPLICATE_PREVIEW_SETTLE_MS = 120;
+const DUPLICATE_PREVIEW_MIN_DELAY_MS = 260;
+
+function emitInvoiceCreateDebug(_detail: Record<string, unknown>) {
+  if (!import.meta.env.DEV || typeof window === "undefined") return;
+}
+
 // Form values: extend schema with local-only fields (number is for display, not sent to API)
 type CreateInvoiceFormValues = z.infer<typeof createInvoiceSchema> & {
   number?: string;
@@ -104,6 +104,62 @@ type DocumentAddFormProps = {
   /** Document ID for edit mode */
   documentId?: string;
 } & ComponentTranslationProps;
+
+function buildInvoiceFormValues({
+  initialValues,
+  currencyCode,
+  defaultInvoiceNote,
+  defaultPaymentTerms,
+  defaultFooter,
+  defaultInvoiceDueDays,
+}: {
+  initialValues?: Partial<CreateInvoiceRequest> & { number?: string };
+  currencyCode?: string;
+  defaultInvoiceNote: string;
+  defaultPaymentTerms: string;
+  defaultFooter: string;
+  defaultInvoiceDueDays: number;
+}): CreateInvoiceFormValues {
+  return {
+    number: initialValues?.number || "",
+    date: initialValues?.date || new Date().toISOString(),
+    customer_id: initialValues?.customer_id ?? undefined,
+    customer: (initialValues?.customer as CreateInvoiceFormValues["customer"]) ?? undefined,
+    items: initialValues?.items?.length
+      ? initialValues.items.map((item: any) => ({
+          type: item.type,
+          name: item.name || "",
+          description: item.description || "",
+          ...(item.type !== "separator"
+            ? {
+                quantity: item.quantity ?? 1,
+                price: item.gross_price ?? item.price,
+                taxes: item.taxes || [],
+              }
+            : {}),
+        }))
+      : [
+          {
+            name: "",
+            description: "",
+            quantity: 1,
+            price: undefined,
+            taxes: [],
+          },
+        ],
+    currency_code: initialValues?.currency_code || currencyCode || "EUR",
+    reference: (initialValues as any)?.reference ?? "",
+    note: initialValues?.note ?? defaultInvoiceNote,
+    tax_clause: (initialValues as any)?.tax_clause ?? "",
+    payment_terms: initialValues?.payment_terms ?? defaultPaymentTerms,
+    footer: (initialValues as any)?.footer ?? defaultFooter,
+    date_due:
+      initialValues?.date_due ||
+      calculateDueDate(initialValues?.date || new Date().toISOString(), defaultInvoiceDueDays),
+    date_service: (initialValues as any)?.date_service || new Date().toISOString(),
+    linked_documents: (initialValues as any)?.linked_documents,
+  };
+}
 
 export default function CreateInvoiceForm({
   type: _type,
@@ -140,42 +196,16 @@ export default function CreateInvoiceForm({
   const defaultInvoiceDueDays = (activeEntity?.settings as any)?.default_invoice_due_days ?? 30;
 
   // ============================================================================
-  // FURS Settings & Premises
+  // FURS & FINA Premise Selection (shared hook)
   // ============================================================================
-  const { data: fursSettings, isLoading: isFursSettingsLoading } = useFursSettings(entityId);
-  const { data: fursPremises, isLoading: isFursPremisesLoading } = useFursPremises(entityId, {
-    enabled: fursSettings?.enabled === true,
-  });
-
-  // Loading state for FURS - don't render form until we know if FURS is active
-  const isFursLoading = isFursSettingsLoading || (fursSettings?.enabled && isFursPremisesLoading);
-
-  // Check if FURS is enabled and has active premises
-  const isFursEnabled = fursSettings?.enabled === true;
-  const activePremises = useMemo(() => fursPremises?.filter((p) => p.is_active) || [], [fursPremises]);
-  const hasFursPremises = activePremises.length > 0;
-
-  // FURS premise/device selection state
-  const [selectedPremiseName, setSelectedPremiseName] = useState<string | undefined>();
-  const [selectedDeviceName, setSelectedDeviceName] = useState<string | undefined>();
+  const furs = usePremiseSelection({ entityId, type: "furs" });
+  const fina = usePremiseSelection({ entityId, type: "fina" });
   const [skipFiscalization, setSkipFiscalization] = useState(false);
 
   // ============================================================================
-  // FINA Settings & Premises
+  // e-SLOG Validation (shared hook)
   // ============================================================================
-  const { data: finaSettings, isLoading: isFinaSettingsLoading } = useFinaSettings(entityId);
-  const { data: finaPremises, isLoading: isFinaPremisesLoading } = useFinaPremises(entityId, {
-    enabled: finaSettings?.enabled === true,
-  });
-
-  const isFinaLoading = isFinaSettingsLoading || (finaSettings?.enabled && isFinaPremisesLoading);
-  const isFinaEnabled = finaSettings?.enabled === true;
-  const activeFinaPremises = useMemo(() => finaPremises?.filter((p: any) => p.is_active) || [], [finaPremises]);
-  const hasFinaPremises = activeFinaPremises.length > 0;
-
-  // FINA premise/device selection state (no skip - all FINA invoices must be fiscalized)
-  const [selectedFinaBusinessPremiseName, setSelectedFinaBusinessPremiseName] = useState<string | undefined>();
-  const [selectedFinaElectronicDeviceName, setSelectedFinaElectronicDeviceName] = useState<string | undefined>();
+  const eslog = useEslogValidation(activeEntity);
 
   // UI-only state (not part of API schema)
   const [markAsPaid, setMarkAsPaid] = useState(false);
@@ -183,7 +213,9 @@ export default function CreateInvoiceForm({
   const [isDraftPending, setIsDraftPending] = useState(false);
 
   // Service date type state (single date or range)
-  const [serviceDateType, setServiceDateType] = useState<"single" | "range">("single");
+  const [serviceDateType, setServiceDateType] = useState<"single" | "range">(
+    initialValues && (initialValues as any).date_service_to ? "range" : "single",
+  );
 
   // Due days type state for invoice due date selector
   const [dueDaysType, setDueDaysType] = useState<number | "custom">(() => {
@@ -202,173 +234,30 @@ export default function CreateInvoiceForm({
   }, [initialValues?.items]);
   const priceModesRef = useRef<PriceModesMap>(initialPriceModes);
 
-  // ============================================================================
-  // e-SLOG Settings (Slovenian e-Invoice)
-  // ============================================================================
-  const isSloenianEntity = activeEntity?.country_code === "SI";
-  const entityEslogEnabled = !!(activeEntity?.settings as any)?.eslog_validation_enabled;
-  const isEslogAvailable = isSloenianEntity && entityEslogEnabled;
-
-  // e-SLOG validation state - defaults to entity setting
-  const [eslogValidationEnabled, setEslogValidationEnabled] = useState<boolean | undefined>(undefined);
-  // e-SLOG entity-level errors (require settings update, can't be fixed in form)
-  const [eslogEntityErrors, setEslogEntityErrors] = useState<Array<{ field: string; message: string }>>([]);
-
-  // Initialize e-SLOG state from entity settings
-  useEffect(() => {
-    if (isEslogAvailable && eslogValidationEnabled === undefined) {
-      setEslogValidationEnabled(true);
-    }
-  }, [isEslogAvailable, eslogValidationEnabled]);
-
-  // Clear entity errors when eslog validation is disabled
-  useEffect(() => {
-    if (!eslogValidationEnabled) {
-      setEslogEntityErrors([]);
-    }
-  }, [eslogValidationEnabled]);
-
-  // Get active devices for selected premise
-  const activeDevices = useMemo(() => {
-    if (!selectedPremiseName) return [];
-    const premise = activePremises.find((p) => p.business_premise_name === selectedPremiseName);
-    return premise?.Devices?.filter((d) => d.is_active) || [];
-  }, [activePremises, selectedPremiseName]);
-
-  // Initialize FURS selection from localStorage or first active combo
-  useEffect(() => {
-    if (!isFursEnabled || !hasFursPremises || selectedPremiseName) return;
-
-    const lastUsed = getLastUsedFursCombo(entityId);
-    if (lastUsed) {
-      // Verify the last-used combo is still valid (premise/device still exist and active)
-      const premise = activePremises.find((p) => p.business_premise_name === lastUsed.business_premise_name);
-      const device = premise?.Devices?.find(
-        (d) => d.electronic_device_name === lastUsed.electronic_device_name && d.is_active,
-      );
-      if (premise && device) {
-        setSelectedPremiseName(lastUsed.business_premise_name);
-        setSelectedDeviceName(lastUsed.electronic_device_name);
-        return;
-      }
-    }
-
-    // Fall back to first active premise/device
-    const firstPremise = activePremises[0];
-    const firstDevice = firstPremise?.Devices?.find((d) => d.is_active);
-    if (firstPremise && firstDevice) {
-      setSelectedPremiseName(firstPremise.business_premise_name);
-      setSelectedDeviceName(firstDevice.electronic_device_name);
-    }
-  }, [isFursEnabled, hasFursPremises, activePremises, entityId, selectedPremiseName]);
-
-  // When premise changes, select first active device
-  useEffect(() => {
-    if (!selectedPremiseName) return;
-    const premise = activePremises.find((p) => p.business_premise_name === selectedPremiseName);
-    const firstDevice = premise?.Devices?.find((d) => d.is_active);
-    if (firstDevice && selectedDeviceName !== firstDevice.electronic_device_name) {
-      // Only update if the current device is not in this premise
-      const currentDeviceInPremise = premise?.Devices?.find(
-        (d) => d.electronic_device_name === selectedDeviceName && d.is_active,
-      );
-      if (!currentDeviceInPremise) {
-        setSelectedDeviceName(firstDevice.electronic_device_name);
-      }
-    }
-  }, [selectedPremiseName, activePremises, selectedDeviceName]);
-
-  // Get active FINA devices for selected premise
-  const activeFinaDevices = useMemo(() => {
-    if (!selectedFinaBusinessPremiseName) return [];
-    const premise = activeFinaPremises.find((p: any) => p.business_premise_name === selectedFinaBusinessPremiseName);
-    return premise?.Devices?.filter((d: any) => d.is_active) || [];
-  }, [activeFinaPremises, selectedFinaBusinessPremiseName]);
-
-  // Initialize FINA selection from localStorage or first active combo
-  useEffect(() => {
-    if (!isFinaEnabled || !hasFinaPremises || selectedFinaBusinessPremiseName) return;
-
-    const lastUsed = getLastUsedFinaCombo(entityId);
-    if (lastUsed) {
-      const premise = activeFinaPremises.find((p: any) => p.business_premise_name === lastUsed.business_premise_name);
-      const device = premise?.Devices?.find(
-        (d: any) => d.electronic_device_name === lastUsed.electronic_device_name && d.is_active,
-      );
-      if (premise && device) {
-        setSelectedFinaBusinessPremiseName(lastUsed.business_premise_name);
-        setSelectedFinaElectronicDeviceName(lastUsed.electronic_device_name);
-        return;
-      }
-    }
-
-    const firstPremise = activeFinaPremises[0];
-    const firstDevice = firstPremise?.Devices?.find((d: any) => d.is_active);
-    if (firstPremise && firstDevice) {
-      setSelectedFinaBusinessPremiseName(firstPremise.business_premise_name);
-      setSelectedFinaElectronicDeviceName(firstDevice.electronic_device_name);
-    }
-  }, [isFinaEnabled, hasFinaPremises, activeFinaPremises, entityId, selectedFinaBusinessPremiseName]);
-
-  // When FINA premise changes, select first active device
-  useEffect(() => {
-    if (!selectedFinaBusinessPremiseName) return;
-    const premise = activeFinaPremises.find((p: any) => p.business_premise_name === selectedFinaBusinessPremiseName);
-    const firstDevice = premise?.Devices?.find((d: any) => d.is_active);
-    if (firstDevice && selectedFinaElectronicDeviceName !== firstDevice.electronic_device_name) {
-      const currentDeviceInPremise = premise?.Devices?.find(
-        (d: any) => d.electronic_device_name === selectedFinaElectronicDeviceName && d.is_active,
-      );
-      if (!currentDeviceInPremise) {
-        setSelectedFinaElectronicDeviceName(firstDevice.electronic_device_name);
-      }
-    }
-  }, [selectedFinaBusinessPremiseName, activeFinaPremises, selectedFinaElectronicDeviceName]);
+  const formDefaultValues = useMemo(
+    () =>
+      buildInvoiceFormValues({
+        initialValues,
+        currencyCode: activeEntity?.currency_code ?? undefined,
+        defaultInvoiceNote,
+        defaultPaymentTerms,
+        defaultFooter,
+        defaultInvoiceDueDays,
+      }),
+    [
+      activeEntity?.currency_code,
+      defaultFooter,
+      defaultInvoiceDueDays,
+      defaultInvoiceNote,
+      defaultPaymentTerms,
+      initialValues,
+    ],
+  );
 
   const form = useForm<CreateInvoiceFormValues>({
     // Cast resolver to accept extended form type (includes UI-only fields)
     resolver: zodResolver(createInvoiceSchema) as Resolver<CreateInvoiceFormValues>,
-    defaultValues: {
-      number: initialValues?.number || "", // Edit mode uses initialValues, create mode uses useNextInvoiceNumber
-      date: initialValues?.date || new Date().toISOString(),
-      customer_id: initialValues?.customer_id ?? undefined,
-      // Cast customer to form schema type (API type may have additional fields)
-      customer: (initialValues?.customer as CreateInvoiceFormValues["customer"]) ?? undefined,
-      items: initialValues?.items?.length
-        ? initialValues.items.map((item: any) => ({
-            type: item.type,
-            name: item.name || "",
-            description: item.description || "",
-            ...(item.type !== "separator"
-              ? {
-                  quantity: item.quantity ?? 1,
-                  // Use gross_price if set, otherwise use price
-                  price: item.gross_price ?? item.price,
-                  taxes: item.taxes || [],
-                }
-              : {}),
-          }))
-        : [
-            {
-              name: "",
-              description: "",
-              quantity: 1,
-              price: undefined,
-              taxes: [],
-            },
-          ],
-      currency_code: initialValues?.currency_code || activeEntity?.currency_code || "EUR",
-      reference: (initialValues as any)?.reference ?? "",
-      note: initialValues?.note ?? defaultInvoiceNote,
-      tax_clause: (initialValues as any)?.tax_clause ?? "",
-      payment_terms: initialValues?.payment_terms ?? defaultPaymentTerms,
-      footer: (initialValues as any)?.footer ?? defaultFooter,
-      date_due:
-        initialValues?.date_due ||
-        calculateDueDate(initialValues?.date || new Date().toISOString(), defaultInvoiceDueDays),
-      date_service: new Date().toISOString(),
-      linked_documents: (initialValues as any)?.linked_documents,
-    },
+    defaultValues: formDefaultValues,
   });
 
   // Skip fiscalization is only allowed for bank transfers or unpaid invoices
@@ -402,19 +291,8 @@ export default function CreateInvoiceForm({
     [form],
   );
 
-  // Check if FURS selection is ready (needed to prevent number flashing)
-  // Selection is ready when: FURS not enabled, OR no premises, OR we have a valid selection
-  const isFursSelectionReady = !isFursEnabled || !hasFursPremises || (!!selectedPremiseName && !!selectedDeviceName);
-
   // FURS is "active" for this invoice if enabled and we have a valid selection (and not skipped)
-  const isFursActive =
-    isFursEnabled && hasFursPremises && selectedPremiseName && selectedDeviceName && !skipFiscalization;
-
-  // FINA selection ready and active checks
-  const isFinaSelectionReady =
-    !isFinaEnabled || !hasFinaPremises || (!!selectedFinaBusinessPremiseName && !!selectedFinaElectronicDeviceName);
-  const isFinaActive =
-    isFinaEnabled && hasFinaPremises && selectedFinaBusinessPremiseName && selectedFinaElectronicDeviceName;
+  const isFursActive = furs.isActive && !skipFiscalization;
 
   // ============================================================================
   // VIES Check - determine transaction type early (needed for number preview)
@@ -441,10 +319,10 @@ export default function CreateInvoiceForm({
   });
 
   // FINA numbering guard: use FINA numbering for domestic transactions (or all if unified numbering is on)
-  const finaUnifiedNumbering = finaSettings?.unified_numbering !== false;
+  const finaUnifiedNumbering = fina.settings?.unified_numbering !== false;
   const useFinaNumbering =
-    !!isFinaActive && (finaUnifiedNumbering || transactionType == null || transactionType === "domestic");
-  const isFinaNonDomestic = !!isFinaActive && !useFinaNumbering;
+    !!fina.isActive && (finaUnifiedNumbering || transactionType == null || transactionType === "domestic");
+  const isFinaNonDomestic = !!fina.isActive && !useFinaNumbering;
 
   // ============================================================================
   // Next Invoice Number Preview
@@ -453,44 +331,44 @@ export default function CreateInvoiceForm({
   // Skip in edit mode - we use the existing document number
   // Use the same premise/device params for both FURS and FINA (an entity is either one, never both)
   const activePremiseName = isFursActive
-    ? selectedPremiseName
+    ? furs.selectedPremiseName
     : useFinaNumbering
-      ? selectedFinaBusinessPremiseName
+      ? fina.selectedPremiseName
       : undefined;
   const activeDeviceNameForNumber = isFursActive
-    ? selectedDeviceName
+    ? furs.selectedDeviceName
     : useFinaNumbering
-      ? selectedFinaElectronicDeviceName
+      ? fina.selectedDeviceName
       : undefined;
 
   const { data: nextNumberData, isLoading: isNextNumberLoading } = useNextInvoiceNumber(entityId, {
     business_premise_name: activePremiseName,
     electronic_device_name: activeDeviceNameForNumber,
     enabled:
-      !!entityId && !isFursLoading && isFursSelectionReady && !isFinaLoading && isFinaSelectionReady && !isEditMode,
+      !!entityId && !furs.isLoading && furs.isSelectionReady && !fina.isLoading && fina.isSelectionReady && !isEditMode,
   });
 
   // Overall loading state - wait until we have FURS/FINA data, selection ready, and next number (only in create mode)
   const isFormDataLoading = isEditMode
     ? false // In edit mode, don't wait for next number
-    : isFursLoading || !isFursSelectionReady || isFinaLoading || !isFinaSelectionReady || isNextNumberLoading;
+    : furs.isLoading || !furs.isSelectionReady || fina.isLoading || !fina.isSelectionReady || isNextNumberLoading;
 
   // Update header action with FURS and e-SLOG toggle buttons
   useEffect(() => {
     if (!onHeaderActionChange) return;
 
     // Don't set header action while loading or in edit mode (FURS/FINA/e-SLOG not editable)
-    if (isFursLoading || isFinaLoading || isEditMode) {
+    if (furs.isLoading || fina.isLoading || isEditMode) {
       onHeaderActionChange(null);
       return;
     }
 
-    const showFursToggle = isFursEnabled && hasFursPremises;
-    const showEslogToggle = isEslogAvailable;
+    const showFursToggle = furs.isEnabled && furs.hasPremises;
+    const showEslogToggle = eslog.isAvailable;
 
     if (showFursToggle || showEslogToggle) {
       const isFursChecked = !skipFiscalization;
-      const isEslogChecked = eslogValidationEnabled === true;
+      const isEslogChecked = eslog.isEnabled === true;
 
       onHeaderActionChange(
         <div className="flex items-center gap-2">
@@ -504,7 +382,7 @@ export default function CreateInvoiceForm({
                     variant={isEslogChecked ? "outline" : "ghost"}
                     size="sm"
                     className={cn("h-8 cursor-pointer gap-2", !isEslogChecked && "text-muted-foreground")}
-                    onClick={() => setEslogValidationEnabled(!eslogValidationEnabled)}
+                    onClick={() => eslog.setEnabled(!eslog.isEnabled)}
                   >
                     <div
                       className={cn(
@@ -573,14 +451,15 @@ export default function CreateInvoiceForm({
       onHeaderActionChange(null);
     }
   }, [
-    isFursLoading,
-    isFinaLoading,
-    isFursEnabled,
-    hasFursPremises,
+    furs.isLoading,
+    fina.isLoading,
+    furs.isEnabled,
+    furs.hasPremises,
     skipFiscalization,
     canSkipFiscalization,
-    isEslogAvailable,
-    eslogValidationEnabled,
+    eslog.isAvailable,
+    eslog.isEnabled,
+    eslog.setEnabled,
     isEditMode,
     onHeaderActionChange,
     t,
@@ -634,7 +513,7 @@ export default function CreateInvoiceForm({
     if (isDomesticTransaction && customerHasTaxNumber && !customerIsEndConsumerWatch) {
       return t("Domestic B2B invoicing in Croatia is not supported");
     }
-    if (!isFinaEnabled) {
+    if (!fina.isEnabled) {
       return t("FINA fiscalization must be enabled for domestic invoices");
     }
     return undefined;
@@ -668,20 +547,9 @@ export default function CreateInvoiceForm({
   const { mutate: createInvoice, isPending: isCreatePending } = useCreateInvoice({
     entityId,
     onSuccess: (data) => {
-      // Save FURS combo to localStorage on successful creation
-      if (isFursActive && selectedPremiseName && selectedDeviceName) {
-        setLastUsedFursCombo(entityId, {
-          business_premise_name: selectedPremiseName,
-          electronic_device_name: selectedDeviceName,
-        });
-      }
-      // Save FINA combo to localStorage on successful creation
-      if (isFinaActive && selectedFinaBusinessPremiseName && selectedFinaElectronicDeviceName) {
-        setLastUsedFinaCombo(entityId, {
-          business_premise_name: selectedFinaBusinessPremiseName,
-          electronic_device_name: selectedFinaElectronicDeviceName,
-        });
-      }
+      // Save FURS/FINA combos to localStorage on successful creation
+      furs.saveCombo();
+      fina.saveCombo();
       // Invalidate customers cache when a customer was created/linked
       // This ensures the new customer appears in autocomplete for future documents
       if (data.customer_id) {
@@ -715,13 +583,13 @@ export default function CreateInvoiceForm({
       if (finaValidationError) return;
 
       // Skip e-SLOG validation for drafts and edit mode
-      if (!isDraft && !isEditMode && eslogValidationEnabled) {
+      if (!isDraft && !isEditMode && eslog.isEnabled) {
         const validationErrors = validateEslogForm(values as any, activeEntity);
 
         if (validationErrors.length > 0) {
           const entityErrors = getEntityErrors(validationErrors);
           const formErrors = getFormFieldErrors(validationErrors);
-          setEslogEntityErrors(entityErrors);
+          eslog.setEntityErrors(entityErrors);
           for (const error of formErrors) {
             form.setError(error.field as any, {
               type: "eslog",
@@ -730,38 +598,36 @@ export default function CreateInvoiceForm({
           }
           return;
         }
-        setEslogEntityErrors([]);
+        eslog.setEntityErrors([]);
       }
 
       // Build FURS options (skip for drafts and edit mode)
-      const fursOptions =
-        !isDraft && !isEditMode && isFursEnabled
-          ? skipFiscalization
-            ? { skip: true }
-            : selectedPremiseName && selectedDeviceName
-              ? { business_premise_name: selectedPremiseName, electronic_device_name: selectedDeviceName }
-              : undefined
-          : undefined;
+      const fursOptions = buildFursOptions({
+        isDraft,
+        isEnabled: furs.isEnabled,
+        isEditMode,
+        skipFiscalization,
+        premiseName: furs.selectedPremiseName,
+        deviceName: furs.selectedDeviceName,
+      });
 
       // Build FINA options (skip for drafts, edit mode, and non-domestic transactions)
-      const finaOptions =
-        !isDraft &&
-        !isEditMode &&
-        useFinaNumbering &&
-        selectedFinaBusinessPremiseName &&
-        selectedFinaElectronicDeviceName
-          ? {
-              business_premise_name: selectedFinaBusinessPremiseName,
-              electronic_device_name: selectedFinaElectronicDeviceName,
-              payment_type: paymentTypes[0],
-            }
-          : undefined;
+      const finaOptions = buildFinaOptions({
+        isDraft,
+        useFinaNumbering,
+        isEditMode,
+        premiseName: fina.selectedPremiseName,
+        deviceName: fina.selectedDeviceName,
+        paymentType: paymentTypes[0],
+      });
 
       // Build e-SLOG options (skip for drafts and edit mode)
-      const eslogOptions =
-        !isDraft && !isEditMode && isEslogAvailable
-          ? { validation_enabled: eslogValidationEnabled === true }
-          : undefined;
+      const eslogOptions = buildEslogOptions({
+        isDraft,
+        isEditMode,
+        isAvailable: eslog.isAvailable,
+        isEnabled: eslog.isEnabled,
+      });
 
       const payload = prepareInvoiceSubmission(values as any, {
         originalCustomer,
@@ -794,21 +660,17 @@ export default function CreateInvoiceForm({
       createInvoice,
       updateInvoice,
       documentId,
-      eslogValidationEnabled,
+      eslog,
       finaValidationError,
+      fina,
       forceLinkedDocuments,
       form,
+      furs,
       isEditMode,
-      isEslogAvailable,
-      isFursEnabled,
       useFinaNumbering,
       markAsPaid,
       originalCustomer,
       paymentTypes,
-      selectedDeviceName,
-      selectedPremiseName,
-      selectedFinaBusinessPremiseName,
-      selectedFinaElectronicDeviceName,
       showCustomerForm,
       skipFiscalization,
     ],
@@ -858,6 +720,24 @@ export default function CreateInvoiceForm({
 
   // Track if initial setup has been done
   const initialSetupDoneRef = useRef(false);
+  const hasInitialValues = !!initialValues;
+  const duplicateHydrationStartedAtRef = useRef<number | null>(hasInitialValues ? performance.now() : null);
+  const duplicateHydrationLoggedRef = useRef(false);
+  const appliedInitialValuesSignatureRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!hasInitialValues) return;
+
+    const nextSignature = JSON.stringify(formDefaultValues);
+    if (appliedInitialValuesSignatureRef.current === nextSignature) return;
+
+    appliedInitialValuesSignatureRef.current = nextSignature;
+    initialSetupDoneRef.current = false;
+    duplicateHydrationStartedAtRef.current = performance.now();
+    duplicateHydrationLoggedRef.current = false;
+    form.reset(formDefaultValues);
+    priceModesRef.current = initialPriceModes;
+  }, [form, formDefaultValues, hasInitialValues, initialPriceModes]);
 
   // Set default note and payment terms from entity settings when entity data is available
   // This handles the case where activeEntity loads asynchronously
@@ -901,7 +781,15 @@ export default function CreateInvoiceForm({
     }
 
     initialSetupDoneRef.current = true;
-  }, [activeEntity, form, isEditMode, initialValues?.date_due]);
+    if (hasInitialValues && duplicateHydrationStartedAtRef.current && !duplicateHydrationLoggedRef.current) {
+      duplicateHydrationLoggedRef.current = true;
+      emitInvoiceCreateDebug({
+        stage: "entity_defaults_applied",
+        hasInitialValues: true,
+        elapsedMs: Number((performance.now() - duplicateHydrationStartedAtRef.current).toFixed(1)),
+      });
+    }
+  }, [activeEntity, form, hasInitialValues, isEditMode, initialValues]);
 
   // Recalculate due date when document date changes (skip in edit mode and custom due days)
   const prevDateRef = useRef(form.getValues("date"));
@@ -916,48 +804,119 @@ export default function CreateInvoiceForm({
 
   // Use form.watch subscription for onChange callback (avoids re-render loops)
   const prevPayloadRef = useRef<string>("");
+  const initialPreviewTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hasEmittedSettledInitialPreviewRef = useRef(!hasInitialValues);
+  const pendingInitialPreviewPayloadRef = useRef<InvoicePreviewPayload | null>(null);
+
+  useEffect(() => {
+    if (!hasInitialValues) return;
+
+    hasEmittedSettledInitialPreviewRef.current = false;
+    prevPayloadRef.current = "";
+    pendingInitialPreviewPayloadRef.current = null;
+    if (initialPreviewTimeoutRef.current) {
+      clearTimeout(initialPreviewTimeoutRef.current);
+      initialPreviewTimeoutRef.current = null;
+    }
+  }, [hasInitialValues]);
+
+  const buildPreviewPayload = useCallback((formValues: any): InvoicePreviewPayload => {
+    const currentItems = formValues.items || [];
+    const transformedItems = currentItems.map((item: any, index: number) => {
+      const { price, ...rest } = item;
+      const isGross = priceModesRef.current[index] ?? false;
+      return isGross ? { ...rest, gross_price: price } : { ...rest, price };
+    });
+    return {
+      number: formValues.number,
+      date: formValues.date,
+      date_service: formValues.date_service,
+      date_service_to: formValues.date_service_to,
+      customer_id: formValues.customer_id,
+      customer: formValues.customer,
+      items: transformedItems,
+      currency_code: formValues.currency_code,
+      reference: formValues.reference,
+      note: formValues.note,
+      payment_terms: formValues.payment_terms,
+      signature: formValues.signature,
+    };
+  }, []);
+
+  const emitCurrentPreviewPayload = useCallback(() => {
+    if (!onChange) return;
+    onChange(buildPreviewPayload(form.getValues()));
+  }, [buildPreviewPayload, form, onChange]);
 
   useEffect(() => {
     if (!onChange) return;
 
-    const buildPayload = (formValues: any): InvoicePreviewPayload => {
-      const currentItems = formValues.items || [];
-      const transformedItems = currentItems.map((item: any, index: number) => {
-        const { price, ...rest } = item;
-        const isGross = priceModesRef.current[index] ?? false;
-        return isGross ? { ...rest, gross_price: price } : { ...rest, price };
-      });
-      return {
-        number: formValues.number,
-        date: formValues.date,
-        customer_id: formValues.customer_id,
-        customer: formValues.customer,
-        items: transformedItems,
-        currency_code: formValues.currency_code,
-        reference: formValues.reference,
-        note: formValues.note,
-        payment_terms: formValues.payment_terms,
-        signature: formValues.signature,
-      };
+    const emitSettledInitialPreview = (payload: InvoicePreviewPayload) => {
+      pendingInitialPreviewPayloadRef.current = payload;
+
+      if (initialPreviewTimeoutRef.current) return;
+
+      const hydrationStartedAt = duplicateHydrationStartedAtRef.current ?? performance.now();
+      const elapsedMs = performance.now() - hydrationStartedAt;
+      const delayMs = Math.max(DUPLICATE_PREVIEW_SETTLE_MS, DUPLICATE_PREVIEW_MIN_DELAY_MS - elapsedMs);
+      initialPreviewTimeoutRef.current = setTimeout(() => {
+        initialPreviewTimeoutRef.current = null;
+        hasEmittedSettledInitialPreviewRef.current = true;
+        const settledPayload = pendingInitialPreviewPayloadRef.current ?? payload;
+        if (hasInitialValues && duplicateHydrationStartedAtRef.current && !duplicateHydrationLoggedRef.current) {
+          duplicateHydrationLoggedRef.current = true;
+          emitInvoiceCreateDebug({
+            stage: "initial_payload_emitted",
+            hasInitialValues: true,
+            itemCount: settledPayload.items?.length ?? 0,
+            elapsedMs: Number((performance.now() - duplicateHydrationStartedAtRef.current).toFixed(1)),
+          });
+        }
+        onChange(settledPayload);
+        pendingInitialPreviewPayloadRef.current = null;
+      }, delayMs);
     };
 
     // Initial call
-    const initialPayload = buildPayload(form.getValues());
+    const initialPayload = buildPreviewPayload(form.getValues());
     prevPayloadRef.current = JSON.stringify(initialPayload);
-    onChange(initialPayload);
+    if (hasInitialValues) {
+      emitSettledInitialPreview(initialPayload);
+    } else {
+      onChange(initialPayload);
+    }
 
     // Subscribe to changes
     const subscription = form.watch((formValues) => {
-      const payload = buildPayload(formValues);
+      const payload = buildPreviewPayload(formValues);
       const payloadStr = JSON.stringify(payload);
       if (payloadStr !== prevPayloadRef.current) {
         prevPayloadRef.current = payloadStr;
-        onChange(payload);
+        if (hasInitialValues && duplicateHydrationStartedAtRef.current) {
+          emitInvoiceCreateDebug({
+            stage: "payload_changed",
+            hasInitialValues: true,
+            itemCount: payload.items?.length ?? 0,
+            elapsedMs: Number((performance.now() - duplicateHydrationStartedAtRef.current).toFixed(1)),
+          });
+        }
+        if (hasInitialValues && !hasEmittedSettledInitialPreviewRef.current) {
+          emitSettledInitialPreview(payload);
+        } else {
+          onChange(payload);
+        }
       }
     });
 
-    return () => subscription.unsubscribe();
-  }, [onChange, form]);
+    return () => {
+      subscription.unsubscribe();
+      if (initialPreviewTimeoutRef.current) {
+        clearTimeout(initialPreviewTimeoutRef.current);
+        initialPreviewTimeoutRef.current = null;
+      }
+      pendingInitialPreviewPayloadRef.current = null;
+    };
+  }, [buildPreviewPayload, form, hasInitialValues, onChange]);
 
   const onSubmit = (values: CreateInvoiceFormValues) => {
     submitInvoice(values, false);
@@ -1040,14 +999,14 @@ export default function CreateInvoiceForm({
         )}
 
         {/* e-SLOG entity-level validation errors */}
-        {eslogEntityErrors.length > 0 && (
+        {eslog.entityErrors.length > 0 && (
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>{t("e-SLOG Validation Failed")}</AlertTitle>
             <AlertDescription>
               <p className="mb-2">{t("The following entity settings need to be updated:")}</p>
               <ul className="list-disc space-y-1 pl-4">
-                {eslogEntityErrors.map((error) => (
+                {eslog.entityErrors.map((error) => (
                   <li key={error.field} className="text-sm">
                     {error.message}
                   </li>
@@ -1076,14 +1035,20 @@ export default function CreateInvoiceForm({
             t={t}
             fursInline={
               // Hide FURS selector in edit mode - fiscalization is set at creation only
-              !isEditMode && isFursEnabled && hasFursPremises
+              !isEditMode && furs.isEnabled && furs.hasPremises
                 ? {
-                    premises: activePremises.map((p) => ({ id: p.id, business_premise_name: p.business_premise_name })),
-                    devices: activeDevices.map((d) => ({ id: d.id, electronic_device_name: d.electronic_device_name })),
-                    selectedPremise: selectedPremiseName,
-                    selectedDevice: selectedDeviceName,
-                    onPremiseChange: setSelectedPremiseName,
-                    onDeviceChange: setSelectedDeviceName,
+                    premises: furs.activePremises.map((p) => ({
+                      id: p.id,
+                      business_premise_name: p.business_premise_name,
+                    })),
+                    devices: furs.activeDevices.map((d: any) => ({
+                      id: d.id,
+                      electronic_device_name: d.electronic_device_name,
+                    })),
+                    selectedPremise: furs.selectedPremiseName,
+                    selectedDevice: furs.selectedDeviceName,
+                    onPremiseChange: furs.setSelectedPremiseName,
+                    onDeviceChange: furs.setSelectedDeviceName,
                     isSkipped: skipFiscalization,
                   }
                 : undefined
@@ -1091,18 +1056,18 @@ export default function CreateInvoiceForm({
             finaInline={
               !isEditMode && useFinaNumbering
                 ? {
-                    premises: activeFinaPremises.map((p: any) => ({
+                    premises: fina.activePremises.map((p: any) => ({
                       id: p.id,
                       business_premise_name: p.business_premise_name,
                     })),
-                    devices: activeFinaDevices.map((d: any) => ({
+                    devices: fina.activeDevices.map((d: any) => ({
                       id: d.id,
                       electronic_device_name: d.electronic_device_name,
                     })),
-                    selectedPremise: selectedFinaBusinessPremiseName,
-                    selectedDevice: selectedFinaElectronicDeviceName,
-                    onPremiseChange: setSelectedFinaBusinessPremiseName,
-                    onDeviceChange: setSelectedFinaElectronicDeviceName,
+                    selectedPremise: fina.selectedPremiseName,
+                    selectedDevice: fina.selectedDeviceName,
+                    onPremiseChange: fina.setSelectedPremiseName,
+                    onDeviceChange: fina.setSelectedDeviceName,
                   }
                 : undefined
             }
@@ -1124,7 +1089,7 @@ export default function CreateInvoiceForm({
                 paymentTypes={paymentTypes}
                 onPaymentTypesChange={setPaymentTypes}
                 t={t}
-                alwaysShowPaymentType={!!isFinaActive && requiresFinaFiscalization}
+                alwaysShowPaymentType={!!fina.isActive && requiresFinaFiscalization}
               />
             )}
           </DocumentDetailsSection>
@@ -1146,6 +1111,7 @@ export default function CreateInvoiceForm({
           maxTaxesPerItem={activeEntity?.country_rules?.max_taxes_per_item}
           priceModesRef={priceModesRef}
           initialPriceModes={initialPriceModes}
+          onItemsStateChange={emitCurrentPreviewPayload}
         />
 
         <DocumentNoteField

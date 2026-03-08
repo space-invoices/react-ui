@@ -4,6 +4,7 @@ import { useCallback, useMemo, useState } from "react";
 import { DataTable } from "@/ui/components/table/data-table";
 import { FormattedDate } from "@/ui/components/table/date-cell";
 import { useTableFetch } from "@/ui/components/table/hooks/use-table-fetch";
+import { withTableTranslations } from "@/ui/components/table/locales";
 import { SelectionToolbar } from "@/ui/components/table/selection-toolbar";
 import type {
   Column,
@@ -31,7 +32,7 @@ import pl from "./locales/pl";
 import pt from "./locales/pt";
 import sl from "./locales/sl";
 
-const translations = {
+const translations = withTableTranslations({
   en,
   sl,
   de,
@@ -42,12 +43,13 @@ const translations = {
   nl,
   pl,
   hr,
-} as const;
+} as const);
 
 type CreditNoteListTableProps = {
   t?: (key: string) => string;
   namespace?: string;
   locale?: string;
+  translationLocale?: string;
   entityId?: string;
   onView?: (creditNote: CreditNote) => void;
   onAddPayment?: (creditNote: CreditNote) => void;
@@ -84,6 +86,7 @@ export default function CreditNoteListTable({
 }: CreditNoteListTableProps) {
   const t = createTranslation({
     translations,
+    locale: i18nProps.translationLocale ?? i18nProps.locale,
     ...i18nProps,
   });
 
@@ -209,7 +212,7 @@ export default function CreditNoteListTable({
       {
         id: "date",
         header: t("Date"),
-        cell: (creditNote) => <FormattedDate date={creditNote.date} />,
+        cell: (creditNote) => <FormattedDate date={creditNote.date} locale={i18nProps.locale} />,
       },
       {
         id: "total",

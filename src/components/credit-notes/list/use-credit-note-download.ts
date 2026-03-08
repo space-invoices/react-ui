@@ -35,19 +35,8 @@ export function useCreditNoteDownload({
     onDownloadStart?.();
 
     try {
-      // SDK signature: renderPdf(id, params?, SDKMethodOptions?)
-      // entity_id goes in SDKMethodOptions (last arg), not params
-      // Note: renderPdf is on invoices module but works with any document ID
-      const blob = await sdk.invoices.renderPdf(creditNote.id, {}, { entity_id: activeEntity.id });
-      const downloadUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = downloadUrl;
       const fileName = `${t("Credit Note")} ${creditNote.number}.pdf`;
-      link.download = fileName;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(downloadUrl);
+      await sdk.invoices.downloadPdf(creditNote.id, fileName, {}, { entity_id: activeEntity.id });
 
       onDownloadSuccess?.(fileName);
     } catch (error) {

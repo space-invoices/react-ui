@@ -4,6 +4,7 @@ import { useCallback, useMemo, useState } from "react";
 import { DataTable } from "@/ui/components/table/data-table";
 import { FormattedDate } from "@/ui/components/table/date-cell";
 import { useTableFetch } from "@/ui/components/table/hooks/use-table-fetch";
+import { withTableTranslations } from "@/ui/components/table/locales";
 import { SelectionToolbar } from "@/ui/components/table/selection-toolbar";
 import type {
   Column,
@@ -31,7 +32,7 @@ import pl from "./locales/pl";
 import pt from "./locales/pt";
 import sl from "./locales/sl";
 
-const translations = {
+const translations = withTableTranslations({
   en,
   sl,
   de,
@@ -42,12 +43,13 @@ const translations = {
   nl,
   pl,
   hr,
-} as const;
+} as const);
 
 type AdvanceInvoiceListTableProps = {
   t?: (key: string) => string;
   namespace?: string;
   locale?: string;
+  translationLocale?: string;
   entityId?: string;
   onView?: (advanceInvoice: AdvanceInvoice) => void;
   onAddPayment?: (advanceInvoice: AdvanceInvoice) => void;
@@ -86,6 +88,7 @@ export default function AdvanceInvoiceListTable({
 }: AdvanceInvoiceListTableProps) {
   const t = createTranslation({
     translations,
+    locale: i18nProps.translationLocale ?? i18nProps.locale,
     ...i18nProps,
   });
 
@@ -149,11 +152,15 @@ export default function AdvanceInvoiceListTable({
       const someFailed = failedCount > 0 && failedCount < selectedDocs.length;
       const showRetry = hasRetry && failedCount > 0;
 
+      const hasDrafts = selectedDocs.some((d) => (d as any).is_draft);
+
       return (
         <SelectionToolbar
           selectedCount={count}
           onExportPdfs={onExportSelected ? handleExportPdfs : undefined}
           onCopyToInvoice={onCopyToInvoice ? handleCopyToInvoice : undefined}
+          copyToInvoiceDisabled={hasDrafts}
+          copyToInvoiceTooltip={hasDrafts ? t("Finalize draft documents before copying to invoice") : undefined}
           onRetryFiscalization={showRetry ? () => onRetryFiscalization(failedDocs.map((d) => d.id)) : undefined}
           retryFiscalizationDisabled={someFailed && !allFailed}
           retryFiscalizationTooltip={
@@ -224,7 +231,7 @@ export default function AdvanceInvoiceListTable({
       {
         id: "date",
         header: t("Date"),
-        cell: (advanceInvoice) => <FormattedDate date={advanceInvoice.date} />,
+        cell: (advanceInvoice) => <FormattedDate date={advanceInvoice.date} locale={i18nProps.locale} />,
       },
       {
         id: "total",

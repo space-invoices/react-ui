@@ -16,6 +16,50 @@ const sendEmailSchemaDefinition = z.object({
   document_id: z.string().optional(),
   attach_pdf: z.boolean().optional().default(false),
   attach_eslog: z.boolean().optional().default(false),
+  locale: z
+    .enum([
+      "en-US",
+      "de-DE",
+      "it-IT",
+      "fr-FR",
+      "es-ES",
+      "sl-SI",
+      "pt-PT",
+      "nl-NL",
+      "pl-PL",
+      "hr-HR",
+      "sv-SE",
+      "fi-FI",
+      "et-EE",
+      "bg-BG",
+      "cs-CZ",
+      "sk-SK",
+      "nb-NO",
+      "is-IS",
+    ])
+    .optional(),
+  language: z
+    .enum([
+      "en-US",
+      "de-DE",
+      "it-IT",
+      "fr-FR",
+      "es-ES",
+      "sl-SI",
+      "pt-PT",
+      "nl-NL",
+      "pl-PL",
+      "hr-HR",
+      "sv-SE",
+      "fi-FI",
+      "et-EE",
+      "bg-BG",
+      "cs-CZ",
+      "sk-SK",
+      "nb-NO",
+      "is-IS",
+    ])
+    .optional(),
 });
 
 // Type for send email operation

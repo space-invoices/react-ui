@@ -12,9 +12,13 @@ type ItemComboboxProps = {
   entityId: string;
   value?: string;
   onSelect?: (item: Item | null, customName?: string) => void;
+  onCommitInlineName?: (value: string) => void;
+  commitOnBlurMode?: "create" | "update-inline";
   placeholder?: string;
   className?: string;
   disabled?: boolean;
+  locale?: string;
+  inputTestId?: string;
 };
 
 /**
@@ -25,9 +29,13 @@ export function ItemCombobox({
   entityId,
   value,
   onSelect,
+  onCommitInlineName,
+  commitOnBlurMode = "create",
   placeholder = "Search or enter item name...",
   className,
   disabled,
+  locale,
+  inputTestId,
 }: ItemComboboxProps) {
   const [search, setSearch] = useState("");
   const [displayValue, setDisplayValue] = useState(value || "");
@@ -53,7 +61,7 @@ export function ItemCombobox({
   const formatPrice = (item: Item) => {
     const price = item.gross_price ?? item.price;
     if (price === null || price === undefined) return "";
-    return ` - ${price.toFixed(2)}`;
+    return ` - ${new Intl.NumberFormat(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(price)}`;
   };
 
   const options = items.map((item) => ({
@@ -113,11 +121,20 @@ export function ItemCombobox({
     }
   };
 
-  const handleBlur = () => {
-    // If nothing was selected but there's text, treat as custom name
-    if (!displayValue && search) {
-      handleValueChange(`__custom__:${search}`);
+  const commitCustomName = (customName: string) => {
+    const trimmedName = customName.trim();
+    if (!trimmedName) return;
+
+    if (commitOnBlurMode === "update-inline") {
+      onCommitInlineName?.(trimmedName);
+      setSearch(trimmedName);
+      setDisplayValue(trimmedName);
+      return;
     }
+
+    onSelect?.(null, trimmedName);
+    setSearch(trimmedName);
+    setDisplayValue(trimmedName);
   };
 
   // Sync when value changes externally (e.g., duplication, form reset)
@@ -136,7 +153,8 @@ export function ItemCombobox({
       onSearch={handleSearch}
       value={value}
       onValueChange={handleValueChange}
-      onBlur={handleBlur}
+      onCommitUnselectedInput={commitCustomName}
+      commitUnselectedOnBlur={true}
       options={options}
       placeholder={placeholder}
       className={className}
@@ -144,6 +162,8 @@ export function ItemCombobox({
       loading={isLoading}
       emptyText={debouncedSearch ? "No items found" : "Recent items"}
       displayValue={displayValue}
+      inputTestId={inputTestId}
+      committedDisplayValue={value}
     />
   );
 }

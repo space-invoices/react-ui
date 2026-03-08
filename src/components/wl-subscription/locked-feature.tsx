@@ -168,6 +168,7 @@ function getDefaultLockedMessage(feature: GatedFeature): string {
     api_access: "API access requires an Advanced plan",
     webhooks: "Webhooks require an Advanced plan",
     priority_support: "Priority support requires an Advanced plan",
+    e_invoicing: "E-Invoicing requires a Starter or Advanced plan",
   };
 
   return messages[feature] || "This feature requires a plan upgrade";

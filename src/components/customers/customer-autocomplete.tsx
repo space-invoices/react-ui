@@ -1,7 +1,7 @@
 import type { Customer } from "@spaceinvoices/js-sdk";
 
 import { Plus } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { Autocomplete } from "@/ui/common/autocomplete";
 import { useDebounce } from "@/ui/hooks/use-debounce";
@@ -17,7 +17,9 @@ const truncateText = (text: string, maxLength: number = MAX_TEXT_LENGTH): string
 type CustomerAutocompleteProps = {
   entityId: string;
   value?: string | null;
+  committedDisplayName?: string;
   onValueChange?: (value: string, customer: Customer) => void;
+  onCommitInlineName?: (value: string) => void;
   onClear?: () => void;
   placeholder?: string;
   className?: string;
@@ -25,20 +27,29 @@ type CustomerAutocompleteProps = {
   onBlur?: () => void; // Added onBlur prop
   /** Initial display name when pre-populating with a customer (e.g., for duplication) */
   initialDisplayName?: string;
+  inputTestId?: string;
+  inputRef?: React.Ref<HTMLInputElement>;
+  commitOnBlurMode?: "none" | "create" | "update-inline";
 };
 
 export function CustomerAutocomplete({
   entityId,
   value,
+  committedDisplayName,
   onValueChange,
+  onCommitInlineName,
   placeholder = "Name",
   className,
   disabled,
   onBlur: onBlurPropFromParent, // Destructure the onBlur prop from parent
   initialDisplayName,
+  inputTestId,
+  inputRef,
+  commitOnBlurMode = "none",
 }: CustomerAutocompleteProps) {
   const [search, setSearch] = useState(initialDisplayName || "");
   const [displayValue, setDisplayValue] = useState(initialDisplayName || "");
+  const preserveSearchOnClearRef = useRef(false);
   const debouncedSearch = useDebounce(search, 300);
 
   const handleSearch = (value: string) => {
@@ -137,22 +148,59 @@ export function CustomerAutocomplete({
     }
   };
 
-  const handleBlur = () => {
-    // If displayValue is empty (nothing selected) and there's text in search (something was typed),
-    // then behave as if "Create new" was clicked.
-    if (!displayValue && search) {
-      handleValueChange(`__create__:${search}`);
+  const commitCustomerName = (customerName: string) => {
+    const trimmedName = customerName.trim();
+    if (!trimmedName) return;
+
+    if (commitOnBlurMode === "update-inline") {
+      onCommitInlineName?.(trimmedName);
+      const truncatedName = truncateText(trimmedName);
+      setSearch(truncatedName);
+      setDisplayValue(truncatedName);
+      return;
     }
-    onBlurPropFromParent?.(); // Call the passed onBlur prop after internal logic
+
+    if (onValueChange) {
+      onValueChange("", {
+        name: trimmedName,
+        address: null,
+        address_2: null,
+        post_code: null,
+        city: null,
+        state: null,
+        country: null,
+        tax_number: null,
+      } as Customer);
+    }
+
+    const truncatedName = truncateText(trimmedName);
+    setSearch(truncatedName);
+    setDisplayValue(truncatedName);
   };
 
-  // Reset search when value changes externally
+  const handleBlur = () => {
+    onBlurPropFromParent?.();
+  };
+
+  // Sync visible input when committed customer state changes externally
   useEffect(() => {
-    if (!value) {
-      setSearch("");
+    if (value) {
+      const nextDisplayValue = committedDisplayName || initialDisplayName || "";
+      if (nextDisplayValue) {
+        setSearch(nextDisplayValue);
+        setDisplayValue(nextDisplayValue);
+      }
+      return;
+    }
+
+    if (!committedDisplayName) {
+      if (!preserveSearchOnClearRef.current) {
+        setSearch("");
+      }
+      preserveSearchOnClearRef.current = false;
       setDisplayValue("");
     }
-  }, [value]);
+  }, [committedDisplayName, initialDisplayName, value]);
 
   return (
     <Autocomplete
@@ -160,6 +208,8 @@ export function CustomerAutocomplete({
       onSearch={handleSearch}
       value={value ?? undefined}
       onValueChange={handleValueChange}
+      onCommitUnselectedInput={commitCustomerName}
+      commitUnselectedOnBlur={commitOnBlurMode !== "none"}
       onBlur={handleBlur} // Pass the new handleBlur to Autocomplete
       options={options}
       placeholder={placeholder}
@@ -168,6 +218,9 @@ export function CustomerAutocomplete({
       loading={isLoading}
       emptyText={debouncedSearch ? "No customers found" : "Recent customers"}
       displayValue={displayValue}
+      inputTestId={inputTestId}
+      committedDisplayValue={committedDisplayName}
+      inputRef={inputRef}
     />
   );
 }

@@ -151,7 +151,12 @@ export const PremisesManagementSection: FC<PremisesManagementSectionProps> = ({
         </Alert>
 
         {/* Add Premise Button */}
-        <Button onClick={() => setRegisterDialogOpen(true)} variant="default" className="cursor-pointer">
+        <Button
+          onClick={() => setRegisterDialogOpen(true)}
+          variant="default"
+          className="cursor-pointer"
+          data-testid="fina-add-premise"
+        >
           <Building2 className="mr-2 h-4 w-4" />
           {t("Add Premise")}
         </Button>
@@ -189,7 +194,11 @@ export const PremisesManagementSection: FC<PremisesManagementSectionProps> = ({
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleAddDevice(premise.id)} className="cursor-pointer">
+                          <DropdownMenuItem
+                            onClick={() => handleAddDevice(premise.id)}
+                            className="cursor-pointer"
+                            data-testid={`fina-add-device-${premise.business_premise_name}`}
+                          >
                             <Cpu className="mr-2 h-4 w-4" />
                             {t("Add Electronic Device")}
                           </DropdownMenuItem>
@@ -245,6 +254,7 @@ export const PremisesManagementSection: FC<PremisesManagementSectionProps> = ({
                             variant="outline"
                             onClick={() => handleAddDevice(premise.id)}
                             className="cursor-pointer"
+                            data-testid={`fina-add-device-${premise.business_premise_name}`}
                           >
                             <Cpu className="mr-2 h-4 w-4" />
                             {t("Add Electronic Device")}
@@ -307,6 +317,7 @@ export const PremisesManagementSection: FC<PremisesManagementSectionProps> = ({
                       handleRegisterDevice();
                     }
                   }}
+                  data-testid="fina-device-id-input"
                 />
               </div>
             </div>
@@ -324,6 +335,7 @@ export const PremisesManagementSection: FC<PremisesManagementSectionProps> = ({
                 onClick={handleRegisterDevice}
                 disabled={!deviceId.trim() || isRegisteringDevice}
                 className="cursor-pointer"
+                data-testid="fina-register-device-submit"
               >
                 {isRegisteringDevice ? t("Registering...") : t("Register Device")}
               </Button>

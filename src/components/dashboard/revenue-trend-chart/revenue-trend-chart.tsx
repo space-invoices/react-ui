@@ -6,18 +6,26 @@ import { type ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } f
 import { createTranslation } from "@/ui/lib/translation";
 import { ChartEmptyState } from "../chart-empty-state";
 import { LoadingCard } from "../loading-card";
+import bg from "./locales/bg";
+import cs from "./locales/cs";
 import de from "./locales/de";
+import et from "./locales/et";
 import es from "./locales/es";
+import fi from "./locales/fi";
 import fr from "./locales/fr";
 import hr from "./locales/hr";
+import is from "./locales/is";
 import it from "./locales/it";
+import nb from "./locales/nb";
 import nl from "./locales/nl";
 import pl from "./locales/pl";
 import pt from "./locales/pt";
+import sk from "./locales/sk";
 import sl from "./locales/sl";
+import sv from "./locales/sv";
 import { useRevenueTrendData } from "./use-revenue-trend";
 
-const translations = { sl, de, it, fr, es, pt, nl, pl, hr } as const;
+const translations = { bg, cs, de, et, es, fi, fr, hr, is, it, nb, nl, pl, pt, sk, sl, sv } as const;
 
 export type RevenueTrendChartData = { month: string; revenue: number }[];
 
@@ -40,13 +48,6 @@ type TurnkeyProps = BaseProps & {
 };
 
 export type RevenueTrendChartProps = DataProps | TurnkeyProps;
-
-const chartConfig = {
-  revenue: {
-    label: "Revenue",
-    color: "var(--chart-1)",
-  },
-} satisfies ChartConfig;
 
 function formatMonth(month: string, locale?: string): string {
   const date = new Date(`${month}-01`);
@@ -79,6 +80,12 @@ export function RevenueTrendChart(props: RevenueTrendChartProps) {
   }
 
   const hasData = data.some((d) => d.revenue > 0);
+  const chartConfig = {
+    revenue: {
+      label: t("Revenue"),
+      color: "var(--chart-1)",
+    },
+  } satisfies ChartConfig;
 
   // Placeholder data for empty state
   const placeholderData =

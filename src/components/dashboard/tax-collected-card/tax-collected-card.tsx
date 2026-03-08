@@ -1,7 +1,9 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/ui/components/ui/card";
+import { createTranslation } from "@/ui/lib/translation";
 import { Skeleton } from "@/ui/components/ui/skeleton";
+import translations from "./locales";
 import type { TaxByRate } from "./use-tax-collected";
 
 export type TaxCollectedCardProps = {
@@ -12,6 +14,7 @@ export type TaxCollectedCardProps = {
   currency: string;
   isLoading?: boolean;
   locale?: string;
+  t?: (key: string) => string;
 };
 
 function formatCurrency(value: number, currency: string, locale?: string): string {
@@ -30,7 +33,10 @@ export function TaxCollectedCard({
   currency,
   isLoading,
   locale,
+  t: externalT,
 }: TaxCollectedCardProps) {
+  const t = createTranslation({ t: externalT, locale, translations });
+
   if (isLoading) {
     return (
       <Card>
@@ -62,14 +68,14 @@ export function TaxCollectedCard({
             {taxes.map((tax) => (
               <div key={`${tax.name}-${tax.rate}`} className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">
-                  {tax.name} {tax.rate}%
+                  {t(tax.name)} {tax.rate}%
                 </span>
                 <span className="font-medium">{formatCurrency(tax.amount, currency, locale)}</span>
               </div>
             ))}
           </div>
         ) : (
-          <p className="text-muted-foreground text-sm">No tax data</p>
+          <p className="text-muted-foreground text-sm">{t("No tax data")}</p>
         )}
       </CardContent>
     </Card>

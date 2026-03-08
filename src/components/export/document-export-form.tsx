@@ -1,7 +1,7 @@
-type TFunction = (key: string, options?: Record<string, unknown>) => string;
-
 import { Calendar, Download, Loader2 } from "lucide-react";
 import { useRef, useState } from "react";
+import type { ComponentTranslationProps } from "@/ui/lib/translation";
+import { createTranslation } from "@/ui/lib/translation";
 import { Button } from "../ui/button";
 import { Checkbox } from "../ui/checkbox";
 import { Input } from "../ui/input";
@@ -45,27 +45,52 @@ export type DocumentExportFormProps = {
   token: string;
   accountId?: string | null;
   language: string;
-  t: TFunction;
   /** Base URL for API calls (required in embed context where relative paths don't reach the API) */
   apiBaseUrl?: string;
   onSuccess?: (fileName: string) => void;
   onError?: (error: Error) => void;
   onPdfExportStarted?: (jobId: string) => void;
   onLoadingChange?: (isLoading: boolean, toastId: string | number | null) => void;
-};
+} & ComponentTranslationProps;
+
+const translations = {
+  en: {
+    "export-page.document-type": "Document type",
+    "export-page.types.invoice": "Invoice",
+    "export-page.types.estimate": "Estimate",
+    "export-page.types.credit_note": "Credit note",
+    "export-page.types.advance_invoice": "Advance invoice",
+    "export-page.types.delivery_note": "Delivery note",
+    "export-page.format": "Format",
+    "export-page.formats.xlsx": "Excel (.xlsx)",
+    "export-page.formats.csv": "CSV (.csv)",
+    "export-page.formats.pdf_zip": "PDF ZIP archive",
+    "export-page.pdf-export-info":
+      "PDF export runs asynchronously and generates a ZIP archive for the selected document types.",
+    "export-page.date-from": "Date from",
+    "export-page.date-to": "Date to",
+    "export-page.error.date-range-exceeded": "Date range cannot exceed one year.",
+    "export-page.clear-dates": "Clear dates",
+    "export-page.exporting": "Exporting...",
+    "export-page.export-button": "Export documents",
+  },
+} as const;
 
 export function DocumentExportForm({
   entityId,
   token,
   accountId,
   language,
-  t,
+  t: translateFn,
+  namespace,
+  locale,
   apiBaseUrl = "",
   onSuccess,
   onError,
   onPdfExportStarted,
   onLoadingChange,
 }: DocumentExportFormProps) {
+  const t = createTranslation({ t: translateFn, namespace, locale, translations });
   const defaultDates = getPreviousMonthRange();
   const [documentType, setDocumentType] = useState<DocumentType>("invoice");
   const [selectedTypes, setSelectedTypes] = useState<DocumentType[]>(["invoice"]);
@@ -140,11 +165,9 @@ export function DocumentExportForm({
 
     // XLSX/CSV export - synchronous download
     try {
-      const exportLanguage = language === "sl" ? "sl" : "en";
       const queryParams: Record<string, string> = {
         type: documentType,
         format: exportFormat,
-        language: exportLanguage,
       };
       if (dateFrom) {
         queryParams.date_from = dateFrom;

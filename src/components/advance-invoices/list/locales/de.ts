@@ -48,6 +48,8 @@ export default {
   "Retry Fiscalization": "Retry Fiscalization",
   "Some selected documents don't have failed fiscalization": "Some selected documents don't have failed fiscalization",
   "Copy to Invoice": "In Rechnung kopieren",
+  "Finalize draft documents before copying to invoice":
+    "Entwurfsdokumente abschließen, bevor Sie in eine Rechnung kopieren",
   Void: "Stornieren",
   "Cannot void an advance invoice linked to an invoice":
     "Stornierung einer mit einer Rechnung verknüpften Anzahlungsrechnung nicht möglich",

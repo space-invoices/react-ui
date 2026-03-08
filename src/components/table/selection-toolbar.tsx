@@ -6,6 +6,8 @@ type SelectionToolbarProps = {
   selectedCount: number;
   onExportPdfs?: () => void;
   onCopyToInvoice?: () => void;
+  copyToInvoiceDisabled?: boolean;
+  copyToInvoiceTooltip?: string;
   onRetryFiscalization?: () => void;
   retryFiscalizationDisabled?: boolean;
   retryFiscalizationTooltip?: string;
@@ -17,6 +19,8 @@ export function SelectionToolbar({
   selectedCount,
   onExportPdfs,
   onCopyToInvoice,
+  copyToInvoiceDisabled,
+  copyToInvoiceTooltip,
   onRetryFiscalization,
   retryFiscalizationDisabled,
   retryFiscalizationTooltip,
@@ -34,12 +38,25 @@ export function SelectionToolbar({
           {t("Export PDFs")}
         </Button>
       )}
-      {onCopyToInvoice && (
-        <Button variant="outline" size="sm" onClick={onCopyToInvoice}>
-          <FileText className="mr-1.5 size-4" />
-          {t("Copy to Invoice")}
-        </Button>
-      )}
+      {onCopyToInvoice &&
+        (copyToInvoiceDisabled && copyToInvoiceTooltip ? (
+          <Tooltip>
+            <TooltipTrigger>
+              <span>
+                <Button variant="outline" size="sm" disabled>
+                  <FileText className="mr-1.5 size-4" />
+                  {t("Copy to Invoice")}
+                </Button>
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>{copyToInvoiceTooltip}</TooltipContent>
+          </Tooltip>
+        ) : (
+          <Button variant="outline" size="sm" onClick={onCopyToInvoice}>
+            <FileText className="mr-1.5 size-4" />
+            {t("Copy to Invoice")}
+          </Button>
+        ))}
       {onRetryFiscalization &&
         (retryFiscalizationDisabled && retryFiscalizationTooltip ? (
           <Tooltip>

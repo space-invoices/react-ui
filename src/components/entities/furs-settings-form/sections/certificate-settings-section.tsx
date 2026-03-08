@@ -171,7 +171,11 @@ export const CertificateSettingsSection: FC<CertificateSettingsSectionProps> = (
         {/* Certificate Status - Show when certificate exists */}
         {hasCertificate && (
           <div className="space-y-4">
-            <Alert variant={currentStatus.variant}>
+            <Alert
+              variant={currentStatus.variant}
+              data-testid="furs-certificate-status"
+              data-status={fursSettings?.certificate_status || "unknown"}
+            >
               <StatusIcon className={cn("h-4 w-4", currentStatus.iconColor)} />
               <AlertTitle>Certificate Status: {currentStatus.label}</AlertTitle>
               <AlertDescription className="space-y-2">
@@ -221,6 +225,7 @@ export const CertificateSettingsSection: FC<CertificateSettingsSectionProps> = (
                   onChange={handleFileChange}
                   disabled={isPending}
                   className="flex-1"
+                  data-testid="furs-certificate-file-input"
                 />
                 {certificateFile && <CheckCircle2 className="h-5 w-5 text-green-500" />}
               </div>
@@ -240,6 +245,7 @@ export const CertificateSettingsSection: FC<CertificateSettingsSectionProps> = (
                 onChange={(e) => setPassphrase(e.target.value)}
                 disabled={isPending}
                 placeholder={t("Enter certificate passphrase")}
+                data-testid="furs-certificate-passphrase-input"
               />
             </div>
 
@@ -264,6 +270,7 @@ export const CertificateSettingsSection: FC<CertificateSettingsSectionProps> = (
                 onClick={handleUpload}
                 disabled={!certificateFile || !passphrase || isPending}
                 className={cn(hasCertificate && showUploadForm ? "flex-1" : "w-full", "cursor-pointer")}
+                data-testid="furs-certificate-upload-submit"
               >
                 <Upload className="mr-2 h-4 w-4" />
                 {isPending ? t("Loading...") : hasCertificate ? t("Upload New Certificate") : t("Upload Certificate")}

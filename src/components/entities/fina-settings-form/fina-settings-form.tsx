@@ -1,5 +1,5 @@
 import { AlertCircle, AlertTriangle, Building2, CheckCircle2, ChevronRight, Info, User } from "lucide-react";
-import { type FC, type ReactNode, useCallback, useEffect, useState } from "react";
+import { type FC, type ReactNode, useEffect, useState } from "react";
 import { useUpdateEntity } from "@/ui/components/entities/entities.hooks";
 import { Alert, AlertDescription, AlertTitle } from "@/ui/components/ui/alert";
 import { Button } from "@/ui/components/ui/button";
@@ -9,11 +9,11 @@ import { PageLoadingSpinner } from "@/ui/components/ui/loading-spinner";
 import { RadioGroup, RadioGroupItem } from "@/ui/components/ui/radio-group";
 import { Separator } from "@/ui/components/ui/separator";
 import { Switch } from "@/ui/components/ui/switch";
-import { Tabs, TabsList, TabsTrigger } from "@/ui/components/ui/tabs";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/ui/components/ui/tooltip";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
 import { cn } from "@/ui/lib/utils";
+import { type FiscalizationStepConfig, useFiscalizationStepFlow } from "../shared/fiscalization-step-flow";
+import { FiscalizationStepTabs } from "../shared/fiscalization-step-tabs";
 import {
   useFinaPremises,
   useFinaSettings,
@@ -82,23 +82,12 @@ export const FinaSettingsForm: FC<FinaSettingsFormProps> = ({
   renderSection,
   hideUserOperatorSection,
 }) => {
-  const [activeStep, setActiveStep] = useState<FinaStepType>(initialStep);
-  const [hasInitializedStep, setHasInitializedStep] = useState(false);
-
   const translate = createTranslation({
     t: translateFn,
     namespace,
     locale,
     translations,
   });
-
-  const handleStepChange = useCallback(
-    (newStep: FinaStepType) => {
-      setActiveStep(newStep);
-      onStepChange?.(newStep);
-    },
-    [onStepChange],
-  );
 
   // Entity info state
   const [entityTaxNumber, setEntityTaxNumber] = useState("");
@@ -201,10 +190,9 @@ export const FinaSettingsForm: FC<FinaSettingsFormProps> = ({
   // Determine completion status
   const hasEntityTaxNumber = !!entity.tax_number;
   // Operator OIB is required by CIS protocol (minOccurs="1" in FiskalizacijaSchema.xsd)
-  // Can come from user settings or entity-level FINA settings
-  const hasOperatorSettings =
-    (!!userFinaSettings?.operator_oib && !!userFinaSettings?.operator_label) ||
-    (!!finaSettings?.operator_oib && !!finaSettings?.operator_label);
+  // Can come from user settings or entity-level FINA settings.
+  // operator_label is optional metadata and must not block setup.
+  const hasOperatorSettings = !!userFinaSettings?.operator_oib || !!finaSettings?.operator_oib;
   const hasCertificate = finaSettings?.has_certificate || false;
   const certificateValid = finaSettings?.certificate_status === "valid";
   const hasPremises = (premises?.length || 0) > 0;
@@ -217,7 +205,7 @@ export const FinaSettingsForm: FC<FinaSettingsFormProps> = ({
   const canAccessEnable =
     hasEntityTaxNumber && hasOperatorSettings && certificateValid && hasPremises && hasPremiseWithDevice;
 
-  const steps = [
+  const steps: FiscalizationStepConfig<FinaStepType>[] = [
     {
       id: "settings" as const,
       title: translate("General Settings"),
@@ -233,14 +221,14 @@ export const FinaSettingsForm: FC<FinaSettingsFormProps> = ({
     {
       id: "premises" as const,
       title: translate("Business Premises"),
-      complete: !!hasPremiseWithDevice,
-      unlocked: canAccessPremises,
+      complete: Boolean(hasPremiseWithDevice),
+      unlocked: Boolean(canAccessPremises),
     },
     {
       id: "enable" as const,
       title: translate("Enable Fiscalization"),
-      complete: finaEnabled,
-      unlocked: canAccessEnable,
+      complete: Boolean(finaEnabled),
+      unlocked: Boolean(canAccessEnable),
     },
   ];
 
@@ -255,27 +243,13 @@ export const FinaSettingsForm: FC<FinaSettingsFormProps> = ({
     return "settings";
   };
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: Intentionally run only when data loads
-  useEffect(() => {
-    if (!hasInitializedStep && !settingsLoading && !premisesLoading) {
-      const smartStep = getDefaultStep();
-      if (smartStep !== activeStep) {
-        handleStepChange(smartStep);
-      }
-      setHasInitializedStep(true);
-    }
-  }, [settingsLoading, premisesLoading, hasInitializedStep]);
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: steps is recreated on each render but values are stable
-  useEffect(() => {
-    const currentStepInfo = steps.find((s) => s.id === activeStep);
-    if (currentStepInfo && !currentStepInfo.unlocked) {
-      const firstUnlockedStep = steps.find((s) => s.unlocked);
-      if (firstUnlockedStep) {
-        handleStepChange(firstUnlockedStep.id);
-      }
-    }
-  }, [activeStep, handleStepChange]);
+  const { activeStep, handleStepChange } = useFiscalizationStepFlow({
+    initialStep,
+    isReady: !settingsLoading && !premisesLoading,
+    steps,
+    getDefaultStep,
+    onStepChange,
+  });
 
   if (entity.country_code !== "HR") {
     return (
@@ -322,82 +296,39 @@ export const FinaSettingsForm: FC<FinaSettingsFormProps> = ({
     return content;
   };
 
-  const tabsNavigation = (
-    <div className="grid items-start gap-6 lg:grid-cols-[1fr_280px]">
-      <Tabs value={activeStep} onValueChange={(value) => handleStepChange(value as FinaStepType)} className="w-full">
-        <TabsList className="grid w-full grid-cols-4 rounded-none p-0">
-          {steps.map((step, index) => {
-            const isLocked = !step.unlocked;
-            let tooltipText = "";
-            if (isLocked) {
-              if (step.id === "certificate") {
-                if (!hasEntityTaxNumber) {
-                  tooltipText = translate("Set entity OIB in General Settings first");
-                } else {
-                  tooltipText = translate("Set operator OIB and label in General Settings first");
-                }
-              } else if (step.id === "premises") {
-                if (!hasEntityTaxNumber) {
-                  tooltipText = translate("Set entity OIB in General Settings first");
-                } else if (!hasOperatorSettings) {
-                  tooltipText = translate("Set operator OIB and label in General Settings first");
-                } else {
-                  tooltipText = translate("Upload and validate digital certificate first");
-                }
-              } else if (step.id === "enable") {
-                if (!hasEntityTaxNumber || !hasOperatorSettings) {
-                  tooltipText = translate("Complete General Settings first");
-                } else if (!certificateValid) {
-                  tooltipText = translate("Upload and validate digital certificate first");
-                } else if (!hasPremises) {
-                  tooltipText = translate("Register at least one business premise first");
-                } else {
-                  tooltipText = translate("Register at least one electronic device first");
-                }
-              }
-            }
+  const getStepTooltipText = (step: (typeof steps)[number]) => {
+    if (step.id === "certificate") {
+      if (!hasEntityTaxNumber) {
+        return translate("Set entity OIB in General Settings first");
+      }
+      return translate("Set operator OIB in General Settings first");
+    }
 
-            const trigger = (
-              <TabsTrigger
-                value={step.id}
-                disabled={isLocked}
-                className={cn("cursor-pointer justify-center", !step.unlocked && "opacity-50")}
-              >
-                <span className="flex items-center gap-2">
-                  {step.complete ? (
-                    <CheckCircle2 className="h-4 w-4 text-green-500" />
-                  ) : (
-                    <span className="text-xs">{index + 1}</span>
-                  )}
-                  {step.title}
-                </span>
-              </TabsTrigger>
-            );
+    if (step.id === "premises") {
+      if (!hasEntityTaxNumber) {
+        return translate("Set entity OIB in General Settings first");
+      }
+      if (!hasOperatorSettings) {
+        return translate("Set operator OIB in General Settings first");
+      }
+      return translate("Upload and validate digital certificate first");
+    }
 
-            if (isLocked) {
-              return (
-                <Tooltip key={step.id} delayDuration={0}>
-                  <TooltipTrigger asChild>
-                    <span className="flex cursor-not-allowed justify-center">{trigger}</span>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>{tooltipText}</p>
-                  </TooltipContent>
-                </Tooltip>
-              );
-            }
+    if (step.id === "enable") {
+      if (!hasEntityTaxNumber || !hasOperatorSettings) {
+        return translate("Complete General Settings first");
+      }
+      if (!certificateValid) {
+        return translate("Upload and validate digital certificate first");
+      }
+      if (!hasPremises) {
+        return translate("Register at least one business premise first");
+      }
+      return translate("Register at least one electronic device first");
+    }
 
-            return (
-              <span key={step.id} className="flex justify-center">
-                {trigger}
-              </span>
-            );
-          })}
-        </TabsList>
-      </Tabs>
-      <div className="hidden lg:block" />
-    </div>
-  );
+    return "";
+  };
 
   return (
     <div className="space-y-6">
@@ -416,7 +347,13 @@ export const FinaSettingsForm: FC<FinaSettingsFormProps> = ({
         </div>
       )}
 
-      {tabsNavigation}
+      <FiscalizationStepTabs
+        activeStep={activeStep}
+        steps={steps}
+        onStepChange={handleStepChange}
+        getTooltipText={getStepTooltipText}
+        testIdPrefix="fina-tab"
+      />
 
       {/* Settings step */}
       {activeStep === "settings" && (
@@ -503,6 +440,7 @@ export const FinaSettingsForm: FC<FinaSettingsFormProps> = ({
                   onClick={handleSaveEntityInfo}
                   disabled={isEntityUpdatePending}
                   className="cursor-pointer"
+                  data-testid="fina-entity-info-save"
                 >
                   {isEntityUpdatePending ? translate("Saving...") : translate("Save Entity Info")}
                 </Button>
@@ -568,7 +506,11 @@ export const FinaSettingsForm: FC<FinaSettingsFormProps> = ({
           )}
 
           <div className="grid items-start gap-6 lg:grid-cols-[1fr_280px]">
-            <Button onClick={handleSaveSettings} disabled={isPending || !!operatorOibError}>
+            <Button
+              onClick={handleSaveSettings}
+              disabled={isPending || !!operatorOibError}
+              data-testid="fina-settings-save"
+            >
               {isPending ? translate("Saving...") : translate("Save Settings")}
             </Button>
             <div className="hidden lg:block" />
@@ -594,7 +536,7 @@ export const FinaSettingsForm: FC<FinaSettingsFormProps> = ({
                     </div>
                   </div>
 
-                  {(!userFinaSettings?.operator_oib || !userFinaSettings?.operator_label) && (
+                  {!userFinaSettings?.operator_oib && (
                     <Alert variant="destructive">
                       <AlertTriangle className="h-4 w-4" />
                       <AlertDescription>
@@ -617,6 +559,7 @@ export const FinaSettingsForm: FC<FinaSettingsFormProps> = ({
                         className={cn("mt-1", userOperatorOibError && "border-destructive")}
                         maxLength={11}
                         disabled={userSettingsLoading}
+                        data-testid="fina-user-operator-oib-input"
                       />
                       {userOperatorOibError && <p className="mt-1 text-destructive text-xs">{userOperatorOibError}</p>}
                     </div>
@@ -629,6 +572,7 @@ export const FinaSettingsForm: FC<FinaSettingsFormProps> = ({
                         placeholder={translate("e.g. Cashier 1")}
                         className="mt-1"
                         disabled={userSettingsLoading}
+                        data-testid="fina-user-operator-label-input"
                       />
                     </div>
 
@@ -637,6 +581,7 @@ export const FinaSettingsForm: FC<FinaSettingsFormProps> = ({
                       onClick={handleSaveUserSettings}
                       disabled={isUserSettingsPending || userSettingsLoading || !!userOperatorOibError}
                       className="cursor-pointer"
+                      data-testid="fina-operator-settings-save"
                     >
                       {isUserSettingsPending ? translate("Saving...") : translate("Save Operator Settings")}
                     </Button>
@@ -656,6 +601,7 @@ export const FinaSettingsForm: FC<FinaSettingsFormProps> = ({
                 type="button"
                 onClick={() => setIsAdvancedOpen(!isAdvancedOpen)}
                 className="flex w-full items-center gap-2 py-2 text-muted-foreground hover:text-foreground"
+                data-testid="fina-advanced-toggle"
               >
                 <ChevronRight className={cn("h-4 w-4 transition-transform", isAdvancedOpen && "rotate-90")} />
                 <span className="font-medium text-sm">{translate("Advanced Settings")}</span>
@@ -683,6 +629,7 @@ export const FinaSettingsForm: FC<FinaSettingsFormProps> = ({
                           placeholder={translate("OIB of the operator (11 digits)")}
                           className={cn("mt-1", operatorOibError && "border-destructive")}
                           maxLength={11}
+                          data-testid="fina-api-operator-oib-input"
                         />
                         {operatorOibError && <p className="mt-1 text-destructive text-xs">{operatorOibError}</p>}
                         <p className="mt-1 text-muted-foreground text-xs">
@@ -697,6 +644,7 @@ export const FinaSettingsForm: FC<FinaSettingsFormProps> = ({
                           onChange={(e) => setFormData((prev) => ({ ...prev, operator_label: e.target.value }))}
                           placeholder="API Default"
                           className="mt-1"
+                          data-testid="fina-api-operator-label-input"
                         />
                         <p className="mt-1 text-muted-foreground text-xs">
                           {translate("Operator label for API key usage (optional)")}
@@ -704,7 +652,12 @@ export const FinaSettingsForm: FC<FinaSettingsFormProps> = ({
                       </div>
                     </div>
 
-                    <Button onClick={handleSaveSettings} disabled={isPending || !!operatorOibError} size="sm">
+                    <Button
+                      onClick={handleSaveSettings}
+                      disabled={isPending || !!operatorOibError}
+                      size="sm"
+                      data-testid="fina-advanced-settings-save"
+                    >
                       {isPending ? translate("Saving...") : translate("Save Settings")}
                     </Button>
                   </div>
@@ -791,6 +744,7 @@ export const FinaSettingsForm: FC<FinaSettingsFormProps> = ({
                           : { enabled: false },
                       });
                     }}
+                    data-testid="fina-enable-switch"
                   />
                   <Label>{translate("Enable FINA Fiscalization")}</Label>
                 </div>

@@ -14,6 +14,9 @@ type AutocompleteProps = {
   value?: string;
   onValueChange?: (value: string) => void;
   onBlur?: (event: React.FocusEvent<HTMLInputElement>) => void; // Added onBlur prop
+  onCommitUnselectedInput?: (value: string) => void;
+  commitUnselectedOnBlur?: boolean;
+  committedDisplayValue?: string;
   placeholder?: string;
   emptyText?: string;
   className?: string;
@@ -22,6 +25,8 @@ type AutocompleteProps = {
   onSearch?: (value: string) => void;
   searchValue?: string;
   displayValue?: string;
+  inputTestId?: string;
+  inputRef?: React.Ref<HTMLInputElement>;
 };
 
 export function Autocomplete({
@@ -29,6 +34,9 @@ export function Autocomplete({
   value,
   onValueChange,
   onBlur: onBlurProp, // Destructure the new onBlur prop
+  onCommitUnselectedInput,
+  commitUnselectedOnBlur = false,
+  committedDisplayValue,
   placeholder = "Type to search...",
   emptyText = "No results found.",
   className,
@@ -37,10 +45,16 @@ export function Autocomplete({
   onSearch,
   searchValue: externalSearchValue,
   displayValue,
+  inputTestId,
+  inputRef: externalInputRef,
 }: AutocompleteProps) {
   const [open, setOpen] = React.useState(false);
   const [internalSearchValue, setInternalSearchValue] = React.useState("");
   const inputRef = React.useRef<HTMLInputElement>(null);
+  const suppressAutoOpenRef = React.useRef(false);
+  const blurCloseRef = React.useRef(false);
+  const focusOpenRef = React.useRef(false);
+  const selectedValueRef = React.useRef<string | null>(null);
 
   const searchValue = externalSearchValue ?? internalSearchValue;
   // Show displayValue when not typing, otherwise show what user is typing
@@ -48,6 +62,7 @@ export function Autocomplete({
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
+    suppressAutoOpenRef.current = false;
     setInternalSearchValue(value);
     onSearch?.(value);
 
@@ -59,22 +74,38 @@ export function Autocomplete({
 
   // Close popover when options become empty, open when they appear
   React.useEffect(() => {
+    if (!displayValue && !value) {
+      suppressAutoOpenRef.current = false;
+    }
+
     if (options.length === 0) {
       setOpen(false);
+    } else if (suppressAutoOpenRef.current) {
+      return;
     } else if (document.activeElement === inputRef.current && searchValue) {
       setOpen(true);
     }
-  }, [options.length, searchValue]);
+  }, [displayValue, options.length, searchValue, value]);
 
   const handleSelect = (selectedValue: string) => {
+    selectedValueRef.current = selectedValue;
+    suppressAutoOpenRef.current = true;
     onValueChange?.(selectedValue);
     setOpen(false);
   };
 
   const handleInputFocus = () => {
+    if (!displayValue) {
+      suppressAutoOpenRef.current = false;
+    }
+    if (suppressAutoOpenRef.current) return;
     // Only open popover on focus if there's no displayValue (no customer selected)
     if (!displayValue && options.length > 0) {
+      focusOpenRef.current = true;
       setOpen(true);
+      requestAnimationFrame(() => {
+        focusOpenRef.current = false;
+      });
     }
   };
 
@@ -84,8 +115,30 @@ export function Autocomplete({
     if (relatedTarget?.closest('[role="dialog"]')) {
       return;
     }
-    // Close after a short delay to allow click events to fire
-    setTimeout(() => setOpen(false), 200);
+
+    const typedValue = searchValue?.trim();
+    const shouldCommitTypedValue =
+      !!typedValue &&
+      typedValue !== displayValue &&
+      selectedValueRef.current == null &&
+      commitUnselectedOnBlur &&
+      !!onCommitUnselectedInput;
+
+    if (shouldCommitTypedValue) {
+      onCommitUnselectedInput(typedValue);
+    } else if (selectedValueRef.current == null) {
+      const restoredValue = committedDisplayValue ?? displayValue ?? "";
+      setInternalSearchValue("");
+      onSearch?.(restoredValue);
+    }
+
+    blurCloseRef.current = true;
+    suppressAutoOpenRef.current = false;
+    setOpen(false);
+    requestAnimationFrame(() => {
+      blurCloseRef.current = false;
+      selectedValueRef.current = null;
+    });
 
     onBlurProp?.(e); // Call the passed onBlur prop after internal logic
   };
@@ -98,8 +151,10 @@ export function Autocomplete({
 
   // Handle popover open/close - prevent closing when input is focused
   const handleOpenChange = (newOpen: boolean) => {
-    if (!newOpen && document.activeElement === inputRef.current) {
-      // Don't close if the input still has focus (user clicked on input)
+    if (!newOpen && focusOpenRef.current) {
+      return;
+    }
+    if (!newOpen && document.activeElement === inputRef.current && !blurCloseRef.current) {
       return;
     }
     setOpen(newOpen);
@@ -108,7 +163,14 @@ export function Autocomplete({
   return (
     <Popover.Root open={open} onOpenChange={handleOpenChange}>
       <Input
-        ref={inputRef}
+        ref={(node) => {
+          inputRef.current = node;
+          if (typeof externalInputRef === "function") {
+            externalInputRef(node);
+          } else if (externalInputRef) {
+            (externalInputRef as React.MutableRefObject<HTMLInputElement | null>).current = node;
+          }
+        }}
         value={inputValue}
         onChange={handleInputChange}
         onFocus={handleInputFocus}
@@ -118,6 +180,7 @@ export function Autocomplete({
         className={className}
         disabled={disabled}
         autoComplete="off"
+        data-testid={inputTestId}
       />
       <Popover.Portal>
         <Popover.Positioner anchor={inputRef} align="start" sideOffset={4} className="isolate z-50">

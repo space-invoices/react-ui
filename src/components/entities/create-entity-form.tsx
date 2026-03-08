@@ -10,6 +10,7 @@ import { Button } from "@/ui/components/ui/button";
 import { Checkbox } from "@/ui/components/ui/checkbox";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/ui/components/ui/form";
 import { type CreateEntitySchema, createEntitySchema } from "@/ui/generated/schemas";
+import { createTranslation } from "@/ui/lib/translation";
 
 import ButtonLoader from "../button-loader";
 import { useCreateEntity } from "./entities.hooks";
@@ -27,10 +28,85 @@ export type CreateEntityFormProps = {
   onError?: (error: unknown) => void;
 };
 
-const defaultTranslate = (text: string) => text;
+const translations = {
+  en: {
+    name: "Name",
+    "search-hint": "Search companies by name",
+    "no-results": "No companies found",
+    country: "Country",
+    address: "Address",
+    "address-2": "Address 2",
+    "post-code": "Post Code",
+    city: "City",
+    state: "State",
+    "tax-number": "Tax Number",
+    "is-tax-subject": "Tax subject",
+    "company-number": "Company Number",
+    submit: "Create entity",
+  },
+} as const;
+
+const ISO_COUNTRY_CODES = [
+  "AD", "AE", "AF", "AG", "AL", "AM", "AO", "AR", "AT", "AU", "AZ", "BA", "BB", "BD", "BE", "BF", "BG", "BH", "BI",
+  "BJ", "BN", "BO", "BR", "BS", "BT", "BW", "BY", "BZ", "CA", "CD", "CF", "CG", "CH", "CI", "CL", "CM", "CN", "CO",
+  "CR", "CU", "CV", "CY", "CZ", "DE", "DJ", "DK", "DM", "DO", "DZ", "EC", "EE", "EG", "ER", "ES", "ET", "FI", "FJ",
+  "FM", "FR", "GA", "GB", "GD", "GE", "GH", "GM", "GN", "GQ", "GR", "GT", "GW", "GY", "HK", "HN", "HR", "HT", "HU",
+  "ID", "IE", "IL", "IN", "IQ", "IR", "IS", "IT", "JM", "JO", "JP", "KE", "KG", "KH", "KI", "KM", "KN", "KP", "KR",
+  "KW", "KZ", "LA", "LB", "LC", "LI", "LK", "LR", "LS", "LT", "LU", "LV", "LY", "MA", "MC", "MD", "ME", "MG", "MH",
+  "MK", "ML", "MM", "MN", "MR", "MT", "MU", "MV", "MW", "MX", "MY", "MZ", "NA", "NE", "NG", "NI", "NL", "NO", "NP",
+  "NR", "NZ", "OM", "PA", "PE", "PG", "PH", "PK", "PL", "PT", "PW", "PY", "QA", "RO", "RS", "RU", "RW", "SA", "SB",
+  "SC", "SD", "SE", "SG", "SI", "SK", "SL", "SM", "SN", "SO", "SR", "SS", "ST", "SV", "SY", "SZ", "TD", "TG", "TH",
+  "TJ", "TL", "TM", "TN", "TO", "TR", "TT", "TV", "TW", "TZ", "UA", "UG", "US", "UY", "UZ", "VA", "VC", "VE", "VN",
+  "VU", "WS", "XK", "YE", "ZA", "ZM", "ZW",
+] as const;
+
+const COUNTRY_CODE_ALIASES: Record<string, string> = {
+  uk: "GB",
+  "u.k.": "GB",
+  usa: "US",
+  "u.s.": "US",
+  "u.s.a.": "US",
+};
+
+function normalizeCountryName(value: string): string {
+  return value
+    .normalize("NFKD")
+    .replace(/\p{Diacritic}/gu, "")
+    .replace(/[.'’]/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
+}
+
+function resolveCountryCodeFromName(value: string | undefined, locale: string): string | undefined {
+  const trimmed = value?.trim();
+  if (!trimmed) return undefined;
+
+  const alias = COUNTRY_CODE_ALIASES[normalizeCountryName(trimmed)];
+  if (alias) return alias;
+
+  const upper = trimmed.toUpperCase();
+  if (upper.length === 2 && ISO_COUNTRY_CODES.includes(upper as (typeof ISO_COUNTRY_CODES)[number])) {
+    return upper;
+  }
+
+  const localesToTry = Array.from(new Set([locale, "en", "en-US"]));
+
+  for (const candidateLocale of localesToTry) {
+    const displayNames = new Intl.DisplayNames([candidateLocale], { type: "region" });
+    for (const code of ISO_COUNTRY_CODES) {
+      const label = displayNames.of(code);
+      if (label && normalizeCountryName(label) === normalizeCountryName(trimmed)) {
+        return code;
+      }
+    }
+  }
+
+  return undefined;
+}
 
 export function CreateEntityForm({
-  t = defaultTranslate,
+  t,
   namespace = "",
   accountId,
   environment,
@@ -41,7 +117,7 @@ export function CreateEntityForm({
   onSuccess,
   onError,
 }: CreateEntityFormProps) {
-  const translate = (key: string) => t(namespace ? `${namespace}.${key}` : key);
+  const translate = createTranslation({ t, namespace, locale, translations });
 
   const countryName = countryCode ? new Intl.DisplayNames([locale], { type: "region" }).of(countryCode) : undefined;
 
@@ -50,12 +126,13 @@ export function CreateEntityForm({
   const autoFilledCountryRef = useRef(countryName);
 
   // Company registry autocomplete state
+  // showAutocomplete is based on the initial countryCode prop to avoid component switch mid-typing
   const [nameSearch, setNameSearch] = useState("");
-  const { isSupported: isRegistrySupported } = useIsCountrySupported(activeCountryCode || "");
+  const { isSupported: isRegistrySupported } = useIsCountrySupported(countryCode || "");
   const { data: searchData, isLoading: isSearching } = useCompanyRegistrySearch(activeCountryCode || "", nameSearch);
   const companies = searchData?.data || [];
 
-  const showAutocomplete = !!activeCountryCode && isRegistrySupported;
+  const showAutocomplete = !!countryCode && isRegistrySupported;
 
   const nameOptions = companies.map((company) => {
     const addressParts = [company.address, company.city].filter(Boolean);
@@ -97,13 +174,14 @@ export function CreateEntityForm({
   // Watch country field — clear activeCountryCode when user edits away from auto-filled value
   const countryValue = form.watch("country");
   useEffect(() => {
-    if (countryValue !== autoFilledCountryRef.current) {
-      setActiveCountryCode(undefined);
-      form.setValue("country_code", "");
-    } else {
-      setActiveCountryCode(countryCode);
-    }
-  }, [countryValue, countryCode, form]);
+    const nextCountryCode =
+      countryValue === autoFilledCountryRef.current
+        ? countryCode
+        : resolveCountryCodeFromName(countryValue, locale) || undefined;
+
+    setActiveCountryCode(nextCountryCode);
+    form.setValue("country_code", nextCountryCode || "");
+  }, [countryValue, countryCode, form, locale]);
 
   const handleCompanySelect = (company: CompanyRegistryResult) => {
     form.setValue("name", company.name);
@@ -133,9 +211,10 @@ export function CreateEntityForm({
 
   const onSubmit = async (values: CreateEntitySchema) => {
     try {
-      // Zod validation ensures required fields are present before this is called
-      // The type cast is safe because React Hook Form's DeepPartial doesn't reflect runtime validation
-      createEntity(values as CreateEntityRequest);
+      const resolvedCountryCode = values.country_code || resolveCountryCodeFromName(values.country, locale);
+      const { country_code: _countryCode, ...rest } = values;
+      const payload = resolvedCountryCode ? { ...rest, country_code: resolvedCountryCode } : rest;
+      createEntity(payload as CreateEntityRequest);
     } catch (e) {
       onError?.(e);
       form.setError("root", {
@@ -259,7 +338,13 @@ export function CreateEntityForm({
           placeholder={translate("company-number")}
         />
 
-        <Button type="submit" className="w-full cursor-pointer" disabled={isPending} aria-busy={isPending}>
+        <Button
+          type="submit"
+          className="w-full cursor-pointer"
+          disabled={isPending}
+          aria-busy={isPending}
+          data-testid="entity-create-submit"
+        >
           {isPending ? <ButtonLoader /> : translate("submit")}
         </Button>
       </form>

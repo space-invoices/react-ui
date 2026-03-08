@@ -10,7 +10,53 @@ import { z } from 'zod';
 
 // Dependency schema for startpdfexport_body
 const PdfExportByDocumentIds = z
-  .object({ document_ids: z.array(z.string()).min(1) })
+  .object({
+    document_ids: z.array(z.string()).min(1),
+    locale: z
+      .enum([
+        "en-US",
+        "de-DE",
+        "it-IT",
+        "fr-FR",
+        "es-ES",
+        "sl-SI",
+        "pt-PT",
+        "nl-NL",
+        "pl-PL",
+        "hr-HR",
+        "sv-SE",
+        "fi-FI",
+        "et-EE",
+        "bg-BG",
+        "cs-CZ",
+        "sk-SK",
+        "nb-NO",
+        "is-IS",
+      ])
+      .optional(),
+    language: z
+      .enum([
+        "en",
+        "de",
+        "sl",
+        "it",
+        "fr",
+        "es",
+        "pt",
+        "nl",
+        "pl",
+        "hr",
+        "sv",
+        "fi",
+        "et",
+        "bg",
+        "cs",
+        "sk",
+        "nb",
+        "is",
+      ])
+      .optional(),
+  })
   .passthrough();
 
 
@@ -30,6 +76,50 @@ const PdfExportByDateRange = z
       .min(1),
     date_from: z.string().optional(),
     date_to: z.string().optional(),
+    locale: z
+      .enum([
+        "en-US",
+        "de-DE",
+        "it-IT",
+        "fr-FR",
+        "es-ES",
+        "sl-SI",
+        "pt-PT",
+        "nl-NL",
+        "pl-PL",
+        "hr-HR",
+        "sv-SE",
+        "fi-FI",
+        "et-EE",
+        "bg-BG",
+        "cs-CZ",
+        "sk-SK",
+        "nb-NO",
+        "is-IS",
+      ])
+      .optional(),
+    language: z
+      .enum([
+        "en",
+        "de",
+        "sl",
+        "it",
+        "fr",
+        "es",
+        "pt",
+        "nl",
+        "pl",
+        "hr",
+        "sv",
+        "fi",
+        "et",
+        "bg",
+        "cs",
+        "sk",
+        "nb",
+        "is",
+      ])
+      .optional(),
   })
   .passthrough();
 

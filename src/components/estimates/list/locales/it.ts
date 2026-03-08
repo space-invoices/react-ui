@@ -34,4 +34,5 @@ export default {
   "Export PDFs": "Esporta PDF",
   "Deselect all": "Deseleziona tutto",
   "Copy to Invoice": "Copia in fattura",
+  "Finalize draft documents before copying to invoice": "Finalizzare i documenti bozza prima di copiare in fattura",
 } as const;

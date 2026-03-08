@@ -27,14 +27,19 @@ async function main() {
   await fs.mkdir(GENERATED_DIR, { recursive: true });
 
   // Fetch OpenAPI spec from running API and generate schemas
-  const API_URL = "http://localhost:3000/openapi.json";
+  const API_URL = process.env.OPENAPI_TARGET || "http://localhost:3000/openapi.json";
   const openApiPath = path.resolve(GENERATED_DIR, "openapi.json");
 
   try {
-    const res = await fetch(API_URL);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    await fs.writeFile(openApiPath, await res.text());
-    console.log(`Fetched OpenAPI spec from ${API_URL}`);
+    if (/^https?:\/\//.test(API_URL)) {
+      const res = await fetch(API_URL);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      await fs.writeFile(openApiPath, await res.text());
+      console.log(`Fetched OpenAPI spec from ${API_URL}`);
+    } else {
+      await fs.copyFile(API_URL, openApiPath);
+      console.log(`Copied OpenAPI spec from ${API_URL}`);
+    }
   } catch (_error) {
     console.error(`Failed to fetch OpenAPI spec from ${API_URL}. Is the API running?`);
     process.exit(1);

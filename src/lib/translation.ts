@@ -1,4 +1,5 @@
 import { useCallback } from "react";
+import { getLocaleLanguage, normalizeLocale } from "./locale";
 
 type TranslationFunction = (key: string) => string;
 
@@ -24,9 +25,13 @@ export function createTranslation({ t, namespace, locale = "en", translations = 
         }
       }
 
-      // 2. Look up in local translations for current locale
-      if (translations[locale]) {
-        const translation = translations[locale][key];
+      const normalizedLocale = normalizeLocale(locale);
+      const baseLocale = getLocaleLanguage(normalizedLocale);
+
+      // 2. Look up in local translations for current locale, then base language
+      const localeTranslations = translations[normalizedLocale] ?? translations[baseLocale];
+      if (localeTranslations) {
+        const translation = localeTranslations[key];
         if (translation) return translation;
       }
 

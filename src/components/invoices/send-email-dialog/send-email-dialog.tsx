@@ -26,6 +26,7 @@ import {
   FormMessage,
 } from "@/ui/components/ui/form";
 import { Input } from "@/ui/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui/components/ui/select";
 import { Spinner } from "@/ui/components/ui/spinner";
 import { type SendEmailSchema, sendEmailSchema } from "@/ui/generated/schemas";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
@@ -43,6 +44,29 @@ import pt from "./locales/pt";
 import sl from "./locales/sl";
 
 const translations = { de, sl, it, fr, es, pt, nl, pl, hr } as const;
+
+const LOCALE_OPTIONS = [
+  { value: "en-US", label: "English (US)" },
+  { value: "de-DE", label: "Deutsch" },
+  { value: "it-IT", label: "Italiano" },
+  { value: "fr-FR", label: "Français" },
+  { value: "es-ES", label: "Español" },
+  { value: "sl-SI", label: "Slovenščina" },
+  { value: "pt-PT", label: "Português" },
+  { value: "nl-NL", label: "Nederlands" },
+  { value: "pl-PL", label: "Polski" },
+  { value: "hr-HR", label: "Hrvatski" },
+  { value: "sv-SE", label: "Svenska" },
+  { value: "fi-FI", label: "Suomi" },
+  { value: "et-EE", label: "Eesti" },
+  { value: "bg-BG", label: "Български" },
+  { value: "cs-CZ", label: "Čeština" },
+  { value: "sk-SK", label: "Slovenčina" },
+  { value: "nb-NO", label: "Norsk bokmål" },
+  { value: "is-IS", label: "Íslenska" },
+] as const;
+
+const DEFAULT_LANGUAGE_VALUE = "__default__";
 
 type SendEmailDialogProps = {
   invoice: Invoice;
@@ -87,12 +111,14 @@ export function SendEmailDialog({
   // biome-ignore lint/suspicious/noEmptyBlockStatements: noop fallback for controlled mode
   const setOpen = isControlled ? onOpenChange || (() => {}) : setInternalOpen;
   const [isLoading, setIsLoading] = useState(false);
+  const [language, setLanguage] = useState<string>("");
   const { sdk } = useSDK();
   const { activeEntity } = useEntities();
 
   // Get entity email defaults if not provided
   const entitySettings = (activeEntity?.settings as Record<string, any>) || {};
   const emailDefaults = entitySettings.email_defaults || {};
+  const entityLocale = (activeEntity as any)?.locale || "en-US";
 
   const finalSubject = defaultSubject || emailDefaults.invoice_subject || `Invoice #${invoice.number}`;
   const finalBody =
@@ -107,18 +133,26 @@ export function SendEmailDialog({
       attach_pdf: false,
     },
   });
+  const { control, handleSubmit, reset, setValue } = form;
+  const handleLanguageChange = (value: string | null) => {
+    setLanguage(value ?? DEFAULT_LANGUAGE_VALUE);
+  };
+
+  const entityLocaleLabel = LOCALE_OPTIONS.find((option) => option.value === entityLocale)?.label ?? entityLocale;
+  const defaultLanguageLabel = `${t("Default")} (${entityLocaleLabel})`;
 
   // Reset form and fetch customer email when dialog opens
   useEffect(() => {
     if (!open) return;
 
     // Reset form to defaults when dialog opens
-    form.reset({
+    reset({
       to: defaultEmail,
       subject: finalSubject,
       body_text: finalBody,
       attach_pdf: false,
     });
+    setLanguage(DEFAULT_LANGUAGE_VALUE);
 
     // Fetch customer email from linked customer if not in invoice snapshot
     const fetchCustomerEmail = async () => {
@@ -135,7 +169,7 @@ export function SendEmailDialog({
 
         const customer = response.data[0];
         if (customer?.email) {
-          form.setValue("to", customer.email);
+          setValue("to", customer.email);
         }
       } catch {
         // Silently fail - customer might not exist or not have email
@@ -143,7 +177,18 @@ export function SendEmailDialog({
     };
 
     fetchCustomerEmail();
-  }, [open, defaultEmail, invoice.customer_id, sdk, activeEntity?.id, form, finalSubject, finalBody]);
+  }, [
+    open,
+    defaultEmail,
+    invoice.customer_id,
+    sdk,
+    activeEntity?.id,
+    reset,
+    setValue,
+    finalSubject,
+    finalBody,
+    entityLocale,
+  ]);
 
   const onSubmit = async (values: SendEmailSchema) => {
     setIsLoading(true);
@@ -153,6 +198,9 @@ export function SendEmailDialog({
       // Ensure we have an active entity
       if (!activeEntity?.id) throw new Error("Entity context required");
 
+      const localeOverride =
+        language && language !== DEFAULT_LANGUAGE_VALUE && language !== entityLocale ? language : undefined;
+
       // Call the email API endpoint using SDK
       await (sdk.email as any).send(
         {
@@ -160,6 +208,8 @@ export function SendEmailDialog({
           subject: values.subject,
           body_text: values.body_text,
           document_id: invoice.id,
+          locale: localeOverride,
+          language: localeOverride,
         },
         { entity_id: activeEntity.id },
       );
@@ -169,7 +219,7 @@ export function SendEmailDialog({
       });
 
       setOpen(false);
-      form.reset();
+      reset();
       onSuccess?.();
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : t("Failed to send email");
@@ -213,9 +263,9 @@ export function SendEmailDialog({
         )}
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <FormField
-              control={form.control}
+              control={control}
               name="to"
               render={({ field }) => (
                 <FormItem>
@@ -228,8 +278,27 @@ export function SendEmailDialog({
               )}
             />
 
+            <div className="space-y-2">
+              <label htmlFor="pdf-language" className="font-medium text-sm leading-none">
+                {t("PDF Language")}
+              </label>
+              <Select value={language} onValueChange={handleLanguageChange}>
+                <SelectTrigger id="pdf-language">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={DEFAULT_LANGUAGE_VALUE}>{defaultLanguageLabel}</SelectItem>
+                  {LOCALE_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             <FormField
-              control={form.control}
+              control={control}
               name="subject"
               render={({ field }) => (
                 <FormItem>
@@ -252,7 +321,7 @@ export function SendEmailDialog({
             />
 
             <FormField
-              control={form.control}
+              control={control}
               name="body_text"
               render={({ field }) => (
                 <FormItem>

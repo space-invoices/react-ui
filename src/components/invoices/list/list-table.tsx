@@ -4,6 +4,7 @@ import { useCallback, useMemo, useState } from "react";
 import { DataTable } from "@/ui/components/table/data-table";
 import { FormattedDate } from "@/ui/components/table/date-cell";
 import { useTableFetch } from "@/ui/components/table/hooks/use-table-fetch";
+import { withTableTranslations } from "@/ui/components/table/locales";
 import { SelectionToolbar } from "@/ui/components/table/selection-toolbar";
 import type {
   Column,
@@ -31,7 +32,7 @@ import pl from "./locales/pl";
 import pt from "./locales/pt";
 import sl from "./locales/sl";
 
-const translations = {
+const translations = withTableTranslations({
   en,
   sl,
   de,
@@ -42,12 +43,13 @@ const translations = {
   nl,
   pl,
   hr,
-} as const;
+} as const);
 
 type InvoiceListTableProps = {
   t?: (key: string) => string;
   namespace?: string;
   locale?: string;
+  translationLocale?: string;
   entityId?: string;
   onView?: (invoice: Invoice) => void;
   onAddPayment?: (invoice: Invoice) => void;
@@ -85,6 +87,7 @@ export default function InvoiceListTable({
 }: InvoiceListTableProps) {
   const t = createTranslation({
     translations,
+    locale: i18nProps.translationLocale ?? i18nProps.locale,
     ...i18nProps,
   });
 
@@ -210,12 +213,12 @@ export default function InvoiceListTable({
       {
         id: "date",
         header: t("Date"),
-        cell: (invoice) => <FormattedDate date={invoice.date} />,
+        cell: (invoice) => <FormattedDate date={invoice.date} locale={i18nProps.locale} />,
       },
       {
         id: "date_due",
         header: t("Date Due"),
-        cell: (invoice) => <FormattedDate date={invoice.date_due} />,
+        cell: (invoice) => <FormattedDate date={invoice.date_due} locale={i18nProps.locale} />,
       },
       {
         id: "total",

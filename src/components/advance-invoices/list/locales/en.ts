@@ -14,6 +14,7 @@ export default {
   "Retry Fiscalization": "Retry Fiscalization",
   "Some selected documents don't have failed fiscalization": "Some selected documents don't have failed fiscalization",
   "Copy to Invoice": "Copy to Invoice",
+  "Finalize draft documents before copying to invoice": "Finalize draft documents before copying to invoice",
   Void: "Void",
   "Cannot void an advance invoice linked to an invoice": "Cannot void an advance invoice linked to an invoice",
 } as const;

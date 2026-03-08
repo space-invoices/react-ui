@@ -122,6 +122,14 @@ export default {
   Dutch: "Niderlandzki",
   Polish: "Polski",
   Croatian: "Chorwacki",
+  Swedish: "Szwedzki",
+  Finnish: "Fiński",
+  Estonian: "Estoński",
+  Bulgarian: "Bułgarski",
+  Czech: "Czeski",
+  Slovak: "Słowacki",
+  Norwegian: "Norweski",
+  Icelandic: "Islandzki",
 
   // Linked documents
   "Linked documents": "Powiązane dokumenty",

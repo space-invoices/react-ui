@@ -1,5 +1,6 @@
 import type { Item } from "@spaceinvoices/js-sdk";
 
+import { withTableTranslations } from "../../table/locales";
 import { createTranslation } from "@/ui/lib/translation";
 import { useSDK } from "@/ui/providers/sdk-provider";
 import { DataTable } from "../../table/data-table";
@@ -19,7 +20,7 @@ import pl from "./locales/pl";
 import pt from "./locales/pt";
 import sl from "./locales/sl";
 
-const translations = {
+const translations = withTableTranslations({
   en,
   sl,
   de,
@@ -30,12 +31,13 @@ const translations = {
   nl,
   pl,
   hr,
-} as const;
+} as const);
 
 type ItemListTableProps = {
   t?: (key: string) => string;
   namespace?: string;
   locale?: string;
+  translationLocale?: string;
   entityId?: string;
   onView?: (item: Item) => void;
 } & ListTableProps<Item>;
@@ -51,6 +53,7 @@ export default function ItemListTable({
 }: ItemListTableProps) {
   const t = createTranslation({
     translations,
+    locale: i18nProps.translationLocale ?? i18nProps.locale,
     ...i18nProps,
   });
   const { sdk } = useSDK();

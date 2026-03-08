@@ -3,18 +3,26 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/ui/components/ui/card";
 import { createTranslation } from "@/ui/lib/translation";
 import { LoadingCard } from "../loading-card";
+import bg from "./locales/bg";
+import cs from "./locales/cs";
 import de from "./locales/de";
+import et from "./locales/et";
 import es from "./locales/es";
+import fi from "./locales/fi";
 import fr from "./locales/fr";
 import hr from "./locales/hr";
+import is from "./locales/is";
 import it from "./locales/it";
+import nb from "./locales/nb";
 import nl from "./locales/nl";
 import pl from "./locales/pl";
 import pt from "./locales/pt";
+import sk from "./locales/sk";
 import sl from "./locales/sl";
+import sv from "./locales/sv";
 import { useCollectionRateData } from "./use-collection-rate";
 
-const translations = { de, es, fr, hr, it, nl, pl, pt, sl } as const;
+const translations = { bg, cs, de, et, es, fi, fr, hr, is, it, nb, nl, pl, pt, sk, sl, sv } as const;
 
 type BaseProps = {
   locale?: string;

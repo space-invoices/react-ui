@@ -1,4 +1,5 @@
 export default {
+  Revenue: "Revenus",
   "Revenue Trend": "Tendance des revenus",
   "Monthly revenue over the last 6 months": "Revenus mensuels au cours des 6 derniers mois",
   "No data available": "Aucune donnée disponible",

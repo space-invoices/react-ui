@@ -6,4 +6,5 @@ export default {
   Overdue: "Achterstallig",
   Voided: "Nietig verklaard",
   "No data available": "Geen gegevens beschikbaar",
+  "Invoices": "Facturen",
 } as const;

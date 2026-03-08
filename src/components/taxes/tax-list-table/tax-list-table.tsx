@@ -1,4 +1,5 @@
 import type { Tax } from "@spaceinvoices/js-sdk";
+import { withTableTranslations } from "../../table/locales";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
 import { useSDK } from "@/ui/providers/sdk-provider";
@@ -19,7 +20,7 @@ import sl from "./locales/sl";
 import TaxListHeader from "./tax-list-header";
 import TaxListRow from "./tax-list-row";
 
-const translations = {
+const translations = withTableTranslations({
   en,
   sl,
   de,
@@ -30,7 +31,7 @@ const translations = {
   nl,
   pl,
   hr,
-} as const;
+} as const);
 
 type TaxListTableProps = {
   entityId?: string;

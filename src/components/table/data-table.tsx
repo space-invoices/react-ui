@@ -261,6 +261,7 @@ export function DataTable<T extends { id: string }>({
             prevCursor={queryResult?.pagination.prev_cursor}
             nextCursor={queryResult?.pagination.next_cursor}
             onPageChange={handlePageChange}
+            t={t}
           />
         </div>
       </div>

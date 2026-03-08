@@ -1,8 +1,11 @@
-import { Check, Crown, Sparkles, Zap } from "lucide-react";
+import { Check, Crown, Loader2, Sparkles, Zap } from "lucide-react";
+import { useState } from "react";
 
 import { type GatedFeature, useWLSubscription, type WhiteLabelPlan } from "../../providers/wl-subscription-provider";
+import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "../ui/dialog";
+import { Switch } from "../ui/switch";
 
 type UpgradeModalProps = {
   isOpen: boolean;
@@ -18,9 +21,13 @@ type UpgradeModalProps = {
  *
  * Shows available plans and allows users to upgrade their subscription.
  * Highlights the feature that triggered the modal and which plans include it.
+ * Includes monthly/yearly toggle with 20% yearly discount.
  */
 export function UpgradeModal({ isOpen, onClose, feature, onUpgrade }: UpgradeModalProps) {
-  const { plan: currentPlan, availablePlans } = useWLSubscription();
+  const { plan: currentPlan, availablePlans, createCheckout } = useWLSubscription();
+  const [isRedirecting, setIsRedirecting] = useState<string | null>(null);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
+  const [isYearly, setIsYearly] = useState(false);
 
   // Sort plans by display order
   const sortedPlans = [...availablePlans].sort((a, b) => a.display_order - b.display_order);
@@ -30,13 +37,21 @@ export function UpgradeModal({ isOpen, onClose, feature, onUpgrade }: UpgradeMod
     ? sortedPlans.find((p) => p.features.length === 0 || p.features.includes(feature))
     : null;
 
-  const handleUpgrade = (planSlug: string) => {
+  const handleUpgrade = async (planSlug: string) => {
     if (onUpgrade) {
       onUpgrade(planSlug);
     }
-    // In the future, this would redirect to Stripe Checkout
-    // For now, just close the modal
-    onClose();
+
+    try {
+      setIsRedirecting(planSlug);
+      setCheckoutError(null);
+      const billingInterval = isYearly ? "yearly" : "monthly";
+      const checkoutUrl = await createCheckout(planSlug, billingInterval);
+      window.location.href = checkoutUrl;
+    } catch (err) {
+      setCheckoutError(err instanceof Error ? err.message : "Failed to start checkout");
+      setIsRedirecting(null);
+    }
   };
 
   return (
@@ -54,17 +69,38 @@ export function UpgradeModal({ isOpen, onClose, feature, onUpgrade }: UpgradeMod
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid gap-4 py-4 md:grid-cols-3">
-          {sortedPlans.map((plan) => (
-            <PlanCard
-              key={plan.id}
-              plan={plan}
-              isCurrentPlan={plan.slug === currentPlan?.slug}
-              isRecommended={minimumPlanForFeature?.slug === plan.slug}
-              highlightFeature={feature}
-              onSelect={() => handleUpgrade(plan.slug)}
-            />
-          ))}
+        {/* Monthly/Yearly toggle */}
+        <div className="flex items-center justify-center gap-3">
+          <span className={`text-sm ${!isYearly ? "font-medium" : "text-muted-foreground"}`}>Monthly</span>
+          <Switch checked={isYearly} onCheckedChange={setIsYearly} />
+          <span className={`text-sm ${isYearly ? "font-medium" : "text-muted-foreground"}`}>Yearly</span>
+          {isYearly && (
+            <Badge variant="secondary" className="ml-1">
+              Save 20%
+            </Badge>
+          )}
+        </div>
+
+        {checkoutError && (
+          <p className="rounded-md bg-destructive/10 px-3 py-2 text-destructive text-sm">{checkoutError}</p>
+        )}
+
+        <div className="grid gap-4 py-4 md:grid-cols-2">
+          {sortedPlans
+            .filter((p) => !p.is_free)
+            .map((plan) => (
+              <PlanCard
+                key={plan.id}
+                plan={plan}
+                isYearly={isYearly}
+                isCurrentPlan={plan.slug === currentPlan?.slug}
+                isRecommended={minimumPlanForFeature?.slug === plan.slug}
+                highlightFeature={feature}
+                isLoading={isRedirecting === plan.slug}
+                isDisabled={isRedirecting !== null}
+                onSelect={() => handleUpgrade(plan.slug)}
+              />
+            ))}
         </div>
 
         {sortedPlans.length === 0 && (
@@ -83,19 +119,30 @@ export function UpgradeModal({ isOpen, onClose, feature, onUpgrade }: UpgradeMod
 
 type PlanCardProps = {
   plan: WhiteLabelPlan;
+  isYearly: boolean;
   isCurrentPlan: boolean;
   isRecommended: boolean;
   highlightFeature?: GatedFeature;
+  isLoading?: boolean;
+  isDisabled?: boolean;
   onSelect: () => void;
 };
 
-function PlanCard({ plan, isCurrentPlan, isRecommended, highlightFeature, onSelect }: PlanCardProps) {
-  const priceDisplay = plan.is_free
-    ? "Free"
-    : plan.base_price_cents
-      ? `${(plan.base_price_cents / 100).toFixed(0)}/${plan.billing_interval === "yearly" ? "yr" : "mo"}`
-      : "Contact us";
+function PlanCard({
+  plan,
+  isYearly,
+  isCurrentPlan,
+  isRecommended,
+  highlightFeature,
+  isLoading,
+  isDisabled,
+  onSelect,
+}: PlanCardProps) {
+  const monthlyPrice = plan.base_price_cents ? plan.base_price_cents / 100 : 0;
+  const yearlyTotal = Math.round(monthlyPrice * 12 * 0.8 * 100) / 100;
+  const yearlyMonthly = Math.round((yearlyTotal / 12) * 100) / 100;
 
+  const displayPrice = isYearly ? yearlyMonthly : monthlyPrice;
   const documentsLimit = plan.limits?.documents_per_month ?? "Unlimited";
 
   return (
@@ -115,10 +162,12 @@ function PlanCard({ plan, isCurrentPlan, isRecommended, highlightFeature, onSele
         <h3 className="font-semibold">{plan.name}</h3>
       </div>
 
-      <div className="mb-1 font-bold text-2xl">
-        {plan.is_free ? "" : "€"}
-        {priceDisplay}
+      <div className="mb-1">
+        <span className="font-bold text-2xl">&euro;{displayPrice.toFixed(0)}</span>
+        <span className="text-muted-foreground">/mo</span>
       </div>
+
+      {isYearly && <p className="mb-1 text-muted-foreground text-xs">&euro;{yearlyTotal.toFixed(0)} billed yearly</p>}
 
       <p className="mb-4 text-muted-foreground text-sm">{documentsLimit} documents/month</p>
 
@@ -141,10 +190,11 @@ function PlanCard({ plan, isCurrentPlan, isRecommended, highlightFeature, onSele
       <Button
         variant={isCurrentPlan ? "outline" : isRecommended ? "default" : "secondary"}
         className="w-full"
-        disabled={isCurrentPlan}
+        disabled={isCurrentPlan || isDisabled}
         onClick={onSelect}
       >
-        {isCurrentPlan ? "Current Plan" : `Upgrade to ${plan.name}`}
+        {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+        {isCurrentPlan ? "Current Plan" : isLoading ? "Redirecting..." : `Upgrade to ${plan.name}`}
       </Button>
     </div>
   );
@@ -158,6 +208,8 @@ function PlanIcon({ slug }: { slug: string }) {
   switch (slug) {
     case "free":
       return <Zap className="h-5 w-5 text-muted-foreground" />;
+    case "basic":
+      return <Zap className="h-5 w-5 text-blue-500" />;
     case "starter":
       return <Sparkles className="h-5 w-5 text-blue-500" />;
     case "advanced":
@@ -178,6 +230,7 @@ function getFeatureDisplayName(feature: GatedFeature): string {
     api_access: "API Access",
     webhooks: "Webhooks",
     priority_support: "Priority Support",
+    e_invoicing: "E-Invoicing",
   };
   return names[feature] || feature;
 }
@@ -186,6 +239,16 @@ function getPlanFeatures(slug: string): string[] {
   switch (slug) {
     case "free":
       return ["Basic invoicing", "Estimates & quotes", "Customer management", "PDF export"];
+    case "basic":
+      return [
+        "Invoices & estimates",
+        "Customer management",
+        "PDF export",
+        "FURS fiscalization",
+        "eSlog export",
+        "Recurring invoices",
+        "Email sending",
+      ];
     case "starter":
       return [
         "Everything in Free",
@@ -197,7 +260,8 @@ function getPlanFeatures(slug: string): string[] {
       ];
     case "advanced":
       return [
-        "Everything in Starter",
+        "Everything in Basic",
+        "All features unlocked",
         "Custom templates",
         "API access",
         "Webhooks",

@@ -7,7 +7,15 @@ import { Button } from "@/ui/components/ui/button";
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/ui/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui/components/ui/select";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
+import { createTranslation } from "@/ui/lib/translation";
 import { useListTaxes } from "../../taxes/taxes.hooks";
+
+const translations = {
+  en: {
+    Tax: "Tax",
+    "Add...": "Add...",
+  },
+} as const;
 
 /**
  * Get the current active rate from a tax (most recent rate by valid_from)
@@ -43,9 +51,11 @@ export default function DocumentAddItemTaxRateField({
   onRemove,
   onAddNewTax,
   showLabel = true,
-  t,
+  t: translateFn,
+  namespace,
+  locale,
 }: DocumentAddItemTaxRateFieldProps) {
-  const translate = t || ((key: string) => key);
+  const translate = createTranslation({ t: translateFn, namespace, locale, translations });
   const { setValue } = useFormContext();
 
   // Fetch available taxes

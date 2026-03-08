@@ -28,6 +28,7 @@ export default {
   "Export PDFs": "Exportar PDFs",
   "Deselect all": "Deseleccionar todo",
   "Copy to Invoice": "Copiar a factura",
+  "Finalize draft documents before copying to invoice": "Finalice los borradores antes de copiar a factura",
   Void: "Anular",
   Voided: "Anulado",
   // Row action translations

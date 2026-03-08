@@ -16,6 +16,18 @@ const eslogSettingsSchema = z.object({
 
 type EslogSettingsSchema = z.infer<typeof eslogSettingsSchema>;
 
+const translations = {
+  en: {
+    "Save Settings": "Save Settings",
+    "Enable e-SLOG validation": "Enable e-SLOG validation",
+    "When enabled, documents will be automatically validated against e-SLOG 2.0 requirements when created.":
+      "When enabled, documents will be automatically validated against e-SLOG 2.0 requirements when created.",
+    "About e-SLOG 2.0": "About e-SLOG 2.0",
+    "e-SLOG 2.0 is the Slovenian electronic invoice standard based on the European EN 16931 specification. Valid documents can be downloaded in XML format and attached to emails.":
+      "e-SLOG 2.0 is the Slovenian electronic invoice standard based on the European EN 16931 specification. Valid documents can be downloaded in XML format and attached to emails.",
+  },
+} as const;
+
 export type EslogSettingsFormProps = {
   entity: Entity;
   onSuccess?: (data: Entity) => void;
@@ -30,7 +42,7 @@ export function EslogSettingsForm({
   onSuccess,
   onError,
 }: EslogSettingsFormProps) {
-  const t = createTranslation({ t: translateProp, namespace, locale, translations: {} });
+  const t = createTranslation({ t: translateProp, namespace, locale, translations });
 
   const currentSettings = (entity.settings as Record<string, unknown>) || {};
 

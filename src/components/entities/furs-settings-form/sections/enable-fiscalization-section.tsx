@@ -116,6 +116,7 @@ export const EnableFiscalizationSection: FC<EnableFiscalizationSectionProps> = (
                   onCheckedChange={field.onChange}
                   disabled={!allPrerequisitesMet && !field.value}
                   className="cursor-pointer"
+                  data-testid="furs-enable-switch"
                 />
               </FormControl>
             </FormItem>

@@ -15,4 +15,6 @@ export default {
   "Failed to send email": "Nie udało się wysłać e-maila",
   "Sandbox email warning":
     "W trybie sandbox e-maile można wysyłać tylko do zweryfikowanych członków zespołu tego konta.",
+  "PDF Language": "Język PDF",
+  Default: "Domyślnie",
 } as const;

@@ -1,9 +1,8 @@
-import type SDK from "@spaceinvoices/js-sdk";
-
-type TFunction = (key: string, options?: Record<string, unknown>) => string;
-
 import { Download, Loader2 } from "lucide-react";
 import { useRef, useState } from "react";
+import type SDK from "@spaceinvoices/js-sdk";
+import type { ComponentTranslationProps } from "@/ui/lib/translation";
+import { createTranslation } from "@/ui/lib/translation";
 import { Button } from "../ui/button";
 import { Label } from "../ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
@@ -25,13 +24,52 @@ function getPreviousMonth(): { year: number; month: number } {
 type KirExportFormProps = {
   sdk: SDK;
   entityId: string;
-  t: TFunction;
   onSuccess?: (fileName: string) => void;
   onError?: (error: Error) => void;
   onLoadingChange?: (isLoading: boolean, toastId: string | number | null) => void;
-};
+} & ComponentTranslationProps;
 
-export function KirExportForm({ sdk, entityId, t, onSuccess, onError, onLoadingChange }: KirExportFormProps) {
+const translations = {
+  en: {
+    "kir-export.year": "Year",
+    "kir-export.period-type": "Period type",
+    "kir-export.period-types.month": "Month",
+    "kir-export.period-types.quarter": "Quarter",
+    "kir-export.month": "Month",
+    "kir-export.quarter": "Quarter",
+    "kir-export.months.1": "January",
+    "kir-export.months.2": "February",
+    "kir-export.months.3": "March",
+    "kir-export.months.4": "April",
+    "kir-export.months.5": "May",
+    "kir-export.months.6": "June",
+    "kir-export.months.7": "July",
+    "kir-export.months.8": "August",
+    "kir-export.months.9": "September",
+    "kir-export.months.10": "October",
+    "kir-export.months.11": "November",
+    "kir-export.months.12": "December",
+    "kir-export.quarters.1": "Q1",
+    "kir-export.quarters.2": "Q2",
+    "kir-export.quarters.3": "Q3",
+    "kir-export.quarters.4": "Q4",
+    "kir-export.file-preview": "File preview",
+    "kir-export.exporting": "Exporting...",
+    "kir-export.export-button": "Export KIR ZIP",
+  },
+} as const;
+
+export function KirExportForm({
+  sdk,
+  entityId,
+  t: translateFn,
+  namespace,
+  locale,
+  onSuccess,
+  onError,
+  onLoadingChange,
+}: KirExportFormProps) {
+  const t = createTranslation({ t: translateFn, namespace, locale, translations });
   const defaultPeriod = getPreviousMonth();
   const [year, setYear] = useState(defaultPeriod.year);
   const [periodType, setPeriodType] = useState<PeriodType>("month");

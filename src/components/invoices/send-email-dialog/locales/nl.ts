@@ -15,4 +15,6 @@ export default {
   "Failed to send email": "E-mail verzenden mislukt",
   "Sandbox email warning":
     "In sandbox-modus kunnen e-mails alleen worden verzonden naar geverifieerde teamleden van dit account.",
+  "PDF Language": "PDF-taal",
+  Default: "Standaard",
 } as const;

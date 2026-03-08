@@ -5,12 +5,21 @@
 import { PlusIcon, SeparatorHorizontal } from "lucide-react";
 import type { MutableRefObject } from "react";
 import type { UseFormGetValues, UseFormSetValue, UseFormWatch } from "react-hook-form";
+import { useFieldArray } from "react-hook-form";
 import { Button } from "@/ui/components/ui/button";
 import DocumentAddItemForm from "./document-add-item-form";
 import type { AnyControl } from "./form-types";
 
 /** Map of item index to gross price mode */
 export type PriceModesMap = Record<number, boolean>;
+
+function reindexPriceModes(priceModes: PriceModesMap, nextLength: number): PriceModesMap {
+  const reindexed: PriceModesMap = {};
+  for (let index = 0; index < nextLength; index += 1) {
+    reindexed[index] = priceModes[index] ?? false;
+  }
+  return reindexed;
+}
 
 type DocumentItemsSectionProps = {
   control: AnyControl;
@@ -34,6 +43,8 @@ type DocumentItemsSectionProps = {
   priceModesRef?: MutableRefObject<PriceModesMap>;
   /** Initial price modes (from duplicated document) */
   initialPriceModes?: PriceModesMap;
+  /** Called when item ordering or price mode changes outside normal field edits. */
+  onItemsStateChange?: () => void;
 };
 
 export function DocumentItemsSection({
@@ -50,66 +61,85 @@ export function DocumentItemsSection({
   maxTaxesPerItem,
   priceModesRef,
   initialPriceModes = {},
+  onItemsStateChange,
 }: DocumentItemsSectionProps) {
+  const { fields, append, remove, move } = useFieldArray({
+    control: control as any,
+    name: "items",
+  });
+
+  const syncPriceModes = (updater: (current: PriceModesMap) => PriceModesMap) => {
+    if (!priceModesRef) return;
+    priceModesRef.current = updater(priceModesRef.current ?? {});
+  };
+
   const addItem = () => {
-    const currentItems = getValues("items") || [];
-    setValue("items", [
-      ...currentItems,
-      {
-        name: "",
-        description: "",
-        quantity: 1,
-        price: undefined,
-        taxes: [],
-      },
-    ]);
+    append({
+      name: "",
+      description: "",
+      quantity: 1,
+      price: undefined,
+      taxes: [],
+    });
+    syncPriceModes((current) => ({ ...current, [fields.length]: false }));
+    onItemsStateChange?.();
   };
 
   const addSeparator = () => {
-    const currentItems = getValues("items") || [];
-    setValue("items", [
-      ...currentItems,
-      {
-        type: "separator",
-        name: "",
-        description: "",
-      },
-    ]);
+    append({
+      type: "separator",
+      name: "",
+      description: "",
+    });
+    syncPriceModes((current) => ({ ...current, [fields.length]: false }));
+    onItemsStateChange?.();
   };
 
   const removeItem = (index: number) => {
-    const currentItems = getValues("items") || [];
-    setValue(
-      "items",
-      currentItems.filter((_: unknown, i: number) => i !== index),
-    );
+    remove(index);
+    syncPriceModes((current) => {
+      const next: PriceModesMap = {};
+      let nextIndex = 0;
+      for (let currentIndex = 0; currentIndex < fields.length; currentIndex += 1) {
+        if (currentIndex === index) continue;
+        next[nextIndex] = current[currentIndex] ?? false;
+        nextIndex += 1;
+      }
+      return next;
+    });
+    onItemsStateChange?.();
   };
 
   const moveItemUp = (index: number) => {
     if (index === 0) return;
-    const items = getValues("items");
-    const newItems = [...items];
-    [newItems[index], newItems[index - 1]] = [newItems[index - 1], newItems[index]];
-    setValue("items", newItems);
+    move(index, index - 1);
+    syncPriceModes((current) => {
+      const next = reindexPriceModes(current, fields.length);
+      [next[index], next[index - 1]] = [next[index - 1], next[index]];
+      return next;
+    });
+    onItemsStateChange?.();
   };
 
   const moveItemDown = (index: number) => {
-    const items = getValues("items");
-    if (index === items.length - 1) return;
-    const newItems = [...items];
-    [newItems[index], newItems[index + 1]] = [newItems[index + 1], newItems[index]];
-    setValue("items", newItems);
+    if (index === fields.length - 1) return;
+    move(index, index + 1);
+    syncPriceModes((current) => {
+      const next = reindexPriceModes(current, fields.length);
+      [next[index], next[index + 1]] = [next[index + 1], next[index]];
+      return next;
+    });
+    onItemsStateChange?.();
   };
 
-  const items = watch("items") || [];
+  const items = watch("items") || fields;
 
   return (
     <div className="flex flex-col gap-4">
       <h2 className="font-bold text-xl">{t("Items")}</h2>
 
-      {items.map((_: unknown, index: number) => (
-        // biome-ignore lint/suspicious/noArrayIndexKey: index is stable
-        <div key={index}>
+      {fields.map((field, index: number) => (
+        <div key={field.id}>
           <DocumentAddItemForm
             form={{ control, watch, setValue, getValues } as any}
             index={index}
@@ -127,11 +157,12 @@ export function DocumentItemsSection({
             taxesDisabled={taxesDisabled}
             taxesDisabledMessage={taxesDisabledMessage}
             maxTaxesPerItem={maxTaxesPerItem}
-            initialIsGrossPrice={initialPriceModes[index] ?? false}
+            initialIsGrossPrice={priceModesRef?.current[index] ?? initialPriceModes[index] ?? false}
             onPriceModeChange={(isGross) => {
               if (priceModesRef) {
                 priceModesRef.current[index] = isGross;
               }
+              onItemsStateChange?.();
             }}
           />
         </div>

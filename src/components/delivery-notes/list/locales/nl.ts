@@ -28,6 +28,7 @@ export default {
   "Export PDFs": "PDFs exporteren",
   "Deselect all": "Alles deselecteren",
   "Copy to Invoice": "Kopieer naar factuur",
+  "Finalize draft documents before copying to invoice": "Rond conceptdocumenten af voordat u naar factuur kopieert",
   Void: "Nietig verklaren",
   Voided: "Ongeldig verklaard",
   // Row action translations

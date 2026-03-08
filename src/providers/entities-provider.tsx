@@ -26,6 +26,10 @@ type EntitiesProviderProps = {
   cookieDomain?: string;
   /** When provided (from URL param), this entity ID is used as the source of truth instead of the cookie */
   urlEntityId?: string;
+  /** When provided, determines environment from URL instead of cookie. true = sandbox, false = live. */
+  isSandbox?: boolean;
+  /** Called when urlEntityId is not found in any environment, allowing parent to try other accounts */
+  onEntityNotFound?: (entityId: string) => void;
 };
 
 export function EntitiesProvider({
@@ -34,6 +38,8 @@ export function EntitiesProvider({
   onNoEntities,
   cookieDomain,
   urlEntityId,
+  isSandbox,
+  onEntityNotFound,
 }: EntitiesProviderProps) {
   const { sdk, isInitialized } = useSDK();
   const [cookies, setCookie, removeCookie] = useCookies([ACTIVE_ENTITY_COOKIE, ACTIVE_ENVIRONMENT_COOKIE]);
@@ -44,11 +50,23 @@ export function EntitiesProvider({
   // URL entity ID takes precedence over cookie
   const resolvedEntityId = urlEntityId ?? initialEntityIdFromCookie;
 
+  // When isSandbox is provided (URL-driven), use it as source of truth; otherwise fall back to cookie
   const resolvedInitialEnvironment: EntityEnvironment =
-    initialEnvironmentFromCookie ?? (initialActiveEntity?.environment as EntityEnvironment | undefined) ?? "live";
+    isSandbox !== undefined
+      ? isSandbox
+        ? "sandbox"
+        : "live"
+      : (initialEnvironmentFromCookie ?? (initialActiveEntity?.environment as EntityEnvironment | undefined) ?? "live");
 
   const [environment, setEnvironmentState] = useState<EntityEnvironment>(resolvedInitialEnvironment);
   const previousEnvironment = useRef(environment);
+
+  // Sync environment with isSandbox prop when it changes (URL-driven navigation)
+  useEffect(() => {
+    if (isSandbox === undefined) return;
+    const target: EntityEnvironment = isSandbox ? "sandbox" : "live";
+    setEnvironmentState((current) => (current === target ? current : target));
+  }, [isSandbox]);
 
   // Store the initial entity ID (from URL or cookie) so we can match it when entities load
   const initialEntityIdRef = useRef(resolvedEntityId);
@@ -88,10 +106,18 @@ export function EntitiesProvider({
   });
 
   // When no entities in current environment, check the other before giving up
+  // Skip auto-switch when isSandbox is explicitly set (URL-driven) — respect the user's intent
   const hasCalledNoEntities = useRef(false);
   const hasTriedFallback = useRef(false);
   useEffect(() => {
     if (isLoading || entities.length > 0 || hasCalledNoEntities.current) return;
+
+    // When environment is explicitly set via URL, don't auto-switch to the other environment
+    if (isSandbox !== undefined) {
+      hasCalledNoEntities.current = true;
+      onNoEntities?.();
+      return;
+    }
 
     // Try the other environment before calling onNoEntities
     if (!hasTriedFallback.current && sdk) {
@@ -118,7 +144,7 @@ export function EntitiesProvider({
     if (!hasTriedFallback.current) return;
     hasCalledNoEntities.current = true;
     onNoEntities?.();
-  }, [isLoading, entities.length, onNoEntities, sdk, environment]);
+  }, [isLoading, entities.length, onNoEntities, sdk, environment, isSandbox]);
 
   // Memoize entities to prevent unnecessary re-renders
   const memoizedEntities = useMemo(() => entities, [entities]);
@@ -200,6 +226,26 @@ export function EntitiesProvider({
     const altEnv: EntityEnvironment = environment === "live" ? "sandbox" : "live";
     setEnvironmentState(altEnv);
   }, [urlEntityId, memoizedEntities, isLoading, environment]);
+
+  // After environment fallback has been attempted and entity is still not found, notify parent
+  const entityNotFoundCallbackFired = useRef<string | null>(null);
+  useEffect(() => {
+    if (!urlEntityId || !onEntityNotFound || isLoading) return;
+    if (memoizedEntities.length === 0) return;
+
+    const found = memoizedEntities.some((e) => e.id === urlEntityId);
+    if (found) {
+      entityNotFoundCallbackFired.current = null;
+      return;
+    }
+
+    // Only fire after the environment fallback has already been attempted for this entity
+    if (urlEntityFallbackAttempted.current !== urlEntityId) return;
+    if (entityNotFoundCallbackFired.current === urlEntityId) return;
+
+    entityNotFoundCallbackFired.current = urlEntityId;
+    onEntityNotFound(urlEntityId);
+  }, [urlEntityId, memoizedEntities, isLoading, onEntityNotFound]);
 
   const cookieOpts = useMemo(
     () => ({

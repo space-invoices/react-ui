@@ -33,18 +33,8 @@ export function useInvoiceDownload({
     onDownloadStart?.();
 
     try {
-      // SDK signature: renderPdf(id, params?, SDKMethodOptions?)
-      // entity_id goes in SDKMethodOptions (last arg), not params
-      const blob = await sdk.invoices.renderPdf(invoice.id, {}, { entity_id: activeEntity.id });
-      const downloadUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = downloadUrl;
       const fileName = `${t("Invoice")} ${invoice.number}.pdf`;
-      link.download = fileName;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(downloadUrl);
+      await sdk.invoices.downloadPdf(invoice.id, fileName, {}, { entity_id: activeEntity.id });
 
       onDownloadSuccess?.(fileName);
     } catch (error) {

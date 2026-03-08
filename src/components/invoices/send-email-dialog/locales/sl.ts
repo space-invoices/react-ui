@@ -14,4 +14,6 @@ export default {
   "Invoice sent to": "Račun poslan na",
   "Failed to send email": "Pošiljanje e-pošte ni uspelo",
   "Sandbox email warning": "V testnem načinu lahko pošiljate e-pošto samo verificiranim članom ekipe tega računa.",
+  "PDF Language": "Jezik PDF-ja",
+  Default: "Privzeto",
 } as const;

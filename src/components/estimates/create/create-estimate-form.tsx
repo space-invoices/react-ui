@@ -250,6 +250,7 @@ export default function CreateEstimateForm({
   const formValues = useWatch({
     control: form.control,
   });
+  const prevPayloadRef = useRef("");
 
   // ============================================================================
   // VIES Check - determine if reverse charge applies
@@ -380,37 +381,48 @@ export default function CreateEstimateForm({
     form.setValue("date_valid_till", calculateDueDate(currentDate, validDays));
   }, [formValues.date, activeEntity, form]);
 
-  useEffect(() => {
-    const callback = onChangeRef.current;
-    if (!callback) return;
+  const buildPreviewPayload = useCallback((values: CreateEstimateFormValues): EstimatePreviewPayload => {
+    const currentItems = values.items || [];
 
-    const currentItems = form.getValues("items") || [];
-
-    // Transform items to use gross_price when price mode is gross
     const transformedItems = currentItems.map((item: any, index: number) => {
       const { price, ...rest } = item;
       const isGross = priceModesRef.current[index] ?? false;
-      if (isGross) {
-        return { ...rest, gross_price: price };
-      }
-      return { ...rest, price };
+      return isGross ? { ...rest, gross_price: price } : { ...rest, price };
     });
 
-    const payload: EstimatePreviewPayload = {
-      number: formValues.number,
-      date: formValues.date,
-      customer_id: formValues.customer_id,
-      customer: formValues.customer,
+    return {
+      number: values.number,
+      date: values.date,
+      customer_id: values.customer_id,
+      customer: values.customer,
       items: transformedItems,
-      currency_code: formValues.currency_code,
-      reference: formValues.reference,
-      note: formValues.note,
-      payment_terms: formValues.payment_terms,
-      signature: formValues.signature,
+      currency_code: values.currency_code,
+      reference: values.reference,
+      note: values.note,
+      payment_terms: values.payment_terms,
+      signature: values.signature,
       title_type: titleType,
     };
+  }, [titleType]);
+
+  const emitPreviewPayload = useCallback((payload: EstimatePreviewPayload) => {
+    const callback = onChangeRef.current;
+    if (!callback) return;
+
+    const payloadStr = JSON.stringify(payload);
+    if (payloadStr === prevPayloadRef.current) return;
+    prevPayloadRef.current = payloadStr;
+
     callback(payload);
-  }, [formValues, form, titleType]);
+  }, []);
+
+  useEffect(() => {
+    emitPreviewPayload(buildPreviewPayload(formValues as CreateEstimateFormValues));
+  }, [buildPreviewPayload, emitPreviewPayload, formValues]);
+
+  const emitCurrentPreviewPayload = useCallback(() => {
+    emitPreviewPayload(buildPreviewPayload(form.getValues()));
+  }, [buildPreviewPayload, emitPreviewPayload, form]);
 
   const onSubmit = (values: CreateEstimateFormValues) => {
     submitEstimate(values, false);
@@ -447,6 +459,7 @@ export default function CreateEstimateForm({
           maxTaxesPerItem={activeEntity?.country_rules?.max_taxes_per_item}
           priceModesRef={priceModesRef}
           initialPriceModes={initialPriceModes}
+          onItemsStateChange={emitCurrentPreviewPayload}
           taxesDisabled={reverseChargeApplies}
           taxesDisabledMessage={
             reverseChargeApplies ? t("Reverse charge - tax exempt EU B2B sale") : viesWarning ? viesWarning : undefined

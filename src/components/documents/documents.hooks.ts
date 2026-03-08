@@ -26,6 +26,8 @@ type FinalizeDocumentOptions = {
 type FinalizeDocumentVariables = {
   documentId: string;
   documentType: DocumentType;
+  furs?: { business_premise_name: string; electronic_device_name: string } | { skip: true };
+  fina?: { business_premise_name: string; electronic_device_name: string; payment_type?: string };
 };
 
 /**
@@ -37,8 +39,11 @@ export function useFinalizeDocument(options: FinalizeDocumentOptions) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ documentId, documentType }: FinalizeDocumentVariables) => {
-      return sdk.documents.finalizeDocument(documentId, { type: documentType });
+    mutationFn: async ({ documentId, documentType, furs, fina }: FinalizeDocumentVariables) => {
+      const body: Record<string, unknown> = {};
+      if (furs) body.furs = furs;
+      if (fina) body.fina = fina;
+      return sdk.documents.finalizeDocument(documentId, body, { type: documentType });
     },
     onSuccess: (data, variables) => {
       // Invalidate list cache

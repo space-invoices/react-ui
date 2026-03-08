@@ -47,6 +47,10 @@ export function DocumentRecipientSection({
     control: control as any,
     name: "customer.is_end_consumer" as any,
   });
+  const customerNameController = useController({
+    control: control as any,
+    name: "customer.name" as any,
+  });
 
   useEffect(() => {
     if (showCustomerForm && shouldFocusName) {
@@ -80,16 +84,21 @@ export function DocumentRecipientSection({
         <CustomerAutocomplete
           entityId={entityId}
           value={selectedCustomerId}
+          committedDisplayName={customerNameController.field.value ?? initialCustomerName}
           onValueChange={onCustomerSelect}
+          onCommitInlineName={(nextName) => customerNameController.field.onChange(nextName)}
           onClear={onCustomerClear}
           placeholder={t("Search or create customer...")}
           initialDisplayName={initialCustomerName}
+          inputTestId="document-customer-input"
+          inputRef={nameInputRef}
+          commitOnBlurMode={showCustomerForm ? "update-inline" : "create"}
         />
       </div>
 
       {showCustomerForm && (
         <>
-          <FormInput control={control} name="customer.address" placeholder={t("Address")} label="" ref={nameInputRef} />
+          <FormInput control={control} name="customer.address" placeholder={t("Address")} label="" />
 
           <FormInput control={control} name="customer.address_2" placeholder={t("Address 2")} label="" />
 

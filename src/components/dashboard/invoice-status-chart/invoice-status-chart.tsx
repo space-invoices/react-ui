@@ -13,18 +13,26 @@ import {
 import { createTranslation } from "@/ui/lib/translation";
 import { ChartEmptyState } from "../chart-empty-state";
 import { LoadingCard } from "../loading-card";
+import bg from "./locales/bg";
+import cs from "./locales/cs";
 import de from "./locales/de";
+import et from "./locales/et";
 import es from "./locales/es";
+import fi from "./locales/fi";
 import fr from "./locales/fr";
 import hr from "./locales/hr";
+import is from "./locales/is";
 import it from "./locales/it";
+import nb from "./locales/nb";
 import nl from "./locales/nl";
 import pl from "./locales/pl";
 import pt from "./locales/pt";
+import sk from "./locales/sk";
 import sl from "./locales/sl";
+import sv from "./locales/sv";
 import { useInvoiceStatusData } from "./use-invoice-status";
 
-const translations = { de, es, fr, hr, it, nl, pl, pt, sl } as const;
+const translations = { bg, cs, de, et, es, fi, fr, hr, is, it, nb, nl, pl, pt, sk, sl, sv } as const;
 
 export type InvoiceStatusChartData = {
   paid: number;
@@ -115,7 +123,7 @@ export function InvoiceStatusChart(props: InvoiceStatusChartProps) {
             <Cell key={entry.name} fill={entry.fill} />
           ))}
         </Pie>
-        <ChartTooltip content={<ChartTooltipContent nameKey="name" formatter={(value) => `${value} invoices`} />} />
+        <ChartTooltip content={<ChartTooltipContent nameKey="name" formatter={(value) => `${value} ${t("Invoices")}`} />} />
         <ChartLegend
           content={<ChartLegendContent nameKey="name" />}
           className="-translate-y-2 flex-wrap gap-2 [&>*]:basis-1/4 [&>*]:justify-center"

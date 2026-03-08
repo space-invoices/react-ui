@@ -40,18 +40,18 @@ export const FinaOperatorRequiredDialog: FC<FinaOperatorRequiredDialogProps> = (
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (!operatorOib || !operatorLabel) return;
+    if (!operatorOib) return;
     updateUserSettings({
       entityId,
       data: {
         operator_oib: operatorOib,
-        operator_label: operatorLabel,
+        operator_label: operatorLabel || undefined,
       },
     });
   };
 
   const oibError = operatorOib !== "" && !/^\d{11}$/.test(operatorOib);
-  const isValid = /^\d{11}$/.test(operatorOib) && operatorLabel.trim() !== "";
+  const isValid = /^\d{11}$/.test(operatorOib);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

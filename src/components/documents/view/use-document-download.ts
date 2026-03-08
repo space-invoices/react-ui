@@ -1,4 +1,11 @@
-import type { AdvanceInvoice, CreditNote, DeliveryNote, Estimate, Invoice } from "@spaceinvoices/js-sdk";
+import {
+  type AdvanceInvoice,
+  type CreditNote,
+  type DeliveryNote,
+  downloadBlob,
+  type Estimate,
+  type Invoice,
+} from "@spaceinvoices/js-sdk";
 import { useState } from "react";
 import { useEntities } from "@/ui/providers/entities-context";
 import { useSDK } from "@/ui/providers/sdk-provider";
@@ -36,11 +43,10 @@ export function useDocumentDownload({
   const [isDownloadingEslog, setIsDownloadingEslog] = useState(false);
 
   /**
-   * Download PDF with optional language override for translations
-   * Formatting (decimal separators, dates) always uses entity locale.
-   * The language param only changes labels/translations on the PDF.
+   * Download PDF with optional locale override.
+   * When a locale is selected, it is sent as both the formatting locale and label language.
    */
-  const downloadPdf = async (document: Document, documentType: DocumentType, language?: string) => {
+  const downloadPdf = async (document: Document, documentType: DocumentType, locale?: string) => {
     if (!sdk || !activeEntity?.id) {
       onDownloadError?.("Download failed");
       return;
@@ -53,21 +59,11 @@ export function useDocumentDownload({
       // SDK signature: renderPdf(id, params?, SDKMethodOptions?)
       // entity_id goes in SDKMethodOptions (last arg), not params
       // Note: renderPdf is on invoices module but works with any document ID via /documents/{id}/pdf
-      // Don't send locale — entity locale drives formatting. Send language for translation override.
-      const params = language ? { language } : {};
-      const blob = await sdk.invoices.renderPdf(document.id, params, { entity_id: activeEntity.id });
-      const downloadUrl = window.URL.createObjectURL(blob);
-      const link = window.document.createElement("a");
-      link.href = downloadUrl;
-
+      const params = locale ? { locale, language: locale } : {};
       const typeLabel = TYPE_LABELS[documentType] || "Document";
       const fileName = `${typeLabel} ${document.number}.pdf`;
-      link.download = fileName;
 
-      window.document.body.appendChild(link);
-      link.click();
-      window.document.body.removeChild(link);
-      window.URL.revokeObjectURL(downloadUrl);
+      await sdk.invoices.downloadPdf(document.id, fileName, params, { entity_id: activeEntity.id });
 
       onDownloadSuccess?.(fileName);
     } catch (error) {
@@ -106,14 +102,7 @@ export function useDocumentDownload({
       const xml = await eSlogModule.download(document.id, typeMap[documentType], { entity_id: activeEntity.id });
 
       const blob = new Blob([xml], { type: "application/xml" });
-      const url = window.URL.createObjectURL(blob);
-      const a = window.document.createElement("a");
-      a.href = url;
-      a.download = `${document.number}.xml`;
-      window.document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      window.document.body.removeChild(a);
+      downloadBlob(blob, `${document.number}.xml`);
     } catch (error) {
       console.error("Error downloading e-SLOG:", error);
       onDownloadError?.("e-SLOG download failed");

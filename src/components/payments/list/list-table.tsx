@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { DataTable } from "@/ui/components/table/data-table";
 import { FormattedDate } from "@/ui/components/table/date-cell";
 import { useTableFetch } from "@/ui/components/table/hooks/use-table-fetch";
+import { withTableTranslations } from "@/ui/components/table/locales";
 import type { Column, ListTableProps, TableQueryParams, TableQueryResponse } from "@/ui/components/table/types";
 import { Button } from "@/ui/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/ui/components/ui/popover";
@@ -22,7 +23,7 @@ import pl from "./locales/pl";
 import pt from "./locales/pt";
 import sl from "./locales/sl";
 
-const translations = {
+const translations = withTableTranslations({
   en,
   sl,
   de,
@@ -33,7 +34,7 @@ const translations = {
   nl,
   pl,
   hr,
-} as const;
+} as const);
 
 // Extended payment type that includes Invoice relation from API
 type PaymentWithInvoice = Payment & {
@@ -44,6 +45,7 @@ type PaymentListTableProps = {
   t?: (key: string) => string;
   namespace?: string;
   locale?: string;
+  translationLocale?: string;
   entityId?: string;
   onViewInvoice?: (invoiceId: string) => void;
   onEditPayment?: (payment: Payment) => void;
@@ -63,6 +65,7 @@ export default function PaymentListTable({
 }: PaymentListTableProps) {
   const t = createTranslation({
     translations,
+    locale: i18nProps.translationLocale ?? i18nProps.locale,
     ...i18nProps,
   });
 
@@ -99,13 +102,20 @@ export default function PaymentListTable({
       {
         id: "date",
         header: t("Date"),
-        cell: (payment) => <FormattedDate date={payment.date} />,
+        cell: (payment) => <FormattedDate date={payment.date} locale={i18nProps.locale} />,
       },
       {
         id: "amount",
         header: t("Amount"),
         align: "right",
-        cell: (payment) => <span className="font-medium">{payment.amount.toFixed(2)}</span>,
+        cell: (payment) => (
+          <span className="font-medium">
+            {new Intl.NumberFormat(i18nProps.locale, {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            }).format(payment.amount)}
+          </span>
+        ),
       },
       {
         id: "type",

@@ -193,6 +193,7 @@ export default function CreateDeliveryNoteForm({
   const formValues = useWatch({
     control: form.control,
   });
+  const prevPayloadRef = useRef("");
 
   // ============================================================================
   // VIES Check - determine if reverse charge applies
@@ -301,36 +302,47 @@ export default function CreateDeliveryNoteForm({
     secondaryAction,
   });
 
-  useEffect(() => {
-    const callback = onChangeRef.current;
-    if (!callback) return;
+  const buildPreviewPayload = useCallback((values: CreateDeliveryNoteFormValues): DeliveryNotePreviewPayload => {
+    const currentItems = values.items || [];
 
-    const currentItems = form.getValues("items") || [];
-
-    // Transform items to use gross_price when price mode is gross
     const transformedItems = currentItems.map((item: any, index: number) => {
       const { price, ...rest } = item;
       const isGross = priceModesRef.current[index] ?? false;
-      if (isGross) {
-        return { ...rest, gross_price: price };
-      }
-      return { ...rest, price };
+      return isGross ? { ...rest, gross_price: price } : { ...rest, price };
     });
 
-    const payload: DeliveryNotePreviewPayload = {
-      number: formValues.number,
-      date: formValues.date,
-      customer_id: formValues.customer_id,
-      customer: formValues.customer,
+    return {
+      number: values.number,
+      date: values.date,
+      customer_id: values.customer_id,
+      customer: values.customer,
       items: transformedItems,
-      currency_code: formValues.currency_code,
-      reference: formValues.reference,
-      note: formValues.note,
-      signature: formValues.signature,
+      currency_code: values.currency_code,
+      reference: values.reference,
+      note: values.note,
+      signature: values.signature,
       hide_prices: hidePrices,
     };
+  }, [hidePrices]);
+
+  const emitPreviewPayload = useCallback((payload: DeliveryNotePreviewPayload) => {
+    const callback = onChangeRef.current;
+    if (!callback) return;
+
+    const payloadStr = JSON.stringify(payload);
+    if (payloadStr === prevPayloadRef.current) return;
+    prevPayloadRef.current = payloadStr;
+
     callback(payload);
-  }, [formValues, form, hidePrices]);
+  }, []);
+
+  useEffect(() => {
+    emitPreviewPayload(buildPreviewPayload(formValues as CreateDeliveryNoteFormValues));
+  }, [buildPreviewPayload, emitPreviewPayload, formValues]);
+
+  const emitCurrentPreviewPayload = useCallback(() => {
+    emitPreviewPayload(buildPreviewPayload(form.getValues()));
+  }, [buildPreviewPayload, emitPreviewPayload, form]);
 
   const onSubmit = (values: CreateDeliveryNoteFormValues) => {
     submitDeliveryNote(values, false);
@@ -379,6 +391,7 @@ export default function CreateDeliveryNoteForm({
           maxTaxesPerItem={activeEntity?.country_rules?.max_taxes_per_item}
           priceModesRef={priceModesRef}
           initialPriceModes={initialPriceModes}
+          onItemsStateChange={emitCurrentPreviewPayload}
           taxesDisabled={reverseChargeApplies}
           taxesDisabledMessage={
             reverseChargeApplies ? t("Reverse charge - tax exempt EU B2B sale") : viesWarning ? viesWarning : undefined

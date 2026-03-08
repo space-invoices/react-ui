@@ -24,6 +24,7 @@ const createEntitySchemaDefinition = z.object({
   tax_number_2: z.union([z.string(), z.null()]).optional(),
   company_number: z.union([z.string(), z.null()]).optional(),
   email: z.union([z.string(), z.null()]).optional(),
+  website: z.union([z.string(), z.null()]).optional(),
   environment: z.enum(["live", "sandbox"]).optional(),
   is_tax_subject: z.boolean().optional(),
   is_enabled: z.boolean().optional(),
@@ -141,6 +142,10 @@ const createEntitySchemaDefinition = z.object({
       bank_accounts: z.union([z.array(z.any()), z.null()]),
       eslog_validation_enabled: z.union([z.boolean(), z.null()]),
       delivery_note_hide_prices: z.union([z.boolean(), z.null()]),
+      credit_note_negative_values: z.union([z.boolean(), z.null()]),
+      receipt_note: z.union([z.string(), z.null()]),
+      receipt_footer: z.union([z.string(), z.null()]),
+      receipt_signature: z.union([z.string(), z.null()]),
       tax_clause_defaults: z.union([
         z
           .object({
@@ -150,6 +155,18 @@ const createEntitySchemaDefinition = z.object({
             "3w_b2b": z.union([z.string(), z.null()]),
             "3w_b2c": z.union([z.string(), z.null()]),
             export: z.union([z.string(), z.null()]),
+          })
+          .partial()
+          .passthrough(),
+        z.null(),
+      ]),
+      e_invoicing: z.union([
+        z
+          .object({
+            enabled: z.boolean().default(false),
+            provider: z.literal("flowin").default("flowin"),
+            auto_send: z.boolean().default(false),
+            default_scheme_id: z.string(),
           })
           .partial()
           .passthrough(),
@@ -181,6 +198,7 @@ const patchEntitySchemaDefinition = z
     tax_number_2: z.union([z.string(), z.null()]),
     company_number: z.union([z.string(), z.null()]),
     email: z.union([z.string(), z.null()]),
+    website: z.union([z.string(), z.null()]),
     is_tax_subject: z.boolean(),
     is_enabled: z.boolean(),
     settings: z
@@ -297,6 +315,10 @@ const patchEntitySchemaDefinition = z
         bank_accounts: z.union([z.array(z.any()), z.null()]),
         eslog_validation_enabled: z.union([z.boolean(), z.null()]),
         delivery_note_hide_prices: z.union([z.boolean(), z.null()]),
+        credit_note_negative_values: z.union([z.boolean(), z.null()]),
+        receipt_note: z.union([z.string(), z.null()]),
+        receipt_footer: z.union([z.string(), z.null()]),
+        receipt_signature: z.union([z.string(), z.null()]),
         tax_clause_defaults: z.union([
           z
             .object({
@@ -306,6 +328,18 @@ const patchEntitySchemaDefinition = z
               "3w_b2b": z.union([z.string(), z.null()]),
               "3w_b2c": z.union([z.string(), z.null()]),
               export: z.union([z.string(), z.null()]),
+            })
+            .partial()
+            .passthrough(),
+          z.null(),
+        ]),
+        e_invoicing: z.union([
+          z
+            .object({
+              enabled: z.boolean().default(false),
+              provider: z.literal("flowin").default("flowin"),
+              auto_send: z.boolean().default(false),
+              default_scheme_id: z.string(),
             })
             .partial()
             .passthrough(),

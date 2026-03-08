@@ -30,11 +30,11 @@ const translations = { sl, de } as const;
 
 const SUPPORTED_LOCALES = [
   { value: "en-US", label: "English (US)" },
-  { value: "de-DE", label: "Deutsch (DE)" },
-  { value: "it-IT", label: "Italiano (IT)" },
-  { value: "fr-FR", label: "Français (FR)" },
-  { value: "es-ES", label: "Español (ES)" },
-  { value: "sl-SI", label: "Slovenščina (SI)" },
+  { value: "de-DE", label: "German (DE)" },
+  { value: "it-IT", label: "Italian (IT)" },
+  { value: "fr-FR", label: "French (FR)" },
+  { value: "es-ES", label: "Spanish (ES)" },
+  { value: "sl-SI", label: "Slovenian (SI)" },
 ] as const;
 
 const defaultsSettingsSchema = z.object({
@@ -206,7 +206,7 @@ export function DefaultsSettingsForm({
               <SelectContent>
                 {SUPPORTED_LOCALES.map((loc) => (
                   <SelectItem key={loc.value} value={loc.value}>
-                    {loc.label}
+                    {t(loc.label)}
                   </SelectItem>
                 ))}
               </SelectContent>

@@ -56,15 +56,15 @@ const translations = {
 // Supported locales (matching backend)
 const SUPPORTED_LOCALES = [
   { value: "en-US", label: "English (US)" },
-  { value: "de-DE", label: "Deutsch (DE)" },
-  { value: "it-IT", label: "Italiano (IT)" },
-  { value: "fr-FR", label: "Français (FR)" },
-  { value: "es-ES", label: "Español (ES)" },
-  { value: "pt-PT", label: "Português (Portugal)" },
-  { value: "nl-NL", label: "Nederlands" },
-  { value: "pl-PL", label: "Polski" },
-  { value: "hr-HR", label: "Hrvatski" },
-  { value: "sl-SI", label: "Slovenščina (SI)" },
+  { value: "de-DE", label: "German (DE)" },
+  { value: "it-IT", label: "Italian (IT)" },
+  { value: "fr-FR", label: "French (FR)" },
+  { value: "es-ES", label: "Spanish (ES)" },
+  { value: "pt-PT", label: "Portuguese (Portugal)" },
+  { value: "nl-NL", label: "Dutch" },
+  { value: "pl-PL", label: "Polish" },
+  { value: "hr-HR", label: "Croatian" },
+  { value: "sl-SI", label: "Slovenian (SI)" },
 ] as const;
 
 // Countries with EPC QR feature (EU 27 + Switzerland)
@@ -805,7 +805,7 @@ export function EntitySettingsForm({
                         <SelectContent>
                           {SUPPORTED_LOCALES.map((locale) => (
                             <SelectItem key={locale.value} value={locale.value}>
-                              {locale.label}
+                              {translate(locale.label)}
                             </SelectItem>
                           ))}
                         </SelectContent>

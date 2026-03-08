@@ -47,23 +47,23 @@ const translations = { de, sl, it, fr, es, pt, nl, pl, hr } as const;
 
 const LOCALE_OPTIONS = [
   { value: "en-US", label: "English (US)" },
-  { value: "de-DE", label: "Deutsch" },
-  { value: "it-IT", label: "Italiano" },
-  { value: "fr-FR", label: "Français" },
-  { value: "es-ES", label: "Español" },
-  { value: "sl-SI", label: "Slovenščina" },
-  { value: "pt-PT", label: "Português" },
-  { value: "nl-NL", label: "Nederlands" },
-  { value: "pl-PL", label: "Polski" },
-  { value: "hr-HR", label: "Hrvatski" },
-  { value: "sv-SE", label: "Svenska" },
-  { value: "fi-FI", label: "Suomi" },
-  { value: "et-EE", label: "Eesti" },
-  { value: "bg-BG", label: "Български" },
-  { value: "cs-CZ", label: "Čeština" },
-  { value: "sk-SK", label: "Slovenčina" },
-  { value: "nb-NO", label: "Norsk bokmål" },
-  { value: "is-IS", label: "Íslenska" },
+  { value: "de-DE", label: "German" },
+  { value: "it-IT", label: "Italian" },
+  { value: "fr-FR", label: "French" },
+  { value: "es-ES", label: "Spanish" },
+  { value: "sl-SI", label: "Slovenian" },
+  { value: "pt-PT", label: "Portuguese" },
+  { value: "nl-NL", label: "Dutch" },
+  { value: "pl-PL", label: "Polish" },
+  { value: "hr-HR", label: "Croatian" },
+  { value: "sv-SE", label: "Swedish" },
+  { value: "fi-FI", label: "Finnish" },
+  { value: "et-EE", label: "Estonian" },
+  { value: "bg-BG", label: "Bulgarian" },
+  { value: "cs-CZ", label: "Czech" },
+  { value: "sk-SK", label: "Slovak" },
+  { value: "nb-NO", label: "Norwegian" },
+  { value: "is-IS", label: "Icelandic" },
 ] as const;
 
 const DEFAULT_LANGUAGE_VALUE = "__default__";
@@ -138,7 +138,7 @@ export function SendEmailDialog({
     setLanguage(value ?? DEFAULT_LANGUAGE_VALUE);
   };
 
-  const entityLocaleLabel = LOCALE_OPTIONS.find((option) => option.value === entityLocale)?.label ?? entityLocale;
+  const entityLocaleLabel = t(LOCALE_OPTIONS.find((option) => option.value === entityLocale)?.label ?? entityLocale);
   const defaultLanguageLabel = `${t("Default")} (${entityLocaleLabel})`;
 
   // Reset form and fetch customer email when dialog opens
@@ -290,7 +290,7 @@ export function SendEmailDialog({
                   <SelectItem value={DEFAULT_LANGUAGE_VALUE}>{defaultLanguageLabel}</SelectItem>
                   {LOCALE_OPTIONS.map((opt) => (
                     <SelectItem key={opt.value} value={opt.value}>
-                      {opt.label}
+                      {t(opt.label)}
                     </SelectItem>
                   ))}
                 </SelectContent>

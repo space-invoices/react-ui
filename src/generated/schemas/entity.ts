@@ -72,6 +72,56 @@ const createEntitySchemaDefinition = z.object({
       default_credit_note_payment_terms: z.union([z.string(), z.null()]),
       document_footer: z.union([z.string(), z.null()]),
       default_document_signature: z.union([z.string(), z.null()]),
+      slovenia: z.union([
+        z
+          .object({
+            business_form: z.union([
+              z.enum(["sp", "doo", "dno", "club"]),
+              z.null(),
+            ]),
+            income_tax_regime: z.union([
+              z.enum(["normirani", "dejanski"]),
+              z.null(),
+            ]),
+            vat_profile: z.union([
+              z.enum(["standard", "special_vat_identified"]),
+              z.null(),
+            ]),
+            tax_residency: z.union([
+              z.enum(["resident", "non_resident"]),
+              z.null(),
+            ]),
+            yearly_reporting: z.union([
+              z
+                .object({
+                  activity_code: z.union([z.string(), z.null()]),
+                  registration_number: z.union([z.string(), z.null()]),
+                  accounting_type: z.union([
+                    z.enum(["records", "single_entry", "double_entry"]),
+                    z.null(),
+                  ]),
+                  normiranec_insurance_basis: z.union([
+                    z.enum(["full_time_self_employed", "other"]),
+                    z.null(),
+                  ]),
+                  default_withholding_tax_amount: z.union([
+                    z.number(),
+                    z.null(),
+                  ]),
+                  default_foreign_tax_credit_amount: z.union([
+                    z.number(),
+                    z.null(),
+                  ]),
+                })
+                .partial()
+                .passthrough(),
+              z.null(),
+            ]),
+          })
+          .partial()
+          .passthrough(),
+        z.null(),
+      ]),
       furs: z.union([
         z
           .object({
@@ -245,6 +295,56 @@ const patchEntitySchemaDefinition = z
         default_credit_note_payment_terms: z.union([z.string(), z.null()]),
         document_footer: z.union([z.string(), z.null()]),
         default_document_signature: z.union([z.string(), z.null()]),
+        slovenia: z.union([
+          z
+            .object({
+              business_form: z.union([
+                z.enum(["sp", "doo", "dno", "club"]),
+                z.null(),
+              ]),
+              income_tax_regime: z.union([
+                z.enum(["normirani", "dejanski"]),
+                z.null(),
+              ]),
+              vat_profile: z.union([
+                z.enum(["standard", "special_vat_identified"]),
+                z.null(),
+              ]),
+              tax_residency: z.union([
+                z.enum(["resident", "non_resident"]),
+                z.null(),
+              ]),
+              yearly_reporting: z.union([
+                z
+                  .object({
+                    activity_code: z.union([z.string(), z.null()]),
+                    registration_number: z.union([z.string(), z.null()]),
+                    accounting_type: z.union([
+                      z.enum(["records", "single_entry", "double_entry"]),
+                      z.null(),
+                    ]),
+                    normiranec_insurance_basis: z.union([
+                      z.enum(["full_time_self_employed", "other"]),
+                      z.null(),
+                    ]),
+                    default_withholding_tax_amount: z.union([
+                      z.number(),
+                      z.null(),
+                    ]),
+                    default_foreign_tax_credit_amount: z.union([
+                      z.number(),
+                      z.null(),
+                    ]),
+                  })
+                  .partial()
+                  .passthrough(),
+                z.null(),
+              ]),
+            })
+            .partial()
+            .passthrough(),
+          z.null(),
+        ]),
         furs: z.union([
           z
             .object({

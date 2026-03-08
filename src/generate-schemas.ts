@@ -26,8 +26,8 @@ async function main() {
   await fs.mkdir(SCHEMAS_DIR, { recursive: true });
   await fs.mkdir(GENERATED_DIR, { recursive: true });
 
-  // Fetch OpenAPI spec from running API and generate schemas
-  const API_URL = process.env.OPENAPI_TARGET || "http://localhost:3000/openapi.json";
+  // Default to the checked-in API spec so generation is deterministic across worktrees.
+  const API_URL = process.env.OPENAPI_TARGET || path.resolve(import.meta.dir, "../../../apps/api/openapi.json");
   const openApiPath = path.resolve(GENERATED_DIR, "openapi.json");
 
   try {
@@ -41,7 +41,7 @@ async function main() {
       console.log(`Copied OpenAPI spec from ${API_URL}`);
     }
   } catch (_error) {
-    console.error(`Failed to fetch OpenAPI spec from ${API_URL}. Is the API running?`);
+    console.error(`Failed to fetch OpenAPI spec from ${API_URL}.`);
     process.exit(1);
   }
 

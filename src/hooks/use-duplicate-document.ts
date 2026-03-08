@@ -266,6 +266,9 @@ export function useDuplicateDocument({
       return { initialValues, sourceDocuments };
     },
     enabled: enabled && !!sourceId && !!activeEntity?.id && !!sourceType,
+    retry: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
 
   return {

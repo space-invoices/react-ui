@@ -28,7 +28,7 @@ export function useTableQuery<T>({ cacheKey, fetchFn, params, entityId, enabled 
     queryKey,
     queryFn: () => fetchFn({ ...params, entity_id: entityId }),
     staleTime: 1000 * 60 * 2, // Data is fresh for 2 minutes (unless invalidated)
-    gcTime: 1000 * 60 * 30, // Keep in cache for 30 minutes
+    gcTime: 1000 * 60 * 10, // Keep table variants around for a short session without retaining them all day
     refetchOnMount: true, // Refetch when mounting if data is stale (including when invalidated)
     refetchOnWindowFocus: false, // Don't refetch on window focus
     refetchOnReconnect: true, // Refetch on reconnect

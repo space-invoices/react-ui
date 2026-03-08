@@ -1,3 +1,4 @@
+import { getClientHeaders } from "@spaceinvoices/js-sdk";
 import type { ReactNode } from "react";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useEntitiesOptional } from "./entities-context";
@@ -176,6 +177,7 @@ export function WLSubscriptionProvider({ children, apiBaseUrl }: WLSubscriptionP
       const headers = {
         Authorization: `Bearer ${accessToken}`,
         "x-entity-id": entityId,
+        ...getClientHeaders("ui"),
         "Content-Type": "application/json",
       };
 

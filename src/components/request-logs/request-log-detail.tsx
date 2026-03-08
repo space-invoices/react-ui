@@ -178,8 +178,14 @@ export function RequestLogDetail({ log, t = defaultT, locale }: RequestLogDetail
       </div>
 
       {/* Metadata */}
-      {(log.resource_type || log.resource_id || log.action) && (
+      {(log.client_name || log.resource_type || log.resource_id || log.action) && (
         <div className="flex flex-wrap gap-4 text-sm">
+          {log.client_name && (
+            <div>
+              <span className="text-muted-foreground">{t("Client")}:</span>{" "}
+              <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">{log.client_name}</code>
+            </div>
+          )}
           {log.resource_type && (
             <div>
               <span className="text-muted-foreground">{t("Resource")}:</span>{" "}

@@ -1,3 +1,4 @@
+import { getClientHeaders } from "@spaceinvoices/js-sdk";
 import { Calendar, Download, Loader2 } from "lucide-react";
 import { useRef, useState } from "react";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
@@ -137,6 +138,7 @@ export function DocumentExportForm({
             Authorization: `Bearer ${token}`,
             "x-entity-id": entityId,
             ...(accountId && { "x-account-id": accountId }),
+            ...getClientHeaders("ui"),
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
@@ -181,6 +183,7 @@ export function DocumentExportForm({
           Authorization: `Bearer ${token}`,
           "x-entity-id": entityId,
           ...(accountId && { "x-account-id": accountId }),
+          ...getClientHeaders("ui"),
         },
       });
 

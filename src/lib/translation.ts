@@ -35,6 +35,12 @@ export function createTranslation({ t, namespace, locale = "en", translations = 
         if (translation) return translation;
       }
 
+      const englishTranslations = translations.en;
+      if (englishTranslations) {
+        const translation = englishTranslations[key];
+        if (translation) return translation;
+      }
+
       // 3. Fall back to key itself (which is the English text)
       return key;
     },

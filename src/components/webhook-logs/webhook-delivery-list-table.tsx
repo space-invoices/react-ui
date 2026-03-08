@@ -1,5 +1,6 @@
 "use client";
 
+import { getClientHeaders } from "@spaceinvoices/js-sdk";
 import { formatDistanceToNow } from "date-fns";
 import { useCallback, useMemo } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/ui/components/ui/sheet";
@@ -128,6 +129,7 @@ export function WebhookDeliveryListTable({
       const response = await fetch(`${apiBaseUrl}/webhook-logs?${queryParamsUrl.toString()}`, {
         headers: {
           Authorization: `Bearer ${token}`,
+          ...getClientHeaders("ui"),
           "Content-Type": "application/json",
         },
       });

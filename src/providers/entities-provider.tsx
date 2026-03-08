@@ -29,7 +29,7 @@ type EntitiesProviderProps = {
   /** When provided, determines environment from URL instead of cookie. true = sandbox, false = live. */
   isSandbox?: boolean;
   /** Called when urlEntityId is not found in any environment, allowing parent to try other accounts */
-  onEntityNotFound?: (entityId: string) => void;
+  onEntityNotFound?: (entityId: string) => boolean | void | Promise<boolean | void>;
 };
 
 export function EntitiesProvider({
@@ -83,6 +83,7 @@ export function EntitiesProvider({
   const {
     data: entities = [],
     isLoading,
+    isFetching,
     refetch,
     isError,
     error,
@@ -109,8 +110,40 @@ export function EntitiesProvider({
   // Skip auto-switch when isSandbox is explicitly set (URL-driven) — respect the user's intent
   const hasCalledNoEntities = useRef(false);
   const hasTriedFallback = useRef(false);
+  const resolvingUrlEntityRef = useRef<string | null>(null);
+  const emptyUrlEntityRefetchKeyRef = useRef<string | null>(null);
   useEffect(() => {
-    if (isLoading || entities.length > 0 || hasCalledNoEntities.current) return;
+    if (isLoading || isFetching || entities.length > 0 || hasCalledNoEntities.current) return;
+
+    if (urlEntityId) {
+      const refetchKey = `${urlEntityId}:${environment}`;
+      if (emptyUrlEntityRefetchKeyRef.current !== refetchKey) {
+        emptyUrlEntityRefetchKeyRef.current = refetchKey;
+        void refetch();
+        return;
+      }
+
+      if (resolvingUrlEntityRef.current === urlEntityId) return;
+      resolvingUrlEntityRef.current = urlEntityId;
+
+      if (!onEntityNotFound) {
+        hasCalledNoEntities.current = true;
+        onNoEntities?.();
+        return;
+      }
+
+      void Promise.resolve(onEntityNotFound(urlEntityId))
+        .then((resolved) => {
+          if (resolved) return;
+          hasCalledNoEntities.current = true;
+          onNoEntities?.();
+        })
+        .catch(() => {
+          hasCalledNoEntities.current = true;
+          onNoEntities?.();
+        });
+      return;
+    }
 
     // When environment is explicitly set via URL, don't auto-switch to the other environment
     if (isSandbox !== undefined) {
@@ -144,7 +177,18 @@ export function EntitiesProvider({
     if (!hasTriedFallback.current) return;
     hasCalledNoEntities.current = true;
     onNoEntities?.();
-  }, [isLoading, entities.length, onNoEntities, sdk, environment, isSandbox]);
+  }, [
+    isLoading,
+    isFetching,
+    entities.length,
+    onEntityNotFound,
+    onNoEntities,
+    refetch,
+    sdk,
+    environment,
+    isSandbox,
+    urlEntityId,
+  ]);
 
   // Memoize entities to prevent unnecessary re-renders
   const memoizedEntities = useMemo(() => entities, [entities]);
@@ -156,6 +200,13 @@ export function EntitiesProvider({
     }
   }, [environment]);
 
+  useEffect(() => {
+    if (entities.length > 0) {
+      emptyUrlEntityRefetchKeyRef.current = null;
+      resolvingUrlEntityRef.current = null;
+    }
+  }, [entities.length]);
+
   // Sync active entity when entities list changes
   // Use ref to read current activeEntityState without causing re-runs
   const activeEntityRef = useRef(activeEntityState);
@@ -165,6 +216,8 @@ export function EntitiesProvider({
   useEffect(() => {
     if (urlEntityId) {
       initialEntityIdRef.current = urlEntityId;
+      resolvingUrlEntityRef.current = null;
+      emptyUrlEntityRefetchKeyRef.current = null;
     }
   }, [urlEntityId]);
 

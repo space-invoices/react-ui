@@ -1,7 +1,10 @@
 "use client";
 
+import { getClientHeaders } from "@spaceinvoices/js-sdk";
 import { formatDistanceToNow } from "date-fns";
 import { useCallback, useMemo } from "react";
+import { Label } from "@/ui/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui/components/ui/select";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/ui/components/ui/sheet";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/ui/components/ui/tooltip";
 import { AUTH_COOKIES } from "@/ui/lib/auth";
@@ -26,6 +29,7 @@ export interface RequestLogResponse {
   resource_type: string | null;
   resource_id: string | null;
   action: string | null;
+  client_name: string | null;
   req_body: Record<string, unknown> | null;
   res_body: Record<string, unknown> | null;
   headers: Record<string, unknown> | null;
@@ -137,6 +141,7 @@ export function RequestLogListTable({
 
       // HTTP status code filter
       if (params.filter_http_status) queryParamsUrl.set("status", params.filter_http_status);
+      if (params.filter_client_name) queryParamsUrl.set("client_name", params.filter_client_name);
 
       // Date filters
       if (params.filter_date_from) queryParamsUrl.set("date_from", params.filter_date_from);
@@ -146,6 +151,7 @@ export function RequestLogListTable({
       const response = await fetch(`${apiBaseUrl}/request-logs?${queryParamsUrl.toString()}`, {
         headers: {
           Authorization: `Bearer ${token}`,
+          ...getClientHeaders("ui"),
           "Content-Type": "application/json",
         },
       });
@@ -245,6 +251,31 @@ export function RequestLogListTable({
 
   return (
     <>
+      <div className="space-y-2">
+        <Label htmlFor="request-log-client-filter">{translate("Client")}</Label>
+        <Select
+          value={queryParams?.filter_client_name ?? "all"}
+          onValueChange={(value) =>
+            onChangeParams?.({
+              ...queryParams,
+              filter_client_name: value === "all" ? undefined : value,
+              prev_cursor: undefined,
+              next_cursor: undefined,
+            })
+          }
+        >
+          <SelectTrigger id="request-log-client-filter" className="w-full sm:w-56">
+            <SelectValue placeholder={translate("All clients")} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">{translate("All clients")}</SelectItem>
+            <SelectItem value="web">web</SelectItem>
+            <SelectItem value="ui">ui</SelectItem>
+            <SelectItem value="mobile">mobile</SelectItem>
+            <SelectItem value="js-sdk">js-sdk</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
       <DataTable
         columns={columns}
         cacheKey={cacheKey}

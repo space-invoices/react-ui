@@ -34,6 +34,7 @@ export type TableQueryParams = {
   // HTTP-specific filter params (for request logs)
   filter_method?: string; // GET, POST, PATCH, PUT, DELETE
   filter_http_status?: string; // 2xx, 4xx, 5xx
+  filter_client_name?: string;
 };
 
 /**

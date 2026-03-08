@@ -89,7 +89,8 @@ export function DataTable<T extends { id: string }>({
       queryParams?.filter_date_to ||
       queryParams?.filter_status ||
       queryParams?.filter_method ||
-      queryParams?.filter_http_status,
+      queryParams?.filter_http_status ||
+      queryParams?.filter_client_name,
   );
   const [filterPanelOpen, setFilterPanelOpen] = useState(hasInitialFilters);
 
@@ -115,7 +116,8 @@ export function DataTable<T extends { id: string }>({
       params.filter_date_to ||
       params.filter_status ||
       params.filter_method ||
-      params.filter_http_status,
+      params.filter_http_status ||
+      params.filter_client_name,
   );
 
   // Combined clear handler for both search and filters

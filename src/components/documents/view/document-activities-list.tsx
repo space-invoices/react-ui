@@ -91,6 +91,9 @@ export function DocumentActivitiesList({
       });
     },
     enabled: !!sdk && !!entityId && !!documentId,
+    staleTime: 15_000,
+    gcTime: 300_000,
+    refetchOnWindowFocus: false,
   });
 
   const activities = activitiesData?.data || [];

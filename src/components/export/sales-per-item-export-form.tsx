@@ -1,3 +1,4 @@
+import { getClientHeaders } from "@spaceinvoices/js-sdk";
 import { Calendar, Download, Loader2 } from "lucide-react";
 import { useState } from "react";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
@@ -114,6 +115,7 @@ export function SalesPerItemExportForm({
             Authorization: `Bearer ${token}`,
             "x-entity-id": entityId,
             ...(accountId && { "x-account-id": accountId }),
+            ...getClientHeaders("ui"),
           },
         },
       );

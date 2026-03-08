@@ -1,8 +1,9 @@
 "use client";
 
-import type { AdvanceInvoice, CreditNote, Estimate, Invoice } from "@spaceinvoices/js-sdk";
+import { getClientHeaders, type AdvanceInvoice, type CreditNote, type Estimate, type Invoice } from "@spaceinvoices/js-sdk";
+import { useQuery } from "@tanstack/react-query";
 import { AlertCircle, FileText } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { cn } from "@/ui/lib/utils";
 import { useEntitiesOptional } from "@/ui/providers/entities-context";
 import { useSDK } from "@/ui/providers/sdk-provider";
@@ -11,6 +12,9 @@ import { ScaledDocumentPreview } from "./scaled-document-preview";
 import { useA4Scaling } from "./use-a4-scaling";
 
 const SAVED_PREVIEW_TIMING_EVENT = "si:saved-preview-timing";
+const SAVED_DOCUMENT_PREVIEW_QUERY_KEY = "document-preview-html";
+const SAVED_DOCUMENT_PREVIEW_STALE_TIME = 1000 * 60 * 5;
+const SAVED_DOCUMENT_PREVIEW_GC_TIME = 1000 * 60 * 30;
 
 function emitSavedPreviewDebug(detail: Record<string, unknown>) {
   if (!import.meta.env.DEV || typeof window === "undefined") return;
@@ -32,10 +36,36 @@ function getDocTypePathFromShareableId(shareableId: string): string {
   return "invoices";
 }
 
+export function getSavedDocumentPreviewQueryKey({
+  documentId,
+  documentUpdatedAt,
+  entityId,
+  template,
+  isPublicView,
+  shareableId,
+}: {
+  documentId: string;
+  documentUpdatedAt?: string | null;
+  entityId?: string | null;
+  template?: "modern" | "classic" | "condensed" | "minimal" | "fashion";
+  isPublicView?: boolean;
+  shareableId?: string | null;
+}) {
+  return [
+    SAVED_DOCUMENT_PREVIEW_QUERY_KEY,
+    documentId,
+    documentUpdatedAt ?? null,
+    entityId ?? null,
+    template ?? null,
+    isPublicView ?? false,
+    shareableId ?? null,
+  ] as const;
+}
+
 type DocumentPreviewDisplayProps = {
   /** The document to display (invoice, estimate, credit note, or advance invoice) */
   document: Document;
-  template?: "modern" | "classic" | "minimal" | "fashion";
+  template?: "modern" | "classic" | "condensed" | "minimal" | "fashion";
   className?: string;
   apiBaseUrl?: string;
   /** Locale for document rendering (e.g., "en-US", "sl-SI"). Uses user's UI language. */
@@ -48,6 +78,8 @@ type DocumentPreviewDisplayProps = {
   t?: (key: string) => string;
   /** Document type label for display (e.g., "Invoice", "Estimate") */
   documentTypeLabel?: string;
+  /** Whether preview fetching is currently allowed */
+  fetchEnabled?: boolean;
 };
 
 /**
@@ -62,105 +94,119 @@ export function DocumentPreviewDisplay({
   template,
   className,
   apiBaseUrl,
-  locale,
+  locale: _locale,
   isPublicView = false,
   shareableId,
   t: tProp,
   documentTypeLabel,
+  fetchEnabled = true,
 }: DocumentPreviewDisplayProps) {
   const t = tProp ?? ((key: string) => key);
-  const [previewHtml, setPreviewHtml] = useState<string>("");
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const entitiesContext = useEntitiesOptional();
   const activeEntity = entitiesContext?.activeEntity;
   const { sdk } = useSDK();
+  const documentId = document?.id;
+  const documentUpdatedAt = document?.updated_at ?? null;
 
-  const { containerRef, contentRef, scale, contentHeight, A4_WIDTH_PX } = useA4Scaling(previewHtml);
+  const queryKey = useMemo(() => {
+    return getSavedDocumentPreviewQueryKey({
+      documentId: documentId ?? shareableId ?? "",
+      documentUpdatedAt,
+      entityId: activeEntity?.id,
+      template,
+      isPublicView,
+      shareableId,
+    });
+  }, [activeEntity?.id, documentId, documentUpdatedAt, isPublicView, shareableId, template]);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: document.updated_at intentionally triggers re-fetch when document changes server-side (e.g. after payment)
-  useEffect(() => {
-    const fetchPreview = async () => {
-      // For public view, use per-type shareable HTML endpoint
-      if (isPublicView && shareableId && apiBaseUrl) {
-        setIsLoading(true);
-        setError(null);
-        try {
-          // Determine document type from shareable ID prefix
+  const prerequisitesReady = isPublicView ? !!shareableId && !!apiBaseUrl : !!documentId && !!activeEntity?.id && !!sdk;
+
+  const previewQuery = useQuery({
+    queryKey,
+    enabled: fetchEnabled && prerequisitesReady,
+    staleTime: SAVED_DOCUMENT_PREVIEW_STALE_TIME,
+    gcTime: SAVED_DOCUMENT_PREVIEW_GC_TIME,
+    queryFn: async ({ signal }) => {
+      const abortController = new AbortController();
+      const abortRequest = () => abortController.abort();
+      signal.addEventListener("abort", abortRequest, { once: true });
+
+      try {
+        if (isPublicView && shareableId && apiBaseUrl) {
           const docTypePath = getDocTypePathFromShareableId(shareableId);
-          const response = await fetch(`${apiBaseUrl}/${docTypePath}/shareable/${shareableId}/html`);
+          const response = await fetch(`${apiBaseUrl}/${docTypePath}/shareable/${shareableId}/html`, {
+            headers: getClientHeaders("ui"),
+            signal: abortController.signal,
+          });
           if (!response.ok) {
             throw new Error("Failed to load preview");
           }
-          const html = await response.text();
-          setPreviewHtml(html);
-        } catch (err) {
-          setError(err instanceof Error ? err.message : "Failed to load preview");
-          setPreviewHtml("");
-        } finally {
-          setIsLoading(false);
+          return await response.text();
         }
-        return;
-      }
 
-      // Authenticated view - require entity context and SDK
-      if (!document?.id || !activeEntity?.id || !sdk) {
-        emitSavedPreviewDebug({
-          stage: "skipped",
-          reason: "missing_context",
-          documentId: document?.id,
-          hasEntityId: !!activeEntity?.id,
-          hasSdk: !!sdk,
-        });
-        return;
-      }
+        if (!documentId || !activeEntity?.id || !sdk) {
+          throw new Error("Preview context unavailable");
+        }
 
-      setIsLoading(true);
-      setError(null);
-
-      try {
         const startedAt = performance.now();
         emitSavedPreviewDebug({
           stage: "request_started",
-          documentId: document.id,
+          documentId,
         });
-        // Fetch the rendered HTML by document ID using SDK wrapper
-        // Document type is auto-detected from ID prefix (inv_, est_, cre_, adv_)
-        // Don't send locale — let entity locale drive formatting (decimal separators, date format)
-        const html = await sdk.invoices.renderHtml(document.id, { template }, { entity_id: activeEntity.id });
 
-        setPreviewHtml(html);
-        setError(null);
+        const html = await sdk.invoices.renderHtml(
+          documentId,
+          { template },
+          {
+            entity_id: activeEntity.id,
+            signal: abortController.signal,
+          },
+        );
+
         emitSavedPreviewDebug({
           stage: "request_succeeded",
-          documentId: document.id,
+          documentId,
           elapsedMs: Number((performance.now() - startedAt).toFixed(1)),
         });
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load preview");
-        setPreviewHtml("");
-        emitSavedPreviewDebug({
-          stage: "request_failed",
-          documentId: document.id,
-          message: err instanceof Error ? err.message : "Failed to load preview",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
 
-    fetchPreview();
-  }, [
-    document?.id,
-    document?.updated_at,
-    activeEntity?.id,
-    template,
-    apiBaseUrl,
-    locale,
-    isPublicView,
-    shareableId,
-    sdk,
-  ]);
+        return html;
+      } catch (err) {
+        if (err instanceof Error && err.name === "AbortError") {
+          emitSavedPreviewDebug({
+            stage: "request_aborted",
+            documentId,
+          });
+        } else {
+          emitSavedPreviewDebug({
+            stage: "request_failed",
+            documentId,
+            message: err instanceof Error ? err.message : "Failed to load preview",
+          });
+        }
+        throw err;
+      } finally {
+        signal.removeEventListener("abort", abortRequest);
+      }
+    },
+  });
+
+  const previewHtml = previewQuery.data ?? "";
+  const error = previewQuery.error instanceof Error ? previewQuery.error.message : null;
+  const isWaitingForFetch = prerequisitesReady && !fetchEnabled && !previewHtml && !error;
+  const isLoading = previewQuery.isPending || isWaitingForFetch;
+  const { containerRef, contentRef, scale, contentHeight, A4_WIDTH_PX } = useA4Scaling(previewHtml);
+
+  useEffect(() => {
+    if (isPublicView || prerequisitesReady) return;
+
+    emitSavedPreviewDebug({
+      stage: "skipped",
+      reason: "missing_context",
+      documentId,
+      hasEntityId: !!activeEntity?.id,
+      hasSdk: !!sdk,
+    });
+  }, [activeEntity?.id, documentId, isPublicView, prerequisitesReady, sdk]);
 
   return (
     <div ref={containerRef} className={cn("relative min-h-full", className)}>

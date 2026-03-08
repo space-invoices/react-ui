@@ -135,6 +135,9 @@ export function DocumentPaymentsList({
       return response.data;
     },
     enabled: !!sdk && !!entityId && !!documentId,
+    staleTime: 30_000,
+    gcTime: 600_000,
+    refetchOnWindowFocus: false,
   });
 
   const payments = paymentsData || [];

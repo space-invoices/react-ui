@@ -1,3 +1,4 @@
+import { getClientHeaders } from "@spaceinvoices/js-sdk";
 import type { ReactNode } from "react";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
@@ -44,7 +45,9 @@ export function WhiteLabelProvider({ children, apiBaseUrl = "" }: WhiteLabelProv
   useEffect(() => {
     const fetchConfig = async () => {
       try {
-        const response = await fetch(`${apiBaseUrl}/white-labels/current`);
+        const response = await fetch(`${apiBaseUrl}/white-labels/current`, {
+          headers: apiBaseUrl ? getClientHeaders("ui") : undefined,
+        });
         if (response.ok) {
           const data = await response.json();
           // Map snake_case API response to camelCase internal state

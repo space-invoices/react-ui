@@ -5,6 +5,7 @@ import {
   CONFIG_FILE,
   DEFAULT_CONFIG,
   configExists,
+  resolveAliasPath,
   writeConfig,
   type Config,
 } from "../utils/config.js";
@@ -90,6 +91,12 @@ export async function init(options: InitOptions = {}): Promise<void> {
         message: "Where should providers be installed?",
         initial: DEFAULT_CONFIG.aliases.providers,
       },
+      {
+        type: "text",
+        name: "generated",
+        message: "Where should generated helpers (schemas) be installed?",
+        initial: DEFAULT_CONFIG.aliases.generated,
+      },
     ]);
 
     // Check if user cancelled
@@ -106,6 +113,7 @@ export async function init(options: InitOptions = {}): Promise<void> {
         lib: answers.lib,
         hooks: answers.hooks,
         providers: answers.providers,
+        generated: answers.generated,
       },
     };
   }
@@ -133,16 +141,11 @@ export async function init(options: InitOptions = {}): Promise<void> {
       config.aliases.lib,
       config.aliases.hooks,
       config.aliases.providers,
+      config.aliases.generated,
     ];
 
     for (const alias of directories) {
-      let dirPath: string;
-      if (alias.startsWith("@/")) {
-        dirPath = path.join(cwd, "src", alias.slice(2));
-      } else {
-        dirPath = path.join(cwd, alias);
-      }
-      fs.mkdirSync(dirPath, { recursive: true });
+      fs.mkdirSync(resolveAliasPath(alias, cwd), { recursive: true });
     }
 
     dirSpinner.succeed("Created directories");

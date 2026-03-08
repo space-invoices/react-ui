@@ -1,6 +1,6 @@
 # UI Library Conventions
 
-This document formalizes the patterns and conventions used in the `@space-invoices/ui` package.
+This document formalizes the patterns and conventions used in the `@spaceinvoices/react-ui` package.
 
 ## Overview
 
@@ -14,7 +14,7 @@ The `@space-invoices/ui` package follows a **shadcn-style copy-paste pattern**:
 
 The `registry.json` file defines all components and their dependencies, enabling:
 
-- **Future CLI**: `npx leka-ui add create-invoice-form`
+- **CLI install flow**: `npx @spaceinvoices/react-ui add invoices/create-invoice-form`
 - **Dependency resolution**: Automatically identifies required utils, hooks, providers
 - **Documentation**: Clear visibility of what each component needs
 
@@ -242,12 +242,13 @@ All imports use the `@/ui/` alias for copy-paste compatibility:
 import { Button } from "@/ui/components/ui/button";
 import { useSDK } from "@/ui/providers/sdk-provider";
 import { createTranslation } from "@/ui/lib/translation";
+import { createInvoiceSchema } from "@/ui/generated/schemas";
 
 // ❌ Incorrect - relative paths
 import { Button } from "../../ui/button";
 ```
 
-When copying to your project, find-and-replace `@/ui/` with your alias (e.g., `@/`).
+When copying to your project, the CLI rewrites `@/ui/` imports to your configured aliases. If you install manually, replace them yourself.
 
 ## Testing Patterns
 

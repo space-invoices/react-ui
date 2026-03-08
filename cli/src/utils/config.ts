@@ -11,6 +11,7 @@ export interface Config {
     lib: string;
     hooks: string;
     providers: string;
+    generated: string;
   };
 }
 
@@ -22,6 +23,7 @@ export const DEFAULT_CONFIG: Config = {
     lib: "@/lib",
     hooks: "@/hooks",
     providers: "@/providers",
+    generated: "@/generated",
   },
 };
 
@@ -52,6 +54,10 @@ export function writeConfig(config: Config, cwd: string = process.cwd()): void {
 }
 
 export function resolveAliasPath(alias: string, cwd: string = process.cwd()): string {
+  if (path.isAbsolute(alias)) {
+    return alias;
+  }
+
   // Convert alias like @/components to actual path
   // Assumes @/ maps to src/ or ./ based on project structure
   if (alias.startsWith("@/")) {

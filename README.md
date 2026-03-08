@@ -1,19 +1,25 @@
-# @spaceinvoices/react-ui - Space Invoices Component Library
+# @spaceinvoices/react-ui - Space Invoices React UI Kit
 
-> **Pre-built React components for the Space Invoices API**
+> **Copy-paste React UI for the Space Invoices API**
 
-70+ components for building invoicing applications with the Space Invoices API. Includes forms, tables, dashboard charts, and more - all designed to be copied into your project for full customization.
+50+ installable components for building invoicing applications with the Space Invoices API. Includes forms, tables, dashboard charts, and more - all designed to be copied into your project for full customization.
 
 ## Philosophy
 
-These components are **designed to be copied**, not installed as a package:
+This package is a **CLI installer and source registry**, not a conventional runtime component library. The intended flow is:
+
+1. initialize your app with the CLI
+2. add only the components you need
+3. own the copied source inside your app
+
+These components are **designed to be copied**, not imported from `node_modules` at runtime:
 
 - **Full ownership** - Modify freely without breaking changes
 - **Complete customization** - Change behavior and structure
 - **No version conflicts** - You control when to update
 - **Zero lock-in** - Components work standalone in your codebase
 
-**Note**: Components are built on **shadcn/ui primitives**. Bring your own shadcn/ui components or use any alternative. The `components/ui/` folder is included as reference only.
+**Note**: Components are built on **shadcn/ui primitives**. Bring your own shadcn/ui components or use any alternative. The CLI can copy compatible `components/ui/` primitives when needed, but teams using their own design system can swap those imports after install.
 
 ## Quick Start (CLI - Recommended)
 
@@ -36,6 +42,7 @@ The CLI will:
 - Create `spaceinvoices.json` config with your preferred paths
 - Install required dependencies (`@spaceinvoices/js-sdk`, `@tanstack/react-query`)
 - Copy essential files (SDK provider, utilities)
+ - Copy generated Zod schemas when installed components depend on them
 - Transform import paths to match your project structure
 - Install npm dependencies for each component
 
@@ -101,7 +108,10 @@ cp -r react-ui/src/components/customers/ your-project/src/components/space-invoi
 cp -r react-ui/src/components/table/ your-project/src/components/space-invoices/
 # ... add more as needed
 
-# DON'T copy components/ui/ - use shadcn/ui instead
+# Include generated schemas if you use form components
+cp -r react-ui/src/generated/ your-project/src/generated/
+
+# Optional: skip components/ui/ if you already use shadcn/ui or your own primitives
 ```
 
 ### 4. Update Import Paths
@@ -158,9 +168,13 @@ src/components/
 └── table/              # Generic data table infrastructure
 ```
 
-### UI Primitives (Reference Only)
+### UI Primitives (Optional)
 
-The `components/ui/` folder contains shadcn/ui-style components. **Don't copy these** - use shadcn/ui directly:
+The `components/ui/` folder contains shadcn/ui-style components. You can:
+
+- let the CLI install compatible primitives for you
+- use shadcn/ui directly
+- swap to your own component library after copying the feature components
 
 ```bash
 npx shadcn@latest add button input form table dialog select
@@ -175,6 +189,8 @@ src/
 ├── providers/
 │   ├── sdk-provider.tsx       # SDK context (required)
 │   └── entities-provider.tsx  # Active entity context (required)
+├── generated/
+│   └── schemas/               # Generated Zod schemas used by form components
 ├── hooks/
 │   └── *.ts                   # Shared hooks
 └── lib/

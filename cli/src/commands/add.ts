@@ -24,6 +24,7 @@ import {
   transformImports,
   getFullDestinationPath,
 } from "../utils/transformer.js";
+import { getRegistryManagedDependencies } from "../utils/file-dependencies.js";
 
 export interface AddOptions {
   cwd?: string;
@@ -110,6 +111,8 @@ export async function add(
     throw error;
   }
 
+  const fileContents = await collectRegistryFiles(resolved.allFiles);
+
   // Show summary
   const summary = getInstallSummary(resolved);
   logger.break();
@@ -130,7 +133,7 @@ export async function add(
       `  ${highlight("npm packages:")} ${summary.npmPackages.join(", ")}`
     );
   }
-  logger.log(`  ${highlight("Files:")} ${summary.fileCount} files`);
+  logger.log(`  ${highlight("Files:")} ${fileContents.size} files`);
 
   // Confirm installation
   if (!options.yes) {
@@ -157,7 +160,7 @@ export async function add(
   const filesToWrite: Array<{ path: string; content: string }> = [];
 
   try {
-    for (const filePath of resolved.allFiles) {
+    for (const [filePath, content] of fileContents) {
       const destPath = getFullDestinationPath(filePath, config, cwd);
 
       // Check if file exists
@@ -165,8 +168,6 @@ export async function add(
         existingFiles.push(destPath);
       }
 
-      // Fetch content
-      const content = await fetchFile(filePath);
       const transformed = transformImports(content, config);
       filesToWrite.push({ path: destPath, content: transformed });
     }
@@ -243,6 +244,29 @@ export async function add(
   logger.break();
   logger.success("Components installed successfully!");
   logger.break();
+}
+
+async function collectRegistryFiles(initialFiles: string[]): Promise<Map<string, string>> {
+  const pending = [...initialFiles];
+  const contents = new Map<string, string>();
+
+  while (pending.length > 0) {
+    const filePath = pending.shift();
+    if (!filePath || contents.has(filePath)) {
+      continue;
+    }
+
+    const content = await fetchFile(filePath);
+    contents.set(filePath, content);
+
+    for (const dependency of getRegistryManagedDependencies(filePath, content)) {
+      if (!contents.has(dependency)) {
+        pending.push(dependency);
+      }
+    }
+  }
+
+  return contents;
 }
 
 async function selectComponents(registry: Registry): Promise<string[]> {

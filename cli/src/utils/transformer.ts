@@ -1,4 +1,6 @@
+import path from "node:path";
 import type { Config } from "./config.js";
+import { resolveAliasPath } from "./config.js";
 
 /**
  * Transform import paths in source code from registry format to user's configured aliases
@@ -9,6 +11,7 @@ import type { Config } from "./config.js";
  * - @/ui/providers/xxx -> user's providers alias
  * - @/ui/lib/xxx -> user's lib alias
  * - @/ui/hooks/xxx -> user's hooks alias
+ * - @/ui/generated/xxx -> user's generated alias
  */
 export function transformImports(source: string, config: Config): string {
   let result = source;
@@ -29,6 +32,9 @@ export function transformImports(source: string, config: Config): string {
 
     // Hooks: @/ui/hooks/ -> config.aliases.hooks/
     [/@\/ui\/hooks\//g, `${config.aliases.hooks}/`],
+
+    // Generated helpers: @/ui/generated/ -> config.aliases.generated/
+    [/@\/ui\/generated\//g, `${config.aliases.generated}/`],
   ];
 
   for (const [pattern, replacement] of replacements) {
@@ -44,7 +50,7 @@ export function transformImports(source: string, config: Config): string {
 export function getDestinationPath(
   sourcePath: string,
   config: Config
-): { destPath: string; category: "ui" | "components" | "providers" | "lib" | "hooks" } {
+): { destPath: string; category: "ui" | "components" | "providers" | "lib" | "hooks" | "generated" } {
   // Determine the category and destination based on the source path
   if (sourcePath.startsWith("components/ui/")) {
     return {
@@ -81,6 +87,13 @@ export function getDestinationPath(
     };
   }
 
+  if (sourcePath.startsWith("generated/")) {
+    return {
+      destPath: sourcePath.replace("generated/", ""),
+      category: "generated",
+    };
+  }
+
   // Default to components
   return {
     destPath: sourcePath,
@@ -98,14 +111,5 @@ export function getFullDestinationPath(
 ): string {
   const { destPath, category } = getDestinationPath(sourcePath, config);
   const alias = config.aliases[category];
-
-  // Convert alias to relative path (assuming @/ -> src/)
-  let relativePath: string;
-  if (alias.startsWith("@/")) {
-    relativePath = alias.slice(2); // Remove @/
-  } else {
-    relativePath = alias;
-  }
-
-  return `${basePath}/src/${relativePath}/${destPath}`;
+  return path.join(resolveAliasPath(alias, basePath), destPath);
 }

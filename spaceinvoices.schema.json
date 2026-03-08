@@ -12,7 +12,7 @@
     "aliases": {
       "type": "object",
       "description": "Path aliases for component installation",
-      "required": ["components", "ui", "lib", "hooks", "providers"],
+      "required": ["components", "ui", "lib", "hooks", "providers", "generated"],
       "properties": {
         "components": {
           "type": "string",
@@ -38,6 +38,11 @@
           "type": "string",
           "description": "Path alias for React providers (e.g., @/providers)",
           "default": "@/providers"
+        },
+        "generated": {
+          "type": "string",
+          "description": "Path alias for generated helpers such as Zod schemas (e.g., @/generated)",
+          "default": "@/generated"
         }
       },
       "additionalProperties": false

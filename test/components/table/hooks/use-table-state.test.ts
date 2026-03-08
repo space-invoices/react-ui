@@ -6,11 +6,7 @@ import { useTableState } from "@/ui/components/table/hooks/use-table-state";
 describe("useTableState", () => {
   describe("handlePageChange", () => {
     test("should set next_cursor when navigating forward", () => {
-      const { result } = renderHook(() =>
-        useTableState({
-          defaultOrderBy: "-id",
-        }),
-      );
+      const { result } = renderHook(() => useTableState({}));
 
       act(() => {
         result.current.handlePageChange({ next: "cursor_123" });
@@ -21,11 +17,7 @@ describe("useTableState", () => {
     });
 
     test("should set prev_cursor when navigating backward", () => {
-      const { result } = renderHook(() =>
-        useTableState({
-          defaultOrderBy: "-id",
-        }),
-      );
+      const { result } = renderHook(() => useTableState({}));
 
       act(() => {
         result.current.handlePageChange({ prev: "cursor_456" });
@@ -36,11 +28,7 @@ describe("useTableState", () => {
     });
 
     test("should correctly navigate forward then backward", () => {
-      const { result } = renderHook(() =>
-        useTableState({
-          defaultOrderBy: "-id",
-        }),
-      );
+      const { result } = renderHook(() => useTableState({}));
 
       // Navigate forward to page 2
       act(() => {
@@ -64,9 +52,7 @@ describe("useTableState", () => {
         useTableState({
           initialParams: {
             next_cursor: "existing_cursor",
-            order_by: "-id",
           },
-          defaultOrderBy: "-id",
         }),
       );
 
@@ -87,7 +73,6 @@ describe("useTableState", () => {
 
       const { result } = renderHook(() =>
         useTableState({
-          defaultOrderBy: "-id",
           onChangeParams,
         }),
       );
@@ -108,7 +93,6 @@ describe("useTableState", () => {
         ({ initialParams }) =>
           useTableState({
             initialParams,
-            defaultOrderBy: "-id",
           }),
         {
           initialProps: { initialParams: {} },
@@ -127,29 +111,6 @@ describe("useTableState", () => {
     });
   });
 
-  describe("handleSort", () => {
-    test("should clear cursors when sorting", () => {
-      const { result } = renderHook(() =>
-        useTableState({
-          initialParams: {
-            next_cursor: "some_cursor",
-          },
-          defaultOrderBy: "-id",
-        }),
-      );
-
-      expect(result.current.params.next_cursor).toBe("some_cursor");
-
-      act(() => {
-        result.current.handleSort("name");
-      });
-
-      expect(result.current.params.order_by).toBe("name");
-      expect(result.current.params.next_cursor).toBeUndefined();
-      expect(result.current.params.prev_cursor).toBeUndefined();
-    });
-  });
-
   describe("handleSearch", () => {
     test("should clear cursors when searching", () => {
       const { result } = renderHook(() =>
@@ -157,7 +118,6 @@ describe("useTableState", () => {
           initialParams: {
             prev_cursor: "some_cursor",
           },
-          defaultOrderBy: "-id",
         }),
       );
 

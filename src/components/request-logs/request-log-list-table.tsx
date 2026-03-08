@@ -1,6 +1,5 @@
 "use client";
 
-import { getClientHeaders } from "@spaceinvoices/js-sdk";
 import { formatDistanceToNow } from "date-fns";
 import { useCallback, useMemo } from "react";
 import { Label } from "@/ui/components/ui/label";
@@ -9,6 +8,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/ui/components/ui
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/ui/components/ui/tooltip";
 import { AUTH_COOKIES } from "@/ui/lib/auth";
 import { getCookie } from "@/ui/lib/browser-cookies";
+import { getClientHeaders } from "@/ui/lib/client-headers";
 import { getDateFnsLocale } from "@/ui/lib/date-fns-locale";
 import { createTranslation } from "@/ui/lib/translation";
 import { cn } from "@/ui/lib/utils";

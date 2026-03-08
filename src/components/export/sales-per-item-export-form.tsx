@@ -1,6 +1,6 @@
-import { getClientHeaders } from "@spaceinvoices/js-sdk";
 import { Calendar, Download, Loader2 } from "lucide-react";
 import { useState } from "react";
+import { getClientHeaders } from "@/ui/lib/client-headers";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
 import { Button } from "../ui/button";

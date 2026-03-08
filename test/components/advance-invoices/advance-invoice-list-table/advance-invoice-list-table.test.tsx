@@ -93,7 +93,6 @@ describe("AdvanceInvoiceListTable", () => {
         tax_number: "123456789",
       },
       date: "2023-01-01",
-      date_due: "2023-01-31",
       total: 1000,
       total_with_tax: 1220,
       total_paid: 0,
@@ -128,7 +127,6 @@ describe("AdvanceInvoiceListTable", () => {
         tax_number: "987654321",
       },
       date: "2023-02-01",
-      date_due: "2023-02-28",
       total: 2000,
       total_with_tax: 2440,
       total_paid: 2440,
@@ -234,7 +232,6 @@ describe("AdvanceInvoiceListTable", () => {
     expect(await screen.findByText("Número")).toBeInTheDocument();
     expect(await screen.findByText("Cliente")).toBeInTheDocument();
     expect(await screen.findByText("Fecha")).toBeInTheDocument();
-    expect(await screen.findByText("Fecha de vencimiento")).toBeInTheDocument();
     expect(await screen.findByText("Total")).toBeInTheDocument();
     expect(await screen.findByText("Total con impuestos")).toBeInTheDocument();
   });

@@ -6,6 +6,25 @@ import userEvent from "@testing-library/user-event";
 
 import EstimateListTable from "@/ui/components/estimates/list/list-table";
 
+// Mock the entities context (needed by EstimateListRowActions → useEstimateDownload)
+mock.module("@/ui/providers/entities-context", () => ({
+  useEntities: () => ({
+    activeEntity: { id: "entity1", name: "Test Entity", environment: "live" },
+    entities: [{ id: "entity1", name: "Test Entity", environment: "live" }],
+    // biome-ignore lint/suspicious/noEmptyBlockStatements: Intentionally empty mock function
+    setActiveEntity: () => {},
+    environment: "live",
+    // biome-ignore lint/suspicious/noEmptyBlockStatements: Intentionally empty mock function
+    setEnvironment: () => {},
+    isLoading: false,
+    // biome-ignore lint/suspicious/noEmptyBlockStatements: Intentionally empty mock function
+    refetchEntities: async () => {},
+    isError: false,
+    error: null,
+    status: "success",
+  }),
+}));
+
 // Mock the SDK provider
 const mockSDK = {
   estimates: {
@@ -126,7 +145,7 @@ describe("EstimateListTable", () => {
       expect(mockSDK.estimates.list).toHaveBeenCalledTimes(1);
       expect(mockSDK.estimates.list).toHaveBeenCalledWith(
         expect.objectContaining({
-          order_by: "-id",
+          entity_id: "test-entity",
         }),
       );
     });

@@ -1,6 +1,6 @@
-import { getClientHeaders } from "@spaceinvoices/js-sdk";
 import type { ReactNode } from "react";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { getClientHeaders } from "@/ui/lib/client-headers";
 import { useEntitiesOptional } from "./entities-context";
 import { useAccessToken } from "./sdk-provider";
 

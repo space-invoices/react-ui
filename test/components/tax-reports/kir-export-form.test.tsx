@@ -1,6 +1,28 @@
 import { beforeEach, describe, expect, it, mock } from "bun:test";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+
+mock.module("@/ui/components/ui/select", () => ({
+  Select: ({ children, onValueChange, value }: any) => (
+    <div data-testid="select" data-value={value}>
+      {children}
+      <select aria-label="select-native" data-testid="select-native" value={value} onChange={(e) => onValueChange(e.target.value)}>
+        {Array.isArray(children?.[1]?.props?.children)
+          ? children[1].props.children.map((child: any) => (
+              <option key={child.props.value} value={child.props.value}>
+                {child.props.children}
+              </option>
+            ))
+          : null}
+      </select>
+    </div>
+  ),
+  SelectContent: ({ children }: any) => <div>{children}</div>,
+  SelectItem: ({ children, value }: any) => <div data-value={value}>{children}</div>,
+  SelectTrigger: ({ children }: any) => <div>{children}</div>,
+  SelectValue: () => <span />,
+}));
+
 import { KirExportForm } from "@/ui/components/tax-reports/kir-export-form";
 
 // Mock translation function
@@ -35,44 +57,48 @@ describe("KirExportForm", () => {
   describe("Rendering", () => {
     it("should render year selector", () => {
       render(<KirExportForm {...defaultProps} />);
-      expect(screen.getByText("kir-export.year")).toBeInTheDocument();
+      expect(screen.getByText("Year")).toBeInTheDocument();
     });
 
-    it("should render period type selector", () => {
+    it("should render period type toggle", () => {
       render(<KirExportForm {...defaultProps} />);
-      expect(screen.getByText("kir-export.period-type")).toBeInTheDocument();
+      expect(screen.getByText("Period type")).toBeInTheDocument();
+      expect(screen.getAllByText("Month").length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByText("Quarter").length).toBeGreaterThanOrEqual(1);
     });
 
     it("should render month selector by default", () => {
       render(<KirExportForm {...defaultProps} />);
-      expect(screen.getByText("kir-export.month")).toBeInTheDocument();
+      expect(screen.getAllByText("Month").length).toBeGreaterThanOrEqual(1);
     });
 
     it("should render export button", () => {
       render(<KirExportForm {...defaultProps} />);
-      expect(screen.getByRole("button", { name: /kir-export.export-button/i })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /export kir zip/i })).toBeInTheDocument();
+    });
+
+    it("should render file preview", () => {
+      render(<KirExportForm {...defaultProps} />);
+      expect(screen.getByText(/file preview/i)).toBeInTheDocument();
+      expect(screen.getByText(/KIR_\d{4}_M\d+\.zip/)).toBeInTheDocument();
     });
   });
 
   describe("Year Selection", () => {
     it("should default to current or previous month's year", () => {
       render(<KirExportForm {...defaultProps} />);
-      const trigger = screen.getByRole("combobox", { name: /kir-export.year/i });
+      const [trigger] = screen.getAllByTestId("select-native");
       // Should have a valid year (current or previous based on month)
-      expect(trigger.textContent).toMatch(/\d{4}/);
+      expect((trigger as HTMLSelectElement).value).toMatch(/\d{4}/);
     });
 
     it("should show 6 year options", async () => {
-      const user = userEvent.setup();
       render(<KirExportForm {...defaultProps} />);
-
-      const trigger = screen.getByRole("combobox", { name: /kir-export.year/i });
-      await user.click(trigger);
 
       const currentYear = new Date().getFullYear();
       // Current year appears in both trigger and dropdown option
       expect(screen.getAllByText(currentYear.toString()).length).toBeGreaterThanOrEqual(1);
-      expect(screen.getByText((currentYear - 5).toString())).toBeInTheDocument();
+      expect(screen.getAllByText((currentYear - 5).toString()).length).toBeGreaterThanOrEqual(1);
     });
   });
 
@@ -80,62 +106,55 @@ describe("KirExportForm", () => {
     it("should have month as default period type", () => {
       render(<KirExportForm {...defaultProps} />);
       // Month selector should be visible by default (quarter selector should not)
-      expect(screen.getByText("kir-export.month")).toBeInTheDocument();
-      expect(screen.queryByText("kir-export.quarter")).not.toBeInTheDocument();
+      expect(screen.getAllByText("Month").length).toBeGreaterThanOrEqual(2);
+      expect(screen.getAllByText("Quarter").length).toBe(1);
     });
 
-    it("should show month and quarter options", async () => {
+    it("should show quarter selector when quarter button is clicked", async () => {
       const user = userEvent.setup();
       render(<KirExportForm {...defaultProps} />);
 
-      const trigger = screen.getByRole("combobox", { name: /kir-export.period-type/i });
-      await user.click(trigger);
+      await user.click(screen.getByRole("button", { name: "Quarter" }));
 
-      expect(screen.getByText("kir-export.period-types.month")).toBeInTheDocument();
-      expect(screen.getByText("kir-export.period-types.quarter")).toBeInTheDocument();
+      expect(screen.getAllByText("Quarter").length).toBeGreaterThanOrEqual(2);
+      expect(screen.getAllByText("Month").length).toBe(1);
     });
 
-    it("should show quarter selector when quarter is selected", async () => {
-      const user = userEvent.setup();
-      render(<KirExportForm {...defaultProps} />);
-
-      const trigger = screen.getByRole("combobox", { name: /kir-export.period-type/i });
-      await user.click(trigger);
-      await user.click(screen.getByText("kir-export.period-types.quarter"));
-
-      expect(screen.getByText("kir-export.quarter")).toBeInTheDocument();
-      expect(screen.queryByText("kir-export.month")).not.toBeInTheDocument();
-    });
-
-    it("should show month selector when month is selected", async () => {
+    it("should show month selector when month button is clicked", async () => {
       const user = userEvent.setup();
       render(<KirExportForm {...defaultProps} />);
 
       // First switch to quarter
-      const trigger = screen.getByRole("combobox", { name: /kir-export.period-type/i });
-      await user.click(trigger);
-      await user.click(screen.getByText("kir-export.period-types.quarter"));
+      await user.click(screen.getByRole("button", { name: "Quarter" }));
 
       // Then switch back to month
-      await user.click(trigger);
-      await user.click(screen.getByText("kir-export.period-types.month"));
+      await user.click(screen.getByRole("button", { name: "Month" }));
 
-      expect(screen.getByText("kir-export.month")).toBeInTheDocument();
-      expect(screen.queryByText("kir-export.quarter")).not.toBeInTheDocument();
+      expect(screen.getAllByText("Month").length).toBeGreaterThanOrEqual(2);
+      expect(screen.getAllByText("Quarter").length).toBe(1);
+    });
+
+    it("should update file preview when switching period type", async () => {
+      const user = userEvent.setup();
+      render(<KirExportForm {...defaultProps} />);
+
+      // Default is month
+      expect(screen.getByText(/KIR_\d{4}_M\d+\.zip/)).toBeInTheDocument();
+
+      // Switch to quarter
+      await user.click(screen.getByRole("button", { name: "Quarter" }));
+
+      expect(screen.getByText(/KIR_\d{4}_Q\d\.zip/)).toBeInTheDocument();
     });
   });
 
   describe("Month Selection", () => {
     it("should show all 12 months", async () => {
-      const user = userEvent.setup();
       render(<KirExportForm {...defaultProps} />);
 
-      const trigger = screen.getByRole("combobox", { name: /kir-export.month/i });
-      await user.click(trigger);
-
-      for (let i = 1; i <= 12; i++) {
-        expect(screen.getByText(`kir-export.months.${i}`)).toBeInTheDocument();
-      }
+      ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"].forEach(
+        (month) => expect(screen.getAllByText(month).length).toBeGreaterThanOrEqual(1),
+      );
     });
   });
 
@@ -145,17 +164,9 @@ describe("KirExportForm", () => {
       render(<KirExportForm {...defaultProps} />);
 
       // Switch to quarter
-      const periodTrigger = screen.getByRole("combobox", { name: /kir-export.period-type/i });
-      await user.click(periodTrigger);
-      await user.click(screen.getByText("kir-export.period-types.quarter"));
+      await user.click(screen.getByRole("button", { name: "Quarter" }));
 
-      // Open quarter selector
-      const quarterTrigger = screen.getByRole("combobox", { name: /kir-export.quarter/i });
-      await user.click(quarterTrigger);
-
-      for (let i = 1; i <= 4; i++) {
-        expect(screen.getByText(`kir-export.quarters.${i}`)).toBeInTheDocument();
-      }
+      ["Q1", "Q2", "Q3", "Q4"].forEach((quarter) => expect(screen.getAllByText(quarter).length).toBeGreaterThanOrEqual(1));
     });
   });
 
@@ -164,7 +175,7 @@ describe("KirExportForm", () => {
       const user = userEvent.setup();
       render(<KirExportForm {...defaultProps} />);
 
-      const exportButton = screen.getByRole("button", { name: /kir-export.export-button/i });
+      const exportButton = screen.getByRole("button", { name: /export kir zip/i });
       await user.click(exportButton);
 
       await waitFor(() => {
@@ -184,11 +195,9 @@ describe("KirExportForm", () => {
       render(<KirExportForm {...defaultProps} />);
 
       // Switch to quarter
-      const periodTrigger = screen.getByRole("combobox", { name: /kir-export.period-type/i });
-      await user.click(periodTrigger);
-      await user.click(screen.getByText("kir-export.period-types.quarter"));
+      await user.click(screen.getByRole("button", { name: "Quarter" }));
 
-      const exportButton = screen.getByRole("button", { name: /kir-export.export-button/i });
+      const exportButton = screen.getByRole("button", { name: /export kir zip/i });
       await user.click(exportButton);
 
       await waitFor(() => {
@@ -209,7 +218,7 @@ describe("KirExportForm", () => {
 
       render(<KirExportForm {...defaultProps} onSuccess={onSuccess} />);
 
-      const exportButton = screen.getByRole("button", { name: /kir-export.export-button/i });
+      const exportButton = screen.getByRole("button", { name: /export kir zip/i });
       await user.click(exportButton);
 
       await waitFor(() => {
@@ -224,11 +233,9 @@ describe("KirExportForm", () => {
       render(<KirExportForm {...defaultProps} onSuccess={onSuccess} />);
 
       // Switch to quarter
-      const periodTrigger = screen.getByRole("combobox", { name: /kir-export.period-type/i });
-      await user.click(periodTrigger);
-      await user.click(screen.getByText("kir-export.period-types.quarter"));
+      await user.click(screen.getByRole("button", { name: "Quarter" }));
 
-      const exportButton = screen.getByRole("button", { name: /kir-export.export-button/i });
+      const exportButton = screen.getByRole("button", { name: /export kir zip/i });
       await user.click(exportButton);
 
       await waitFor(() => {
@@ -245,7 +252,7 @@ describe("KirExportForm", () => {
 
       render(<KirExportForm {...defaultProps} onError={onError} />);
 
-      const exportButton = screen.getByRole("button", { name: /kir-export.export-button/i });
+      const exportButton = screen.getByRole("button", { name: /export kir zip/i });
       await user.click(exportButton);
 
       await waitFor(() => {
@@ -259,7 +266,7 @@ describe("KirExportForm", () => {
 
       render(<KirExportForm {...defaultProps} onLoadingChange={onLoadingChange} />);
 
-      const exportButton = screen.getByRole("button", { name: /kir-export.export-button/i });
+      const exportButton = screen.getByRole("button", { name: /export kir zip/i });
       await user.click(exportButton);
 
       await waitFor(() => {
@@ -272,7 +279,7 @@ describe("KirExportForm", () => {
       const user = userEvent.setup();
       render(<KirExportForm {...defaultProps} />);
 
-      const exportButton = screen.getByRole("button", { name: /kir-export.export-button/i });
+      const exportButton = screen.getByRole("button", { name: /export kir zip/i });
       expect(exportButton).not.toBeDisabled();
 
       await user.click(exportButton);

@@ -112,7 +112,7 @@ describe("ItemListTable", () => {
       expect(mockSDK.items.list).toHaveBeenCalledTimes(1);
       expect(mockSDK.items.list).toHaveBeenCalledWith(
         expect.objectContaining({
-          order_by: "-id",
+          entity_id: "test-entity",
         }),
       );
     });

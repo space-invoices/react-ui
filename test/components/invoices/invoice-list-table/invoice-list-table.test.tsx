@@ -233,7 +233,7 @@ describe("InvoiceListTable", () => {
     expect(await screen.findByText("Total con impuestos")).toBeInTheDocument();
   });
 
-  test("displays 'Draft' text instead of number for draft invoices", async () => {
+  test("displays 'Draft' badge for draft invoices", async () => {
     const draftInvoice: Invoice = {
       ...mockInvoices[0],
       id: "draft-1",
@@ -255,9 +255,9 @@ describe("InvoiceListTable", () => {
 
     customRender(<InvoiceListTable entityId="test-entity" />);
 
-    // Draft invoice should show "Draft" instead of "draft-123"
+    // Draft invoice should show a draft badge alongside its number
     expect(await screen.findByText("Draft")).toBeInTheDocument();
-    expect(screen.queryByText("draft-123")).not.toBeInTheDocument();
+    expect(await screen.findByText("draft-123")).toBeInTheDocument();
 
     // Regular invoice should still show its number
     expect(await screen.findByText("INV-002")).toBeInTheDocument();

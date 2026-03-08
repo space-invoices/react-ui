@@ -2,13 +2,22 @@ import { beforeEach, describe, expect, it, mock, spyOn } from "bun:test";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 import { createElement } from "react";
-import { useVoidInvoice } from "@/ui/components/invoices/invoices-furs.hooks";
+import { useVoidDocument } from "@/ui/components/invoices/invoices-furs.hooks";
 
-const mockVoid = mock(async () => ({}));
+const mockInvoiceVoid = mock(async () => ({}));
 
 const mockSDK = {
   invoices: {
-    void: mockVoid,
+    void: mockInvoiceVoid,
+  },
+  creditNotes: {
+    void: mock(async () => ({})),
+  },
+  advanceInvoices: {
+    void: mock(async () => ({})),
+  },
+  deliveryNotes: {
+    void: mock(async () => ({})),
   },
 };
 
@@ -16,11 +25,11 @@ mock.module("@/ui/providers/sdk-provider", () => ({
   useSDK: () => ({ sdk: mockSDK }),
 }));
 
-describe("useVoidInvoice Hook", () => {
+describe("useVoidDocument Hook", () => {
   let queryClient: QueryClient;
 
   beforeEach(() => {
-    mockVoid.mockClear();
+    mockInvoiceVoid.mockClear();
     queryClient = new QueryClient({
       defaultOptions: {
         queries: { retry: false },
@@ -42,10 +51,11 @@ describe("useVoidInvoice Hook", () => {
 
     mockSDK.invoices.void.mockResolvedValue(mockVoidedInvoice);
 
-    const { result } = renderHook(() => useVoidInvoice(), { wrapper });
+    const { result } = renderHook(() => useVoidDocument(), { wrapper });
 
     result.current.mutate({
-      invoiceId: "inv_123",
+      documentId: "inv_123",
+      documentType: "invoice",
       entityId: "ent_123",
       reason: "Customer requested cancellation",
     });
@@ -67,10 +77,11 @@ describe("useVoidInvoice Hook", () => {
   it("should void invoice without reason", async () => {
     mockSDK.invoices.void.mockResolvedValue({ id: "inv_123" });
 
-    const { result } = renderHook(() => useVoidInvoice(), { wrapper });
+    const { result } = renderHook(() => useVoidDocument(), { wrapper });
 
     result.current.mutate({
-      invoiceId: "inv_123",
+      documentId: "inv_123",
+      documentType: "invoice",
       entityId: "ent_123",
     });
 
@@ -85,10 +96,11 @@ describe("useVoidInvoice Hook", () => {
   it("should handle void invoice error", async () => {
     mockSDK.invoices.void.mockRejectedValue(new Error("Cannot void already voided invoice"));
 
-    const { result } = renderHook(() => useVoidInvoice(), { wrapper });
+    const { result } = renderHook(() => useVoidDocument(), { wrapper });
 
     result.current.mutate({
-      invoiceId: "inv_123",
+      documentId: "inv_123",
+      documentType: "invoice",
       entityId: "ent_123",
     });
 
@@ -100,15 +112,16 @@ describe("useVoidInvoice Hook", () => {
     expect((result.current.error as Error).message).toBe("Cannot void already voided invoice");
   });
 
-  it("should invalidate invoice queries on success", async () => {
+  it("should invalidate document queries on success", async () => {
     mockSDK.invoices.void.mockResolvedValue({ id: "inv_123" });
 
     const invalidateQueriesSpy = spyOn(queryClient, "invalidateQueries");
 
-    const { result } = renderHook(() => useVoidInvoice(), { wrapper });
+    const { result } = renderHook(() => useVoidDocument(), { wrapper });
 
     result.current.mutate({
-      invoiceId: "inv_123",
+      documentId: "inv_123",
+      documentType: "invoice",
       entityId: "ent_123",
     });
 
@@ -128,11 +141,12 @@ describe("useVoidInvoice Hook", () => {
   it("should handle multiple void operations", async () => {
     mockSDK.invoices.void.mockResolvedValue({ id: "inv_123" });
 
-    const { result } = renderHook(() => useVoidInvoice(), { wrapper });
+    const { result } = renderHook(() => useVoidDocument(), { wrapper });
 
     // First void
     result.current.mutate({
-      invoiceId: "inv_123",
+      documentId: "inv_123",
+      documentType: "invoice",
       entityId: "ent_123",
     });
 
@@ -144,7 +158,8 @@ describe("useVoidInvoice Hook", () => {
     mockSDK.invoices.void.mockResolvedValue({ id: "inv_456" });
 
     result.current.mutate({
-      invoiceId: "inv_456",
+      documentId: "inv_456",
+      documentType: "invoice",
       entityId: "ent_123",
     });
 
@@ -160,12 +175,13 @@ describe("useVoidInvoice Hook", () => {
       () => new Promise((resolve) => setTimeout(() => resolve({ id: "inv_123" }), 100)),
     );
 
-    const { result } = renderHook(() => useVoidInvoice(), { wrapper });
+    const { result } = renderHook(() => useVoidDocument(), { wrapper });
 
     expect(result.current.isPending).toBe(false);
 
     result.current.mutate({
-      invoiceId: "inv_123",
+      documentId: "inv_123",
+      documentType: "invoice",
       entityId: "ent_123",
     });
 

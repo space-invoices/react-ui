@@ -106,7 +106,7 @@ describe("TaxListTable", () => {
       expect(mockSDK.taxes.list).toHaveBeenCalledTimes(1);
       expect(mockSDK.taxes.list).toHaveBeenCalledWith(
         expect.objectContaining({
-          order_by: "-id",
+          entity_id: "test-entity",
         }),
       );
     });

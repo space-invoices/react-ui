@@ -11,8 +11,22 @@ const mockUpdateSettings = mock(() => undefined);
 let mockUpdateFinaSettingsData: any = { mutate: mockUpdateSettings, isPending: false };
 const mockUploadCertificate = mock(() => undefined);
 let mockUploadCertificateData: any = { mutate: mockUploadCertificate, isPending: false };
-const mockClosePremise = mock(() => undefined);
+const mockDeletePremise = mock(() => undefined);
+const mockDeleteDevice = mock(() => undefined);
 const mockRegisterDevice = mock(() => undefined);
+const mockUpdateEntity = mock(() => undefined);
+let mockUserFinaSettingsData: any = {
+  data: { operator_oib: "12345678901", operator_label: "Operator1" },
+  isLoading: false,
+};
+
+// Mock entities hooks to avoid SDK provider dependency
+mock.module("@/ui/components/entities/entities.hooks", () => ({
+  useUpdateEntity: () => ({ mutate: mockUpdateEntity, isPending: false }),
+  useCreateEntity: () => ({ mutate: mock(), isPending: false }),
+  useDeleteEntity: () => ({ mutate: mock(), isPending: false }),
+  ENTITIES_CACHE_KEY: "entities",
+}));
 
 // Mock only hooks, NOT section components (to avoid mock.module contamination across test files)
 mock.module("@/ui/components/entities/fina-settings-form/fina-settings.hooks", () => ({
@@ -20,8 +34,11 @@ mock.module("@/ui/components/entities/fina-settings-form/fina-settings.hooks", (
   useFinaPremises: () => mockFinaPremisesData,
   useUpdateFinaSettings: () => mockUpdateFinaSettingsData,
   useUploadFinaCertificate: () => mockUploadCertificateData,
-  useCloseFinaPremise: () => ({ mutate: mockClosePremise }),
+  useDeleteFinaPremise: () => ({ mutate: mockDeletePremise }),
+  useDeleteFinaDevice: () => ({ mutate: mockDeleteDevice }),
   useRegisterFinaElectronicDevice: () => ({ mutate: mockRegisterDevice, isPending: false }),
+  useUserFinaSettings: () => mockUserFinaSettingsData,
+  useUpdateUserFinaSettings: () => ({ mutate: mock(), isPending: false }),
 }));
 
 // Mock only the register premise dialog (complex deps)
@@ -45,6 +62,7 @@ describe("FinaSettingsForm", () => {
     id: "ent_123",
     country_code: "HR",
     environment: "production",
+    tax_number: "12345678901",
   };
 
   beforeEach(() => {
@@ -69,6 +87,11 @@ describe("FinaSettingsForm", () => {
     mockUploadCertificateData = {
       mutate: mockUploadCertificate,
       isPending: false,
+    };
+
+    mockUserFinaSettingsData = {
+      data: { operator_oib: "12345678901", operator_label: "Operator1" },
+      isLoading: false,
     };
   });
 

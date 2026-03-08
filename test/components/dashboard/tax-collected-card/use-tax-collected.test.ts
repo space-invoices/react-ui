@@ -3,17 +3,19 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 import { createElement } from "react";
 
-// Mock entityStats responses
-const mockQueryEntityStats = mock(async (query: any, _options?: { entity_id?: string }) => {
-  if (query.table === "invoice_taxes") {
-    return {
-      data: [
-        { rate: 22, tax_total: 1100, quote_currency: "EUR" },
-        { rate: 9.5, tax_total: 475, quote_currency: "EUR" },
-      ],
-    };
-  }
-  return { data: [] };
+// Mock entityStats responses - receives array of queries, returns array of results
+const mockQueryEntityStats = mock(async (queries: any[], _options?: { entity_id?: string }) => {
+  return queries.map((query: any) => {
+    if (query.table === "invoice_taxes") {
+      return {
+        data: [
+          { rate: 22, tax_total: 1100, quote_currency: "EUR" },
+          { rate: 9.5, tax_total: 475, quote_currency: "EUR" },
+        ],
+      };
+    }
+    return { data: [] };
+  });
 });
 
 const mockSDK = {
@@ -66,8 +68,8 @@ describe("useTaxCollectedData", () => {
       expect(result.current.isLoading).toBe(false);
     });
 
-    // Should have called stats API for both prev month and year
-    expect(mockQueryEntityStats).toHaveBeenCalledTimes(2);
+    // Should have called stats API once with a batch of 2 queries
+    expect(mockQueryEntityStats).toHaveBeenCalledTimes(1);
     expect(result.current.data.previousMonth.taxes.length).toBeGreaterThan(0);
     expect(result.current.data.previousMonth.taxes[0]).toHaveProperty("rate");
     expect(result.current.data.previousMonth.taxes[0]).toHaveProperty("amount");
@@ -86,7 +88,7 @@ describe("useTaxCollectedData", () => {
   });
 
   it("should default currency to EUR when no data", () => {
-    mockQueryEntityStats.mockImplementation(async () => ({ data: [] }));
+    mockQueryEntityStats.mockImplementation(async (queries: any[]) => queries.map(() => ({ data: [] })));
 
     const { result } = renderHook(() => useTaxCollectedData(undefined), { wrapper });
 

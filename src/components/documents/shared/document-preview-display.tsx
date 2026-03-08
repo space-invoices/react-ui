@@ -1,9 +1,10 @@
 "use client";
 
-import { getClientHeaders, type AdvanceInvoice, type CreditNote, type Estimate, type Invoice } from "@spaceinvoices/js-sdk";
+import type { AdvanceInvoice, CreditNote, Estimate, Invoice } from "@spaceinvoices/js-sdk";
 import { useQuery } from "@tanstack/react-query";
 import { AlertCircle, FileText } from "lucide-react";
 import { useEffect, useMemo } from "react";
+import { getClientHeaders } from "@/ui/lib/client-headers";
 import { cn } from "@/ui/lib/utils";
 import { useEntitiesOptional } from "@/ui/providers/entities-context";
 import { useSDK } from "@/ui/providers/sdk-provider";

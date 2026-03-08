@@ -4,16 +4,18 @@ import { renderHook, waitFor } from "@testing-library/react";
 import { createElement } from "react";
 
 /**
- * Mock SDK with method names matching the actual FINA SDK.
- * These correspond to the operationIds in the OpenAPI spec:
+ * Mock SDK with method names matching the actual FINA SDK wrappers.
+ * These correspond to the SDK wrapper methods (not raw operationIds):
  * - sdk.finaSettings.list (getFinaSettings)
  * - sdk.finaSettings.update (updateFinaSettings)
  * - sdk.finaCertificate.uploadFinaCertificate
  * - sdk.finaPremises.listFinaPremises
- * - sdk.finaPremises.registerFinaRealEstatePremise
- * - sdk.finaPremises.registerFinaMovablePremise
- * - sdk.finaPremises.closeFinaPremise
+ * - sdk.finaPremises.create (createFinaPremise)
+ * - sdk.finaPremises.delete (deleteFinaPremise)
  * - sdk.finaDevices.registerFinaDevice
+ * - sdk.finaDevices.delete (deleteFinaDevice)
+ * - sdk.users.getMe
+ * - sdk.users.updateFinaSettings (updateUserFinaSettings)
  */
 const mockSDK = {
   finaSettings: {
@@ -25,12 +27,16 @@ const mockSDK = {
   },
   finaPremises: {
     listFinaPremises: mock(async () => []),
-    registerFinaRealEstatePremise: mock(async () => ({})),
-    registerFinaMovablePremise: mock(async () => ({})),
-    closeFinaPremise: mock(async () => ({})),
+    create: mock(async () => ({})),
+    delete: mock(async () => ({})),
   },
   finaDevices: {
     registerFinaDevice: mock(async () => ({})),
+    delete: mock(async () => ({})),
+  },
+  users: {
+    getMe: mock(async () => ({ settings: {} })),
+    updateFinaSettings: mock(async () => ({})),
   },
 };
 
@@ -40,14 +46,16 @@ mock.module("@/ui/providers/sdk-provider", () => ({
 
 import {
   finaQueryKeys,
-  useCloseFinaPremise,
+  useCreateFinaPremise,
+  useDeleteFinaDevice,
+  useDeleteFinaPremise,
   useFinaPremises,
   useFinaSettings,
   useRegisterFinaElectronicDevice,
-  useRegisterFinaMovablePremise,
-  useRegisterFinaRealEstatePremise,
   useUpdateFinaSettings,
+  useUpdateUserFinaSettings,
   useUploadFinaCertificate,
+  useUserFinaSettings,
 } from "@/ui/components/entities/fina-settings-form/fina-settings.hooks";
 
 describe("FINA Settings Hooks", () => {
@@ -58,10 +66,12 @@ describe("FINA Settings Hooks", () => {
     mockSDK.finaSettings.update.mockClear();
     mockSDK.finaCertificate.uploadFinaCertificate.mockClear();
     mockSDK.finaPremises.listFinaPremises.mockClear();
-    mockSDK.finaPremises.registerFinaRealEstatePremise.mockClear();
-    mockSDK.finaPremises.registerFinaMovablePremise.mockClear();
-    mockSDK.finaPremises.closeFinaPremise.mockClear();
+    mockSDK.finaPremises.create.mockClear();
+    mockSDK.finaPremises.delete.mockClear();
     mockSDK.finaDevices.registerFinaDevice.mockClear();
+    mockSDK.finaDevices.delete.mockClear();
+    mockSDK.users.getMe.mockClear();
+    mockSDK.users.updateFinaSettings.mockClear();
 
     queryClient = new QueryClient({
       defaultOptions: {
@@ -265,8 +275,8 @@ describe("FINA Settings Hooks", () => {
   describe("useFinaPremises", () => {
     it("should call sdk.finaPremises.listFinaPremises with correct entity_id", async () => {
       const mockPremises = [
-        { id: "prem_1", premise_id: "PP1", type: "real_estate" },
-        { id: "prem_2", premise_id: "PP2", type: "movable" },
+        { id: "prem_1", business_premise_name: "PP1" },
+        { id: "prem_2", business_premise_name: "PP2" },
       ] as any;
 
       mockSDK.finaPremises.listFinaPremises.mockResolvedValue(mockPremises);
@@ -296,93 +306,39 @@ describe("FINA Settings Hooks", () => {
     });
   });
 
-  describe("useRegisterFinaRealEstatePremise", () => {
-    it("should call sdk.finaPremises.registerFinaRealEstatePremise", async () => {
-      const mockResponse = {
-        id: "prem_123",
-        type: "real_estate",
-      };
+  describe("useCreateFinaPremise", () => {
+    it("should call sdk.finaPremises.create with correct args", async () => {
+      const mockResponse = { id: "prem_123", business_premise_name: "PP01" };
 
-      mockSDK.finaPremises.registerFinaRealEstatePremise.mockResolvedValue(mockResponse);
+      mockSDK.finaPremises.create.mockResolvedValue(mockResponse);
 
-      const { result } = renderHook(() => useRegisterFinaRealEstatePremise(), { wrapper });
-
-      const premiseData = {
-        premise_id: "PP01",
-        street: "Ilica 1",
-        city: "Zagreb",
-        postal_code: "10000",
-      } as any;
+      const { result } = renderHook(() => useCreateFinaPremise(), { wrapper });
 
       result.current.mutate({
         entityId: "ent_123",
-        data: premiseData,
+        data: { business_premise_name: "PP01" },
       });
 
       await waitFor(() => {
         expect(result.current.isSuccess).toBe(true);
       });
 
-      expect(mockSDK.finaPremises.registerFinaRealEstatePremise).toHaveBeenCalledWith(premiseData, {
-        entity_id: "ent_123",
-      });
-    });
-
-    it("should invalidate premises list after registration", async () => {
-      mockSDK.finaPremises.registerFinaRealEstatePremise.mockResolvedValue({});
-
-      const invalidateQueriesSpy = spyOn(queryClient, "invalidateQueries");
-
-      const { result } = renderHook(() => useRegisterFinaRealEstatePremise(), { wrapper });
-
-      result.current.mutate({
-        entityId: "ent_123",
-        data: { premise_id: "PP01" } as any,
-      });
-
-      await waitFor(() => {
-        expect(result.current.isSuccess).toBe(true);
-      });
-
-      expect(invalidateQueriesSpy).toHaveBeenCalledWith({
-        queryKey: ["fina", "premises", "ent_123"],
-      });
-    });
-  });
-
-  describe("useRegisterFinaMovablePremise", () => {
-    it("should call sdk.finaPremises.registerFinaMovablePremise", async () => {
-      mockSDK.finaPremises.registerFinaMovablePremise.mockResolvedValue({
-        id: "prem_456",
-      });
-
-      const { result } = renderHook(() => useRegisterFinaMovablePremise(), { wrapper });
-
-      result.current.mutate({
-        entityId: "ent_123",
-        data: { premise_id: "MOB01", type: "vehicle" } as any,
-      });
-
-      await waitFor(() => {
-        expect(result.current.isSuccess).toBe(true);
-      });
-
-      expect(mockSDK.finaPremises.registerFinaMovablePremise).toHaveBeenCalledWith(
-        { premise_id: "MOB01", type: "vehicle" },
+      expect(mockSDK.finaPremises.create).toHaveBeenCalledWith(
+        { business_premise_name: "PP01" },
         { entity_id: "ent_123" },
       );
     });
 
-    it("should invalidate premises list after registration", async () => {
-      mockSDK.finaPremises.registerFinaMovablePremise.mockResolvedValue({});
+    it("should invalidate premises list after creation", async () => {
+      mockSDK.finaPremises.create.mockResolvedValue({});
 
       const invalidateQueriesSpy = spyOn(queryClient, "invalidateQueries");
 
-      const { result } = renderHook(() => useRegisterFinaMovablePremise(), { wrapper });
+      const { result } = renderHook(() => useCreateFinaPremise(), { wrapper });
 
       result.current.mutate({
         entityId: "ent_123",
-        data: { premise_id: "MOB01" } as any,
+        data: { business_premise_name: "PP01" },
       });
 
       await waitFor(() => {
@@ -395,13 +351,11 @@ describe("FINA Settings Hooks", () => {
     });
   });
 
-  describe("useCloseFinaPremise", () => {
-    it("should call sdk.finaPremises.closeFinaPremise", async () => {
-      mockSDK.finaPremises.closeFinaPremise.mockResolvedValue({
-        success: true,
-      });
+  describe("useDeleteFinaPremise", () => {
+    it("should call sdk.finaPremises.delete with correct args", async () => {
+      mockSDK.finaPremises.delete.mockResolvedValue({ success: true });
 
-      const { result } = renderHook(() => useCloseFinaPremise(), { wrapper });
+      const { result } = renderHook(() => useDeleteFinaPremise(), { wrapper });
 
       result.current.mutate({
         entityId: "ent_123",
@@ -412,17 +366,15 @@ describe("FINA Settings Hooks", () => {
         expect(result.current.isSuccess).toBe(true);
       });
 
-      expect(mockSDK.finaPremises.closeFinaPremise).toHaveBeenCalledWith("prem_123", {
-        entity_id: "ent_123",
-      });
+      expect(mockSDK.finaPremises.delete).toHaveBeenCalledWith("prem_123", { entity_id: "ent_123" });
     });
 
-    it("should invalidate premises list after closing", async () => {
-      mockSDK.finaPremises.closeFinaPremise.mockResolvedValue({});
+    it("should invalidate premises list after deletion", async () => {
+      mockSDK.finaPremises.delete.mockResolvedValue({});
 
       const invalidateQueriesSpy = spyOn(queryClient, "invalidateQueries");
 
-      const { result } = renderHook(() => useCloseFinaPremise(), { wrapper });
+      const { result } = renderHook(() => useDeleteFinaPremise(), { wrapper });
 
       result.current.mutate({
         entityId: "ent_123",
@@ -438,10 +390,10 @@ describe("FINA Settings Hooks", () => {
       });
     });
 
-    it("should handle close error", async () => {
-      mockSDK.finaPremises.closeFinaPremise.mockRejectedValue(new Error("Premise has active devices"));
+    it("should handle delete error", async () => {
+      mockSDK.finaPremises.delete.mockRejectedValue(new Error("Premise has active devices"));
 
-      const { result } = renderHook(() => useCloseFinaPremise(), { wrapper });
+      const { result } = renderHook(() => useDeleteFinaPremise(), { wrapper });
 
       result.current.mutate({
         entityId: "ent_123",
@@ -460,7 +412,7 @@ describe("FINA Settings Hooks", () => {
     it("should call sdk.finaDevices.registerFinaDevice", async () => {
       const mockResponse = {
         id: "dev_123",
-        device_id: "1",
+        electronic_device_name: "1",
       };
 
       mockSDK.finaDevices.registerFinaDevice.mockResolvedValue(mockResponse);
@@ -479,7 +431,7 @@ describe("FINA Settings Hooks", () => {
 
       expect(mockSDK.finaDevices.registerFinaDevice).toHaveBeenCalledWith(
         "prem_123",
-        { device_id: "1" },
+        { electronic_device_name: "1" },
         { entity_id: "ent_123" },
       );
 
@@ -528,6 +480,133 @@ describe("FINA Settings Hooks", () => {
       });
 
       expect((result.current.error as Error).message).toBe("Device ID already exists");
+    });
+  });
+
+  describe("useDeleteFinaDevice", () => {
+    it("should call sdk.finaDevices.delete with correct args", async () => {
+      mockSDK.finaDevices.delete.mockResolvedValue({ success: true });
+
+      const { result } = renderHook(() => useDeleteFinaDevice(), { wrapper });
+
+      result.current.mutate({
+        entityId: "ent_123",
+        deviceId: "dev_123",
+        premiseId: "prem_123",
+      });
+
+      await waitFor(() => {
+        expect(result.current.isSuccess).toBe(true);
+      });
+
+      expect(mockSDK.finaDevices.delete).toHaveBeenCalledWith("dev_123", { entity_id: "ent_123" });
+    });
+
+    it("should invalidate premises and devices queries after deletion", async () => {
+      mockSDK.finaDevices.delete.mockResolvedValue({});
+
+      const invalidateQueriesSpy = spyOn(queryClient, "invalidateQueries");
+
+      const { result } = renderHook(() => useDeleteFinaDevice(), { wrapper });
+
+      result.current.mutate({
+        entityId: "ent_123",
+        deviceId: "dev_123",
+        premiseId: "prem_123",
+      });
+
+      await waitFor(() => {
+        expect(result.current.isSuccess).toBe(true);
+      });
+
+      expect(invalidateQueriesSpy).toHaveBeenCalledWith({
+        queryKey: ["fina", "premises", "ent_123"],
+      });
+
+      expect(invalidateQueriesSpy).toHaveBeenCalledWith({
+        queryKey: ["fina", "devices", "prem_123"],
+      });
+    });
+  });
+
+  describe("useUserFinaSettings", () => {
+    it("should extract FINA settings from user.settings", async () => {
+      mockSDK.users.getMe.mockResolvedValue({
+        settings: {
+          fina_ent_123: {
+            operator_oib: "12345678901",
+            operator_label: "John Doe",
+          },
+        },
+      });
+
+      const { result } = renderHook(() => useUserFinaSettings("ent_123"), { wrapper });
+
+      await waitFor(() => {
+        expect(result.current.data).not.toBeNull();
+      });
+
+      expect(result.current.data).toEqual({
+        operator_oib: "12345678901",
+        operator_label: "John Doe",
+      });
+    });
+
+    it("should return null when no FINA settings for entity", async () => {
+      mockSDK.users.getMe.mockResolvedValue({
+        settings: {},
+      });
+
+      const { result } = renderHook(() => useUserFinaSettings("ent_123"), { wrapper });
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+      });
+
+      expect(result.current.data).toBeNull();
+    });
+  });
+
+  describe("useUpdateUserFinaSettings", () => {
+    it("should call sdk.users.updateFinaSettings with correct args", async () => {
+      mockSDK.users.updateFinaSettings.mockResolvedValue({ settings: {} });
+
+      const { result } = renderHook(() => useUpdateUserFinaSettings(), { wrapper });
+
+      result.current.mutate({
+        entityId: "ent_123",
+        data: { operator_oib: "12345678901", operator_label: "John Doe" },
+      });
+
+      await waitFor(() => {
+        expect(result.current.isSuccess).toBe(true);
+      });
+
+      expect(mockSDK.users.updateFinaSettings).toHaveBeenCalledWith(
+        { operator_oib: "12345678901", operator_label: "John Doe" },
+        { entity_id: "ent_123" },
+      );
+    });
+
+    it("should invalidate current user query on success", async () => {
+      mockSDK.users.updateFinaSettings.mockResolvedValue({});
+
+      const invalidateQueriesSpy = spyOn(queryClient, "invalidateQueries");
+
+      const { result } = renderHook(() => useUpdateUserFinaSettings(), { wrapper });
+
+      result.current.mutate({
+        entityId: "ent_123",
+        data: { operator_oib: "12345678901" },
+      });
+
+      await waitFor(() => {
+        expect(result.current.isSuccess).toBe(true);
+      });
+
+      expect(invalidateQueriesSpy).toHaveBeenCalledWith({
+        queryKey: ["user", "me"],
+      });
     });
   });
 });

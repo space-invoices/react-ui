@@ -53,7 +53,8 @@ function getLastMonths(count: number): string[] {
 }
 
 // Mock entityStats responses based on query type
-const mockQueryEntityStats = mock(async (query: any, _options?: { entity_id?: string }) => {
+// The real SDK receives an array of queries and returns an array of results
+function resolveQuery(query: any) {
   const table = query.table;
   const groupBy = query.group_by || [];
 
@@ -85,23 +86,56 @@ const mockQueryEntityStats = mock(async (query: any, _options?: { entity_id?: st
       data: getLastMonths(6).map((month) => ({
         month,
         revenue: 2000,
-        currency_code: "EUR",
+        quote_currency: "EUR",
       })),
     };
+  }
+
+  // Credit notes trend data
+  if (table === "credit_notes" && groupBy.includes("month")) {
+    return { data: [] };
+  }
+
+  // Collection rate queries (no group_by, sum metrics)
+  const metrics = query.metrics || [];
+  const hasSumMetric = metrics.some((m: any) => m.type === "sum");
+
+  if (table === "invoices" && hasSumMetric && !groupBy.length) {
+    return { data: [{ total: 10000 }] };
+  }
+
+  if (table === "payments" && hasSumMetric && !groupBy.length) {
+    const filters = query.filters || {};
+    // Invoice payments (credit_note_id IS NULL)
+    if (filters.credit_note_id === null) {
+      return { data: [{ total: 7000 }] };
+    }
+    // Credit note payments (credit_note_id IS NOT NULL)
+    if (filters.credit_note_id && typeof filters.credit_note_id === "object" && filters.credit_note_id.not === null) {
+      return { data: [{ total: 500 }] };
+    }
+  }
+
+  if (table === "credit_notes" && hasSumMetric && !groupBy.length) {
+    return { data: [{ total: 2000 }] };
   }
 
   // Top customers data
   if (table === "invoices" && groupBy.includes("customer_name")) {
     return {
       data: [
-        { customer_name: "Customer A", customer_id: "cust_1", revenue: 5000, currency_code: "EUR" },
-        { customer_name: "Customer B", customer_id: "cust_2", revenue: 3000, currency_code: "EUR" },
+        { customer_name: "Customer A", customer_id: "cust_1", revenue: 5000, quote_currency: "EUR" },
+        { customer_name: "Customer B", customer_id: "cust_2", revenue: 3000, quote_currency: "EUR" },
       ],
     };
   }
 
   // Default empty response
   return { data: [] };
+}
+
+const mockQueryEntityStats = mock(async (queries: any[], _options?: { entity_id?: string }) => {
+  return queries.map(resolveQuery);
 });
 
 const mockSDK = {
@@ -129,6 +163,7 @@ mock.module("@/ui/providers/sdk-provider", () => ({
   useSDK: () => ({ sdk: mockSDK }),
 }));
 
+import { useCollectionRateData } from "@/ui/components/dashboard/collection-rate-card/use-collection-rate";
 import { useInvoiceStatusData } from "@/ui/components/dashboard/invoice-status-chart";
 import { usePaymentMethodsData } from "@/ui/components/dashboard/payment-methods-chart";
 import { usePaymentTrendData } from "@/ui/components/dashboard/payment-trend-chart";
@@ -180,10 +215,12 @@ describe("Dashboard Hooks", () => {
       expect(result.current.data.length).toBe(6); // Last 6 months
       expect(result.current.currency).toBe("EUR");
       expect(mockQueryEntityStats).toHaveBeenCalledWith(
-        expect.objectContaining({
-          table: "invoices",
-          group_by: expect.arrayContaining(["month"]),
-        }),
+        expect.arrayContaining([
+          expect.objectContaining({
+            table: "invoices",
+            group_by: expect.arrayContaining(["month"]),
+          }),
+        ]),
         expect.objectContaining({ entity_id: "ent_123" }),
       );
     });
@@ -204,11 +241,12 @@ describe("Dashboard Hooks", () => {
         expect(result.current.isLoading).toBe(false);
       });
 
-      // Should have status breakdown object
-      expect(typeof result.current.data.paid).toBe("number");
-      expect(typeof result.current.data.pending).toBe("number");
-      expect(typeof result.current.data.overdue).toBe("number");
-      expect(typeof result.current.data.voided).toBe("number");
+      // Mock resolveQuery returns empty data for invoice count queries,
+      // so all status counts should be 0
+      expect(result.current.data.paid).toBe(0);
+      expect(result.current.data.pending).toBe(0);
+      expect(result.current.data.overdue).toBe(0);
+      expect(result.current.data.voided).toBe(0);
     });
   });
 
@@ -230,10 +268,12 @@ describe("Dashboard Hooks", () => {
       expect(result.current.data.length).toBe(6); // Last 6 months
       expect(result.current.currency).toBe("EUR");
       expect(mockQueryEntityStats).toHaveBeenCalledWith(
-        expect.objectContaining({
-          table: "payments",
-          group_by: expect.arrayContaining(["month"]),
-        }),
+        expect.arrayContaining([
+          expect.objectContaining({
+            table: "payments",
+            group_by: expect.arrayContaining(["month"]),
+          }),
+        ]),
         expect.objectContaining({ entity_id: "ent_123" }),
       );
     });
@@ -254,12 +294,12 @@ describe("Dashboard Hooks", () => {
         expect(result.current.isLoading).toBe(false);
       });
 
-      // Should have grouped by payment type
-      expect(result.current.data.length).toBeGreaterThan(0);
-      const types = result.current.data.map((d) => d.type);
-      expect(types).toContain("bank_transfer");
-      expect(types).toContain("cash");
-      expect(types).toContain("card");
+      // Mock returns 3 payment types with specific amounts
+      expect(result.current.data.length).toBe(3);
+      const byType = Object.fromEntries(result.current.data.map((d) => [d.type, d.amount]));
+      expect(byType.bank_transfer).toBe(2000);
+      expect(byType.cash).toBe(500);
+      expect(byType.card).toBe(1500);
     });
   });
 
@@ -278,13 +318,14 @@ describe("Dashboard Hooks", () => {
         expect(result.current.isLoading).toBe(false);
       });
 
-      // Should have top customers sorted by revenue
-      expect(result.current.data.length).toBeGreaterThan(0);
+      // Mock returns Customer A (5000) and Customer B (3000), pre-sorted by revenue
+      // Hook transforms customer_name → name
+      expect(result.current.data.length).toBe(2);
       expect(result.current.currency).toBe("EUR");
-      // First customer should have highest revenue
-      if (result.current.data.length > 1) {
-        expect(result.current.data[0].revenue).toBeGreaterThanOrEqual(result.current.data[1].revenue);
-      }
+      expect(result.current.data[0].name).toBe("Customer A");
+      expect(result.current.data[0].revenue).toBe(5000);
+      expect(result.current.data[1].name).toBe("Customer B");
+      expect(result.current.data[1].revenue).toBe(3000);
     });
   });
 
@@ -304,11 +345,12 @@ describe("Dashboard Hooks", () => {
         expect(result.current.isLoading).toBe(false);
       });
 
+      // Revenue metrics should be numeric values (computed from mock data)
       expect(result.current.data.currency).toBe("EUR");
-      expect(typeof result.current.data.thisMonth).toBe("number");
-      expect(typeof result.current.data.thisYear).toBe("number");
-      expect(typeof result.current.data.outstanding).toBe("number");
-      expect(typeof result.current.data.overdue).toBe("number");
+      expect(result.current.data.thisMonth).toBeGreaterThanOrEqual(0);
+      expect(result.current.data.thisYear).toBeGreaterThanOrEqual(0);
+      expect(result.current.data.outstanding).toBeGreaterThanOrEqual(0);
+      expect(result.current.data.overdue).toBeGreaterThanOrEqual(0);
     });
   });
 
@@ -328,11 +370,56 @@ describe("Dashboard Hooks", () => {
         expect(result.current.isLoading).toBe(false);
       });
 
-      // Verify the structure of returned data
-      expect(typeof result.current.data.invoices).toBe("number");
-      expect(typeof result.current.data.customers).toBe("number");
-      expect(typeof result.current.data.items).toBe("number");
-      expect(typeof result.current.data.estimates).toBe("number");
+      // Mock resolveQuery returns empty data for count queries (no group_by match),
+      // so counts should be 0
+      expect(result.current.data.invoices).toBe(0);
+      expect(result.current.data.customers).toBe(0);
+      expect(result.current.data.items).toBe(0);
+      expect(result.current.data.estimates).toBe(0);
+    });
+  });
+
+  describe("useCollectionRateData", () => {
+    it("should return defaults when no entityId provided", async () => {
+      const { result } = renderHook(() => useCollectionRateData(undefined), { wrapper });
+
+      expect(result.current.data.collectionRate).toBe(0);
+      expect(result.current.data.totalCollected).toBe(0);
+      expect(result.current.data.totalInvoiced).toBe(0);
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    it("should calculate correct collection rate values", async () => {
+      const { result } = renderHook(() => useCollectionRateData("ent_123"), { wrapper });
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+      });
+
+      // netInvoiced = totalInvoiced(10000) - cnTotal(2000) = 8000
+      // netCollected = invoicePayments(7000) - cnPayments(500) = 6500
+      // collectionRate = (6500 / 8000) * 100 = 81.25
+      expect(result.current.data.totalInvoiced).toBe(8000);
+      expect(result.current.data.totalCollected).toBe(6500);
+      expect(result.current.data.collectionRate).toBe(81.25);
+      expect(result.current.data.currency).toBe("EUR");
+    });
+
+    it("should handle zero invoiced without division by zero", async () => {
+      // Override to return 0 for all queries
+      mockQueryEntityStats.mockImplementationOnce(async (queries: any[]) => {
+        return queries.map(() => ({ data: [{ total: 0 }] }));
+      });
+
+      const { result } = renderHook(() => useCollectionRateData("ent_zero"), { wrapper });
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+      });
+
+      expect(result.current.data.collectionRate).toBe(0);
+      expect(result.current.data.totalInvoiced).toBe(0);
+      expect(result.current.data.totalCollected).toBe(0);
     });
   });
 });

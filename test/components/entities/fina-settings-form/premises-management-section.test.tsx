@@ -2,15 +2,21 @@ import { beforeEach, describe, expect, it, mock } from "bun:test";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-const mockClosePremise = mock(() => undefined);
+const mockDeletePremise = mock(() => undefined);
+const mockDeleteDevice = mock(() => undefined);
 const mockRegisterDevice = mock(() => undefined);
-let mockClosePremiseData: any = { mutate: mockClosePremise };
+let mockDeletePremiseData: any = { mutate: mockDeletePremise };
+let mockDeleteDeviceData: any = { mutate: mockDeleteDevice };
 let mockRegisterDeviceData: any = { mutate: mockRegisterDevice, isPending: false };
 
 mock.module("@/ui/components/entities/fina-settings-form/fina-settings.hooks", () => ({
-  useCloseFinaPremise: (opts?: any) => {
-    mockClosePremiseData._opts = opts;
-    return mockClosePremiseData;
+  useDeleteFinaPremise: (opts?: any) => {
+    mockDeletePremiseData._opts = opts;
+    return mockDeletePremiseData;
+  },
+  useDeleteFinaDevice: (opts?: any) => {
+    mockDeleteDeviceData._opts = opts;
+    return mockDeleteDeviceData;
   },
   useRegisterFinaElectronicDevice: (opts?: any) => {
     mockRegisterDeviceData._opts = opts;
@@ -29,9 +35,11 @@ describe("FINA PremisesManagementSection", () => {
   const t = (key: string) => key;
 
   beforeEach(() => {
-    mockClosePremise.mockClear();
+    mockDeletePremise.mockClear();
+    mockDeleteDevice.mockClear();
     mockRegisterDevice.mockClear();
-    mockClosePremiseData = { mutate: mockClosePremise };
+    mockDeletePremiseData = { mutate: mockDeletePremise };
+    mockDeleteDeviceData = { mutate: mockDeleteDevice };
     mockRegisterDeviceData = { mutate: mockRegisterDevice, isPending: false };
   });
 
@@ -41,10 +49,9 @@ describe("FINA PremisesManagementSection", () => {
       expect(screen.getByText("No premises registered yet")).toBeInTheDocument();
     });
 
-    it("should show Add Real Estate and Add Movable buttons", () => {
+    it("should show Add Premise button", () => {
       render(<PremisesManagementSection entity={mockEntity} premises={[]} t={t} />);
-      expect(screen.getByText("Add Real Estate")).toBeInTheDocument();
-      expect(screen.getByText("Add Movable")).toBeInTheDocument();
+      expect(screen.getByText("Add Premise")).toBeInTheDocument();
     });
   });
 
@@ -53,28 +60,20 @@ describe("FINA PremisesManagementSection", () => {
       {
         id: "prem_1",
         entity_id: "ent_123",
-        premise_id: "PP1",
-        type: "real_estate",
-        real_estate: {
-          street: "Ilica",
-          house_number: "1",
-          city: "Zagreb",
-          postal_code: "10000",
-          cadastral_municipality: "Zagreb",
-          land_registry_number: "456",
-        },
+        business_premise_name: "PP1",
+        type: "premise",
         is_active: true,
         registered_at: "2025-01-01",
         closed_at: null,
         created_at: "2025-01-01",
         Devices: [
-          { id: "dev_1", device_id: "1" },
-          { id: "dev_2", device_id: "2" },
+          { id: "dev_1", electronic_device_name: "1" },
+          { id: "dev_2", electronic_device_name: "2" },
         ],
       },
     ] as any;
 
-    it("should display premise_id as name", () => {
+    it("should display business_premise_name as name", () => {
       render(<PremisesManagementSection entity={mockEntity} premises={mockPremises} t={t} />);
       expect(screen.getByText("PP1")).toBeInTheDocument();
     });
@@ -84,27 +83,22 @@ describe("FINA PremisesManagementSection", () => {
       expect(screen.getByText("Active")).toBeInTheDocument();
     });
 
-    it("should display Closed badge for closed premise", () => {
-      const closedPremises = [{ ...mockPremises[0], is_active: false, closed_at: "2025-06-01" }] as any;
-      render(<PremisesManagementSection entity={mockEntity} premises={closedPremises} t={t} />);
-      expect(screen.getByText("Closed")).toBeInTheDocument();
+    it("should display Inactive badge for inactive premise", () => {
+      const inactivePremises = [{ ...mockPremises[0], is_active: false, closed_at: "2025-06-01" }] as any;
+      render(<PremisesManagementSection entity={mockEntity} premises={inactivePremises} t={t} />);
+      expect(screen.getByText("Inactive")).toBeInTheDocument();
     });
 
-    it("should display Real Estate type badge", () => {
-      render(<PremisesManagementSection entity={mockEntity} premises={mockPremises} t={t} />);
-      expect(screen.getByText("Real Estate")).toBeInTheDocument();
-    });
-
-    it("should display device count and device IDs", () => {
+    it("should display device count badge", () => {
       render(<PremisesManagementSection entity={mockEntity} premises={mockPremises} t={t} />);
       expect(screen.getByText("2 Devices")).toBeInTheDocument();
-      expect(screen.getByText("1, 2")).toBeInTheDocument();
     });
 
-    it("should display address for real estate premise", () => {
+    it("should display individual device IDs", () => {
       render(<PremisesManagementSection entity={mockEntity} premises={mockPremises} t={t} />);
-      expect(screen.getByText(/Ilica 1/)).toBeInTheDocument();
-      expect(screen.getByText(/10000 Zagreb/)).toBeInTheDocument();
+      // Device IDs are rendered in separate elements
+      const deviceElements = screen.getAllByText(/^[12]$/);
+      expect(deviceElements.length).toBe(2);
     });
   });
 
@@ -114,8 +108,8 @@ describe("FINA PremisesManagementSection", () => {
         {
           id: "prem_1",
           entity_id: "ent_123",
-          premise_id: "PP1",
-          type: "real_estate",
+          business_premise_name: "PP1",
+          type: "premise",
           is_active: true,
           registered_at: "2025-01-01",
           closed_at: null,
@@ -131,68 +125,6 @@ describe("FINA PremisesManagementSection", () => {
     });
   });
 
-  describe("Movable premise display", () => {
-    it("should display Vehicle type for movable premise", () => {
-      const movablePremises = [
-        {
-          id: "prem_2",
-          entity_id: "ent_123",
-          premise_id: "MOB1",
-          type: "movable",
-          movable_premise: { type: "vehicle" },
-          is_active: true,
-          registered_at: "2025-01-01",
-          closed_at: null,
-          created_at: "2025-01-01",
-          Devices: [{ id: "dev_1", device_id: "1" }],
-        },
-      ] as any;
-
-      render(<PremisesManagementSection entity={mockEntity} premises={movablePremises} t={t} />);
-      expect(screen.getByText("Vehicle")).toBeInTheDocument();
-    });
-
-    it("should display Market Stall type for market_stall movable premise", () => {
-      const movablePremises = [
-        {
-          id: "prem_3",
-          entity_id: "ent_123",
-          premise_id: "MKT1",
-          type: "movable",
-          movable_premise: { type: "market_stall" },
-          is_active: true,
-          registered_at: "2025-01-01",
-          closed_at: null,
-          created_at: "2025-01-01",
-          Devices: [{ id: "dev_1", device_id: "1" }],
-        },
-      ] as any;
-
-      render(<PremisesManagementSection entity={mockEntity} premises={movablePremises} t={t} />);
-      expect(screen.getByText("Market Stall")).toBeInTheDocument();
-    });
-
-    it("should display Other type for other movable premise", () => {
-      const movablePremises = [
-        {
-          id: "prem_4",
-          entity_id: "ent_123",
-          premise_id: "OTH1",
-          type: "movable",
-          movable_premise: { type: "other" },
-          is_active: true,
-          registered_at: "2025-01-01",
-          closed_at: null,
-          created_at: "2025-01-01",
-          Devices: [{ id: "dev_1", device_id: "1" }],
-        },
-      ] as any;
-
-      render(<PremisesManagementSection entity={mockEntity} premises={movablePremises} t={t} />);
-      expect(screen.getByText("Other")).toBeInTheDocument();
-    });
-  });
-
   describe("Device dialog", () => {
     it("should show numeric device ID input in add device dialog", async () => {
       const user = userEvent.setup();
@@ -201,8 +133,8 @@ describe("FINA PremisesManagementSection", () => {
         {
           id: "prem_1",
           entity_id: "ent_123",
-          premise_id: "PP1",
-          type: "real_estate",
+          business_premise_name: "PP1",
+          type: "premise",
           is_active: true,
           registered_at: "2025-01-01",
           closed_at: null,
@@ -228,8 +160,8 @@ describe("FINA PremisesManagementSection", () => {
         {
           id: "prem_1",
           entity_id: "ent_123",
-          premise_id: "PP1",
-          type: "real_estate",
+          business_premise_name: "PP1",
+          type: "premise",
           is_active: true,
           registered_at: "2025-01-01",
           closed_at: null,

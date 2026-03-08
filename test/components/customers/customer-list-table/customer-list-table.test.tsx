@@ -120,7 +120,7 @@ describe("CustomerListTable", () => {
       expect(mockSDK.customers.list).toHaveBeenCalledTimes(1);
       expect(mockSDK.customers.list).toHaveBeenCalledWith(
         expect.objectContaining({
-          order_by: "-id", // Default order
+          entity_id: "test-entity",
         }),
       );
     });

@@ -1,6 +1,33 @@
 import { beforeEach, describe, expect, it, mock } from "bun:test";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+
+mock.module("@/ui/components/ui/select", () => ({
+  Select: ({ children, onValueChange, value }: any) => (
+    <div data-testid="select" data-value={value}>
+      {children}
+      <select
+        aria-label="select-native"
+        data-testid="select-native"
+        value={value}
+        onChange={(e) => onValueChange(e.target.value)}
+      >
+        {Array.isArray(children?.[1]?.props?.children)
+          ? children[1].props.children.map((child: any) => (
+              <option key={child.props.value} value={child.props.value}>
+                {child.props.children}
+              </option>
+            ))
+          : null}
+      </select>
+    </div>
+  ),
+  SelectContent: ({ children }: any) => <div>{children}</div>,
+  SelectItem: ({ children, value }: any) => <div data-value={value}>{children}</div>,
+  SelectTrigger: ({ children }: any) => <div>{children}</div>,
+  SelectValue: () => <span />,
+}));
+
 import { DocumentExportForm } from "@/ui/components/export/document-export-form";
 
 // Mock translation function
@@ -31,94 +58,92 @@ describe("DocumentExportForm", () => {
   });
 
   describe("Rendering", () => {
-    it("should render description text", () => {
-      render(<DocumentExportForm {...defaultProps} />);
-      expect(screen.getByText("export-page.description")).toBeInTheDocument();
-    });
-
     it("should render document type selector", () => {
       render(<DocumentExportForm {...defaultProps} />);
-      expect(screen.getByText("export-page.document-type")).toBeInTheDocument();
+      expect(screen.getByText("Document type")).toBeInTheDocument();
     });
 
     it("should render export format selector", () => {
       render(<DocumentExportForm {...defaultProps} />);
-      expect(screen.getByText("export-page.format")).toBeInTheDocument();
+      expect(screen.getByText("Format")).toBeInTheDocument();
     });
 
     it("should render date from and date to inputs", () => {
       render(<DocumentExportForm {...defaultProps} />);
-      expect(screen.getByText("export-page.date-from")).toBeInTheDocument();
-      expect(screen.getByText("export-page.date-to")).toBeInTheDocument();
+      expect(screen.getByText("Date from")).toBeInTheDocument();
+      expect(screen.getByText("Date to")).toBeInTheDocument();
     });
 
     it("should render export button", () => {
       render(<DocumentExportForm {...defaultProps} />);
-      expect(screen.getByRole("button", { name: /export-page.export-button/i })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /export documents/i })).toBeInTheDocument();
     });
 
     it("should render clear dates button when dates are set", () => {
       render(<DocumentExportForm {...defaultProps} />);
       // Default dates are set to previous month
-      expect(screen.getByText("export-page.clear-dates")).toBeInTheDocument();
+      expect(screen.getByText("Clear dates")).toBeInTheDocument();
     });
   });
 
   describe("Document Type Selection", () => {
     it("should have invoice as default document type", async () => {
-      const user = userEvent.setup();
       render(<DocumentExportForm {...defaultProps} />);
-      // Open the dropdown to verify invoice is listed and selected by default
-      const trigger = screen.getByRole("combobox", { name: /export-page.document-type/i });
-      await user.click(trigger);
-      // Invoice option should be in the list
-      expect(screen.getByText("export-page.types.invoice")).toBeInTheDocument();
+      const [documentTypeSelect] = screen.getAllByTestId("select-native");
+      expect(documentTypeSelect).toHaveValue("invoice");
+      expect(screen.getAllByText("Invoice").length).toBeGreaterThanOrEqual(1);
     });
 
     it("should allow selecting different document types", async () => {
-      const user = userEvent.setup();
       render(<DocumentExportForm {...defaultProps} />);
-
-      const trigger = screen.getByRole("combobox", { name: /export-page.document-type/i });
-      await user.click(trigger);
-
-      expect(screen.getByText("export-page.types.invoice")).toBeInTheDocument();
-      expect(screen.getByText("export-page.types.estimate")).toBeInTheDocument();
-      expect(screen.getByText("export-page.types.credit_note")).toBeInTheDocument();
+      expect(screen.getAllByText("Invoice").length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByText("Estimate").length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByText("Credit note").length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByText("Advance invoice").length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByText("Delivery note").length).toBeGreaterThanOrEqual(1);
     });
   });
 
   describe("Export Format Selection", () => {
     it("should have xlsx as default export format", async () => {
-      const user = userEvent.setup();
       render(<DocumentExportForm {...defaultProps} />);
-      // Open the dropdown to verify xlsx is listed
-      const trigger = screen.getByRole("combobox", { name: /export-page.format/i });
-      await user.click(trigger);
-      expect(screen.getByText("export-page.formats.xlsx")).toBeInTheDocument();
+      const [, formatSelect] = screen.getAllByTestId("select-native");
+      expect(formatSelect).toHaveValue("xlsx");
+      expect(screen.getAllByText("Excel (.xlsx)").length).toBeGreaterThanOrEqual(1);
     });
 
     it("should allow selecting different export formats", async () => {
-      const user = userEvent.setup();
       render(<DocumentExportForm {...defaultProps} />);
-
-      const trigger = screen.getByRole("combobox", { name: /export-page.format/i });
-      await user.click(trigger);
-
-      expect(screen.getByText("export-page.formats.xlsx")).toBeInTheDocument();
-      expect(screen.getByText("export-page.formats.csv")).toBeInTheDocument();
-      expect(screen.getByText("export-page.formats.pdf_zip")).toBeInTheDocument();
+      expect(screen.getAllByText("Excel (.xlsx)").length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByText("CSV (.csv)").length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByText("PDF ZIP archive").length).toBeGreaterThanOrEqual(1);
     });
 
     it("should show PDF export info when pdf_zip is selected", async () => {
       const user = userEvent.setup();
       render(<DocumentExportForm {...defaultProps} />);
 
-      const trigger = screen.getByRole("combobox", { name: /export-page.format/i });
-      await user.click(trigger);
-      await user.click(screen.getByText("export-page.formats.pdf_zip"));
+      const [, formatSelect] = screen.getAllByTestId("select-native");
+      await user.selectOptions(formatSelect, "pdf_zip");
 
-      expect(screen.getByText("export-page.pdf-export-info")).toBeInTheDocument();
+      expect(
+        screen.getByText("PDF export runs asynchronously and generates a ZIP archive for the selected document types."),
+      ).toBeInTheDocument();
+    });
+
+    it("should show multi-type checkboxes when pdf_zip is selected", async () => {
+      const user = userEvent.setup();
+      render(<DocumentExportForm {...defaultProps} />);
+
+      const [, formatSelect] = screen.getAllByTestId("select-native");
+      await user.selectOptions(formatSelect, "pdf_zip");
+
+      // Should show checkboxes for all 5 document types
+      expect(screen.getAllByText("Invoice").length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByText("Estimate").length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByText("Credit note").length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByText("Advance invoice").length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByText("Delivery note").length).toBeGreaterThanOrEqual(1);
     });
   });
 
@@ -127,30 +152,30 @@ describe("DocumentExportForm", () => {
       const user = userEvent.setup();
       render(<DocumentExportForm {...defaultProps} />);
 
-      const dateFromInput = screen.getByLabelText("export-page.date-from");
-      const dateToInput = screen.getByLabelText("export-page.date-to");
+      const dateFromInput = screen.getByLabelText("Date from");
+      const dateToInput = screen.getByLabelText("Date to");
 
       await user.clear(dateFromInput);
       await user.type(dateFromInput, "2020-01-01");
       await user.clear(dateToInput);
       await user.type(dateToInput, "2023-12-31");
 
-      expect(screen.getByText("export-page.error.date-range-exceeded")).toBeInTheDocument();
+      expect(screen.getByText("Date range cannot exceed one year.")).toBeInTheDocument();
     });
 
     it("should disable export button when date range is invalid", async () => {
       const user = userEvent.setup();
       render(<DocumentExportForm {...defaultProps} />);
 
-      const dateFromInput = screen.getByLabelText("export-page.date-from");
-      const dateToInput = screen.getByLabelText("export-page.date-to");
+      const dateFromInput = screen.getByLabelText("Date from");
+      const dateToInput = screen.getByLabelText("Date to");
 
       await user.clear(dateFromInput);
       await user.type(dateFromInput, "2020-01-01");
       await user.clear(dateToInput);
       await user.type(dateToInput, "2023-12-31");
 
-      const exportButton = screen.getByRole("button", { name: /export-page.export-button/i });
+      const exportButton = screen.getByRole("button", { name: /export documents/i });
       expect(exportButton).toBeDisabled();
     });
 
@@ -159,20 +184,20 @@ describe("DocumentExportForm", () => {
       render(<DocumentExportForm {...defaultProps} />);
 
       // First set invalid range
-      const dateFromInput = screen.getByLabelText("export-page.date-from");
-      const dateToInput = screen.getByLabelText("export-page.date-to");
+      const dateFromInput = screen.getByLabelText("Date from");
+      const dateToInput = screen.getByLabelText("Date to");
 
       await user.clear(dateFromInput);
       await user.type(dateFromInput, "2020-01-01");
       await user.clear(dateToInput);
       await user.type(dateToInput, "2023-12-31");
 
-      expect(screen.getByText("export-page.error.date-range-exceeded")).toBeInTheDocument();
+      expect(screen.getByText("Date range cannot exceed one year.")).toBeInTheDocument();
 
       // Clear dates
-      await user.click(screen.getByText("export-page.clear-dates"));
+      await user.click(screen.getByText("Clear dates"));
 
-      expect(screen.queryByText("export-page.error.date-range-exceeded")).not.toBeInTheDocument();
+      expect(screen.queryByText("Date range cannot exceed one year.")).not.toBeInTheDocument();
     });
   });
 
@@ -181,11 +206,11 @@ describe("DocumentExportForm", () => {
       const user = userEvent.setup();
       render(<DocumentExportForm {...defaultProps} />);
 
-      const clearButton = screen.getByText("export-page.clear-dates");
+      const clearButton = screen.getByText("Clear dates");
       await user.click(clearButton);
 
-      const dateFromInput = screen.getByLabelText("export-page.date-from") as HTMLInputElement;
-      const dateToInput = screen.getByLabelText("export-page.date-to") as HTMLInputElement;
+      const dateFromInput = screen.getByLabelText("Date from") as HTMLInputElement;
+      const dateToInput = screen.getByLabelText("Date to") as HTMLInputElement;
 
       expect(dateFromInput.value).toBe("");
       expect(dateToInput.value).toBe("");
@@ -195,10 +220,10 @@ describe("DocumentExportForm", () => {
       const user = userEvent.setup();
       render(<DocumentExportForm {...defaultProps} />);
 
-      const clearButton = screen.getByText("export-page.clear-dates");
+      const clearButton = screen.getByText("Clear dates");
       await user.click(clearButton);
 
-      expect(screen.queryByText("export-page.clear-dates")).not.toBeInTheDocument();
+      expect(screen.queryByText("Clear dates")).not.toBeInTheDocument();
     });
   });
 
@@ -209,7 +234,7 @@ describe("DocumentExportForm", () => {
 
       render(<DocumentExportForm {...defaultProps} onSuccess={onSuccess} />);
 
-      const exportButton = screen.getByRole("button", { name: /export-page.export-button/i });
+      const exportButton = screen.getByRole("button", { name: /export documents/i });
       await user.click(exportButton);
 
       await waitFor(() => {
@@ -230,7 +255,7 @@ describe("DocumentExportForm", () => {
 
       render(<DocumentExportForm {...defaultProps} onError={onError} />);
 
-      const exportButton = screen.getByRole("button", { name: /export-page.export-button/i });
+      const exportButton = screen.getByRole("button", { name: /export documents/i });
       await user.click(exportButton);
 
       await waitFor(() => {
@@ -244,7 +269,7 @@ describe("DocumentExportForm", () => {
 
       render(<DocumentExportForm {...defaultProps} onLoadingChange={onLoadingChange} />);
 
-      const exportButton = screen.getByRole("button", { name: /export-page.export-button/i });
+      const exportButton = screen.getByRole("button", { name: /export documents/i });
       await user.click(exportButton);
 
       await waitFor(() => {
@@ -257,7 +282,7 @@ describe("DocumentExportForm", () => {
       const user = userEvent.setup();
       render(<DocumentExportForm {...defaultProps} />);
 
-      const exportButton = screen.getByRole("button", { name: /export-page.export-button/i });
+      const exportButton = screen.getByRole("button", { name: /export documents/i });
       expect(exportButton).not.toBeDisabled();
 
       await user.click(exportButton);
@@ -268,16 +293,16 @@ describe("DocumentExportForm", () => {
       });
     });
 
-    it("should include correct query params in fetch request", async () => {
+    it("should omit language overrides for standard exports by default", async () => {
       const user = userEvent.setup();
       render(<DocumentExportForm {...defaultProps} />);
 
-      const exportButton = screen.getByRole("button", { name: /export-page.export-button/i });
+      const exportButton = screen.getByRole("button", { name: /export documents/i });
       await user.click(exportButton);
 
       await waitFor(() => {
         expect(global.fetch).toHaveBeenCalledWith(
-          expect.stringMatching(/\/documents\/export\?.*type=invoice.*format=xlsx.*language=en/),
+          expect.stringMatching(/\/documents\/export\?.*type=invoice.*format=xlsx/),
           expect.objectContaining({
             headers: expect.objectContaining({
               Authorization: "Bearer test-token",
@@ -285,6 +310,9 @@ describe("DocumentExportForm", () => {
             }),
           }),
         );
+
+        const url = (global.fetch as any).mock.calls[0][0] as string;
+        expect(url).not.toContain("language=");
       });
     });
   });
@@ -303,12 +331,10 @@ describe("DocumentExportForm", () => {
 
       render(<DocumentExportForm {...defaultProps} onPdfExportStarted={onPdfExportStarted} />);
 
-      // Select PDF format
-      const formatTrigger = screen.getByRole("combobox", { name: /export-page.format/i });
-      await user.click(formatTrigger);
-      await user.click(screen.getByText("export-page.formats.pdf_zip"));
+      const [, formatSelect] = screen.getAllByTestId("select-native");
+      await user.selectOptions(formatSelect, "pdf_zip");
 
-      const exportButton = screen.getByRole("button", { name: /export-page.export-button/i });
+      const exportButton = screen.getByRole("button", { name: /export documents/i });
       await user.click(exportButton);
 
       await waitFor(() => {
@@ -316,7 +342,7 @@ describe("DocumentExportForm", () => {
       });
     });
 
-    it("should POST to /documents/export/pdf for pdf_zip format", async () => {
+    it("should POST to /documents/export/pdf with types array and no implicit locale override", async () => {
       global.fetch = mock(() =>
         Promise.resolve({
           ok: true,
@@ -327,12 +353,10 @@ describe("DocumentExportForm", () => {
       const user = userEvent.setup();
       render(<DocumentExportForm {...defaultProps} />);
 
-      // Select PDF format
-      const formatTrigger = screen.getByRole("combobox", { name: /export-page.format/i });
-      await user.click(formatTrigger);
-      await user.click(screen.getByText("export-page.formats.pdf_zip"));
+      const [, formatSelect] = screen.getAllByTestId("select-native");
+      await user.selectOptions(formatSelect, "pdf_zip");
 
-      const exportButton = screen.getByRole("button", { name: /export-page.export-button/i });
+      const exportButton = screen.getByRole("button", { name: /export documents/i });
       await user.click(exportButton);
 
       await waitFor(() => {
@@ -347,6 +371,14 @@ describe("DocumentExportForm", () => {
             }),
           }),
         );
+
+        // Verify the body contains types array instead of type string
+        const fetchCall = (global.fetch as any).mock.calls[0];
+        const body = JSON.parse(fetchCall[1].body);
+        expect(body.types).toEqual(["invoice"]);
+        expect(body.type).toBeUndefined();
+        expect(body.locale).toBeUndefined();
+        expect(body.language).toBeUndefined();
       });
     });
   });

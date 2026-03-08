@@ -19,6 +19,13 @@ const mockClosePremise = mock(() => undefined);
 const mockRegisterDevice = mock(() => undefined);
 
 const mockUpdateUserSettings = mock(() => undefined);
+const mockUpdateEntity = mock(() => undefined);
+const mockUpdateEntityData: any = { mutate: mockUpdateEntity, isPending: false };
+
+// Mock the entity hooks to avoid SDKProvider dependency
+mock.module("@/ui/components/entities/entities.hooks", () => ({
+  useUpdateEntity: () => mockUpdateEntityData,
+}));
 
 // Mock the hooks — but NOT the section components (to avoid mock.module contamination)
 mock.module("@/ui/components/entities/furs-settings-form/furs-settings.hooks", () => ({
@@ -28,7 +35,10 @@ mock.module("@/ui/components/entities/furs-settings-form/furs-settings.hooks", (
   useUploadFursCertificate: () => mockUploadCertificateData,
   useClosePremise: () => ({ mutate: mockClosePremise }),
   useRegisterElectronicDevice: () => ({ mutate: mockRegisterDevice, isPending: false }),
-  useUserFursSettings: () => ({ data: null, isLoading: false }),
+  useUserFursSettings: () => ({
+    data: { operator_tax_number: "12345678", operator_label: "Operator1" },
+    isLoading: false,
+  }),
   useUpdateUserFursSettings: () => ({ mutate: mockUpdateUserSettings, isPending: false }),
   useCurrentUser: () => ({ data: null, isLoading: false }),
 }));
@@ -57,7 +67,8 @@ describe("FursSettingsForm", () => {
     id: "ent_123",
     country_code: "SI",
     environment: "production",
-  } as Entity;
+    tax_number: "12345678",
+  } as unknown as Entity;
 
   beforeEach(() => {
     mockUpdateSettings.mockClear();

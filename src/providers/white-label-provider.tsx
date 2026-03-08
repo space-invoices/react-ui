@@ -1,6 +1,6 @@
-import { getClientHeaders } from "@spaceinvoices/js-sdk";
 import type { ReactNode } from "react";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { getClientHeaders } from "@/ui/lib/client-headers";
 
 export type WhiteLabelConfig = {
   slug: string;

@@ -1,6 +1,5 @@
-import { describe, expect, mock, test } from "bun:test";
+import { describe, expect, test } from "bun:test";
 import { render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import TaxListHeader from "@/ui/components/taxes/tax-list-table/tax-list-header";
 
 const t = (key: string) => key;
@@ -22,29 +21,35 @@ describe("TaxListHeader", () => {
     expect(screen.getByText("Created")).toBeInTheDocument();
   });
 
-  test("calls onSort when sortable header clicked", async () => {
-    const onSort = mock();
-    const user = userEvent.setup();
-
+  test("renders all expected columns", () => {
     render(
       <TableWrapper>
-        <TaxListHeader onSort={onSort} t={t} />
+        <TaxListHeader t={t} />
       </TableWrapper>,
     );
 
-    await user.click(screen.getByText("Name"));
-
-    expect(onSort).toHaveBeenCalled();
+    const headers = screen.getAllByRole("columnheader");
+    expect(headers.length).toBeGreaterThanOrEqual(3);
   });
 
-  test("shows active sort indicator", () => {
+  test("applies translation function to header labels", () => {
+    const customT = (key: string) => {
+      const map: Record<string, string> = {
+        Name: "Naziv",
+        "Tax Rates": "Davčne stopnje",
+        Created: "Ustvarjeno",
+      };
+      return map[key] ?? key;
+    };
+
     render(
       <TableWrapper>
-        <TaxListHeader orderBy="name:asc" onSort={() => undefined} t={t} />
+        <TaxListHeader t={customT} />
       </TableWrapper>,
     );
 
-    // Name header should reflect active sort
-    expect(screen.getByText("Name")).toBeInTheDocument();
+    expect(screen.getByText("Naziv")).toBeInTheDocument();
+    expect(screen.getByText("Davčne stopnje")).toBeInTheDocument();
+    expect(screen.getByText("Ustvarjeno")).toBeInTheDocument();
   });
 });

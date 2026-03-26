@@ -1,4 +1,5 @@
 import type { Payment } from "@spaceinvoices/js-sdk";
+import { payments } from "@spaceinvoices/js-sdk";
 import { Info } from "lucide-react";
 import { useMemo } from "react";
 import { DataTable } from "@/ui/components/table/data-table";
@@ -8,8 +9,8 @@ import { withTableTranslations } from "@/ui/components/table/locales";
 import type { Column, ListTableProps, TableQueryParams, TableQueryResponse } from "@/ui/components/table/types";
 import { Button } from "@/ui/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/ui/components/ui/popover";
+import { getPaymentDocumentDisplay, getPaymentTypeLabel, localizePaymentNote } from "@/ui/lib/payment-display";
 import { createTranslation } from "@/ui/lib/translation";
-import { useSDK } from "@/ui/providers/sdk-provider";
 
 import PaymentListRowActions from "./list-row-actions";
 import de from "./locales/de";
@@ -36,9 +37,11 @@ const translations = withTableTranslations({
   hr,
 } as const);
 
-// Extended payment type that includes Invoice relation from API
-type PaymentWithInvoice = Payment & {
+type PaymentWithDocument = Payment & {
   Invoice?: { id: string; number: string } | null;
+  CreditNote?: { id: string; number: string } | null;
+  AdvanceInvoice?: { id: string; number: string } | null;
+  IncomingPurchaseDocument?: { id: string; supplier_document_number?: string | null } | null;
 };
 
 type PaymentListTableProps = {
@@ -64,50 +67,42 @@ export default function PaymentListTable({
   ...i18nProps
 }: PaymentListTableProps) {
   const t = createTranslation({
-    translations,
-    locale: i18nProps.translationLocale ?? i18nProps.locale,
     ...i18nProps,
+    translations,
   });
-
-  const { sdk } = useSDK();
-
   const handleFetch = useTableFetch(async (params: TableQueryParams) => {
-    if (!sdk) throw new Error("SDK not initialized");
     if (!params.entity_id) throw new Error("Entity ID required");
 
-    const response = await sdk.payments.list({
+    const response = await payments.list({
       entity_id: params.entity_id,
       limit: params.limit,
       next_cursor: params.next_cursor,
       prev_cursor: params.prev_cursor,
+      order_by: params.order_by,
       search: params.search,
       query: params.query,
+      include: "Invoice,CreditNote,AdvanceInvoice,IncomingPurchaseDocument",
     });
-    return response as unknown as TableQueryResponse<Payment>;
+    return response as unknown as TableQueryResponse<PaymentWithDocument>;
   }, entityId);
 
-  const typeLabels: Record<string, string> = useMemo(
-    () => ({
-      cash: t("type.cash"),
-      bank_transfer: t("type.bank_transfer"),
-      card: t("type.card"),
-      check: t("type.check"),
-      other: t("type.other"),
-    }),
-    [t],
-  );
-
-  const columns: Column<PaymentWithInvoice>[] = useMemo(
+  const columns: Column<PaymentWithDocument>[] = useMemo(
     () => [
       {
         id: "date",
         header: t("Date"),
+        sort: {
+          defaultDirection: "desc",
+        },
         cell: (payment) => <FormattedDate date={payment.date} locale={i18nProps.locale} />,
       },
       {
         id: "amount",
         header: t("Amount"),
         align: "right",
+        sort: {
+          defaultDirection: "desc",
+        },
         cell: (payment) => (
           <span className="font-medium">
             {new Intl.NumberFormat(i18nProps.locale, {
@@ -120,23 +115,33 @@ export default function PaymentListTable({
       {
         id: "type",
         header: t("Type"),
-        cell: (payment) => typeLabels[payment.type] ?? payment.type,
+        sort: true,
+        cell: (payment) => getPaymentTypeLabel(payment.type, t),
       },
       {
-        id: "invoice",
-        header: t("Invoice"),
-        cell: (payment) =>
-          payment.Invoice ? (
-            <Button
-              variant="link"
-              className="h-auto cursor-pointer p-0 text-foreground underline"
-              onClick={() => onViewInvoice?.(payment.Invoice!.id)}
-            >
-              {payment.Invoice.number}
-            </Button>
-          ) : (
-            <span className="text-muted-foreground">-</span>
-          ),
+        id: "document",
+        header: t("Document"),
+        cell: (payment) => {
+          const document = getPaymentDocumentDisplay(payment);
+
+          if (!document) {
+            return <span className="text-muted-foreground">-</span>;
+          }
+
+          if (document.isNavigable) {
+            return (
+              <Button
+                variant="link"
+                className="h-auto cursor-pointer p-0 text-foreground underline"
+                onClick={() => onViewInvoice?.(document.id)}
+              >
+                {document.label}
+              </Button>
+            );
+          }
+
+          return <span>{document.label}</span>;
+        },
       },
       {
         id: "reference",
@@ -147,7 +152,7 @@ export default function PaymentListTable({
         id: "note",
         header: t("Note"),
         className: "max-w-[200px]",
-        cell: (payment) => <NoteCell note={payment.note} />,
+        cell: (payment) => <NoteCell note={payment.note} t={t} />,
       },
       {
         id: "actions",
@@ -167,7 +172,7 @@ export default function PaymentListTable({
         ),
       },
     ],
-    [t, typeLabels, entityId, onViewInvoice, onEditPayment, onDeleteSuccess, onDeleteError, i18nProps.locale],
+    [t, entityId, onViewInvoice, onEditPayment, onDeleteSuccess, onDeleteError, i18nProps.locale],
   );
 
   return (
@@ -186,14 +191,15 @@ export default function PaymentListTable({
 }
 
 /** Note cell with popover for long notes */
-function NoteCell({ note }: { note?: string | null }) {
-  if (!note) return "-";
+function NoteCell({ note, t }: { note?: string | null; t: (key: string) => string }) {
+  const localizedNote = localizePaymentNote(note, t);
+  if (!localizedNote) return "-";
 
-  const hasLongNote = note.length > 30;
+  const hasLongNote = localizedNote.length > 30;
 
   return (
     <div className="flex items-center gap-1">
-      <span className="truncate">{note}</span>
+      <span className="truncate">{localizedNote}</span>
       {hasLongNote && (
         <Popover>
           <PopoverTrigger asChild>
@@ -202,7 +208,7 @@ function NoteCell({ note }: { note?: string | null }) {
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-80">
-            <p className="text-sm">{note}</p>
+            <p className="text-sm">{localizedNote}</p>
           </PopoverContent>
         </Popover>
       )}

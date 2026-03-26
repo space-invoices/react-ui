@@ -2,7 +2,7 @@ export default {
   "FURS is for Slovenian Entities": "FURS je samo za slovenska poduzeća",
   "FURS fiscalization is only available for entities with country code SI":
     "Fiskalizacija FURS dostupna je samo za subjekte s oznakom države SI (Slovenija)",
-  "Test Mode (Sandbox)": "Testni način (Sandbox)",
+  "Test Mode (Sandbox)": "Testni način rada",
   "This entity is in test mode. FURS invoices will be sent to the test/demo environment. No real fiscalization will occur.":
     "Ovaj subjekt je u testnom načinu. FURS računi bit će poslani u testno/demo okruženje. Prava fiskalizacija se neće provesti.",
   "General Settings": "Opće postavke",
@@ -18,6 +18,9 @@ export default {
   "Register at least one business premise before fiscalizing invoices":
     "Registrirajte barem jedan poslovni prostor prije fiskalizacije računa",
   "Configure FURS fiscalization behavior": "Konfigurirajte ponašanje fiskalizacije FURS",
+  "Skip Fiscalization by Default": "Preskoči fiskalizaciju prema zadanim postavkama",
+  "New invoices and advance invoices start with fiscalization turned off when payment type allows it. Non-bank-transfer payments still force fiscalization back on.":
+    "Novi računi i avansni računi započinju s isključenom fiskalizacijom kada to vrsta plaćanja dopušta. Plaćanja koja nisu bankovna doznaka ponovno uključuju fiskalizaciju.",
   "Configure how FURS fiscalization works for your entity. Enable fiscalization, choose your numbering strategy, and set operator information.":
     "Konfigurirajte kako funkcionira fiskalizacija FURS za vaš subjekt. Omogućite fiskalizaciju, odaberite strategiju numeriranja i postavite informacije o operateru.",
   "Enable FURS Fiscalization": "Omogući fiskalizaciju FURS",
@@ -55,9 +58,9 @@ export default {
   "Please select a certificate file and enter the passphrase":
     "Molimo odaberite datoteku certifikata i unesite lozinku",
   "Invalid certificate passphrase. Please check your passphrase and try again.":
-    "Nevažeća lozinka certifikata. Provjerite lozinku i pokušajte ponovo.",
+    "Nevažeća lozinka certifikata. Provjerite lozinku i pokušajte ponovno.",
   "Certificate tax number does not match entity tax number. Please upload a certificate for this entity.":
-    "Porezni broj certifikata ne odgovara poreznom broju entiteta. Učitajte certifikat za ovaj entitet.",
+    "Porezni broj certifikata ne odgovara poreznom broju poslovnog subjekta. Učitajte certifikat za ovaj poslovni subjekt.",
   Valid: "Valjan",
   "Expiring Soon": "Uskoro ističe",
   Expired: "Istekao",
@@ -143,7 +146,7 @@ export default {
   Fiscalized: "Fiskalizirano",
   Pending: "U tijeku",
   Failed: "Neuspješno",
-  "Fiscalization Error": "Greška fiskalizacije",
+  "Fiscalization Error": "Pogreška fiskalizacije",
   Cancelled: "Otkazano",
   ZOI: "ZOI",
   EOR: "EOR",
@@ -175,6 +178,24 @@ export default {
     "Nakon omogućavanja, svi novi računi bit će automatski poslani FURS-u na fiskalizaciju. Provjerite jeste li dovršili sve korake postavki prije omogućavanja.",
   "You can disable fiscalization at any time, but note that invoices issued while disabled will not be fiscalized.":
     "Možete onemogućiti fiskalizaciju u bilo kojem trenutku, ali imajte na umu da računi izdani dok je onemogućena neće biti fiskalizirani.",
+  "Internal Act": "Interni akt",
+  "Download the internal act in printable PDF or editable DOCX form before enabling FURS fiscalization.":
+    "Preuzmite interni akt u ispisivom PDF ili uređivom DOCX formatu prije uključivanja FURS fiskalizacije.",
+  "The internal act contains your current business premises, devices, and invoice numbering setup.":
+    "Interni akt sadrži vaše trenutačne poslovne prostore, uređaje i postavke numeriranja računa.",
+  "Download PDF": "Preuzmi PDF",
+  "Download DOCX": "Preuzmi DOCX",
+  "Preparing PDF...": "Priprema PDF-a...",
+  "Preparing DOCX...": "Priprema DOCX-a...",
+  "Upload a valid certificate to download the internal act": "Prenesite važeći certifikat za preuzimanje internog akta",
+  "Register at least one active business premise to download the internal act":
+    "Registrirajte barem jedan aktivni poslovni prostor za preuzimanje internog akta",
+  "Register at least one electronic device to download the internal act":
+    "Registrirajte barem jedan elektronički uređaj za preuzimanje internog akta",
+  "Internal act PDF downloaded": "Interni akt PDF preuzet",
+  "Internal act DOCX downloaded": "Interni akt DOCX preuzet",
+  "Failed to download internal act": "Preuzimanje internog akta nije uspjelo",
+  "Internal act download unavailable": "Preuzimanje internog akta nije dostupno",
   "You must upload a digital certificate before you can register business premises":
     "Morate prenijeti digitalni certifikat prije nego što možete registrirati poslovne prostore",
   "Your Operator Settings": "Vaše postavke operatera",
@@ -199,22 +220,26 @@ export default {
   "Certificate uploaded successfully": "Certifikat uspješno prenesen",
   "Loading certificate details...": "Učitavanje pojedinosti certifikata...",
   // Entity info section
-  "Entity Information": "Entity Information",
-  "Required company details for FURS fiscalization": "Required company details for FURS fiscalization",
-  "Entity Tax Number": "Entity Tax Number",
-  "Your company's tax number (must match FURS certificate)": "Your company's tax number (must match FURS certificate)",
-  Address: "Address",
-  "Post Code": "Post Code",
-  "Save Entity Info": "Save Entity Info",
-  "Tax number is required for FURS fiscalization": "Tax number is required for FURS fiscalization",
-  "Set entity tax number in General Settings first": "Set entity tax number in General Settings first",
+  "Entity Information": "Podaci o subjektu",
+  "Required company details for FURS fiscalization": "Obvezni podaci tvrtke za FURS fiskalizaciju",
+  "Entity Tax Number": "Porezni broj subjekta",
+  "Your company's tax number (must match FURS certificate)":
+    "Porezni broj vaše tvrtke (mora odgovarati FURS certifikatu)",
+  Address: "Adresa",
+  "Post Code": "Poštanski broj",
+  "Save Entity Info": "Spremi podatke o subjektu",
+  "Tax number is required for FURS fiscalization": "Porezni broj je obavezan za FURS fiskalizaciju",
+  "Set entity tax number in General Settings first": "Najprije postavite porezni broj subjekta u Općim postavkama",
   "Set operator tax number and label in General Settings first":
-    "Set operator tax number and label in General Settings first",
-  "Complete General Settings first": "Complete General Settings first",
+    "Najprije postavite porezni broj i oznaku operatera u Općim postavkama",
+  "Complete General Settings first": "Najprije dovršite Opće postavke",
   "Operator tax number and label are required for FURS fiscalization":
-    "Operator tax number and label are required for FURS fiscalization",
-  "FURS Operator Settings Required": "FURS Operator Settings Required",
+    "Porezni broj i oznaka operatera obavezni su za FURS fiskalizaciju",
+  "FURS Operator Settings Required": "Potrebne su postavke FURS operatera",
   "Your FURS operator information is needed to fiscalize this document. Please enter your operator details.":
-    "Your FURS operator information is needed to fiscalize this document. Please enter your operator details.",
-  "Save & Retry": "Save & Retry",
+    "Podaci vašeg FURS operatera potrebni su za fiskalizaciju ovog dokumenta. Unesite podatke o operateru.",
+  "Save & Retry": "Spremi i pokušaj ponovno",
+  "A premise with this name already exists": "Poslovni prostor s ovim nazivom već postoji",
+  "Exactly 4 digits": "Točno 4 znamenke",
+  "Your Name": "Vaše ime",
 } as const;

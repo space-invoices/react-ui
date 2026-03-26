@@ -1,24 +1,22 @@
+import { taxReports } from "@spaceinvoices/js-sdk";
 import { Download, Loader2, RefreshCcw, Save } from "lucide-react";
-import { useEffect, useState } from "react";
-import type SDK from "@spaceinvoices/js-sdk";
+import { useEffect, useMemo, useState } from "react";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
-import { SloveniaTaxProfileStep, type SloveniaTaxProfileFormState } from "./slovenia-tax-profile-step";
-import { SloveniaYearlyReviewStep } from "./slovenia-yearly-review-step";
 import { Button } from "../ui/button";
+import { type SloveniaTaxProfileFormState, SloveniaTaxProfileStep } from "./slovenia-tax-profile-step";
+import { SloveniaYearlyReviewStep } from "./slovenia-yearly-review-step";
 
 type SloveniaYearlyExportFormProps = {
-  sdk: SDK;
   entityId: string;
   onSuccess?: (fileName: string) => void;
   onError?: (error: Error) => void;
 } & ComponentTranslationProps;
 
-type TaxReportsApi = SDK["taxReports"];
-type ProfileResponse = Awaited<ReturnType<TaxReportsApi["getSloveniaTaxProfile"]>>;
-type DraftResponse = Awaited<ReturnType<TaxReportsApi["reviewSloveniaYearlyNormiraniReport"]>>;
+type ProfileResponse = Awaited<ReturnType<typeof taxReports.getSloveniaTaxProfile>>;
+type DraftResponse = Awaited<ReturnType<typeof taxReports.reviewSloveniaYearlyNormiraniReport>>;
 type ManualValues = DraftResponse["manual_values"];
-type UpdateProfileBody = Parameters<TaxReportsApi["updateSloveniaTaxProfile"]>[0];
+type UpdateProfileBody = Parameters<typeof taxReports.updateSloveniaTaxProfile>[0];
 
 const translations = {
   en: {
@@ -291,15 +289,18 @@ function profileToForm(profile: ProfileResponse): SloveniaTaxProfileFormState {
 }
 
 export function SloveniaYearlyExportForm({
-  sdk,
   entityId,
   t: translateFn,
   namespace,
   locale,
+  translationLocale,
   onSuccess,
   onError,
 }: SloveniaYearlyExportFormProps) {
-  const t = createTranslation({ t: translateFn, namespace, locale, translations });
+  const t = useMemo(
+    () => createTranslation({ t: translateFn, namespace, locale, translationLocale, translations }),
+    [locale, namespace, translateFn, translationLocale],
+  );
   const [year, setYear] = useState(getDefaultYear);
   const [profileForm, setProfileForm] = useState<SloveniaTaxProfileFormState>(createDefaultProfileForm);
   const [draft, setDraft] = useState<DraftResponse | null>(null);
@@ -322,7 +323,7 @@ export function SloveniaYearlyExportForm({
       setIsLoadingProfile(true);
 
       try {
-        const profile = await sdk.taxReports.getSloveniaTaxProfile({
+        const profile = await taxReports.getSloveniaTaxProfile({
           entity_id: entityId,
         });
 
@@ -342,7 +343,7 @@ export function SloveniaYearlyExportForm({
     return () => {
       isMounted = false;
     };
-  }, [entityId, onError, sdk.taxReports]);
+  }, [entityId, onError, t]);
 
   const unsupportedReasonKey = getUnsupportedReasonKey(profileForm);
   const unsupportedReason = unsupportedReasonKey ? t(unsupportedReasonKey) : null;
@@ -364,7 +365,7 @@ export function SloveniaYearlyExportForm({
         },
       };
 
-      const profile = await sdk.taxReports.updateSloveniaTaxProfile(payload, {
+      const profile = await taxReports.updateSloveniaTaxProfile(payload, {
         entity_id: entityId,
       });
 
@@ -387,7 +388,7 @@ export function SloveniaYearlyExportForm({
       }
 
       setIsReviewing(true);
-      const response = await sdk.taxReports.reviewSloveniaYearlyNormiraniReport(
+      const response = await taxReports.reviewSloveniaYearlyNormiraniReport(
         {
           year,
         },
@@ -407,7 +408,7 @@ export function SloveniaYearlyExportForm({
     setIsExporting(true);
 
     try {
-      const blob = await sdk.taxReports.exportSloveniaYearlyNormiraniReport(
+      const blob = await taxReports.exportSloveniaYearlyNormiraniReport(
         {
           year,
           manual_values: manualValues,

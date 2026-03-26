@@ -34,12 +34,15 @@ export function SloveniaTaxProfileStep({
   onYearChange,
   yearOptions,
 }: SloveniaTaxProfileStepProps) {
-  const businessFormLabel =
-    form.business_form ? t(`slovenia-yearly.profile.business-form.options.${form.business_form}`) : undefined;
-  const regimeLabel =
-    form.income_tax_regime ? t(`slovenia-yearly.profile.regime.options.${form.income_tax_regime}`) : undefined;
-  const residencyLabel =
-    form.tax_residency ? t(`slovenia-yearly.profile.residency.options.${form.tax_residency}`) : undefined;
+  const businessFormLabel = form.business_form
+    ? t(`slovenia-yearly.profile.business-form.options.${form.business_form}`)
+    : undefined;
+  const regimeLabel = form.income_tax_regime
+    ? t(`slovenia-yearly.profile.regime.options.${form.income_tax_regime}`)
+    : undefined;
+  const residencyLabel = form.tax_residency
+    ? t(`slovenia-yearly.profile.residency.options.${form.tax_residency}`)
+    : undefined;
   const vatProfileLabel = form.vat_profile
     ? t(`slovenia-yearly.profile.vat-profile.options.${form.vat_profile}`)
     : undefined;
@@ -109,11 +112,15 @@ export function SloveniaTaxProfileStep({
             onValueChange={(value) => onFieldChange("tax_residency", value ?? "")}
           >
             <SelectTrigger id="si-yearly-residency">
-              <SelectValue placeholder={t("slovenia-yearly.profile.residency.placeholder")}>{residencyLabel}</SelectValue>
+              <SelectValue placeholder={t("slovenia-yearly.profile.residency.placeholder")}>
+                {residencyLabel}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="resident">{t("slovenia-yearly.profile.residency.options.resident")}</SelectItem>
-              <SelectItem value="non_resident">{t("slovenia-yearly.profile.residency.options.non_resident")}</SelectItem>
+              <SelectItem value="non_resident">
+                {t("slovenia-yearly.profile.residency.options.non_resident")}
+              </SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -169,11 +176,15 @@ export function SloveniaTaxProfileStep({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="si-yearly-registration-number">{t("slovenia-yearly.profile.registration-number.label")}</Label>
+          <Label htmlFor="si-yearly-registration-number">
+            {t("slovenia-yearly.profile.registration-number.label")}
+          </Label>
           <Input
             id="si-yearly-registration-number"
             value={form.registration_number}
-            onChange={(event: ChangeEvent<HTMLInputElement>) => onFieldChange("registration_number", event.target.value)}
+            onChange={(event: ChangeEvent<HTMLInputElement>) =>
+              onFieldChange("registration_number", event.target.value)
+            }
             placeholder={t("slovenia-yearly.profile.registration-number.placeholder")}
           />
         </div>

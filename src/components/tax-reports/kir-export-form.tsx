@@ -1,6 +1,6 @@
+import { taxReports } from "@spaceinvoices/js-sdk";
 import { Download, Loader2 } from "lucide-react";
 import { useRef, useState } from "react";
-import type SDK from "@spaceinvoices/js-sdk";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
 import { Button } from "../ui/button";
@@ -22,7 +22,6 @@ function getPreviousMonth(): { year: number; month: number } {
 }
 
 type KirExportFormProps = {
-  sdk: SDK;
   entityId: string;
   onSuccess?: (fileName: string) => void;
   onError?: (error: Error) => void;
@@ -60,16 +59,16 @@ const translations = {
 } as const;
 
 export function KirExportForm({
-  sdk,
   entityId,
   t: translateFn,
   namespace,
   locale,
+  translationLocale,
   onSuccess,
   onError,
   onLoadingChange,
 }: KirExportFormProps) {
-  const t = createTranslation({ t: translateFn, namespace, locale, translations });
+  const t = createTranslation({ t: translateFn, namespace, locale, translationLocale, translations });
   const defaultPeriod = getPreviousMonth();
   const [year, setYear] = useState(defaultPeriod.year);
   const [periodType, setPeriodType] = useState<PeriodType>("month");
@@ -88,7 +87,7 @@ export function KirExportForm({
     onLoadingChange?.(true, null);
 
     try {
-      const blob = await sdk.taxReports.generateKirExport(
+      const blob = await taxReports.generateKirExport(
         {
           year: year.toString(),
           month: periodType === "month" ? month.toString() : undefined,

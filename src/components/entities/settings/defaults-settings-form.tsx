@@ -49,6 +49,10 @@ const defaultsSettingsSchema = z.object({
   // Credit note defaults
   default_credit_note_note: z.union([z.string(), z.null()]).optional(),
   default_credit_note_payment_terms: z.union([z.string(), z.null()]).optional(),
+  // Advance invoice defaults
+  default_advance_invoice_note: z.union([z.string(), z.null()]).optional(),
+  // Delivery note defaults
+  default_delivery_note_note: z.union([z.string(), z.null()]).optional(),
   // Shared
   document_footer: z.union([z.string(), z.null()]).optional(),
   default_document_signature: z.union([z.string(), z.null()]).optional(),
@@ -71,11 +75,12 @@ export function DefaultsSettingsForm({
   t: translateProp,
   namespace,
   locale,
+  translationLocale,
   onSuccess,
   onError,
   renderSection,
 }: DefaultsSettingsFormProps) {
-  const t = createTranslation({ t: translateProp, namespace, locale, translations });
+  const t = createTranslation({ t: translateProp, namespace, locale, translationLocale, translations });
 
   const currentSettings = (entity.settings as any) || {};
 
@@ -88,6 +93,10 @@ export function DefaultsSettingsForm({
   // Refs for smart code insert buttons - Credit Note
   const creditNoteNoteRef = useRef<HTMLTextAreaElement>(null);
   const creditNotePaymentTermsRef = useRef<HTMLTextAreaElement>(null);
+  // Refs for smart code insert buttons - Advance Invoice
+  const advanceInvoiceNoteRef = useRef<HTMLTextAreaElement>(null);
+  // Refs for smart code insert buttons - Delivery Note
+  const deliveryNoteNoteRef = useRef<HTMLTextAreaElement>(null);
   // Ref for document footer (shared)
   const documentFooterRef = useRef<HTMLTextAreaElement>(null);
   // Ref for document signature (shared)
@@ -107,6 +116,10 @@ export function DefaultsSettingsForm({
       // Credit Note
       default_credit_note_note: currentSettings.default_credit_note_note || null,
       default_credit_note_payment_terms: currentSettings.default_credit_note_payment_terms || null,
+      // Advance Invoice
+      default_advance_invoice_note: currentSettings.default_advance_invoice_note || null,
+      // Delivery Note
+      default_delivery_note_note: currentSettings.default_delivery_note_note || null,
       // Shared
       document_footer: currentSettings.document_footer || null,
       default_document_signature: currentSettings.default_document_signature || null,
@@ -142,6 +155,10 @@ export function DefaultsSettingsForm({
         // Credit Note
         default_credit_note_note: values.default_credit_note_note || null,
         default_credit_note_payment_terms: values.default_credit_note_payment_terms || null,
+        // Advance Invoice
+        default_advance_invoice_note: values.default_advance_invoice_note || null,
+        // Delivery Note
+        default_delivery_note_note: values.default_delivery_note_note || null,
         // Shared
         document_footer: values.document_footer || null,
         default_document_signature: values.default_document_signature || null,
@@ -237,6 +254,12 @@ export function DefaultsSettingsForm({
           <TabsTrigger value="credit_note" className="cursor-pointer">
             {t("Credit Note")}
           </TabsTrigger>
+          <TabsTrigger value="advance_invoice" className="cursor-pointer">
+            {t("Advance Invoice")}
+          </TabsTrigger>
+          <TabsTrigger value="delivery_note" className="cursor-pointer">
+            {t("Delivery Note")}
+          </TabsTrigger>
         </TabsList>
 
         {/* Invoice Tab */}
@@ -260,8 +283,9 @@ export function DefaultsSettingsForm({
                     ref={invoiceNoteRef}
                     value={field.value || ""}
                     onChange={field.onChange}
-                    placeholder={t("Payment due by {document_due_date}. Please reference invoice {document_number}.")}
+                    placeholder={t("Optional note for the document.")}
                     entity={entity}
+                    translatePreviewLabel={t}
                     multiline
                     rows={3}
                     className="resize-y"
@@ -294,8 +318,9 @@ export function DefaultsSettingsForm({
                     ref={invoicePaymentTermsRef}
                     value={field.value || ""}
                     onChange={field.onChange}
-                    placeholder={t("Net 30 days. Payment due by {document_due_date}.")}
+                    placeholder={t("Please remit payment using the bank details shown on the document.")}
                     entity={entity}
+                    translatePreviewLabel={t}
                     multiline
                     rows={3}
                     className="resize-y"
@@ -333,6 +358,7 @@ export function DefaultsSettingsForm({
                     onChange={field.onChange}
                     placeholder={t("This estimate is valid until {document_valid_until}.")}
                     entity={entity}
+                    translatePreviewLabel={t}
                     multiline
                     rows={3}
                     className="resize-y"
@@ -367,6 +393,7 @@ export function DefaultsSettingsForm({
                     onChange={field.onChange}
                     placeholder={t("Payment due upon acceptance.")}
                     entity={entity}
+                    translatePreviewLabel={t}
                     multiline
                     rows={3}
                     className="resize-y"
@@ -404,6 +431,7 @@ export function DefaultsSettingsForm({
                     onChange={field.onChange}
                     placeholder={t("Credit note for invoice {document_number}.")}
                     entity={entity}
+                    translatePreviewLabel={t}
                     multiline
                     rows={3}
                     className="resize-y"
@@ -438,6 +466,7 @@ export function DefaultsSettingsForm({
                     onChange={field.onChange}
                     placeholder={t("Credit will be applied to your account.")}
                     entity={entity}
+                    translatePreviewLabel={t}
                     multiline
                     rows={3}
                     className="resize-y"
@@ -446,6 +475,78 @@ export function DefaultsSettingsForm({
                 <FormDescription className="text-xs">
                   {t("Payment terms pre-filled when creating new credit notes")}
                 </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </TabsContent>
+
+        {/* Advance Invoice Tab */}
+        <TabsContent value="advance_invoice" className="mt-4 space-y-4">
+          <FormField
+            control={form.control}
+            name="default_advance_invoice_note"
+            render={({ field }) => (
+              <FormItem>
+                <div className="flex items-center justify-between">
+                  <FormLabel className="font-medium text-sm">{t("Default Note")}</FormLabel>
+                  <SmartCodeInsertButton
+                    textareaRef={advanceInvoiceNoteRef}
+                    value={field.value || ""}
+                    onInsert={(newValue) => field.onChange(newValue)}
+                    t={t}
+                  />
+                </div>
+                <FormControl>
+                  <InputWithPreview
+                    ref={advanceInvoiceNoteRef}
+                    value={field.value || ""}
+                    onChange={field.onChange}
+                    placeholder={t("Default note for advance invoices")}
+                    entity={entity}
+                    translatePreviewLabel={t}
+                    multiline
+                    className="min-h-[100px] resize-none"
+                    rows={4}
+                  />
+                </FormControl>
+                <FormDescription className="text-xs">{t("Default note for all new advance invoices")}</FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </TabsContent>
+
+        {/* Delivery Note Tab */}
+        <TabsContent value="delivery_note" className="mt-4 space-y-4">
+          <FormField
+            control={form.control}
+            name="default_delivery_note_note"
+            render={({ field }) => (
+              <FormItem>
+                <div className="flex items-center justify-between">
+                  <FormLabel className="font-medium text-sm">{t("Default Note")}</FormLabel>
+                  <SmartCodeInsertButton
+                    textareaRef={deliveryNoteNoteRef}
+                    value={field.value || ""}
+                    onInsert={(newValue) => field.onChange(newValue)}
+                    t={t}
+                  />
+                </div>
+                <FormControl>
+                  <InputWithPreview
+                    ref={deliveryNoteNoteRef}
+                    value={field.value || ""}
+                    onChange={field.onChange}
+                    placeholder={t("Default note for delivery notes")}
+                    entity={entity}
+                    translatePreviewLabel={t}
+                    multiline
+                    className="min-h-[100px] resize-none"
+                    rows={4}
+                  />
+                </FormControl>
+                <FormDescription className="text-xs">{t("Default note for all new delivery notes")}</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -479,6 +580,7 @@ export function DefaultsSettingsForm({
                 onChange={field.onChange}
                 placeholder={t("{entity_name}")}
                 entity={entity}
+                translatePreviewLabel={t}
                 multiline
                 rows={2}
                 className="resize-y"
@@ -511,6 +613,7 @@ export function DefaultsSettingsForm({
                 onChange={field.onChange}
                 placeholder={t("{entity_name} | Due Date: {document_due_date} | Invoice #{document_number}")}
                 entity={entity}
+                translatePreviewLabel={t}
                 multiline
                 rows={2}
                 className="resize-y"

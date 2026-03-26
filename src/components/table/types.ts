@@ -1,5 +1,19 @@
 import type { ReactNode } from "react";
 
+export type TableOrderByValue = string | string[];
+export type TableSortDirection = "asc" | "desc";
+
+export type TableColumnSort = {
+  /** API order_by value to send for ascending sort */
+  asc?: TableOrderByValue;
+  /** API order_by value to send for descending sort */
+  desc?: TableOrderByValue;
+  /** Which direction should be applied first when the column is unsorted */
+  defaultDirection?: TableSortDirection;
+  /** When true, the third click clears sorting for this column */
+  clearOnThirdClick?: boolean;
+};
+
 /**
  * Column definition for table headers and cells
  */
@@ -14,6 +28,8 @@ export type Column<T> = {
   align?: "left" | "center" | "right";
   /** Optional CSS class for the column */
   className?: string;
+  /** Enable header click sorting using the column id or an explicit sort mapping */
+  sort?: boolean | TableColumnSort;
 };
 
 /**
@@ -23,6 +39,7 @@ export type TableQueryParams = {
   search?: string;
   prev_cursor?: string;
   next_cursor?: string;
+  order_by?: TableOrderByValue;
   entity_id?: string;
   limit?: number;
   query?: string; // JSON string for API query filters (built from filter_* params)

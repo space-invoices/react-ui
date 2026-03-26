@@ -6,8 +6,8 @@ import { LoadingCard } from "../loading-card";
 import bg from "./locales/bg";
 import cs from "./locales/cs";
 import de from "./locales/de";
-import et from "./locales/et";
 import es from "./locales/es";
+import et from "./locales/et";
 import fi from "./locales/fi";
 import fr from "./locales/fr";
 import hr from "./locales/hr";
@@ -26,6 +26,7 @@ const translations = { bg, cs, de, et, es, fi, fr, hr, is, it, nb, nl, pl, pt, s
 
 type BaseProps = {
   locale?: string;
+  translationLocale?: string;
   t?: (key: string) => string;
   namespace?: string;
 };
@@ -49,8 +50,8 @@ type TurnkeyProps = BaseProps & {
 export type CollectionRateCardProps = DataProps | TurnkeyProps;
 
 export function CollectionRateCard(props: CollectionRateCardProps) {
-  const { locale, t: externalT, namespace } = props;
-  const t = createTranslation({ t: externalT, namespace, locale, translations });
+  const { locale, translationLocale, t: externalT, namespace } = props;
+  const t = createTranslation({ t: externalT, namespace, locale, translationLocale, translations });
 
   // Turnkey mode - fetch own data
   const hookResult = useCollectionRateData("entityId" in props ? props.entityId : undefined);
@@ -81,11 +82,11 @@ export function CollectionRateCard(props: CollectionRateCardProps) {
   };
 
   return (
-    <Card>
-      <CardHeader className="pb-2">
+    <Card className="gap-2">
+      <CardHeader className="pb-1">
         <CardTitle className="font-medium text-muted-foreground text-sm">{t("Collection Rate")}</CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-0">
         <div className={`font-bold text-2xl ${getVariantColor(collectionRate)}`}>{collectionRate.toFixed(1)}%</div>
         <p className="mt-1 text-muted-foreground text-xs">
           {formatCurrency(totalCollected)} / {formatCurrency(totalInvoiced)}

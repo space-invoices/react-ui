@@ -17,8 +17,10 @@ import { Input } from "@/ui/components/ui/input";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/ui/components/ui/tooltip";
 import type { CreateItemSchema } from "@/ui/generated/schemas";
 import { createItemSchema } from "@/ui/generated/schemas";
+import { getEntityCountryCapabilities } from "@/ui/lib/country-capabilities";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
+import { useEntities } from "@/ui/providers/entities-context";
 
 import { useUpdateItem } from "../items.hooks";
 import de from "./locales/de";
@@ -63,12 +65,16 @@ export default function EditItemForm({
     ...i18nProps,
     translations,
   });
+  const { activeEntity } = useEntities();
+  const countryCapabilities = getEntityCountryCapabilities(activeEntity);
+  const lockPortugalSavedItemFields = !countryCapabilities.allowSavedItemFullEdit;
 
   const [isGrossPrice, setIsGrossPrice] = useState(item.gross_price != null);
 
   const form = useForm<CreateItemSchema>({
     resolver: zodResolver(createItemSchema),
     defaultValues: {
+      classification: item.classification ?? undefined,
       name: item.name ?? "",
       description: item.description ?? "",
       price: isGrossPrice ? (item.gross_price ?? 0) : item.price,
@@ -111,14 +117,46 @@ export default function EditItemForm({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <FormInput control={form.control} name="name" label={t("Name")} placeholder={t("Enter name")} />
+        <FormInput
+          control={form.control}
+          name="name"
+          label={t("Name")}
+          placeholder={t("Enter name")}
+          disabled={lockPortugalSavedItemFields}
+        />
 
         <FormInput
           control={form.control}
           name="description"
           label={t("Description")}
           placeholder={t("Enter description")}
+          disabled={lockPortugalSavedItemFields}
         />
+
+        {countryCapabilities.isPortugal && (
+          <FormField
+            control={form.control}
+            name="classification"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t("Classification")}</FormLabel>
+                <FormControl>
+                  <select
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                    value={field.value ?? "product"}
+                    onChange={(event) => field.onChange(event.target.value)}
+                    disabled={lockPortugalSavedItemFields}
+                  >
+                    <option value="product">{t("Product")}</option>
+                    <option value="service">{t("Service")}</option>
+                    <option value="advance">{t("Advance")}</option>
+                  </select>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
 
         <FormField
           control={form.control}

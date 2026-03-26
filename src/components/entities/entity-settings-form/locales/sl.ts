@@ -25,7 +25,7 @@ export default {
   "Signature preview": "Predogled podpisa",
   "Crop Your Signature": "Obreži podpis",
   "Adjust the crop area or upload the full image": "Prilagodite območje obrezovanja ali naložite celotno sliko",
-  "Upload failed. Please try again.": "Nalaganje ni uspelo. Prosim poskusite znova.",
+  "Upload failed. Please try again.": "Nalaganje ni uspelo. Poskusite znova.",
   "Uploading...": "Nalaganje...",
   "Upload & Save": "Naloži in shrani",
   Cancel: "Prekliči",
@@ -34,8 +34,8 @@ export default {
   "ISO 4217 currency code (e.g., USD, EUR, GBP)": "ISO 4217 koda valute (npr. USD, EUR, GBP)",
   Locale: "Lokalnost",
   "BCP 47 language tag (e.g., en-US, de-DE, sl-SI)": "BCP 47 jezikovna oznaka (npr. en-US, de-DE, sl-SI)",
-  "Select currency": "Izberite valuto",
-  "Select locale": "Izberite lokalnost",
+  "Select currency": "Izberi valuto",
+  "Select locale": "Izberi lokalnost",
   "Configure entity localization": "Konfigurirajte lokalizacijo pravne osebe",
   "English (US)": "Angleščina (US)",
   "German (DE)": "Nemščina (DE)",
@@ -59,32 +59,32 @@ export default {
   // Document Defaults section
   "Document Defaults": "Privzete vrednosti dokumentov",
   "Default values for new documents": "Privzete vrednosti za nove dokumente",
-  "Default Note": "Privzeta opomba",
-  "Default Invoice Note": "Privzeta opomba računa",
+  "Default Note": "Privzeti pripis",
+  "Default Invoice Note": "Privzeti pripis računa",
   "This note will be pre-filled when creating new invoices":
-    "Ta opomba bo vnaprej izpolnjena pri ustvarjanju novih računov",
+    "Ta pripis bo vnaprej izpolnjen pri ustvarjanju novih računov",
   "This note will be pre-filled when creating new estimates":
-    "Ta opomba bo vnaprej izpolnjena pri ustvarjanju novih predračunov",
+    "Ta pripis bo vnaprej izpolnjen pri ustvarjanju novih predračunov",
   "This note will be pre-filled when creating new credit notes":
-    "Ta opomba bo vnaprej izpolnjena pri ustvarjanju novih dobropisov",
+    "Ta pripis bo vnaprej izpolnjen pri ustvarjanju novih dobropisov",
   "Payment terms pre-filled when creating new invoices":
     "Plačilni pogoji bodo vnaprej izpolnjeni pri ustvarjanju novih računov",
   "Payment terms pre-filled when creating new estimates":
     "Plačilni pogoji bodo vnaprej izpolnjeni pri ustvarjanju novih predračunov",
   "Payment terms pre-filled when creating new credit notes":
     "Plačilni pogoji bodo vnaprej izpolnjeni pri ustvarjanju novih dobropisov",
-  "Payment due by {document_due_date}. Please reference invoice {document_number}.":
-    "Rok plačila {document_due_date}. Prosimo, navedite številko računa {document_number}.",
-  "Net 30 days. Payment due by {document_due_date}.": "Neto 30 dni. Rok plačila {document_due_date}.",
+  "Optional note for the document.": "Neobvezna opomba za dokument.",
+  "Please remit payment using the bank details shown on the document.":
+    "Plačilo izvedite po bančnih podatkih, navedenih na dokumentu.",
   "This estimate is valid until {document_valid_until}.": "Ta predračun velja do {document_valid_until}.",
   "Payment due upon acceptance.": "Plačilo ob sprejemu.",
   "Credit note for invoice {document_number}.": "Dobropis za račun {document_number}.",
   "Credit will be applied to your account.": "Dobropis bo upoštevan na vašem računu.",
-  "Invoice Notes": "Opombe računa",
+  "Invoice Notes": "Pripisi računa",
   "Smart Template Variables": "Pametne spremenljivke predloge",
-  "Use variables to personalize your notes automatically": "Uporabite spremenljivke za samodejno prilagajanje opomb",
+  "Use variables to personalize your notes automatically": "Uporabite spremenljivke za samodejno prilagajanje pripisov",
   "Set a default note that will appear on all new invoices. Use template variables to personalize the note automatically.":
-    "Nastavite privzeto opombo, ki bo prikazana na vseh novih računih. Uporabite spremenljivke predloge za samodejno prilagajanje opombe.",
+    "Nastavite privzeti pripis, ki bo prikazan na vseh novih računih. Uporabite spremenljivke predloge za samodejno prilagajanje pripisa.",
   // Smart code insert button
   "Insert variable": "Vstavi spremenljivko",
   Entity: "Podjetje",
@@ -107,7 +107,7 @@ export default {
   "This payment terms will be pre-filled when creating new documents":
     "Ti plačilni pogoji bodo vnaprej izpolnjeni pri ustvarjanju novih dokumentov",
   "Payment Terms": "Plačilni pogoji",
-  "Add payment terms...": "Dodajte plačilne pogoje...",
+  "Add payment terms...": "Dodaj plačilne pogoje...",
   // Document footer
   "Document Footer": "Noga dokumenta",
   "Footer text displayed at the bottom of PDF documents": "Besedilo noge, prikazano na dnu PDF dokumentov",
@@ -118,6 +118,11 @@ export default {
   "Document Signature": "Podpis dokumenta",
   "Signature text displayed on all PDF documents": "Besedilo podpisa, prikazano na vseh PDF dokumentih",
   "Add signature text...": "Dodaj besedilo podpisa...",
+  "Delivery Note": "Dobavnica",
+  "Default note for advance invoices": "Privzeti pripis za avansne račune",
+  "Default note for all new advance invoices": "Privzeti pripis za vse nove avansne račune",
+  "Default note for delivery notes": "Privzeti pripis za dobavnice",
+  "Default note for all new delivery notes": "Privzeti pripis za vse nove dobavnice",
   // Overdue Notifications section
   "Overdue Notifications": "Opomniki o zapadlih računih",
   "Automatically remind customers about overdue invoices": "Samodejno opominjajte stranke o zapadlih računih",

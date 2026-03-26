@@ -1,4 +1,4 @@
-import type SDK from "@spaceinvoices/js-sdk";
+import type { SDKMethodOptions } from "@spaceinvoices/js-sdk";
 import type { UseMutationOptions } from "@tanstack/react-query";
 
 import { useQueryClient } from "@tanstack/react-query";
@@ -66,9 +66,14 @@ export function createResourceHooks<
   TCreateData = unknown,
   TUpdateData = Partial<Omit<TResource, "id">>,
 >(
-  resourceName: keyof SDK,
+  methods: {
+    create: (data: TCreateData, options?: SDKMethodOptions) => Promise<TResource>;
+    update: (id: string, data: TUpdateData, options?: SDKMethodOptions) => Promise<TResource>;
+    delete: (id: string, options?: SDKMethodOptions) => Promise<void>;
+    restore?: (id: string, options?: SDKMethodOptions) => Promise<TResource>;
+    permanentDelete?: (id: string, options?: SDKMethodOptions) => Promise<void>;
+  },
   cacheKey: string,
-  options?: { restoreMethodName?: string; permanentDeleteMethodName?: string },
 ) {
   /**
    * Hook for creating a new resource
@@ -79,8 +84,8 @@ export function createResourceHooks<
     const queryClient = useQueryClient();
 
     return useResourceMutation<TResource, TError, TCreateData>({
-      resourceName,
-      methodName: "create",
+      mutationFn: methods.create,
+      operation: "create",
       cacheKey,
       entityId: options.entityId,
       accountId: options.accountId,
@@ -157,8 +162,8 @@ export function createResourceHooks<
     const queryClient = useQueryClient();
 
     return useResourceMutation<TResource, TError, { id: string; data: TUpdateData }>({
-      resourceName,
-      methodName: "update",
+      mutationFn: methods.update,
+      operation: "update",
       cacheKey: [cacheKey, `${cacheKey}-detail`],
       entityId: options.entityId,
       accountId: options.accountId,
@@ -260,8 +265,8 @@ export function createResourceHooks<
     const queryClient = useQueryClient();
 
     return useResourceMutation<void, TError, { id: string }>({
-      resourceName,
-      methodName: "delete",
+      mutationFn: methods.delete,
+      operation: "idOnly",
       cacheKey,
       entityId: options.entityId,
       accountId: options.accountId,
@@ -303,14 +308,13 @@ export function createResourceHooks<
     hookOptions: ResourceMutationHookOptions<TResource, TError, { id: string }> = {},
   ) {
     const queryClient = useQueryClient();
-    const methodName = options?.restoreMethodName;
-    if (!methodName) {
-      throw new Error(`restoreMethodName not configured for ${String(resourceName)}`);
+    if (!methods.restore) {
+      throw new Error("restore method not configured for this resource");
     }
 
     return useResourceMutation<TResource, TError, { id: string }>({
-      resourceName,
-      methodName,
+      mutationFn: methods.restore,
+      operation: "idOnly",
       cacheKey,
       entityId: hookOptions.entityId,
       accountId: hookOptions.accountId,
@@ -335,14 +339,13 @@ export function createResourceHooks<
     hookOptions: ResourceMutationHookOptions<void, TError, { id: string }> = {},
   ) {
     const queryClient = useQueryClient();
-    const methodName = options?.permanentDeleteMethodName;
-    if (!methodName) {
-      throw new Error(`permanentDeleteMethodName not configured for ${String(resourceName)}`);
+    if (!methods.permanentDelete) {
+      throw new Error("permanentDelete method not configured for this resource");
     }
 
     return useResourceMutation<void, TError, { id: string }>({
-      resourceName,
-      methodName,
+      mutationFn: methods.permanentDelete,
+      operation: "idOnly",
       cacheKey,
       entityId: hookOptions.entityId,
       accountId: hookOptions.accountId,

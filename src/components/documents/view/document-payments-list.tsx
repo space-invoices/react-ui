@@ -1,7 +1,8 @@
 import type { Payment } from "@spaceinvoices/js-sdk";
+import { payments as paymentsApi } from "@spaceinvoices/js-sdk";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { MoreHorizontal, Pencil, Plus, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 import { Button } from "@/ui/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/ui/components/ui/card";
 import {
@@ -19,9 +20,11 @@ import {
   DropdownMenuTrigger,
 } from "@/ui/components/ui/dropdown-menu";
 import { Skeleton } from "@/ui/components/ui/skeleton";
+import { actionMenuTooltipProps, Tooltip, TooltipContent, TooltipTrigger } from "@/ui/components/ui/tooltip";
+import { getPaymentTypeLabel } from "@/ui/lib/payment-display";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
-import { useSDK } from "@/ui/providers/sdk-provider";
+import { getSavedDocumentPreviewQueryPrefix } from "../shared/document-preview-display";
 import de from "./locales/de";
 import es from "./locales/es";
 import fr from "./locales/fr";
@@ -41,6 +44,7 @@ interface DocumentPaymentsListProps extends ComponentTranslationProps {
   documentType: DocumentType;
   entityId: string;
   currencyCode: string;
+  payments?: Payment[];
   /** Locale for formatting */
   locale?: string;
   /** Callback when Add Payment is clicked */
@@ -51,7 +55,18 @@ interface DocumentPaymentsListProps extends ComponentTranslationProps {
   onDeleteSuccess?: () => void;
   /** Callback on delete error */
   onDeleteError?: (error: string) => void;
+  addDisabledReason?: string;
+  editDisabledReason?: string;
+  deleteDisabledReason?: string;
   variant?: "card" | "inline";
+}
+
+function isAppliedAdvancePayment(payment: Payment): boolean {
+  return payment.type === "advance" && !!payment.invoice_id && !!payment.advance_invoice_id;
+}
+
+function isAppliedCreditNotePayment(payment: Payment): boolean {
+  return payment.type === "credit_note" && !!payment.invoice_id && !!payment.credit_note_id;
 }
 
 /**
@@ -90,16 +105,19 @@ export function DocumentPaymentsList({
   documentType,
   entityId,
   currencyCode,
+  payments: prefetchedPayments,
   locale = "en",
   onAddPayment,
   onEditPayment,
   onDeleteSuccess,
   onDeleteError,
+  addDisabledReason,
+  editDisabledReason,
+  deleteDisabledReason,
   variant = "card",
   ...i18nProps
 }: DocumentPaymentsListProps) {
   const t = createTranslation({ translations, locale, ...i18nProps });
-  const { sdk } = useSDK();
   const queryClient = useQueryClient();
 
   const [paymentToDelete, setPaymentToDelete] = useState<Payment | null>(null);
@@ -124,9 +142,7 @@ export function DocumentPaymentsList({
   const { data: paymentsData, isLoading } = useQuery({
     queryKey: ["payments", documentType, documentId, entityId],
     queryFn: async () => {
-      if (!sdk) throw new Error("SDK not initialized");
-
-      const response = await sdk.payments.list({
+      const response = await paymentsApi.list({
         entity_id: entityId,
         query: JSON.stringify(getFilter()),
         order_by: "-date",
@@ -134,27 +150,30 @@ export function DocumentPaymentsList({
 
       return response.data;
     },
-    enabled: !!sdk && !!entityId && !!documentId,
+    enabled: !prefetchedPayments && !!entityId && !!documentId,
     staleTime: 30_000,
     gcTime: 600_000,
     refetchOnWindowFocus: false,
   });
 
-  const payments = paymentsData || [];
+  const payments = (prefetchedPayments ?? paymentsData ?? []).filter((payment) =>
+    documentType === "advance_invoice" ? !isAppliedAdvancePayment(payment) : true,
+  );
 
   /**
    * Handle payment deletion
    */
   const handleDelete = async () => {
-    if (!paymentToDelete || !sdk) return;
+    if (!paymentToDelete) return;
 
     setIsDeleting(true);
     try {
-      await sdk.payments.delete(paymentToDelete.id, { entity_id: entityId });
+      await paymentsApi.delete(paymentToDelete.id, { entity_id: entityId });
 
       // Invalidate this document's payments and document view
       queryClient.invalidateQueries({ queryKey: ["payments", documentType, documentId] });
       queryClient.invalidateQueries({ queryKey: ["documents", documentType, documentId] });
+      queryClient.invalidateQueries({ queryKey: getSavedDocumentPreviewQueryPrefix(documentId) });
 
       onDeleteSuccess?.();
     } catch (error) {
@@ -170,20 +189,39 @@ export function DocumentPaymentsList({
    * Get payment type label
    */
   const getTypeLabel = (type: string): string => {
-    const labels: Record<string, string> = {
-      cash: t("cash"),
-      bank_transfer: t("bank_transfer"),
-      card: t("card"),
-      check: t("check"),
-      credit_note: t("credit_note"),
-      other: t("other"),
-      advance: t("advance_invoice"),
-    };
-    return labels[type] || type;
+    return getPaymentTypeLabel(type, t);
   };
 
   const fmt = (amount: number) => formatCurrency(amount, currencyCode, locale);
   const fmtDate = (date: Date | string | null) => formatDate(date, locale);
+
+  const addPaymentButton = (
+    <Button
+      variant="outline"
+      size="sm"
+      onClick={addDisabledReason ? undefined : onAddPayment}
+      className="cursor-pointer"
+      disabled={!!addDisabledReason}
+    >
+      <Plus className="mr-1 h-4 w-4" />
+      {t("Add payment")}
+    </Button>
+  );
+
+  const renderDisabledAction = (item: ReactNode, reason?: string, side: "left" | "top" = "left") => {
+    if (!reason) return item;
+
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div>{item}</div>
+        </TooltipTrigger>
+        <TooltipContent side={side} {...actionMenuTooltipProps}>
+          {reason}
+        </TooltipContent>
+      </Tooltip>
+    );
+  };
 
   const headerContent = (
     <div
@@ -196,10 +234,7 @@ export function DocumentPaymentsList({
       >
         {t("Payments")} {payments.length > 0 && `(${payments.length})`}
       </h3>
-      <Button variant="outline" size="sm" onClick={onAddPayment} className="cursor-pointer">
-        <Plus className="mr-1 h-4 w-4" />
-        {t("Add payment")}
-      </Button>
+      {renderDisabledAction(addPaymentButton, addDisabledReason)}
     </div>
   );
 
@@ -212,35 +247,60 @@ export function DocumentPaymentsList({
     <p className="py-4 text-center text-muted-foreground text-sm">{t("No payments")}</p>
   ) : (
     <div className="space-y-2">
-      {payments.map((payment) => (
-        <div key={payment.id} className="flex items-center justify-between rounded-md border p-3">
-          <div className="flex items-center gap-4">
-            <span className="text-muted-foreground text-sm">{fmtDate(payment.date)}</span>
-            <span className="font-medium">{fmt(payment.amount)}</span>
-            <span className="text-muted-foreground text-sm">{getTypeLabel(payment.type)}</span>
-          </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-8 w-8 cursor-pointer p-0">
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => onEditPayment?.(payment)} className="cursor-pointer">
-                <Pencil className="mr-2 h-4 w-4" />
-                {t("Edit")}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => setPaymentToDelete(payment)}
-                className="cursor-pointer text-destructive focus:text-destructive"
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                {t("Delete")}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      ))}
+      {payments.map((payment) =>
+        (() => {
+          const appliedAdvance = isAppliedAdvancePayment(payment);
+          const appliedCreditNote = isAppliedCreditNotePayment(payment);
+          const managedReason = appliedAdvance
+            ? t("Applied advance payments are managed automatically.")
+            : appliedCreditNote
+              ? t("Applied credit note payments are managed automatically.")
+              : undefined;
+          const paymentEditDisabledReason = managedReason ?? editDisabledReason;
+          const paymentDeleteDisabledReason = managedReason ?? deleteDisabledReason;
+
+          return (
+            <div key={payment.id} className="flex items-center justify-between rounded-md border p-3">
+              <div className="flex items-center gap-4">
+                <span className="text-muted-foreground text-sm">{fmtDate(payment.date)}</span>
+                <span className="font-medium">{fmt(payment.amount)}</span>
+                <span className="text-muted-foreground text-sm">{getTypeLabel(payment.type)}</span>
+              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-8 w-8 cursor-pointer p-0">
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {renderDisabledAction(
+                    <DropdownMenuItem
+                      onClick={paymentEditDisabledReason ? undefined : () => onEditPayment?.(payment)}
+                      className="cursor-pointer"
+                      disabled={!!paymentEditDisabledReason}
+                    >
+                      <Pencil className="mr-2 h-4 w-4" />
+                      {t("Edit")}
+                    </DropdownMenuItem>,
+                    paymentEditDisabledReason,
+                  )}
+                  {renderDisabledAction(
+                    <DropdownMenuItem
+                      onClick={paymentDeleteDisabledReason ? undefined : () => setPaymentToDelete(payment)}
+                      className="cursor-pointer text-destructive focus:text-destructive"
+                      disabled={!!paymentDeleteDisabledReason}
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      {t("Delete")}
+                    </DropdownMenuItem>,
+                    paymentDeleteDisabledReason,
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          );
+        })(),
+      )}
     </div>
   );
 
@@ -287,10 +347,7 @@ export function DocumentPaymentsList({
           <CardTitle className="text-lg">
             {t("Payments")} {payments.length > 0 && `(${payments.length})`}
           </CardTitle>
-          <Button variant="outline" size="sm" onClick={onAddPayment} className="cursor-pointer">
-            <Plus className="mr-1 h-4 w-4" />
-            {t("Add payment")}
-          </Button>
+          {renderDisabledAction(addPaymentButton, addDisabledReason)}
         </CardHeader>
         <CardContent>{bodyContent}</CardContent>
       </Card>

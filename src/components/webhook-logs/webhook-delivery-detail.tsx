@@ -60,39 +60,45 @@ function JsonViewer({ data, noDataLabel, t }: { data: unknown; noDataLabel: stri
 }
 
 function JsonHighlight({ json }: { json: string }) {
-  const tokens: { type: string; value: string }[] = [];
+  const tokens: { key: string; type: string; value: string }[] = [];
   const lines = json.split("\n");
+  let tokenKey = 0;
+
+  const pushToken = (type: string, value: string) => {
+    tokens.push({ key: `${type}:${tokenKey}`, type, value });
+    tokenKey += 1;
+  };
 
   for (const line of lines) {
     const keyMatch = line.match(/^(\s*)"([^"]+)":/);
     if (keyMatch) {
       const [, indent, key] = keyMatch;
       const rest = line.slice(keyMatch[0].length);
-      tokens.push({ type: "indent", value: indent });
-      tokens.push({ type: "key", value: `"${key}"` });
-      tokens.push({ type: "punctuation", value: ":" });
+      pushToken("indent", indent);
+      pushToken("key", `"${key}"`);
+      pushToken("punctuation", ":");
 
       const valueMatch = rest.match(/^\s*(.+?)(,?)$/);
       if (valueMatch) {
         const [, value, comma] = valueMatch;
-        tokens.push({ type: "space", value: " " });
+        pushToken("space", " ");
         if (value.startsWith('"')) {
-          tokens.push({ type: "string", value: value.replace(/,$/, "") });
+          pushToken("string", value.replace(/,$/, ""));
         } else if (value === "true" || value === "false") {
-          tokens.push({ type: "boolean", value });
+          pushToken("boolean", value);
         } else if (value === "null") {
-          tokens.push({ type: "null", value });
+          pushToken("null", value);
         } else if (!Number.isNaN(Number(value.replace(/,$/, "")))) {
-          tokens.push({ type: "number", value: value.replace(/,$/, "") });
+          pushToken("number", value.replace(/,$/, ""));
         } else {
-          tokens.push({ type: "other", value: value.replace(/,$/, "") });
+          pushToken("other", value.replace(/,$/, ""));
         }
-        if (comma) tokens.push({ type: "punctuation", value: comma });
+        if (comma) pushToken("punctuation", comma);
       }
     } else {
-      tokens.push({ type: "other", value: line });
+      pushToken("other", line);
     }
-    tokens.push({ type: "newline", value: "\n" });
+    pushToken("newline", "\n");
   }
 
   const colorMap: Record<string, string> = {
@@ -105,8 +111,8 @@ function JsonHighlight({ json }: { json: string }) {
 
   return (
     <code>
-      {tokens.map((token, i) => (
-        <span key={`${i}-${token.type}`} className={colorMap[token.type] || ""}>
+      {tokens.map((token) => (
+        <span key={token.key} className={colorMap[token.type] || ""}>
           {token.value}
         </span>
       ))}
@@ -241,13 +247,7 @@ function DeliveryIdDisplay({ deliveryId, t }: { deliveryId: string; t: Translati
     <div className="flex items-center gap-2 border-t pt-4 text-muted-foreground text-xs">
       <span>{t("Delivery ID")}:</span>
       <code className="font-mono">{deliveryId}</code>
-      <Button
-        variant="ghost"
-        size="sm"
-        className="h-6 w-6 p-0"
-        onClick={handleCopy}
-        title={t("Copy to clipboard")}
-      >
+      <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={handleCopy} title={t("Copy to clipboard")}>
         {copied ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
       </Button>
     </div>

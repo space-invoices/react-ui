@@ -73,9 +73,9 @@ export default {
     "Warunki płatności wstępnie wypełnione podczas tworzenia nowych kosztorysów",
   "Payment terms pre-filled when creating new credit notes":
     "Warunki płatności wstępnie wypełnione podczas tworzenia nowych not kredytowych",
-  "Payment due by {document_due_date}. Please reference invoice {document_number}.":
-    "Płatność do {document_due_date}. Proszę podać numer faktury {document_number}.",
-  "Net 30 days. Payment due by {document_due_date}.": "Netto 30 dni. Płatność do {document_due_date}.",
+  "Optional note for the document.": "Opcjonalna notatka do dokumentu.",
+  "Please remit payment using the bank details shown on the document.":
+    "Prosimy o płatność przy użyciu danych bankowych podanych w dokumencie.",
   "This estimate is valid until {document_valid_until}.": "Ten kosztorys jest ważny do {document_valid_until}.",
   "Payment due upon acceptance.": "Płatność przy akceptacji.",
   "Credit note for invoice {document_number}.": "Nota kredytowa do faktury {document_number}.",
@@ -120,6 +120,11 @@ export default {
   "Document Signature": "Podpis dokumentu",
   "Signature text displayed on all PDF documents": "Tekst podpisu wyświetlany na wszystkich dokumentach PDF",
   "Add signature text...": "Dodaj tekst podpisu...",
+  "Delivery Note": "Dokument dostawy",
+  "Default note for advance invoices": "Domyślna notatka dla faktur zaliczkowych",
+  "Default note for all new advance invoices": "Domyślna notatka dla wszystkich nowych faktur zaliczkowych",
+  "Default note for delivery notes": "Domyślna notatka dla dokumentów dostawy",
+  "Default note for all new delivery notes": "Domyślna notatka dla wszystkich nowych dokumentów dostawy",
   // Overdue Notifications section
   "Overdue Notifications": "Powiadomienia o zaległych płatnościach",
   "Automatically remind customers about overdue invoices": "Automatycznie przypominaj klientom o zaległych fakturach",

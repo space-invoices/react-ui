@@ -1,10 +1,26 @@
 export default {
   "Send Invoice by Email": "Enviar fatura por e-mail",
+  "Send Estimate by Email": "Enviar orçamento por e-mail",
+  "Send Credit Note by Email": "Enviar nota de crédito por e-mail",
+  "Send Advance Invoice by Email": "Enviar fatura adiantada por e-mail",
+  "Send Delivery Note by Email": "Enviar guia de remessa por e-mail",
   "Send invoice by email description":
     "Envie a fatura #{number} ao cliente por e-mail. A formatação Markdown é suportada no texto.",
+  "Send estimate by email description":
+    "Envie o orçamento #{number} ao cliente por e-mail. A formatação Markdown é suportada no texto.",
+  "Send credit note by email description":
+    "Envie a nota de crédito #{number} ao cliente por e-mail. A formatação Markdown é suportada no texto.",
+  "Send advance invoice by email description":
+    "Envie a fatura adiantada #{number} ao cliente por e-mail. A formatação Markdown é suportada no texto.",
+  "Send delivery note by email description":
+    "Envie a guia de remessa #{number} ao cliente por e-mail. A formatação Markdown é suportada no texto.",
   "Recipient Email": "E-mail do destinatário",
   "Subject (Optional)": "Assunto (opcional)",
   "Invoice Subject": "Assunto da fatura",
+  "Estimate Subject": "Assunto do orçamento",
+  "Credit Note Subject": "Assunto da nota de crédito",
+  "Advance Invoice Subject": "Assunto da fatura adiantada",
+  "Delivery Note Subject": "Assunto da guia de remessa",
   "Leave empty to use default": "Deixe vazio para usar o valor predefinido",
   "Message (Optional)": "Mensagem (opcional)",
   "Email message placeholder": "Mensagem de e-mail... Suporta **negrito**, *itálico*, [links](url) e listas",
@@ -12,11 +28,16 @@ export default {
   "Send Email": "Enviar e-mail",
   "Email sent": "E-mail enviado",
   "Invoice sent to": "Fatura enviada para",
+  "Estimate sent to": "Orçamento enviado para",
+  "Credit note sent to": "Nota de crédito enviada para",
+  "Advance invoice sent to": "Fatura adiantada enviada para",
+  "Delivery note sent to": "Guia de remessa enviada para",
   "Failed to send email": "Falha ao enviar o e-mail",
   "Sandbox email warning":
     "No modo sandbox, os e-mails só podem ser enviados para membros verificados da equipa desta conta.",
   "PDF Language": "Idioma do PDF",
   Default: "Padrão",
+  "English (US)": "Inglês (EUA)",
   English: "Inglês",
   German: "Alemão",
   Slovenian: "Esloveno",

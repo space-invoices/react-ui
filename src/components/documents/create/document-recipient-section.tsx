@@ -27,6 +27,7 @@ type DocumentRecipientSectionProps = {
   /** Show end consumer (B2C) toggle next to tax number (Croatian entity + domestic transaction) */
   showEndConsumerToggle?: boolean;
   t: (key: string) => string;
+  locale?: string;
 };
 
 export function DocumentRecipientSection({
@@ -40,6 +41,7 @@ export function DocumentRecipientSection({
   initialCustomerName,
   showEndConsumerToggle,
   t,
+  locale = "en",
 }: DocumentRecipientSectionProps) {
   const nameInputRef = useRef<HTMLInputElement>(null);
 
@@ -51,6 +53,7 @@ export function DocumentRecipientSection({
     control: control as any,
     name: "customer.name" as any,
   });
+  const customerNameError = customerNameController.fieldState.error?.message;
 
   useEffect(() => {
     if (showCustomerForm && shouldFocusName) {
@@ -80,7 +83,7 @@ export function DocumentRecipientSection({
       </div>
 
       <div className="space-y-2">
-        <Label>{t("Name")}</Label>
+        <Label className={cn(customerNameError && "text-destructive")}>{t("Name")}</Label>
         <CustomerAutocomplete
           entityId={entityId}
           value={selectedCustomerId}
@@ -88,12 +91,17 @@ export function DocumentRecipientSection({
           onValueChange={onCustomerSelect}
           onCommitInlineName={(nextName) => customerNameController.field.onChange(nextName)}
           onClear={onCustomerClear}
-          placeholder={t("Search or create customer...")}
+          placeholder="Search or create customer..."
           initialDisplayName={initialCustomerName}
           inputTestId="document-customer-input"
+          inputDataDemo="marketing-demo-customer-input"
           inputRef={nameInputRef}
           commitOnBlurMode={showCustomerForm ? "update-inline" : "create"}
+          t={t}
+          locale={locale}
+          ariaInvalid={!!customerNameError}
         />
+        {customerNameError && <p className="font-normal text-destructive text-xs">{customerNameError}</p>}
       </div>
 
       {showCustomerForm && (

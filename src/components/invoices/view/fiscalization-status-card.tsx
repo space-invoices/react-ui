@@ -40,11 +40,13 @@ export function FiscalizationStatusCard({
   t: translateFn,
   namespace,
   locale,
+  translationLocale,
 }: FiscalizationStatusCardProps) {
   const t = createTranslation({
     t: translateFn,
     namespace,
     locale,
+    translationLocale,
     translations,
   });
 

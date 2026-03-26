@@ -188,7 +188,11 @@ export default function EditPaymentForm({
                       variant="outline"
                       className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
                     >
-                      {field.value ? new Date(field.value).toLocaleDateString() : <span>{t("Pick a date")}</span>}
+                      {field.value ? (
+                        new Date(field.value).toLocaleDateString(i18nProps.locale)
+                      ) : (
+                        <span>{t("Pick a date")}</span>
+                      )}
                       <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                     </Button>
                   </FormControl>

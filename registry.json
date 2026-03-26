@@ -30,8 +30,7 @@
     "hooks": {
       "name": "Resource Hooks",
       "files": ["hooks/create-resource-hooks.ts", "hooks/use-resource-mutation.ts"],
-      "dependencies": ["providers/sdk-provider"],
-      "description": "Factory for creating CRUD hooks with optimistic updates"
+      "description": "Factory for creating CRUD hooks from explicit modular SDK methods"
     },
     "string-helpers": {
       "name": "String Helpers",
@@ -40,16 +39,16 @@
     }
   },
   "providers": {
-    "sdk-provider": {
-      "name": "SDK Provider",
-      "files": ["providers/sdk-provider.tsx", "lib/auth.ts", "lib/browser-cookies.ts"],
-      "description": "Initializes and provides SDK context"
+    "space-invoices-provider": {
+      "name": "Space Invoices Provider",
+      "files": ["providers/space-invoices-provider.tsx"],
+      "description": "Recommended runtime provider for modular SDK setup"
     },
     "entities-provider": {
       "name": "Entities Provider",
       "files": ["providers/entities-provider.tsx", "providers/entities-context.tsx"],
-      "dependencies": ["sdk-provider"],
-      "description": "Multi-tenant entity management"
+      "dependencies": ["space-invoices-provider"],
+      "description": "Optional multi-tenant entity management"
     }
   },
   "components": {
@@ -223,7 +222,7 @@
         "components/taxes/taxes.hooks.ts"
       ],
       "dependencies": ["form/form-input", "ui/form"],
-      "providers": ["sdk-provider"],
+      "providers": ["space-invoices-provider"],
       "utils": ["translation", "hooks"],
       "schemas": ["createTaxSchema"]
     },
@@ -241,7 +240,7 @@
         "components/taxes/taxes.hooks.ts"
       ],
       "dependencies": ["table/data-table", "ui/dropdown-menu", "ui/button"],
-      "providers": ["sdk-provider"],
+      "providers": ["space-invoices-provider"],
       "utils": ["translation", "hooks"]
     },
     "items/create-item-form": {
@@ -255,7 +254,7 @@
         "components/items/items.hooks.ts"
       ],
       "dependencies": ["form/form-input", "ui/form"],
-      "providers": ["sdk-provider"],
+      "providers": ["space-invoices-provider"],
       "utils": ["translation", "hooks"],
       "schemas": ["createItemSchema"]
     },
@@ -273,7 +272,7 @@
         "components/items/items.hooks.ts"
       ],
       "dependencies": ["table/data-table", "ui/dropdown-menu", "ui/button"],
-      "providers": ["sdk-provider"],
+      "providers": ["space-invoices-provider"],
       "utils": ["translation", "hooks"]
     },
     "payments/create-payment-form": {
@@ -287,7 +286,7 @@
         "components/payments/payments.hooks.ts"
       ],
       "dependencies": ["form/form-input", "ui/form", "ui/select"],
-      "providers": ["sdk-provider"],
+      "providers": ["space-invoices-provider"],
       "utils": ["translation", "hooks"],
       "schemas": ["createPaymentSchema"]
     },
@@ -302,7 +301,7 @@
         "components/customers/customers.hooks.ts"
       ],
       "dependencies": ["form/form-input", "ui/form"],
-      "providers": ["sdk-provider"],
+      "providers": ["space-invoices-provider"],
       "utils": ["translation", "hooks"],
       "schemas": ["createCustomerSchema"]
     },
@@ -320,7 +319,7 @@
         "components/customers/customers.hooks.ts"
       ],
       "dependencies": ["table/data-table", "ui/dropdown-menu", "ui/button"],
-      "providers": ["sdk-provider"],
+      "providers": ["space-invoices-provider"],
       "utils": ["translation", "hooks"]
     },
     "customers/customer-combobox": {
@@ -328,7 +327,7 @@
       "category": "feature",
       "files": ["components/customers/customer-combobox.tsx", "components/customers/customers.hooks.ts"],
       "dependencies": ["ui/popover", "ui/command", "ui/button"],
-      "providers": ["sdk-provider"],
+      "providers": ["space-invoices-provider"],
       "utils": ["hooks"]
     },
     "entities/create-entity-form": {
@@ -336,7 +335,7 @@
       "category": "feature",
       "files": ["components/entities/create-entity-form.tsx", "components/entities/entities.hooks.ts"],
       "dependencies": ["form/form-input", "ui/form", "ui/select"],
-      "providers": ["sdk-provider"],
+      "providers": ["space-invoices-provider"],
       "utils": ["translation", "hooks"],
       "schemas": ["createEntitySchema"]
     },
@@ -363,7 +362,7 @@
         "ui/popover",
         "customers/customer-combobox"
       ],
-      "providers": ["sdk-provider", "entities-provider"],
+      "providers": ["space-invoices-provider", "entities-provider"],
       "utils": ["translation", "hooks"],
       "schemas": ["createInvoiceSchema"]
     },
@@ -378,7 +377,7 @@
         "components/invoices/invoices.hooks.ts"
       ],
       "dependencies": ["table/data-table", "ui/dropdown-menu", "ui/button", "ui/badge"],
-      "providers": ["sdk-provider"],
+      "providers": ["space-invoices-provider"],
       "utils": ["translation", "hooks"]
     },
     "estimates/create-estimate-form": {
@@ -386,7 +385,7 @@
       "category": "feature",
       "files": ["components/estimates/create/create-estimate-form.tsx", "components/estimates/estimates.hooks.ts"],
       "dependencies": ["form/form-input", "ui/form", "ui/card", "customers/customer-combobox"],
-      "providers": ["sdk-provider", "entities-provider"],
+      "providers": ["space-invoices-provider", "entities-provider"],
       "utils": ["translation", "hooks"],
       "schemas": ["createEstimateSchema"]
     },
@@ -401,7 +400,7 @@
         "components/estimates/estimates.hooks.ts"
       ],
       "dependencies": ["table/data-table", "ui/dropdown-menu", "ui/button", "ui/badge"],
-      "providers": ["sdk-provider"],
+      "providers": ["space-invoices-provider"],
       "utils": ["translation", "hooks"]
     },
     "credit-notes/create-credit-note-form": {
@@ -412,7 +411,7 @@
         "components/credit-notes/credit-notes.hooks.ts"
       ],
       "dependencies": ["form/form-input", "ui/form", "ui/card", "customers/customer-combobox"],
-      "providers": ["sdk-provider", "entities-provider"],
+      "providers": ["space-invoices-provider", "entities-provider"],
       "utils": ["translation", "hooks"],
       "schemas": ["createCreditNoteSchema"]
     },
@@ -427,7 +426,7 @@
         "components/credit-notes/credit-notes.hooks.ts"
       ],
       "dependencies": ["table/data-table", "ui/dropdown-menu", "ui/button", "ui/badge"],
-      "providers": ["sdk-provider"],
+      "providers": ["space-invoices-provider"],
       "utils": ["translation", "hooks"]
     },
     "dashboard/chart-empty-state": {
@@ -464,7 +463,7 @@
         "components/dashboard/revenue-trend-chart/index.ts"
       ],
       "dependencies": ["ui/card", "ui/chart", "dashboard/chart-empty-state", "dashboard/loading-card"],
-      "providers": ["sdk-provider"],
+      "providers": ["space-invoices-provider"],
       "utils": ["translation"]
     },
     "dashboard/invoice-status-chart": {
@@ -477,7 +476,7 @@
         "components/dashboard/invoice-status-chart/index.ts"
       ],
       "dependencies": ["ui/card", "ui/chart", "dashboard/chart-empty-state", "dashboard/loading-card"],
-      "providers": ["sdk-provider"],
+      "providers": ["space-invoices-provider"],
       "utils": ["translation"]
     },
     "dashboard/payment-trend-chart": {
@@ -490,7 +489,7 @@
         "components/dashboard/payment-trend-chart/index.ts"
       ],
       "dependencies": ["ui/card", "ui/chart", "dashboard/chart-empty-state", "dashboard/loading-card"],
-      "providers": ["sdk-provider"],
+      "providers": ["space-invoices-provider"],
       "utils": ["translation"]
     },
     "dashboard/payment-methods-chart": {
@@ -503,7 +502,7 @@
         "components/dashboard/payment-methods-chart/index.ts"
       ],
       "dependencies": ["ui/card", "ui/chart", "dashboard/chart-empty-state", "dashboard/loading-card"],
-      "providers": ["sdk-provider"],
+      "providers": ["space-invoices-provider"],
       "utils": ["translation"]
     },
     "dashboard/top-customers-chart": {
@@ -516,7 +515,7 @@
         "components/dashboard/top-customers-chart/index.ts"
       ],
       "dependencies": ["ui/card", "ui/chart", "dashboard/chart-empty-state", "dashboard/loading-card"],
-      "providers": ["sdk-provider"],
+      "providers": ["space-invoices-provider"],
       "utils": ["translation"]
     },
     "dashboard/collection-rate-card": {
@@ -529,7 +528,7 @@
         "components/dashboard/collection-rate-card/index.ts"
       ],
       "dependencies": ["ui/card", "dashboard/loading-card"],
-      "providers": ["sdk-provider"],
+      "providers": ["space-invoices-provider"],
       "utils": ["translation"]
     },
     "recurring-invoices/create-recurring-invoice-form": {
@@ -540,7 +539,7 @@
         "components/recurring-invoices/recurring-invoices.hooks.ts"
       ],
       "dependencies": ["form/form-input", "ui/form", "ui/card", "customers/customer-combobox"],
-      "providers": ["sdk-provider", "entities-provider"],
+      "providers": ["space-invoices-provider", "entities-provider"],
       "utils": ["translation", "hooks"],
       "schemas": ["createRecurringInvoiceSchema"]
     },
@@ -553,7 +552,7 @@
         "components/recurring-invoices/recurring-invoices.hooks.ts"
       ],
       "dependencies": ["table/data-table", "ui/dropdown-menu", "ui/button", "ui/badge"],
-      "providers": ["sdk-provider"],
+      "providers": ["space-invoices-provider"],
       "utils": ["translation", "hooks"]
     }
   }

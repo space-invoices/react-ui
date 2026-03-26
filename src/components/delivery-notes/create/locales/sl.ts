@@ -4,7 +4,7 @@ export default {
   Number: "Številka",
   Date: "Datum",
   Recipient: "Prejemnik",
-  "Search or create customer...": "Išči ali ustvari stranko...",
+  "Search or create customer...": "Poiščite ali ustvarite stranko...",
   Clear: "Počisti",
   Name: "Ime",
   Address: "Naslov",
@@ -23,9 +23,9 @@ export default {
   "Loading...": "Nalaganje...",
   "No taxes found": "Ni najdenih davkov",
   "Add new tax...": "Dodaj nov davek...",
-  Note: "Opomba",
+  Note: "Pripis",
   "Insert variable": "Vstavi spremenljivko",
-  "Add payment instructions, terms, or other notes...": "Dodajte navodila za plačilo, pogoje ali druge opombe...",
+  "Add payment instructions, terms, or other notes...": "Dodaj navodila za plačilo, pogoje ali druge pripise...",
   // Signature field
   Signature: "Podpis",
   "Add signature text...": "Dodaj besedilo podpisa...",
@@ -64,8 +64,8 @@ export default {
   "This invoice will not be fiscalized (non-domestic transaction)":
     "Ta račun ne bo fiskaliziran (nedomača transakcija)",
   "Tax Clause": "Davčna klavzula",
-  "Add tax clause...": "Dodajte davčno klavzulo...",
+  "Add tax clause...": "Dodaj davčno klavzulo...",
   Footer: "Noga dokumenta",
-  "Add document footer...": "Dodajte nogo dokumenta...",
+  "Add document footer...": "Dodaj nogo dokumenta...",
   "Reverse charge - tax exempt EU B2B sale": "Obrnjena davčna obveznost - davka oproščena EU B2B prodaja",
 } as const;

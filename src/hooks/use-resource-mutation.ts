@@ -1,16 +1,13 @@
-import type SDK from "@spaceinvoices/js-sdk";
 import type { SDKMethodOptions } from "@spaceinvoices/js-sdk";
 import type { UseMutationOptions } from "@tanstack/react-query";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-import { useSDK } from "@/ui/providers/sdk-provider";
-
 type ResourceMutationOptions<TData, TError, TVariables, TContext> = {
-  /** The resource name in the SDK (e.g., 'customers', 'invoices') */
-  resourceName: keyof SDK;
-  /** The method name to call on the resource (e.g., 'create', 'update', 'delete') */
-  methodName: string;
+  /** Concrete SDK module method */
+  mutationFn: (...args: any[]) => Promise<TData>;
+  /** How to map TVariables to the mutationFn signature */
+  operation: "create" | "update" | "idOnly";
   /** The cache key(s) to invalidate after successful mutation */
   cacheKey: string | string[];
   /** Entity ID for multi-tenant filtering */
@@ -34,14 +31,13 @@ type ResourceMutationOptions<TData, TError, TVariables, TContext> = {
  * Automatically handles cache invalidation and error handling
  */
 export function useResourceMutation<TData, TError = Error, TVariables = unknown, TContext = unknown>({
-  resourceName,
-  methodName,
+  mutationFn,
+  operation,
   cacheKey,
   entityId,
   accountId,
   mutationOptions,
 }: ResourceMutationOptions<TData, TError, TVariables, TContext>) {
-  const { sdk } = useSDK();
   const queryClient = useQueryClient();
 
   // Destructure to separate onSuccess/onError from other options
@@ -50,35 +46,20 @@ export function useResourceMutation<TData, TError = Error, TVariables = unknown,
   return useMutation<TData, TError, TVariables, TContext>({
     ...otherOptions,
     mutationFn: async (variables: TVariables) => {
-      // SDK is guaranteed non-null by provider - no need to check
-      const resource = sdk[resourceName] as Record<string, (...args: unknown[]) => Promise<unknown>>;
-
-      if (!resource || typeof resource[methodName] !== "function") {
-        throw new Error(`Method ${methodName} not found on resource ${String(resourceName)}`);
-      }
-
       // Build SDK options (entity_id, etc.)
       const options: SDKMethodOptions | undefined = entityId ? { entity_id: entityId } : undefined;
 
-      // SDK API: method(data, options) or method(id, data, options)
-      const isUpdateMethod = methodName === "update";
-      const isIdOnlyMethod =
-        methodName === "delete" || methodName.startsWith("restore") || methodName.startsWith("permanentDelete");
-
-      if (isUpdateMethod) {
-        // Update: method(id, data, options)
+      if (operation === "update") {
         const { id, data } = variables as { id: string; data: unknown };
-        return (await resource[methodName](id, data, options)) as TData;
+        return (await mutationFn(id, data, options)) as TData;
       }
 
-      if (isIdOnlyMethod) {
-        // Delete/Restore/PermanentDelete: method(id, options)
+      if (operation === "idOnly") {
         const { id } = variables as { id: string };
-        return (await resource[methodName](id, options)) as TData;
+        return (await mutationFn(id, options)) as TData;
       }
 
-      // Create: method(data, options)
-      return (await resource[methodName](variables, options)) as TData;
+      return (await mutationFn(variables, options)) as TData;
     },
 
     onSuccess: (data, variables, context) => {

@@ -1,4 +1,5 @@
 import type { AdvanceInvoice } from "@spaceinvoices/js-sdk";
+import { advanceInvoices } from "@spaceinvoices/js-sdk";
 import { AlertTriangle } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { DataTable } from "@/ui/components/table/data-table";
@@ -18,7 +19,6 @@ import { Button } from "@/ui/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/ui/components/ui/tooltip";
 import { getFiscalizationFailureType } from "@/ui/lib/fiscalization";
 import { createTranslation } from "@/ui/lib/translation";
-import { useSDK } from "@/ui/providers/sdk-provider";
 
 import AdvanceInvoiceListRowActions from "./list-row-actions";
 import de from "./locales/de";
@@ -58,6 +58,8 @@ type AdvanceInvoiceListTableProps = {
   onDownloadSuccess?: (fileName: string) => void;
   onDownloadError?: (error: string) => void;
   onExportSelected?: (documentIds: string[]) => void;
+  pdfExportDisabled?: boolean;
+  pdfExportDisabledTooltip?: string;
   onCopyToInvoice?: (documentIds: string[]) => void;
   onRetryFiscalization?: (documentIds: string[]) => void;
   fiscalizationFeatures?: ("furs" | "fina")[];
@@ -78,6 +80,8 @@ export default function AdvanceInvoiceListTable({
   onDownloadSuccess,
   onDownloadError,
   onExportSelected,
+  pdfExportDisabled,
+  pdfExportDisabledTooltip,
   onCopyToInvoice,
   onRetryFiscalization,
   fiscalizationFeatures,
@@ -87,23 +91,21 @@ export default function AdvanceInvoiceListTable({
   ...i18nProps
 }: AdvanceInvoiceListTableProps) {
   const t = createTranslation({
-    translations,
-    locale: i18nProps.translationLocale ?? i18nProps.locale,
     ...i18nProps,
+    translations,
   });
 
-  const { sdk } = useSDK();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const handleFetch = useTableFetch(async (params: TableQueryParams) => {
-    if (!sdk) throw new Error("SDK not initialized");
     if (!params.entity_id) throw new Error("Entity ID required");
 
-    const response = await sdk.advanceInvoices.list({
+    const response = await advanceInvoices.list({
       entity_id: params.entity_id,
       limit: params.limit,
       next_cursor: params.next_cursor,
       prev_cursor: params.prev_cursor,
+      order_by: params.order_by,
       search: params.search,
       query: params.query,
       include: "document_relations",
@@ -153,14 +155,23 @@ export default function AdvanceInvoiceListTable({
       const showRetry = hasRetry && failedCount > 0;
 
       const hasDrafts = selectedDocs.some((d) => (d as any).is_draft);
+      const hasVoided = selectedDocs.some((d) => !!(d as any).voided_at);
+      const copyDisabled = hasDrafts || hasVoided;
+      const copyTooltip = hasDrafts
+        ? t("Finalize draft documents before copying to invoice")
+        : hasVoided
+          ? t("Voided documents cannot be copied to invoices")
+          : undefined;
 
       return (
         <SelectionToolbar
           selectedCount={count}
           onExportPdfs={onExportSelected ? handleExportPdfs : undefined}
+          exportPdfsDisabled={pdfExportDisabled}
+          exportPdfsTooltip={pdfExportDisabledTooltip}
           onCopyToInvoice={onCopyToInvoice ? handleCopyToInvoice : undefined}
-          copyToInvoiceDisabled={hasDrafts}
-          copyToInvoiceTooltip={hasDrafts ? t("Finalize draft documents before copying to invoice") : undefined}
+          copyToInvoiceDisabled={copyDisabled}
+          copyToInvoiceTooltip={copyTooltip}
           onRetryFiscalization={showRetry ? () => onRetryFiscalization(failedDocs.map((d) => d.id)) : undefined}
           retryFiscalizationDisabled={someFailed && !allFailed}
           retryFiscalizationTooltip={
@@ -176,6 +187,8 @@ export default function AdvanceInvoiceListTable({
       handleCopyToInvoice,
       handleDeselectAll,
       onExportSelected,
+      pdfExportDisabled,
+      pdfExportDisabledTooltip,
       onCopyToInvoice,
       onRetryFiscalization,
       fiscalizationFeatures,
@@ -189,6 +202,9 @@ export default function AdvanceInvoiceListTable({
       {
         id: "number",
         header: t("Number"),
+        sort: {
+          defaultDirection: "desc",
+        },
         cell: (advanceInvoice) => {
           const failureType = getFiscalizationFailureType(advanceInvoice as any);
           const showWarning = failureType && fiscalizationFeatures?.includes(failureType);
@@ -231,18 +247,27 @@ export default function AdvanceInvoiceListTable({
       {
         id: "date",
         header: t("Date"),
+        sort: {
+          defaultDirection: "desc",
+        },
         cell: (advanceInvoice) => <FormattedDate date={advanceInvoice.date} locale={i18nProps.locale} />,
       },
       {
         id: "total",
         header: t("Total"),
         align: "right",
+        sort: {
+          defaultDirection: "desc",
+        },
         cell: (advanceInvoice) => advanceInvoice.total,
       },
       {
         id: "total_with_tax",
         header: t("Total with Tax"),
         align: "right",
+        sort: {
+          defaultDirection: "desc",
+        },
         cell: (advanceInvoice) => advanceInvoice.total_with_tax,
       },
       {

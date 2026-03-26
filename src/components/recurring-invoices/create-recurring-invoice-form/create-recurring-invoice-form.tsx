@@ -90,6 +90,7 @@ type CreateRecurringInvoiceFormProps = {
   documentId: string;
   onSuccess?: (recurringInvoice: RecurringInvoice) => void;
   onError?: (error: Error) => void;
+  allowDrafts?: boolean;
   renderSubmitButton?: (props: { isSubmitting: boolean; submit: () => void }) => React.ReactNode;
 } & ComponentTranslationProps;
 
@@ -98,6 +99,7 @@ export default function CreateRecurringInvoiceForm({
   documentId,
   onSuccess,
   onError,
+  allowDrafts = true,
   renderSubmitButton,
   ...i18nProps
 }: CreateRecurringInvoiceFormProps) {
@@ -105,6 +107,8 @@ export default function CreateRecurringInvoiceForm({
     ...i18nProps,
     translations,
   });
+  const formatDisplayDate = (value?: string) =>
+    value ? new Date(`${value}T00:00:00`).toLocaleDateString(i18nProps.locale) : undefined;
 
   const form = useForm<CreateRecurringInvoiceSchema>({
     resolver: zodResolver(createRecurringInvoiceSchema),
@@ -325,7 +329,7 @@ export default function CreateRecurringInvoiceForm({
                       variant="outline"
                       className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
                     >
-                      {field.value ? field.value : <span>{t("Pick a date")}</span>}
+                      {field.value ? formatDisplayDate(field.value) : <span>{t("Pick a date")}</span>}
                       <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                     </Button>
                   </FormControl>
@@ -357,7 +361,7 @@ export default function CreateRecurringInvoiceForm({
                       variant="outline"
                       className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
                     >
-                      {field.value ? field.value : <span>{t("No end date")}</span>}
+                      {field.value ? formatDisplayDate(field.value) : <span>{t("No end date")}</span>}
                       <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                     </Button>
                   </FormControl>
@@ -392,21 +396,23 @@ export default function CreateRecurringInvoiceForm({
           )}
         />
 
-        <FormField
-          control={form.control}
-          name="create_as_draft"
-          render={({ field }) => (
-            <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-              <FormControl>
-                <Checkbox checked={field.value} onCheckedChange={field.onChange} />
-              </FormControl>
-              <div className="space-y-1 leading-none">
-                <FormLabel>{t("Create as draft")}</FormLabel>
-                <FormDescription>{t("Generated invoices will be drafts for review")}</FormDescription>
-              </div>
-            </FormItem>
-          )}
-        />
+        {allowDrafts ? (
+          <FormField
+            control={form.control}
+            name="create_as_draft"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                <FormControl>
+                  <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                </FormControl>
+                <div className="space-y-1 leading-none">
+                  <FormLabel>{t("Create as draft")}</FormLabel>
+                  <FormDescription>{t("Generated invoices will be drafts for review")}</FormDescription>
+                </div>
+              </FormItem>
+            )}
+          />
+        ) : null}
 
         {renderSubmitButton?.({
           isSubmitting: isPending || form.formState.isSubmitting,

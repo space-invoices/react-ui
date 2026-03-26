@@ -4,6 +4,7 @@
  * Sends 2 queries in a single batch request.
  */
 import type { StatsQueryDataItem, StatsQueryRequest } from "@spaceinvoices/js-sdk";
+import { formatLocalDate } from "../shared/local-date";
 import { useStatsBatchQuery } from "../shared/use-stats-query";
 
 export const TAX_COLLECTED_CACHE_KEY = "dashboard-tax-collected";
@@ -13,8 +14,8 @@ function getPreviousMonthDateRange(locale?: string) {
   const firstDay = new Date(now.getFullYear(), now.getMonth() - 1, 1);
   const lastDay = new Date(now.getFullYear(), now.getMonth(), 0);
   return {
-    from: firstDay.toISOString().split("T")[0],
-    to: lastDay.toISOString().split("T")[0],
+    from: formatLocalDate(firstDay),
+    to: formatLocalDate(lastDay),
     label: firstDay.toLocaleDateString(locale, { month: "short", year: "numeric" }),
   };
 }

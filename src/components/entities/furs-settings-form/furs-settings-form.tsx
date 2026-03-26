@@ -15,22 +15,30 @@ import { type FiscalizationStepConfig, useFiscalizationStepFlow } from "../share
 import { FiscalizationStepTabs } from "../shared/fiscalization-step-tabs";
 import { useFursPremises, useFursSettings, useUpdateFursSettings, useUserFursSettings } from "./furs-settings.hooks";
 // Import locale files
+import bg from "./locales/bg";
+import cs from "./locales/cs";
 import de from "./locales/de";
 import en from "./locales/en";
 import es from "./locales/es";
+import et from "./locales/et";
+import fi from "./locales/fi";
 import fr from "./locales/fr";
 import hr from "./locales/hr";
+import is from "./locales/is";
 import it from "./locales/it";
+import nb from "./locales/nb";
 import nl from "./locales/nl";
 import pl from "./locales/pl";
 import pt from "./locales/pt";
+import sk from "./locales/sk";
 import sl from "./locales/sl";
+import sv from "./locales/sv";
 import { CertificateSettingsSection } from "./sections/certificate-settings-section";
 import { EnableFiscalizationSection } from "./sections/enable-fiscalization-section";
 import { GeneralSettingsSection } from "./sections/general-settings-section";
 import { PremisesManagementSection } from "./sections/premises-management-section";
 
-const translations = { sl, de, en, it, fr, es, pt, nl, pl, hr } as const;
+const translations = { bg, cs, de, en, es, et, fi, fr, hr, is, it, nb, nl, pl, pt, sk, sl, sv } as const;
 
 /**
  * FURS Settings Form Schema
@@ -93,6 +101,7 @@ export const FursSettingsForm: FC<FursSettingsFormProps> = ({
   t: translateFn,
   namespace,
   locale,
+  translationLocale,
   initialStep = "settings",
   onStepChange,
   renderSection,
@@ -103,6 +112,7 @@ export const FursSettingsForm: FC<FursSettingsFormProps> = ({
     t: translateFn,
     namespace,
     locale,
+    translationLocale,
     translations,
   });
 
@@ -126,6 +136,7 @@ export const FursSettingsForm: FC<FursSettingsFormProps> = ({
     resolver: zodResolver(fursSettingsFormSchema),
     values: {
       enabled: fursSettings?.enabled || false,
+      default_skip_fiscalization: fursSettings?.default_skip_fiscalization || false,
       numbering_strategy: fursSettings?.numbering_strategy || "C",
       operator_tax_number: fursSettings?.operator_tax_number || "",
       operator_label: fursSettings?.operator_label || "",
@@ -361,6 +372,7 @@ export const FursSettingsForm: FC<FursSettingsFormProps> = ({
 
         {activeStep === "enable" && (
           <EnableFiscalizationSection
+            entityId={entity.id}
             form={form}
             fursSettings={fursSettings}
             premises={(premises || []) as any}

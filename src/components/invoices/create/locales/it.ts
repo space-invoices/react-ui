@@ -94,6 +94,30 @@ export default {
   "Click to enable e-SLOG validation": "Clicca per abilitare la validazione e-SLOG",
   "e-SLOG Validation Failed": "Validazione e-SLOG non riuscita",
   "The following entity settings need to be updated:": "Le seguenti impostazioni dell'entità devono essere aggiornate:",
+  "Entity name is required for e-SLOG. Update in Settings > Company.":
+    "Il nome dell'entità è obbligatorio per e-SLOG. Aggiornalo in Impostazioni > Azienda.",
+  "Entity address is required for e-SLOG. Update in Settings > Company.":
+    "L'indirizzo dell'entità è obbligatorio per e-SLOG. Aggiornalo in Impostazioni > Azienda.",
+  "Entity postal code is required for e-SLOG. Update in Settings > Company.":
+    "Il codice postale dell'entità è obbligatorio per e-SLOG. Aggiornalo in Impostazioni > Azienda.",
+  "Entity city is required for e-SLOG. Update in Settings > Company.":
+    "La città dell'entità è obbligatoria per e-SLOG. Aggiornala in Impostazioni > Azienda.",
+  "Entity must be from Slovenia (SI) for e-SLOG.": "L'entità deve essere della Slovenia (SI) per e-SLOG.",
+  "Entity tax number is required for e-SLOG. Update in Settings > Company.":
+    "Il numero fiscale dell'entità è obbligatorio per e-SLOG. Aggiornalo in Impostazioni > Azienda.",
+  "Slovenian tax number must be 8 digits.": "Il numero fiscale sloveno deve essere di 8 cifre.",
+  "Invoice date is required for e-SLOG.": "La data della fattura è obbligatoria per e-SLOG.",
+  "Currency is required for e-SLOG.": "La valuta è obbligatoria per e-SLOG.",
+  "Entity currency must be EUR for e-SLOG when invoice uses a different currency.":
+    "La valuta dell'entità deve essere EUR per e-SLOG quando la fattura usa una valuta diversa.",
+  "Customer name is required when customer is provided.":
+    "Il nome del cliente è obbligatorio quando viene fornito un cliente.",
+  "At least one line item is required for e-SLOG.": "Per e-SLOG è richiesta almeno una riga articolo.",
+  "Item name is required for e-SLOG.": "Il nome dell'articolo è obbligatorio per e-SLOG.",
+  "Quantity must be greater than 0.": "La quantità deve essere maggiore di 0.",
+  "Price is required for e-SLOG.": "Il prezzo è obbligatorio per e-SLOG.",
+  "Invalid Slovenian tax rate {{rate}}%. Valid: {{validRates}}":
+    "Aliquota IVA slovena non valida {{rate}}%. Valide: {{validRates}}",
   "Reverse charge - tax exempt EU B2B sale": "Inversione contabile - vendita B2B UE esente da imposta",
   "Taxes disabled": "Imposte disabilitate",
   "Gross price": "Prezzo lordo",

@@ -11,27 +11,103 @@ import { z } from 'zod';
 // Schema for update sloveniataxprofile operation
 const updateSloveniaTaxProfileSchemaDefinition = z
   .object({
-    business_form: z.enum(["sp", "doo", "dno", "club"]),
-    income_tax_regime: z.enum(["normirani", "dejanski"]),
-    vat_profile: z.enum(["standard", "special_vat_identified"]),
-    tax_residency: z.enum(["resident", "non_resident"]),
-    yearly_reporting: z
-      .object({
-        activity_code: z.union([z.string(), z.null()]),
-        registration_number: z.union([z.string(), z.null()]),
-        accounting_type: z.union([
-          z.enum(["records", "single_entry", "double_entry"]),
-          z.null(),
-        ]),
-        normiranec_insurance_basis: z.union([
-          z.enum(["full_time_self_employed", "other"]),
-          z.null(),
-        ]),
-        default_withholding_tax_amount: z.union([z.number(), z.null()]),
-        default_foreign_tax_credit_amount: z.union([z.number(), z.null()]),
-      })
-      .partial()
-      .passthrough(),
+    business_form: z.union([
+      z.enum(["sp", "doo", "dno", "club", null]),
+      z.null(),
+    ]),
+    income_tax_regime: z.union([
+      z.enum(["normirani", "dejanski", null]),
+      z.null(),
+    ]),
+    vat_profile: z.union([
+      z.enum(["standard", "special_vat_identified", null]),
+      z.null(),
+    ]),
+    tax_residency: z.union([
+      z.enum(["resident", "non_resident", null]),
+      z.null(),
+    ]),
+    yearly_reporting: z.union([
+      z
+        .object({
+          activity_code: z.union([z.string(), z.null()]),
+          registration_number: z.union([z.string(), z.null()]),
+          accounting_type: z.union([
+            z.enum(["records", "single_entry", "double_entry", null]),
+            z.null(),
+          ]),
+          normiranec_insurance_basis: z.union([
+            z.enum(["full_time_self_employed", "other", null]),
+            z.null(),
+          ]),
+          default_withholding_tax_amount: z.union([z.number(), z.null()]),
+          default_foreign_tax_credit_amount: z.union([z.number(), z.null()]),
+        })
+        .partial()
+        .passthrough(),
+      z.null(),
+    ]),
+    accounting_exports: z.union([
+      z
+        .object({
+          preferred_format: z.union([
+            z.enum(["vod_xml", "vasco_xml", "minimax_xml", null]),
+            z.null(),
+          ]),
+          konto_mappings: z.union([
+            z
+              .object({
+                receivables: z.union([z.string(), z.null()]),
+                payables: z.union([z.string(), z.null()]),
+                sales_vat_22: z.union([z.string(), z.null()]),
+                sales_vat_95: z.union([z.string(), z.null()]),
+                sales_vat_5: z.union([z.string(), z.null()]),
+                purchase_vat_recoverable_22: z.union([z.string(), z.null()]),
+                purchase_vat_recoverable_95: z.union([z.string(), z.null()]),
+                purchase_vat_recoverable_5: z.union([z.string(), z.null()]),
+                sales_revenue_22: z.union([z.string(), z.null()]),
+                sales_revenue_95: z.union([z.string(), z.null()]),
+                sales_revenue_5: z.union([z.string(), z.null()]),
+                sales_revenue_exempt: z.union([z.string(), z.null()]),
+                sales_revenue_eu_goods: z.union([z.string(), z.null()]),
+                sales_revenue_eu_services: z.union([z.string(), z.null()]),
+                sales_revenue_reverse_charge: z.union([z.string(), z.null()]),
+                sales_revenue_third_country_goods: z.union([
+                  z.string(),
+                  z.null(),
+                ]),
+                sales_revenue_third_country_services: z.union([
+                  z.string(),
+                  z.null(),
+                ]),
+                purchase_expense_22: z.union([z.string(), z.null()]),
+                purchase_expense_95: z.union([z.string(), z.null()]),
+                purchase_expense_5: z.union([z.string(), z.null()]),
+                purchase_expense_exempt: z.union([z.string(), z.null()]),
+                purchase_expense_eu_goods: z.union([z.string(), z.null()]),
+                purchase_expense_eu_services: z.union([z.string(), z.null()]),
+                purchase_expense_reverse_charge: z.union([
+                  z.string(),
+                  z.null(),
+                ]),
+                purchase_expense_third_country_goods: z.union([
+                  z.string(),
+                  z.null(),
+                ]),
+                purchase_expense_third_country_services: z.union([
+                  z.string(),
+                  z.null(),
+                ]),
+              })
+              .partial()
+              .passthrough(),
+            z.null(),
+          ]),
+        })
+        .partial()
+        .passthrough(),
+      z.null(),
+    ]),
   })
   .partial()
   .passthrough();

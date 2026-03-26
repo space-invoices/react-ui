@@ -29,22 +29,22 @@ export default {
   Paid: "Plačano",
   "Invoice will be marked as fully paid upon creation": "Račun bo označen kot plačan ob ustvarjanju",
   "Payment Type": "Vrsta plačila",
-  "Select payment type": "Izberite vrsto plačila",
+  "Select payment type": "Izberi vrsto plačila",
   Cash: "Gotovina",
   "Bank Transfer": "Bančno nakazilo",
   Card: "Kartica",
   Check: "Ček",
   Other: "Drugo",
   // Note field
-  Note: "Opomba",
+  Note: "Pripis",
   "Insert variable": "Vstavi spremenljivko",
-  "Add payment instructions, terms, or other notes...": "Dodajte navodila za plačilo, pogoje ali druge opombe...",
+  "Add payment instructions, terms, or other notes...": "Dodaj navodila za plačilo, pogoje ali druge pripise...",
   // Signature field
   Signature: "Podpis",
   "Add signature text...": "Dodaj besedilo podpisa...",
   // Payment terms field
   "Payment Terms": "Plačilni pogoji",
-  "Add payment terms...": "Dodajte plačilne pogoje...",
+  "Add payment terms...": "Dodaj plačilne pogoje...",
   // Smart code categories
   Entity: "Podjetje",
   Document: "Dokument",
@@ -63,7 +63,7 @@ export default {
   "Today's date": "Današnji datum",
   "Current year": "Tekoče leto",
   // Recipient fields
-  "Search or create customer...": "Išči ali ustvari stranko...",
+  "Search or create customer...": "Poiščite ali ustvarite stranko...",
   Clear: "Počisti",
   Address: "Naslov",
   "Address 2": "Naslov 2",
@@ -83,8 +83,8 @@ export default {
   "Electronic Device": "Elektronska naprava",
   Premise: "Prostor",
   Device: "Naprava",
-  "Select premise": "Izberite prostor",
-  "Select device": "Izberite napravo",
+  "Select premise": "Izberi prostor",
+  "Select device": "Izberi napravo",
   "Skip Fiscalization": "Preskoči davčno potrjevanje",
   "Skip fiscalization for this invoice (e.g., bank transfers or unpaid invoices)":
     "Preskoči davčno potrjevanje za ta račun (npr. bančna nakazila ali neplačani računi)",
@@ -100,6 +100,29 @@ export default {
   "Click to enable e-SLOG validation": "Kliknite za omogočanje e-SLOG preverjanja",
   "e-SLOG Validation Failed": "e-SLOG preverjanje ni uspelo",
   "The following entity settings need to be updated:": "Naslednje nastavitve podjetja je potrebno posodobiti:",
+  "Entity name is required for e-SLOG. Update in Settings > Company.":
+    "Ime podjetja je obvezno za e-SLOG. Posodobite ga v Nastavitve > Podjetje.",
+  "Entity address is required for e-SLOG. Update in Settings > Company.":
+    "Naslov podjetja je obvezen za e-SLOG. Posodobite ga v Nastavitve > Podjetje.",
+  "Entity postal code is required for e-SLOG. Update in Settings > Company.":
+    "Poštna številka podjetja je obvezna za e-SLOG. Posodobite jo v Nastavitve > Podjetje.",
+  "Entity city is required for e-SLOG. Update in Settings > Company.":
+    "Mesto podjetja je obvezno za e-SLOG. Posodobite ga v Nastavitve > Podjetje.",
+  "Entity must be from Slovenia (SI) for e-SLOG.": "Podjetje mora biti iz Slovenije (SI) za e-SLOG.",
+  "Entity tax number is required for e-SLOG. Update in Settings > Company.":
+    "Davčna številka podjetja je obvezna za e-SLOG. Posodobite jo v Nastavitve > Podjetje.",
+  "Slovenian tax number must be 8 digits.": "Slovenska davčna številka mora imeti 8 številk.",
+  "Invoice date is required for e-SLOG.": "Datum računa je obvezen za e-SLOG.",
+  "Currency is required for e-SLOG.": "Valuta je obvezna za e-SLOG.",
+  "Entity currency must be EUR for e-SLOG when invoice uses a different currency.":
+    "Valuta podjetja mora biti EUR za e-SLOG, kadar račun uporablja drugo valuto.",
+  "Customer name is required when customer is provided.": "Ime stranke je obvezno, ko je stranka vnesena.",
+  "At least one line item is required for e-SLOG.": "Za e-SLOG je potrebna vsaj ena postavka.",
+  "Item name is required for e-SLOG.": "Ime postavke je obvezno za e-SLOG.",
+  "Quantity must be greater than 0.": "Količina mora biti večja od 0.",
+  "Price is required for e-SLOG.": "Cena je obvezna za e-SLOG.",
+  "Invalid Slovenian tax rate {{rate}}%. Valid: {{validRates}}":
+    "Neveljavna slovenska davčna stopnja {{rate}}%. Veljavne: {{validRates}}",
   // VIES / Reverse Charge
   "Reverse charge - tax exempt EU B2B sale": "Obrnjena davčna obveznost - davka oproščena EU B2B prodaja",
   "Taxes disabled": "Davki onemogočeni",
@@ -147,9 +170,9 @@ export default {
   "This invoice will not be fiscalized (non-domestic transaction)":
     "Ta račun ne bo fiskaliziran (nedomača transakcija)",
   "Tax Clause": "Davčna klavzula",
-  "Add tax clause...": "Dodajte davčno klavzulo...",
+  "Add tax clause...": "Dodaj davčno klavzulo...",
   Footer: "Noga dokumenta",
-  "Add document footer...": "Dodajte nogo dokumenta...",
+  "Add document footer...": "Dodaj nogo dokumenta...",
   // Croatian domestic invoice validation
   "End consumer": "Končni potrošnik",
   "Domestic B2B invoicing in Croatia is not supported":

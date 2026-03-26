@@ -51,8 +51,8 @@ const PAYMENT_TYPE_LABELS: Record<string, string> = {
 
 type CreatePaymentFormProps = {
   entityId: string;
-  invoiceId: string;
-  invoiceTotal: number;
+  documentId: string;
+  documentTotal: number;
   onSuccess?: (payment: Payment) => void;
   onError?: (error: Error) => void;
   renderSubmitButton?: (props: { isSubmitting: boolean; submit: () => void }) => React.ReactNode;
@@ -60,8 +60,8 @@ type CreatePaymentFormProps = {
 
 export default function CreatePaymentForm({
   entityId,
-  invoiceId,
-  invoiceTotal,
+  documentId,
+  documentTotal,
   onSuccess,
   onError,
   renderSubmitButton,
@@ -75,8 +75,8 @@ export default function CreatePaymentForm({
   const form = useForm<CreatePaymentSchema>({
     resolver: zodResolver(createPaymentSchema),
     defaultValues: {
-      invoice_id: invoiceId,
-      amount: invoiceTotal,
+      document_id: documentId,
+      amount: documentTotal,
       type: "cash",
       date: new Date().toISOString(),
       reference: "",
@@ -178,7 +178,11 @@ export default function CreatePaymentForm({
                       variant="outline"
                       className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
                     >
-                      {field.value ? new Date(field.value).toLocaleDateString() : <span>{t("Pick a date")}</span>}
+                      {field.value ? (
+                        new Date(field.value).toLocaleDateString(i18nProps.locale)
+                      ) : (
+                        <span>{t("Pick a date")}</span>
+                      )}
                       <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                     </Button>
                   </FormControl>

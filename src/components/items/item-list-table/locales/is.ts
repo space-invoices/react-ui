@@ -1,0 +1,16 @@
+export default {
+  Name: "Nafn",
+  Description: "Lýsing",
+  Unit: "Unit",
+  Price: "Verð",
+  "Open menu": "Opna valmynd",
+  Actions: "Aðgerðir",
+  "Copy item ID": "Copy item ID",
+  "View item": "View item",
+  "Your list is empty": "Your item list is empty",
+  "Get started by creating your first entry": "Get started by creating your first item",
+  "No results found": "No items found",
+  "Try adjusting your search criteria": "Try adjusting your search criteria",
+  "Clear search": "Clear search",
+  "Clear all": "Clear all",
+} as const;

@@ -1,10 +1,26 @@
 export default {
   "Send Invoice by Email": "Pošalji račun e-mailom",
+  "Send Estimate by Email": "Pošalji predračun e-mailom",
+  "Send Credit Note by Email": "Pošalji odobrenje e-mailom",
+  "Send Advance Invoice by Email": "Pošalji avansni račun e-mailom",
+  "Send Delivery Note by Email": "Pošalji otpremnicu e-mailom",
   "Send invoice by email description":
     "Pošaljite račun #{number} kupcu putem e-maila. Markdown formatiranje je podržano u tekstu.",
+  "Send estimate by email description":
+    "Pošaljite predračun #{number} kupcu putem e-maila. Markdown formatiranje je podržano u tekstu.",
+  "Send credit note by email description":
+    "Pošaljite odobrenje #{number} kupcu putem e-maila. Markdown formatiranje je podržano u tekstu.",
+  "Send advance invoice by email description":
+    "Pošaljite avansni račun #{number} kupcu putem e-maila. Markdown formatiranje je podržano u tekstu.",
+  "Send delivery note by email description":
+    "Pošaljite otpremnicu #{number} kupcu putem e-maila. Markdown formatiranje je podržano u tekstu.",
   "Recipient Email": "E-mail primatelja",
   "Subject (Optional)": "Predmet (neobavezno)",
   "Invoice Subject": "Predmet računa",
+  "Estimate Subject": "Predmet predračuna",
+  "Credit Note Subject": "Predmet odobrenja",
+  "Advance Invoice Subject": "Predmet avansnog računa",
+  "Delivery Note Subject": "Predmet otpremnice",
   "Leave empty to use default": "Ostavite prazno za zadanu vrijednost",
   "Message (Optional)": "Poruka (neobavezno)",
   "Email message placeholder": "Poruka e-maila... Podržava **podebljano**, *kurziv*, [linkove](url) i popise",
@@ -12,10 +28,15 @@ export default {
   "Send Email": "Pošalji e-mail",
   "Email sent": "E-mail poslan",
   "Invoice sent to": "Račun poslan na",
+  "Estimate sent to": "Predračun poslan na",
+  "Credit note sent to": "Odobrenje poslano na",
+  "Advance invoice sent to": "Avansni račun poslan na",
+  "Delivery note sent to": "Otpremnica poslana na",
   "Failed to send email": "Slanje e-maila nije uspjelo",
   "Sandbox email warning": "U sandbox načinu e-mailovi se mogu slati samo verificiranim članovima tima ovog računa.",
   "PDF Language": "Jezik PDF-a",
   Default: "Zadano",
+  "English (US)": "Engleski (SAD)",
   English: "Engleski",
   German: "Njemački",
   Slovenian: "Slovenski",

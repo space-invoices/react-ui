@@ -6,16 +6,96 @@ import { Slot } from "@radix-ui/react-slot"
 import {
   Controller,
   type ControllerProps,
+  type FieldErrors,
   type FieldPath,
   type FieldValues,
   FormProvider,
+  type UseFormReturn,
   useFormContext,
 } from "react-hook-form"
 
 import { cn } from "@/ui/lib/utils"
 import { Label } from "@/ui/components/ui/label"
+import { getValidationLocale, translateZodValidationMessage } from "@/ui/lib/zod-validation-message"
 
-const Form = FormProvider
+const ValidationLocaleContext = React.createContext<string | undefined>(undefined)
+
+type FormProps = UseFormReturn<any> & {
+  children: React.ReactNode
+  locale?: string
+}
+
+function Form({ locale, ...props }: FormProps) {
+  const { watch, getFieldState, clearErrors, trigger } = props
+
+  React.useEffect(() => {
+    const subscription = watch((_value, { name, type }) => {
+      if (!name || type !== "change") return
+
+      const fieldState = getFieldState(name)
+      if (!fieldState.error) return
+
+      // Manual/setError flows should clear immediately once the user edits the field again.
+      if (fieldState.error.type === "manual" || fieldState.error.type === "submit" || fieldState.error.type === "eslog") {
+        clearErrors(name)
+        return
+      }
+
+      void trigger(name)
+    })
+
+    return () => subscription.unsubscribe()
+  }, [watch, getFieldState, clearErrors, trigger])
+
+  return (
+    <ValidationLocaleContext.Provider value={locale}>
+      <FormProvider {...props} />
+    </ValidationLocaleContext.Provider>
+  )
+}
+
+function scrollFormToFirstError(form: HTMLFormElement | null) {
+  if (!form) return
+
+  const scrollToInvalidField = () => {
+    const errorTarget = form.querySelector<HTMLElement>('[data-form-error-summary="true"], [aria-invalid="true"]')
+    if (!errorTarget) return
+
+    errorTarget.scrollIntoView({ behavior: "smooth", block: "center" })
+
+    if (errorTarget.matches('[aria-invalid="true"]') && typeof errorTarget.focus === "function") {
+      errorTarget.focus({ preventScroll: true })
+    }
+  }
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(scrollToInvalidField)
+  })
+}
+
+function collectFormErrorPaths(errors: FieldErrors<FieldValues>, prefix = ""): string[] {
+  const paths: string[] = []
+
+  for (const [key, value] of Object.entries(errors)) {
+    if (!value) continue
+
+    const nextPrefix = prefix ? `${prefix}.${key}` : key
+    if (key === "root") {
+      paths.push(nextPrefix)
+      continue
+    }
+
+    if (typeof value === "object") {
+      if ("message" in value || "type" in value || "ref" in value) {
+        paths.push(nextPrefix)
+      }
+
+      paths.push(...collectFormErrorPaths(value as FieldErrors<FieldValues>, nextPrefix))
+    }
+  }
+
+  return [...new Set(paths)]
+}
 
 type FormFieldContextValue<
   TFieldValues extends FieldValues = FieldValues,
@@ -135,8 +215,11 @@ function FormDescription({ className, ...props }: React.ComponentProps<"p">) {
 }
 
 function FormMessage({ className, children, ...props }: React.ComponentProps<"p">) {
+  const validationLocale = React.useContext(ValidationLocaleContext)
   const { error, formMessageId } = useFormField()
-  const body = error ? String(error?.message ?? "") : children
+  const body = error
+    ? translateZodValidationMessage(String(error?.message ?? ""), getValidationLocale(validationLocale))
+    : children
 
   if (!body) {
     return null
@@ -154,6 +237,37 @@ function FormMessage({ className, children, ...props }: React.ComponentProps<"p"
   )
 }
 
+function FormRoot({ className, ...props }: React.ComponentProps<"form">) {
+  const { formState } = useFormContext()
+  const formRef = React.useRef<HTMLFormElement>(null)
+  const lastSubmitCountRef = React.useRef(0)
+  const hasScrolledForSubmitRef = React.useRef(false)
+  const errorPaths = React.useMemo(() => collectFormErrorPaths(formState.errors), [formState.errors])
+
+  React.useEffect(() => {
+    if (formState.submitCount !== lastSubmitCountRef.current) {
+      lastSubmitCountRef.current = formState.submitCount
+      hasScrolledForSubmitRef.current = false
+    }
+
+    if (!formState.isSubmitted || errorPaths.length === 0 || hasScrolledForSubmitRef.current) {
+      return
+    }
+
+    hasScrolledForSubmitRef.current = true
+    scrollFormToFirstError(formRef.current)
+  }, [errorPaths.length, formState.isSubmitted, formState.submitCount])
+
+  return (
+    <form
+      ref={formRef}
+      data-slot="form-root"
+      className={className}
+      {...props}
+    />
+  )
+}
+
 export {
   useFormField,
   Form,
@@ -163,4 +277,6 @@ export {
   FormDescription,
   FormMessage,
   FormField,
+  FormRoot,
+  scrollFormToFirstError,
 }

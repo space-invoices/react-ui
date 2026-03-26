@@ -1,6 +1,6 @@
+import { getClientHeaders } from "@spaceinvoices/js-sdk";
 import { Calendar, Download, Loader2 } from "lucide-react";
 import { useState } from "react";
-import { getClientHeaders } from "@/ui/lib/client-headers";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
 import { Button } from "../ui/button";
@@ -66,15 +66,16 @@ export function SalesPerItemExportForm({
   entityId,
   token,
   accountId,
-  language,
+  language: _language,
   t: translateFn,
   namespace,
   locale,
+  translationLocale,
   apiBaseUrl = "",
   onSuccess,
   onError,
 }: SalesPerItemExportFormProps) {
-  const t = createTranslation({ t: translateFn, namespace, locale, translations });
+  const t = createTranslation({ t: translateFn, namespace, locale, translationLocale, translations });
   const defaultDates = getPreviousMonthRange();
   const [exportFormat, setExportFormat] = useState<ExportFormat>("xlsx");
   const [dateFrom, setDateFrom] = useState(defaultDates.from);

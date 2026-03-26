@@ -17,17 +17,18 @@ export type CollectionRateData = {
 
 export function useCollectionRateData(entityId: string | undefined) {
   const queries: StatsQueryRequest[] = [
-    // [0] Total invoiced (including voided — counter credit notes cancel them out)
+    // [0] Total invoiced (non-voided, non-draft invoices only)
     {
       metrics: [{ type: "sum", field: "total_with_tax", alias: "total" }],
       table: "invoices",
-      filters: { is_draft: false },
+      filters: { is_draft: false, voided_at: null },
     },
-    // [1] Invoice payments (credit_note_id IS NULL)
+    // [1] Total collected on invoices
+    // Using invoice.total_paid avoids counting orphan payments or payments on voided invoices.
     {
-      metrics: [{ type: "sum", field: "amount", alias: "total" }],
-      table: "payments",
-      filters: { credit_note_id: null },
+      metrics: [{ type: "sum", field: "total_paid", alias: "total" }],
+      table: "invoices",
+      filters: { is_draft: false, voided_at: null },
     },
     // [2] Credit note payments / refunds (credit_note_id IS NOT NULL)
     {
@@ -39,7 +40,7 @@ export function useCollectionRateData(entityId: string | undefined) {
     {
       metrics: [{ type: "sum", field: "total_with_tax", alias: "total" }],
       table: "credit_notes",
-      filters: { is_draft: false },
+      filters: { is_draft: false, voided_at: null },
     },
   ];
 

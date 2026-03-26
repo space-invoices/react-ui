@@ -9,8 +9,8 @@ import { LoadingCard } from "../loading-card";
 import bg from "./locales/bg";
 import cs from "./locales/cs";
 import de from "./locales/de";
-import et from "./locales/et";
 import es from "./locales/es";
+import et from "./locales/et";
 import fi from "./locales/fi";
 import fr from "./locales/fr";
 import hr from "./locales/hr";
@@ -31,6 +31,7 @@ export type PaymentTrendChartData = { month: string; amount: number }[];
 
 type BaseProps = {
   locale?: string;
+  translationLocale?: string;
   t?: (key: string) => string;
   namespace?: string;
 };
@@ -64,8 +65,8 @@ function formatCurrency(value: number, currency: string, locale?: string): strin
 }
 
 export function PaymentTrendChart(props: PaymentTrendChartProps) {
-  const { locale, t: externalT, namespace } = props;
-  const t = createTranslation({ t: externalT, namespace, locale, translations });
+  const { locale, translationLocale, t: externalT, namespace } = props;
+  const t = createTranslation({ t: externalT, namespace, locale, translationLocale, translations });
 
   // Turnkey mode - fetch own data
   const hookResult = usePaymentTrendData("entityId" in props ? props.entityId : undefined);

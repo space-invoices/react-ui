@@ -13,6 +13,10 @@ const createPaymentSchemaDefinition = z.object({
   invoice_id: z.union([z.string(), z.null()]).optional(),
   credit_note_id: z.union([z.string(), z.null()]).optional(),
   advance_invoice_id: z.union([z.string(), z.null()]).optional(),
+  incoming_purchase_document_id: z.union([z.string(), z.null()]).optional(),
+  applied_to_incoming_purchase_document_id: z
+    .union([z.string(), z.null()])
+    .optional(),
   amount: z.number().gt(0),
   type: z.enum([
     "cash",
@@ -30,6 +34,7 @@ const createPaymentSchemaDefinition = z.object({
   reference: z.union([z.string(), z.null()]).optional(),
   note: z.union([z.string(), z.null()]).optional(),
   metadata: z.union([z.record(z.string(), z.any()), z.null()]).optional(),
+  document_id: z.union([z.string(), z.null()]).optional(),
 });
 
 // Type for create payment operation

@@ -1,4 +1,5 @@
 import type { RecurringInvoice } from "@spaceinvoices/js-sdk";
+import { recurringInvoices } from "@spaceinvoices/js-sdk";
 import { useQueryClient } from "@tanstack/react-query";
 import { Eye, MoreHorizontal, Pause, Play, Trash2 } from "lucide-react";
 import { useState } from "react";
@@ -14,7 +15,6 @@ import {
 } from "@/ui/components/ui/dropdown-menu";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
-import { useSDK } from "@/ui/providers/sdk-provider";
 
 import { RECURRING_INVOICES_CACHE_KEY, useDeleteRecurringInvoice } from "../recurring-invoices.hooks";
 import de from "./locales/de";
@@ -60,7 +60,6 @@ export default function RecurringInvoiceListRowActions({
     ...i18nProps,
   });
 
-  const { sdk } = useSDK();
   const queryClient = useQueryClient();
   const [isToggling, setIsToggling] = useState(false);
 
@@ -79,13 +78,12 @@ export default function RecurringInvoiceListRowActions({
   };
 
   const handleTogglePause = async () => {
-    if (!sdk) return;
     setIsToggling(true);
     try {
       if (recurringInvoice.status === "active") {
-        await sdk.recurringInvoices.pauseRecurringInvoice(recurringInvoice.id);
+        await recurringInvoices.pauseRecurringInvoice(recurringInvoice.id);
       } else {
-        await sdk.recurringInvoices.resumeRecurringInvoice(recurringInvoice.id);
+        await recurringInvoices.resumeRecurringInvoice(recurringInvoice.id);
       }
       queryClient.invalidateQueries({ queryKey: [RECURRING_INVOICES_CACHE_KEY] });
     } catch (error) {

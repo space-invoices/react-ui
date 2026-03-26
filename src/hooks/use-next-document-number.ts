@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-
-import { useSDK } from "@/ui/providers/sdk-provider";
+import { documents } from "../../../js-sdk/src/sdk/documents";
 
 export const NEXT_DOCUMENT_NUMBER_CACHE_KEY = "next-document-number";
 
@@ -12,6 +11,16 @@ export type NextDocumentNumberResponse = {
   furs?: {
     business_premise_name: string;
     electronic_device_name: string;
+  } | null;
+  fina?: {
+    business_premise_name: string;
+    electronic_device_name: string;
+  } | null;
+  pt?: {
+    series_id: string;
+    series_code: string;
+    validation_code: string;
+    manual?: boolean;
   } | null;
 };
 
@@ -30,8 +39,6 @@ export function useNextDocumentNumber(
     enabled?: boolean;
   },
 ) {
-  const { sdk } = useSDK();
-
   return useQuery<NextDocumentNumberResponse>({
     queryKey: [
       NEXT_DOCUMENT_NUMBER_CACHE_KEY,
@@ -41,7 +48,7 @@ export function useNextDocumentNumber(
       options?.electronicDeviceName,
     ],
     queryFn: async () => {
-      const response = await sdk.documents.getNextNumber(
+      const response = await documents.getNextNumber(
         {
           type: type as "invoice",
           business_premise_name: options?.businessPremiseName,
@@ -51,7 +58,7 @@ export function useNextDocumentNumber(
       );
       return response;
     },
-    enabled: options?.enabled !== false && !!entityId && !!sdk?.documents,
+    enabled: options?.enabled !== false && !!entityId,
     staleTime: 0, // Always refetch when form opens
   });
 }

@@ -12,10 +12,17 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/ui/components/ui/dropdown-menu";
+import { actionMenuTooltipProps, Tooltip, TooltipContent, TooltipTrigger } from "@/ui/components/ui/tooltip";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
 import { SendEmailDialog } from "../send-email-dialog";
 import { useInvoiceDownload } from "./use-invoice-download";
+
+const translations = {
+  sl: {
+    "This document is already voided.": "Ta dokument je že storniran.",
+  },
+} as const;
 
 type InvoiceListRowActionsProps = {
   invoice: Invoice;
@@ -29,6 +36,7 @@ type InvoiceListRowActionsProps = {
   isUnsharing?: boolean;
   onVoid?: (invoice: Invoice) => void;
   isVoiding?: boolean;
+  allowSendEmail?: boolean;
 } & ComponentTranslationProps;
 
 export default memo(function InvoiceListRowActions({
@@ -43,9 +51,10 @@ export default memo(function InvoiceListRowActions({
   isUnsharing,
   onVoid,
   isVoiding,
+  allowSendEmail = true,
   ...i18nProps
 }: InvoiceListRowActionsProps) {
-  const t = createTranslation(i18nProps);
+  const t = createTranslation({ ...i18nProps, translations });
   const [emailDialogOpen, setEmailDialogOpen] = useState(false);
   const { isDownloading, downloadPDF } = useInvoiceDownload({
     onDownloadStart,
@@ -81,10 +90,12 @@ export default memo(function InvoiceListRowActions({
               <Download className="h-4 w-4" />
               {isDownloading ? t("Downloading...") : t("Download PDF")}
             </DropdownMenuItem>
-            <DropdownMenuItem className="cursor-pointer" onClick={() => setEmailDialogOpen(true)}>
-              <Mail className="h-4 w-4" />
-              {t("Send Email")}
-            </DropdownMenuItem>
+            {allowSendEmail && (
+              <DropdownMenuItem className="cursor-pointer" onClick={() => setEmailDialogOpen(true)}>
+                <Mail className="h-4 w-4" />
+                {t("Send Email")}
+              </DropdownMenuItem>
+            )}
             {onDuplicate && (
               <DropdownMenuItem className="cursor-pointer" onClick={() => onDuplicate(invoice)}>
                 <Copy className="h-4 w-4" />
@@ -118,30 +129,52 @@ export default memo(function InvoiceListRowActions({
               </DropdownMenuGroup>
             </>
           )}
-          {onVoid && !invoice.voided_at && !(invoice as any).is_draft && (
+          {onVoid && !(invoice as any).is_draft && (
             <>
               <DropdownMenuSeparator />
               <DropdownMenuGroup>
-                <DropdownMenuItem
-                  className="cursor-pointer text-destructive focus:text-destructive"
-                  onClick={() => onVoid(invoice)}
-                  disabled={isVoiding}
-                >
-                  {isVoiding ? <Loader2 className="h-4 w-4 animate-spin" /> : <Ban className="h-4 w-4" />}
-                  {t("Void")}
-                </DropdownMenuItem>
+                {(() => {
+                  const disabledReason = invoice?.voided_at ? t("This document is already voided.") : undefined;
+                  const item = (
+                    <DropdownMenuItem
+                      className="cursor-pointer text-destructive focus:text-destructive"
+                      onClick={disabledReason ? undefined : () => onVoid(invoice)}
+                      disabled={isVoiding || !!disabledReason}
+                    >
+                      {isVoiding ? <Loader2 className="h-4 w-4 animate-spin" /> : <Ban className="h-4 w-4" />}
+                      {t("Void")}
+                    </DropdownMenuItem>
+                  );
+
+                  if (!disabledReason) return item;
+
+                  return (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div>{item}</div>
+                      </TooltipTrigger>
+                      <TooltipContent side="left" {...actionMenuTooltipProps}>
+                        {disabledReason}
+                      </TooltipContent>
+                    </Tooltip>
+                  );
+                })()}
               </DropdownMenuGroup>
             </>
           )}
         </DropdownMenuContent>
       </DropdownMenu>
-      <SendEmailDialog
-        invoice={invoice}
-        defaultEmail={invoice.customer?.email || ""}
-        open={emailDialogOpen}
-        onOpenChange={setEmailDialogOpen}
-        translationFn={t}
-      />
+      {allowSendEmail && (
+        <SendEmailDialog
+          document={invoice}
+          defaultEmail={invoice.customer?.email || ""}
+          open={emailDialogOpen}
+          onOpenChange={setEmailDialogOpen}
+          locale={i18nProps.locale}
+          translationFn={t}
+          translationLocale={i18nProps.translationLocale}
+        />
+      )}
     </>
   );
 });

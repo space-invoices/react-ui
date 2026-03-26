@@ -1,8 +1,8 @@
+import { invoices } from "@spaceinvoices/js-sdk";
 import { useState } from "react";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
 import { useEntities } from "@/ui/providers/entities-context";
-import { useSDK } from "@/ui/providers/sdk-provider";
 
 // Type for credit note - using any until SDK is regenerated
 type CreditNote = any;
@@ -21,12 +21,10 @@ export function useCreditNoteDownload({
 }: UseCreditNoteDownloadProps) {
   const [isDownloading, setIsDownloading] = useState(false);
   const { activeEntity } = useEntities();
-  const { sdk } = useSDK();
   const t = createTranslation(i18nProps);
 
   const downloadPDF = async (creditNote: CreditNote) => {
-    if (!activeEntity?.id || !sdk) {
-      console.error("Missing SDK or active entity for PDF download");
+    if (!activeEntity?.id) {
       onDownloadError?.(t("Failed to download PDF"));
       return;
     }
@@ -36,7 +34,7 @@ export function useCreditNoteDownload({
 
     try {
       const fileName = `${t("Credit Note")} ${creditNote.number}.pdf`;
-      await sdk.invoices.downloadPdf(creditNote.id, fileName, {}, { entity_id: activeEntity.id });
+      await invoices.downloadPdf(creditNote.id, fileName, {}, { entity_id: activeEntity.id });
 
       onDownloadSuccess?.(fileName);
     } catch (error) {

@@ -12,6 +12,11 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/ui/c
 import { createEstimateSchema } from "@/ui/generated/schemas";
 import { useNextDocumentNumber } from "@/ui/hooks/use-next-document-number";
 import { useTransactionTypeCheck } from "@/ui/hooks/use-transaction-type-check";
+import {
+  normalizePtDocumentInput,
+  type PtDocumentInputForm,
+  ptDocumentInputFormSchema,
+} from "@/ui/lib/pt-document-input";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
 import { useEntities } from "@/ui/providers/entities-context";
@@ -25,6 +30,7 @@ import {
   DocumentSignatureField,
   DocumentTaxClauseField,
 } from "../../documents/create/document-details-section";
+import { withRequiredDocumentItemFields } from "../../documents/create/document-item-validation";
 import { DocumentItemsSection, type PriceModesMap } from "../../documents/create/document-items-section";
 import { DocumentRecipientSection } from "../../documents/create/document-recipient-section";
 import type { DocumentTypes } from "../../documents/types";
@@ -58,14 +64,19 @@ const translations = {
   pl,
   hr,
 } as const;
+const createEstimateFormSchema = withRequiredDocumentItemFields(
+  createEstimateSchema.extend({
+    pt: ptDocumentInputFormSchema.optional(),
+  }),
+);
 
 // Form values: extend schema with local-only fields (number is for display, not sent to API)
-type CreateEstimateFormValues = z.infer<typeof createEstimateSchema> & {
+type CreateEstimateFormValues = z.infer<typeof createEstimateFormSchema> & {
   number?: string;
 };
 
 /** Preview payload extends request with display-only fields */
-type EstimatePreviewPayload = Partial<CreateEstimateRequest> & { number?: string };
+type EstimatePreviewPayload = Partial<CreateEstimateRequest> & { number?: string; pt?: PtDocumentInputForm };
 
 type CreateEstimateFormProps = {
   type: DocumentTypes;
@@ -78,6 +89,11 @@ type CreateEstimateFormProps = {
   onHeaderActionChange?: (action: ReactNode) => void;
   /** Initial values for form fields (used for document duplication) */
   initialValues?: Partial<CreateEstimateRequest>;
+  /** Whether draft actions should be available in the UI */
+  allowDrafts?: boolean;
+  /** Optional app-level content rendered inside the details section. */
+  detailsExtras?: ReactNode;
+  translationLocale?: string;
 } & ComponentTranslationProps;
 
 export default function CreateEstimateForm({
@@ -89,6 +105,9 @@ export default function CreateEstimateForm({
   onAddNewTax,
   onHeaderActionChange,
   initialValues,
+  allowDrafts = true,
+  detailsExtras,
+  translationLocale,
   t: translateProp,
   namespace,
   locale,
@@ -97,6 +116,7 @@ export default function CreateEstimateForm({
     t: translateProp,
     namespace,
     locale,
+    translationLocale,
     translations,
   });
 
@@ -123,7 +143,7 @@ export default function CreateEstimateForm({
   const defaultFooter = (activeEntity?.settings as any)?.document_footer || "";
 
   const form = useForm<CreateEstimateFormValues>({
-    resolver: zodResolver(createEstimateSchema) as Resolver<CreateEstimateFormValues>,
+    resolver: zodResolver(createEstimateFormSchema) as Resolver<CreateEstimateFormValues>,
     defaultValues: {
       number: "",
       date: initialValues?.date || new Date().toISOString(),
@@ -162,6 +182,7 @@ export default function CreateEstimateForm({
       date_valid_till:
         initialValues?.date_valid_till ||
         calculateDueDate(initialValues?.date || new Date().toISOString(), defaultEstimateValidDays),
+      pt: ((initialValues as any)?.pt as PtDocumentInputForm | undefined) ?? undefined,
     },
   });
 
@@ -343,12 +364,15 @@ export default function CreateEstimateForm({
   }, [form, submitEstimate]);
 
   const secondaryAction = useMemo(
-    () => ({
-      label: t("Save as Draft"),
-      onClick: handleSaveAsDraft,
-      isPending: isDraftPending,
-    }),
-    [t, handleSaveAsDraft, isDraftPending],
+    () =>
+      allowDrafts
+        ? {
+            label: t("Save as Draft"),
+            onClick: handleSaveAsDraft,
+            isPending: isDraftPending,
+          }
+        : undefined,
+    [allowDrafts, t, handleSaveAsDraft, isDraftPending],
   );
 
   useFormFooterRegistration({
@@ -381,29 +405,33 @@ export default function CreateEstimateForm({
     form.setValue("date_valid_till", calculateDueDate(currentDate, validDays));
   }, [formValues.date, activeEntity, form]);
 
-  const buildPreviewPayload = useCallback((values: CreateEstimateFormValues): EstimatePreviewPayload => {
-    const currentItems = values.items || [];
+  const buildPreviewPayload = useCallback(
+    (values: CreateEstimateFormValues): EstimatePreviewPayload => {
+      const currentItems = values.items || [];
 
-    const transformedItems = currentItems.map((item: any, index: number) => {
-      const { price, ...rest } = item;
-      const isGross = priceModesRef.current[index] ?? false;
-      return isGross ? { ...rest, gross_price: price } : { ...rest, price };
-    });
+      const transformedItems = currentItems.map((item: any, index: number) => {
+        const { price, ...rest } = item;
+        const isGross = priceModesRef.current[index] ?? false;
+        return isGross ? { ...rest, gross_price: price } : { ...rest, price };
+      });
 
-    return {
-      number: values.number,
-      date: values.date,
-      customer_id: values.customer_id,
-      customer: values.customer,
-      items: transformedItems,
-      currency_code: values.currency_code,
-      reference: values.reference,
-      note: values.note,
-      payment_terms: values.payment_terms,
-      signature: values.signature,
-      title_type: titleType,
-    };
-  }, [titleType]);
+      return {
+        number: values.number,
+        date: values.date,
+        customer_id: values.customer_id,
+        customer: values.customer,
+        items: transformedItems,
+        currency_code: values.currency_code,
+        reference: values.reference,
+        note: values.note,
+        payment_terms: values.payment_terms,
+        signature: values.signature,
+        title_type: titleType,
+        ...(normalizePtDocumentInput(values.pt) ? { pt: normalizePtDocumentInput(values.pt) } : {}),
+      };
+    },
+    [titleType],
+  );
 
   const emitPreviewPayload = useCallback((payload: EstimatePreviewPayload) => {
     const callback = onChangeRef.current;
@@ -431,7 +459,7 @@ export default function CreateEstimateForm({
   return (
     <Form {...form}>
       <form id="create-estimate-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-        <div className="flex w-full flex-col md:flex-row md:gap-6">
+        <div className="flex w-full flex-col gap-8 md:flex-row md:gap-6">
           <DocumentRecipientSection
             control={form.control}
             entityId={entityId}
@@ -442,20 +470,28 @@ export default function CreateEstimateForm({
             selectedCustomerId={selectedCustomerId}
             initialCustomerName={initialCustomerName}
             t={t}
+            locale={locale}
           />
 
-          <DocumentDetailsSection control={form.control} documentType={type} t={t} />
+          <DocumentDetailsSection control={form.control} documentType={type} t={t} locale={locale}>
+            {detailsExtras}
+          </DocumentDetailsSection>
         </div>
 
         <DocumentItemsSection
           control={form.control}
+          documentType={type}
           watch={form.watch}
           setValue={form.setValue}
+          clearErrors={form.clearErrors}
+          trigger={form.trigger}
+          isSubmitted={form.formState.isSubmitted}
           getValues={form.getValues}
           entityId={entityId}
           currencyCode={activeEntity?.currency_code ?? undefined}
           onAddNewTax={onAddNewTax}
           t={t}
+          locale={locale}
           maxTaxesPerItem={activeEntity?.country_rules?.max_taxes_per_item}
           priceModesRef={priceModesRef}
           initialPriceModes={initialPriceModes}

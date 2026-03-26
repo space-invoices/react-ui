@@ -6,7 +6,97 @@ import { Select as SelectPrimitive } from "@base-ui/react/select"
 import { cn } from "@/ui/lib/utils"
 import { ChevronDownIcon, CheckIcon, ChevronUpIcon } from "lucide-react"
 
-const Select = SelectPrimitive.Root
+type RegisteredSelectItem = {
+  id: symbol
+  label: React.ReactNode
+  value: unknown
+}
+
+type SelectItemsContextValue = {
+  removeItem: (id: symbol) => void
+  upsertItem: (item: RegisteredSelectItem) => void
+}
+
+const SelectItemsContext = React.createContext<SelectItemsContextValue | null>(null)
+
+function getSelectItemText(node: React.ReactNode): string {
+  if (node == null || typeof node === "boolean") {
+    return ""
+  }
+
+  if (typeof node === "string" || typeof node === "number") {
+    return String(node)
+  }
+
+  if (Array.isArray(node)) {
+    return node.map(getSelectItemText).join(" ")
+  }
+
+  if (React.isValidElement<{ children?: React.ReactNode }>(node)) {
+    return getSelectItemText(node.props.children)
+  }
+
+  return ""
+}
+
+function Select<Value, Multiple extends boolean | undefined = false>({
+  children,
+  items,
+  ...props
+}: SelectPrimitive.Root.Props<Value, Multiple>) {
+  const [registeredItems, setRegisteredItems] = React.useState<RegisteredSelectItem[]>([])
+
+  const upsertItem = React.useCallback((item: RegisteredSelectItem) => {
+    setRegisteredItems((current) => {
+      const existingIndex = current.findIndex((entry) => entry.id === item.id)
+
+      if (existingIndex === -1) {
+        return [...current, item]
+      }
+
+      const existingItem = current[existingIndex]
+      if (existingItem.value === item.value && existingItem.label === item.label) {
+        return current
+      }
+
+      const next = current.slice()
+      next[existingIndex] = item
+      return next
+    })
+  }, [])
+
+  const removeItem = React.useCallback((id: symbol) => {
+    setRegisteredItems((current) => current.filter((item) => item.id !== id))
+  }, [])
+
+  const contextValue = React.useMemo<SelectItemsContextValue>(
+    () => ({ removeItem, upsertItem }),
+    [removeItem, upsertItem]
+  )
+
+  const resolvedItems = React.useMemo(() => {
+    if (items) {
+      return items
+    }
+
+    if (registeredItems.length === 0) {
+      return undefined
+    }
+
+    return registeredItems.map(({ label, value }) => ({ label, value }))
+  }, [items, registeredItems])
+
+  return (
+    <SelectItemsContext.Provider value={contextValue}>
+      <SelectPrimitive.Root
+        {...props}
+        items={resolvedItems as SelectPrimitive.Root.Props<Value, Multiple>["items"]}
+      >
+        {children}
+      </SelectPrimitive.Root>
+    </SelectItemsContext.Provider>
+  )
+}
 
 function SelectGroup({ className, ...props }: SelectPrimitive.Group.Props) {
   return (
@@ -118,11 +208,38 @@ function SelectLabel({
 function SelectItem({
   className,
   children,
+  label,
+  value = null,
   ...props
 }: SelectPrimitive.Item.Props) {
+  const itemsContext = React.useContext(SelectItemsContext)
+  const itemId = React.useRef(Symbol("select-item"))
+  const derivedLabel = getSelectItemText(children).replace(/\s+/g, " ").trim()
+  const resolvedLabel = label ?? (derivedLabel.length > 0 ? derivedLabel : undefined)
+
+  React.useEffect(() => {
+    if (!itemsContext || !resolvedLabel) {
+      return undefined
+    }
+
+    const nextItem = {
+      id: itemId.current,
+      label: resolvedLabel,
+      value,
+    }
+
+    itemsContext.upsertItem(nextItem)
+
+    return () => {
+      itemsContext.removeItem(itemId.current)
+    }
+  }, [itemsContext, resolvedLabel, value])
+
   return (
     <SelectPrimitive.Item
       data-slot="select-item"
+      label={resolvedLabel}
+      value={value}
       className={cn(
         "focus:bg-accent focus:text-accent-foreground not-data-[variant=destructive]:focus:**:text-accent-foreground gap-2 rounded-sm py-1.5 pr-8 pl-2 text-sm [&_svg:not([class*='size-'])]:size-4 *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2 relative flex w-full cursor-pointer items-center outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0",
         className

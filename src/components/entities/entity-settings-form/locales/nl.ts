@@ -73,9 +73,9 @@ export default {
     "Betalingsvoorwaarden vooraf ingevuld bij het aanmaken van nieuwe offertes",
   "Payment terms pre-filled when creating new credit notes":
     "Betalingsvoorwaarden vooraf ingevuld bij het aanmaken van nieuwe creditnota's",
-  "Payment due by {document_due_date}. Please reference invoice {document_number}.":
-    "Betaling vóór {document_due_date}. Vermeld a.u.b. factuurnummer {document_number}.",
-  "Net 30 days. Payment due by {document_due_date}.": "Netto 30 dagen. Betaling vóór {document_due_date}.",
+  "Optional note for the document.": "Optionele notitie voor het document.",
+  "Please remit payment using the bank details shown on the document.":
+    "Gelieve te betalen met de bankgegevens op het document.",
   "This estimate is valid until {document_valid_until}.": "Deze offerte is geldig tot {document_valid_until}.",
   "Payment due upon acceptance.": "Betaling bij aanvaarding.",
   "Credit note for invoice {document_number}.": "Creditnota voor factuur {document_number}.",
@@ -119,6 +119,11 @@ export default {
   "Document Signature": "Documenthandtekening",
   "Signature text displayed on all PDF documents": "Handtekeningtekst weergegeven op alle PDF-documenten",
   "Add signature text...": "Handtekeningtekst toevoegen...",
+  "Delivery Note": "Afleverbon",
+  "Default note for advance invoices": "Standaardnotitie voor voorschotfacturen",
+  "Default note for all new advance invoices": "Standaardnotitie voor alle nieuwe voorschotfacturen",
+  "Default note for delivery notes": "Standaardnotitie voor afleverbonnen",
+  "Default note for all new delivery notes": "Standaardnotitie voor alle nieuwe afleverbonnen",
   // Overdue Notifications section
   "Overdue Notifications": "Herinneringen voor achterstallige betalingen",
   "Automatically remind customers about overdue invoices": "Klanten automatisch herinneren aan achterstallige facturen",

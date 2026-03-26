@@ -1,4 +1,5 @@
-import type { CreateRecurringInvoiceBody, RecurringInvoice } from "@spaceinvoices/js-sdk";
+import type { CreateRecurringInvoiceBody, RecurringInvoice, UpdateRecurringInvoiceBody } from "@spaceinvoices/js-sdk";
+import { recurringInvoices } from "@spaceinvoices/js-sdk";
 
 import { createResourceHooks } from "@/ui/hooks/create-resource-hooks";
 
@@ -10,19 +11,21 @@ const {
   useDeleteResource: useDeleteRecurringInvoice,
   useRestoreResource: useRestoreRecurringInvoice,
   usePermanentDeleteResource: usePermanentDeleteRecurringInvoice,
-} = createResourceHooks<RecurringInvoice, CreateRecurringInvoiceBody>(
-  "recurringInvoices",
-  RECURRING_INVOICES_CACHE_KEY,
+} = createResourceHooks<RecurringInvoice, CreateRecurringInvoiceBody, UpdateRecurringInvoiceBody>(
   {
-    restoreMethodName: "restoreRecurringInvoice",
-    permanentDeleteMethodName: "permanentDeleteRecurringInvoice",
+    create: recurringInvoices.create,
+    update: recurringInvoices.update,
+    delete: recurringInvoices.delete,
+    restore: recurringInvoices.restoreRecurringInvoice,
+    permanentDelete: recurringInvoices.permanentDeleteRecurringInvoice,
   },
+  RECURRING_INVOICES_CACHE_KEY,
 );
 
 export {
   useCreateRecurringInvoice,
-  useUpdateRecurringInvoice,
   useDeleteRecurringInvoice,
-  useRestoreRecurringInvoice,
   usePermanentDeleteRecurringInvoice,
+  useRestoreRecurringInvoice,
+  useUpdateRecurringInvoice,
 };

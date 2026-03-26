@@ -16,21 +16,16 @@ import sl from "./locales/sl";
 
 const translations = { sl, de, it, fr, es, pt, nl, pl, hr } as const;
 
-// Document type union
 type Document = Invoice | Estimate | CreditNote | AdvanceInvoice | DeliveryNote;
 type DocumentType = "invoice" | "estimate" | "credit_note" | "advance_invoice" | "delivery_note";
 
 interface DocumentDetailsCardProps extends ComponentTranslationProps {
   document: Document;
   documentType: DocumentType;
-  /** Locale for date formatting */
   locale?: string;
   variant?: "card" | "inline";
 }
 
-/**
- * Format currency value
- */
 function formatCurrency(amount: number, currencyCode: string, locale: string): string {
   return new Intl.NumberFormat(locale, {
     style: "currency",
@@ -38,9 +33,6 @@ function formatCurrency(amount: number, currencyCode: string, locale: string): s
   }).format(amount);
 }
 
-/**
- * Format date
- */
 function formatDate(date: Date | string | null | undefined, locale: string): string {
   if (!date) return "-";
   const d = typeof date === "string" ? new Date(date) : date;
@@ -54,11 +46,10 @@ function formatDate(date: Date | string | null | undefined, locale: string): str
 /**
  * Get payment status for invoice/advance invoice
  */
-function getPaymentStatus(
+export function getDocumentPaymentStatus(
   document: Invoice | AdvanceInvoice,
   t: (key: string) => string,
 ): { label: string; variant: "default" | "secondary" | "destructive" | "outline" } {
-  // Check voided_at - ensure it's a valid date, not just truthy
   if (document.voided_at && new Date(document.voided_at).getTime() > 0) {
     return { label: t("Voided"), variant: "secondary" };
   }
@@ -71,15 +62,6 @@ function getPaymentStatus(
   return { label: t("Unpaid"), variant: "destructive" };
 }
 
-/**
- * Document Details Card Component
- *
- * Displays document metadata including:
- * - Document number and dates
- * - Customer information
- * - Totals breakdown
- * - Payment status (for invoices/advance invoices)
- */
 export function DocumentDetailsCard({
   document,
   documentType,
@@ -94,18 +76,14 @@ export function DocumentDetailsCard({
   const fmt = (amount: number) => formatCurrency(amount, currencyCode, locale);
   const fmtDate = (date: Date | string | null | undefined) => formatDate(date, locale);
 
-  // Type guards for document-specific fields
   const isInvoiceOrAdvance = documentType === "invoice" || documentType === "advance_invoice";
   const isEstimate = documentType === "estimate";
   const invoiceDoc = document as Invoice | AdvanceInvoice;
   const estimateDoc = document as Estimate;
-
-  // Get customer name
   const customerName = document.customer?.name || "-";
 
   const bodyContent = (
     <>
-      {/* Document info */}
       <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
         <div className="text-muted-foreground">{t("Number")}</div>
         <div className="text-right font-medium">{document.number}</div>
@@ -146,7 +124,6 @@ export function DocumentDetailsCard({
 
       <Separator />
 
-      {/* Totals */}
       <div className="space-y-2 text-sm">
         {document.total_discount != null && document.total_discount !== 0 && (
           <div className="flex justify-between">
@@ -186,7 +163,6 @@ export function DocumentDetailsCard({
           <span>{fmt(document.total_with_tax * sign)}</span>
         </div>
 
-        {/* Payment info for invoices/advance invoices */}
         {isInvoiceOrAdvance && invoiceDoc.total_paid > 0 && (
           <>
             <Separator />
@@ -210,7 +186,9 @@ export function DocumentDetailsCard({
         <div className="flex items-center justify-between font-medium text-sm">
           {t("Details")}
           {isInvoiceOrAdvance && (
-            <Badge variant={getPaymentStatus(invoiceDoc, t).variant}>{getPaymentStatus(invoiceDoc, t).label}</Badge>
+            <Badge variant={getDocumentPaymentStatus(invoiceDoc, t).variant}>
+              {getDocumentPaymentStatus(invoiceDoc, t).label}
+            </Badge>
           )}
         </div>
         <div className="space-y-4">{bodyContent}</div>
@@ -224,7 +202,9 @@ export function DocumentDetailsCard({
         <CardTitle className="flex items-center justify-between text-lg">
           {t("Details")}
           {isInvoiceOrAdvance && (
-            <Badge variant={getPaymentStatus(invoiceDoc, t).variant}>{getPaymentStatus(invoiceDoc, t).label}</Badge>
+            <Badge variant={getDocumentPaymentStatus(invoiceDoc, t).variant}>
+              {getDocumentPaymentStatus(invoiceDoc, t).label}
+            </Badge>
           )}
         </CardTitle>
       </CardHeader>

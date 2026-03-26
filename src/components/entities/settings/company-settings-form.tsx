@@ -57,10 +57,11 @@ export function CompanySettingsForm({
   t: translateProp,
   namespace,
   locale,
+  translationLocale,
   onSuccess,
   onError,
 }: CompanySettingsFormProps) {
-  const t = createTranslation({ t: translateProp, namespace, locale, translations });
+  const t = createTranslation({ t: translateProp, namespace, locale, translationLocale, translations });
 
   const currentSettings = (entity.settings as any) || {};
 

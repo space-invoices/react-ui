@@ -73,9 +73,9 @@ export default {
     "Termini di pagamento precompilati durante la creazione di nuovi preventivi",
   "Payment terms pre-filled when creating new credit notes":
     "Termini di pagamento precompilati durante la creazione di nuove note di credito",
-  "Payment due by {document_due_date}. Please reference invoice {document_number}.":
-    "Pagamento entro il {document_due_date}. Si prega di indicare il numero fattura {document_number}.",
-  "Net 30 days. Payment due by {document_due_date}.": "Netto 30 giorni. Pagamento entro il {document_due_date}.",
+  "Optional note for the document.": "Nota facoltativa per il documento.",
+  "Please remit payment using the bank details shown on the document.":
+    "Effettui il pagamento utilizzando le coordinate bancarie indicate nel documento.",
   "This estimate is valid until {document_valid_until}.": "Questo preventivo è valido fino al {document_valid_until}.",
   "Payment due upon acceptance.": "Pagamento dovuto all'accettazione.",
   "Credit note for invoice {document_number}.": "Nota di credito per la fattura {document_number}.",
@@ -120,6 +120,11 @@ export default {
   "Document Signature": "Firma del documento",
   "Signature text displayed on all PDF documents": "Testo della firma visualizzato su tutti i documenti PDF",
   "Add signature text...": "Aggiungi testo della firma...",
+  "Delivery Note": "Bolla di consegna",
+  "Default note for advance invoices": "Nota predefinita per le fatture di acconto",
+  "Default note for all new advance invoices": "Nota predefinita per tutte le nuove fatture di acconto",
+  "Default note for delivery notes": "Nota predefinita per le bolle di consegna",
+  "Default note for all new delivery notes": "Nota predefinita per tutte le nuove bolle di consegna",
   // Overdue Notifications section
   "Overdue Notifications": "Notifiche di scadenza",
   "Automatically remind customers about overdue invoices": "Ricorda automaticamente ai clienti le fatture scadute",

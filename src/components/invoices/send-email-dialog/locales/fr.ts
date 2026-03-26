@@ -1,10 +1,26 @@
 export default {
   "Send Invoice by Email": "Envoyer la facture par e-mail",
+  "Send Estimate by Email": "Envoyer le devis par e-mail",
+  "Send Credit Note by Email": "Envoyer l'avoir par e-mail",
+  "Send Advance Invoice by Email": "Envoyer la facture d'acompte par e-mail",
+  "Send Delivery Note by Email": "Envoyer le bon de livraison par e-mail",
   "Send invoice by email description":
     "Envoyez la facture #{number} au client par e-mail. Le formatage Markdown est pris en charge dans le texte.",
+  "Send estimate by email description":
+    "Envoyez le devis #{number} au client par e-mail. Le formatage Markdown est pris en charge dans le texte.",
+  "Send credit note by email description":
+    "Envoyez l'avoir #{number} au client par e-mail. Le formatage Markdown est pris en charge dans le texte.",
+  "Send advance invoice by email description":
+    "Envoyez la facture d'acompte #{number} au client par e-mail. Le formatage Markdown est pris en charge dans le texte.",
+  "Send delivery note by email description":
+    "Envoyez le bon de livraison #{number} au client par e-mail. Le formatage Markdown est pris en charge dans le texte.",
   "Recipient Email": "E-mail du destinataire",
   "Subject (Optional)": "Objet (facultatif)",
   "Invoice Subject": "Objet de la facture",
+  "Estimate Subject": "Objet du devis",
+  "Credit Note Subject": "Objet de l'avoir",
+  "Advance Invoice Subject": "Objet de la facture d'acompte",
+  "Delivery Note Subject": "Objet du bon de livraison",
   "Leave empty to use default": "Laisser vide pour utiliser la valeur par défaut",
   "Message (Optional)": "Message (facultatif)",
   "Email message placeholder": "Message e-mail... Prend en charge **gras**, *italique*, [liens](url) et listes",
@@ -12,11 +28,16 @@ export default {
   "Send Email": "Envoyer l'e-mail",
   "Email sent": "E-mail envoyé",
   "Invoice sent to": "Facture envoyée à",
+  "Estimate sent to": "Devis envoyé à",
+  "Credit note sent to": "Avoir envoyé à",
+  "Advance invoice sent to": "Facture d'acompte envoyée à",
+  "Delivery note sent to": "Bon de livraison envoyé à",
   "Failed to send email": "Échec de l'envoi de l'e-mail",
   "Sandbox email warning":
     "En mode sandbox, les e-mails ne peuvent être envoyés qu'aux membres vérifiés de l'équipe de ce compte.",
   "PDF Language": "Langue du PDF",
   Default: "Par défaut",
+  "English (US)": "Anglais (États-Unis)",
   English: "Anglais",
   German: "Allemand",
   Slovenian: "Slovène",

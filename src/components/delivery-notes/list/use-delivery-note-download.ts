@@ -1,9 +1,9 @@
 import type { DeliveryNote } from "@spaceinvoices/js-sdk";
+import { invoices } from "@spaceinvoices/js-sdk";
 import { useState } from "react";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
 import { useEntities } from "@/ui/providers/entities-context";
-import { useSDK } from "@/ui/providers/sdk-provider";
 
 type UseDeliveryNoteDownloadProps = {
   onDownloadStart?: () => void;
@@ -19,12 +19,10 @@ export function useDeliveryNoteDownload({
 }: UseDeliveryNoteDownloadProps) {
   const [isDownloading, setIsDownloading] = useState(false);
   const { activeEntity } = useEntities();
-  const { sdk } = useSDK();
   const t = createTranslation(i18nProps);
 
   const downloadPDF = async (deliveryNote: DeliveryNote) => {
-    if (!activeEntity?.id || !sdk) {
-      console.error("Missing SDK or active entity for PDF download");
+    if (!activeEntity?.id) {
       onDownloadError?.(t("Failed to download PDF"));
       return;
     }
@@ -34,7 +32,7 @@ export function useDeliveryNoteDownload({
 
     try {
       const fileName = `${t("Delivery Note")} ${deliveryNote.number}.pdf`;
-      await sdk.invoices.downloadPdf(deliveryNote.id, fileName, {}, { entity_id: activeEntity.id });
+      await invoices.downloadPdf(deliveryNote.id, fileName, {}, { entity_id: activeEntity.id });
 
       onDownloadSuccess?.(fileName);
     } catch (error) {

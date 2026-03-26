@@ -15,6 +15,7 @@ export { prepareDocumentSubmission } from "./create/prepare-document-submission"
 export { useDocumentCustomerForm } from "./create/use-document-customer-form";
 // Preview components
 export { default as DocumentPreview } from "./document-preview";
+export { PublicDocumentSummary } from "./public";
 export { ScaledDocumentPreview } from "./shared/scaled-document-preview";
 export { useA4Scaling } from "./shared/use-a4-scaling";
 // Types

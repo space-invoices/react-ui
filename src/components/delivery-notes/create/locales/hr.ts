@@ -1,10 +1,10 @@
 export default {
-  "Create Delivery Note": "Kreiraj otpremnicu",
+  "Create Delivery Note": "Izradi otpremnicu",
   Details: "Pojedinosti",
   Number: "Broj",
   Date: "Datum",
   Recipient: "Primatelj",
-  "Search or create customer...": "Pretraži ili kreiraj kupca...",
+  "Search or create customer...": "Pretražite ili izradite kupca...",
   Clear: "Očisti",
   Name: "Naziv",
   Address: "Adresa",
@@ -25,7 +25,7 @@ export default {
   "Add new tax...": "Dodaj novi porez...",
   Note: "Napomena",
   "Insert variable": "Umetni varijablu",
-  "Add payment instructions, terms, or other notes...": "Dodajte upute za plaćanje, uvjete ili druge napomene...",
+  "Add payment instructions, terms, or other notes...": "Dodaj upute za plaćanje, uvjete ili druge napomene...",
   // Signature field
   Signature: "Potpis",
   "Add signature text...": "Dodaj tekst potpisa...",
@@ -36,7 +36,7 @@ export default {
   Description: "Opis",
   Save: "Spremi",
   "Save as Draft": "Spremi kao skicu",
-  "Pick a date": "Odaberite datum",
+  "Pick a date": "Odaberi datum",
   Currency: "Valuta",
   "Select currency": "Odaberi valutu",
   "Percentage discount": "Postotni popust",
@@ -64,8 +64,8 @@ export default {
   "This invoice will not be fiscalized (non-domestic transaction)":
     "Ovaj račun neće biti fiskaliziran (nedomaća transakcija)",
   "Tax Clause": "Porezna klauzula",
-  "Add tax clause...": "Dodajte poreznu klauzulu...",
+  "Add tax clause...": "Dodaj poreznu klauzulu...",
   Footer: "Podnožje",
-  "Add document footer...": "Dodajte podnožje dokumenta...",
+  "Add document footer...": "Dodaj podnožje dokumenta...",
   "Reverse charge - tax exempt EU B2B sale": "Prijenos porezne obveze - porezno oslobođena EU B2B prodaja",
 } as const;

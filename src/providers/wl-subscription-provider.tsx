@@ -1,8 +1,9 @@
+import { getClientHeaders } from "@spaceinvoices/js-sdk";
 import type { ReactNode } from "react";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { getClientHeaders } from "@/ui/lib/client-headers";
 import { useEntitiesOptional } from "./entities-context";
-import { useAccessToken } from "./sdk-provider";
+import { useAccessToken } from "./space-invoices-provider";
+import { useWhiteLabel } from "./white-label-provider";
 
 // ============================================
 // TYPES
@@ -12,6 +13,20 @@ export type PlanLimits = {
   documents_per_month: number | null;
   invoices_per_month: number | null;
   overage_price_cents: number | null;
+  annual_price_cents: number | null;
+  included_store_count: number | null;
+  extra_store_price_cents: number | null;
+  extra_store_annual_price_cents: number | null;
+  extra_store_invoices_per_month: number | null;
+} | null;
+
+export type StoreBilling = {
+  connected_stores: number;
+  included_stores: number;
+  billable_extra_stores: number;
+  invoices_included_from_extra_stores: number;
+  extra_store_price_cents_monthly: number | null;
+  extra_store_price_cents_yearly: number | null;
 } | null;
 
 export type WhiteLabelPlan = {
@@ -41,14 +56,23 @@ export type CurrentSubscription = {
   billing_interval: string | null;
   current_period_start: string;
   current_period_end: string;
+  payment_provider: "stripe" | "paypal" | "bank" | "braintree";
+  bank_reference: string | null;
+  billing_email: string | null;
   trial_ends_at: string | null;
   trial_days_remaining: number | null;
   cancel_at: string | null;
+  scheduled_change: {
+    plan: WhiteLabelPlan;
+    billing_interval: string | null;
+    effective_at: string;
+  } | null;
   payment_method: {
     last4: string | null;
     brand: string | null;
     has_card: boolean;
   } | null;
+  store_billing: StoreBilling;
   usage: UsageStats;
 };
 
@@ -90,6 +114,12 @@ type WLSubscriptionContextType = {
 
   // Actions
   createCheckout: (planSlug: string, billingInterval?: "monthly" | "yearly") => Promise<string>;
+  createSetupIntent: () => Promise<{ client_secret: string }>;
+  savePaymentMethod: (paymentMethodId: string) => Promise<void>;
+  activateSubscription: (
+    planSlug: string,
+    billingInterval: "monthly" | "yearly",
+  ) => Promise<{ invoice_id?: string | null; scheduled?: boolean }>;
   refresh: () => Promise<void>;
 };
 
@@ -118,14 +148,19 @@ const DEFAULT_SUBSCRIPTION: CurrentSubscription = {
   billing_interval: null,
   current_period_start: new Date().toISOString(),
   current_period_end: new Date().toISOString(),
+  payment_provider: "stripe",
+  bank_reference: null,
+  billing_email: null,
   trial_ends_at: null,
   trial_days_remaining: null,
   cancel_at: null,
+  scheduled_change: null,
   payment_method: {
     last4: null,
     brand: null,
     has_card: false,
   },
+  store_billing: null,
   usage: {
     documents_count: 0,
     documents_limit: null,
@@ -149,12 +184,13 @@ type WLSubscriptionProviderProps = {
 /**
  * WLSubscriptionProvider component
  * Fetches white-label subscription data and provides limit/feature checks.
- * Must be nested inside EntitiesProvider and SDKProvider.
+ * Must be nested inside SpaceInvoicesProvider and an entity source.
  */
 export function WLSubscriptionProvider({ children, apiBaseUrl }: WLSubscriptionProviderProps) {
   // Get entity and access token from existing context
   const entitiesContext = useEntitiesOptional();
   const accessToken = useAccessToken();
+  const whiteLabel = useWhiteLabel();
 
   const entityId = entitiesContext?.activeEntity?.id ?? null;
   const [subscription, setSubscription] = useState<CurrentSubscription>(DEFAULT_SUBSCRIPTION);
@@ -163,9 +199,15 @@ export function WLSubscriptionProvider({ children, apiBaseUrl }: WLSubscriptionP
   const [error, setError] = useState<string | null>(null);
 
   const fetchSubscription = useCallback(async () => {
-    if (!entityId || !accessToken) {
+    if (whiteLabel.isLoading) {
+      setIsLoading(true);
+      return;
+    }
+
+    if (whiteLabel.slug === "space-invoices" || !entityId || !accessToken) {
       setSubscription(DEFAULT_SUBSCRIPTION);
       setAvailablePlans([]);
+      setError(null);
       setIsLoading(false);
       return;
     }
@@ -209,7 +251,7 @@ export function WLSubscriptionProvider({ children, apiBaseUrl }: WLSubscriptionP
     } finally {
       setIsLoading(false);
     }
-  }, [apiBaseUrl, entityId, accessToken]);
+  }, [apiBaseUrl, entityId, accessToken, whiteLabel.isLoading, whiteLabel.slug]);
 
   useEffect(() => {
     fetchSubscription();
@@ -236,13 +278,14 @@ export function WLSubscriptionProvider({ children, apiBaseUrl }: WLSubscriptionP
       if (resource !== "documents") return false;
 
       const { usage, plan } = subscription;
-      const limit = plan.limits?.documents_per_month;
+      const limit = plan.limits?.invoices_per_month ?? plan.limits?.documents_per_month;
+      const count = plan.limits?.invoices_per_month != null ? usage.invoices_count : usage.documents_count;
 
       if (limit === null || limit === undefined) {
         return false; // No limit = never over
       }
 
-      return usage.documents_count >= limit;
+      return count >= limit;
     },
     [subscription],
   );
@@ -253,13 +296,14 @@ export function WLSubscriptionProvider({ children, apiBaseUrl }: WLSubscriptionP
       if (resource !== "documents") return 0;
 
       const { usage, plan } = subscription;
-      const limit = plan.limits?.documents_per_month;
+      const limit = plan.limits?.invoices_per_month ?? plan.limits?.documents_per_month;
+      const count = plan.limits?.invoices_per_month != null ? usage.invoices_count : usage.documents_count;
 
       if (limit === null || limit === undefined || limit === 0) {
         return 0; // No limit = 0%
       }
 
-      return Math.min(100, Math.round((usage.documents_count / limit) * 100));
+      return Math.min(100, Math.round((count / limit) * 100));
     },
     [subscription],
   );
@@ -271,12 +315,96 @@ export function WLSubscriptionProvider({ children, apiBaseUrl }: WLSubscriptionP
         throw new Error("Not authenticated");
       }
 
-      const url = new URL(`/app/${entityId}/settings/billing`, window.location.origin);
+      const url = new URL(`/app/${entityId}/subscription`, window.location.origin);
+      if (entitiesContext?.environment === "sandbox") {
+        url.searchParams.set("env", "sandbox");
+      }
       url.searchParams.set("plan", planSlug);
       url.searchParams.set("interval", billingInterval);
       return url.toString();
     },
-    [entityId, accessToken],
+    [entityId, accessToken, entitiesContext?.environment],
+  );
+
+  const createSetupIntent = useCallback(async (): Promise<{ client_secret: string }> => {
+    if (!entityId || !accessToken) {
+      throw new Error("Not authenticated");
+    }
+
+    const response = await fetch(`${apiBaseUrl}/white-label-subscriptions/setup-intent`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "x-entity-id": entityId,
+        ...getClientHeaders("ui"),
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || `Failed to create setup intent: ${response.status}`);
+    }
+
+    return response.json();
+  }, [apiBaseUrl, entityId, accessToken]);
+
+  const savePaymentMethod = useCallback(
+    async (paymentMethodId: string): Promise<void> => {
+      if (!entityId || !accessToken) {
+        throw new Error("Not authenticated");
+      }
+
+      const response = await fetch(`${apiBaseUrl}/white-label-subscriptions/payment-method`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "x-entity-id": entityId,
+          ...getClientHeaders("ui"),
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ payment_method_id: paymentMethodId }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `Failed to save payment method: ${response.status}`);
+      }
+    },
+    [apiBaseUrl, entityId, accessToken],
+  );
+
+  const activateSubscription = useCallback(
+    async (
+      planSlug: string,
+      billingInterval: "monthly" | "yearly",
+    ): Promise<{ invoice_id?: string | null; scheduled?: boolean }> => {
+      if (!entityId || !accessToken) {
+        throw new Error("Not authenticated");
+      }
+
+      const response = await fetch(`${apiBaseUrl}/white-label-subscriptions/activate`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "x-entity-id": entityId,
+          ...getClientHeaders("ui"),
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          plan_slug: planSlug,
+          billing_interval: billingInterval,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `Failed to activate subscription: ${response.status}`);
+      }
+
+      return response.json();
+    },
+    [apiBaseUrl, entityId, accessToken],
   );
 
   // Compute trial state
@@ -316,6 +444,9 @@ export function WLSubscriptionProvider({ children, apiBaseUrl }: WLSubscriptionP
       isOverLimit,
       getUsagePercentage,
       createCheckout,
+      createSetupIntent,
+      savePaymentMethod,
+      activateSubscription,
       refresh: fetchSubscription,
     }),
     [
@@ -331,6 +462,9 @@ export function WLSubscriptionProvider({ children, apiBaseUrl }: WLSubscriptionP
       isOverLimit,
       getUsagePercentage,
       createCheckout,
+      createSetupIntent,
+      savePaymentMethod,
+      activateSubscription,
       fetchSubscription,
     ],
   );

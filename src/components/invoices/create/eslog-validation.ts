@@ -5,6 +5,7 @@
  * Returns field-specific errors that can be displayed on form elements.
  */
 
+import type { FieldErrors, FieldValues } from "react-hook-form";
 import type { Entity } from "@/ui/providers/entities-context";
 
 // Valid Slovenian tax rates (%)
@@ -34,6 +35,7 @@ interface FormValues {
 interface ValidationError {
   field: string;
   message: string;
+  params?: Record<string, number | string>;
 }
 
 /**
@@ -99,13 +101,6 @@ export function validateEslogForm(values: FormValues, entity: Entity | null | un
   }
 
   // === DOCUMENT VALIDATION ===
-  if (!values.number?.trim()) {
-    errors.push({
-      field: "number",
-      message: "Invoice number is required for e-SLOG.",
-    });
-  }
-
   if (!values.date) {
     errors.push({
       field: "date",
@@ -175,7 +170,11 @@ export function validateEslogForm(values: FormValues, entity: Entity | null | un
           if (tax.rate !== undefined && !VALID_SI_TAX_RATES.includes(tax.rate)) {
             errors.push({
               field: `items.${index}.taxes`,
-              message: `Invalid Slovenian tax rate ${tax.rate}%. Valid: ${VALID_SI_TAX_RATES.join(", ")}%`,
+              message: "Invalid Slovenian tax rate {{rate}}%. Valid: {{validRates}}",
+              params: {
+                rate: tax.rate,
+                validRates: `${VALID_SI_TAX_RATES.join(", ")}%`,
+              },
             });
           }
         }
@@ -205,4 +204,94 @@ export function getEntityErrors(errors: ValidationError[]): ValidationError[] {
  */
 export function getFormFieldErrors(errors: ValidationError[]): ValidationError[] {
   return errors.filter((e) => !e.field.startsWith("entity."));
+}
+
+function isFieldErrorLeaf(value: unknown): value is { type?: string; message?: string } {
+  return !!value && typeof value === "object" && ("type" in value || "message" in value);
+}
+
+function setNestedFieldError(target: Record<string, any>, path: string, error: { type: string; message: string }) {
+  const segments = path.split(".");
+  let current: Record<string, any> = target;
+
+  segments.forEach((segment, index) => {
+    const isLast = index === segments.length - 1;
+    const nextSegment = segments[index + 1];
+    const nextShouldBeArray = nextSegment !== undefined && /^\d+$/.test(nextSegment);
+    const currentRecord = current as Record<string, any>;
+
+    if (isLast) {
+      currentRecord[segment] = error;
+      return;
+    }
+
+    if (currentRecord[segment] == null) {
+      currentRecord[segment] = nextShouldBeArray ? [] : {};
+    }
+
+    current = currentRecord[segment] as Record<string, any>;
+  });
+}
+
+export function buildEslogFieldErrors<TFieldValues extends FieldValues>(
+  errors: ValidationError[],
+  translate: (key: string) => string,
+): FieldErrors<TFieldValues> {
+  const nestedErrors: Record<string, any> = {};
+
+  for (const error of errors) {
+    setNestedFieldError(nestedErrors, error.field, {
+      type: "eslog",
+      message: translateEslogValidationError(error, translate),
+    });
+  }
+
+  return nestedErrors as FieldErrors<TFieldValues>;
+}
+
+export function mergeFieldErrors<TFieldValues extends FieldValues>(
+  baseErrors: FieldErrors<TFieldValues>,
+  extraErrors: FieldErrors<TFieldValues>,
+): FieldErrors<TFieldValues> {
+  if (!baseErrors || Object.keys(baseErrors).length === 0) {
+    return extraErrors;
+  }
+
+  if (!extraErrors || Object.keys(extraErrors).length === 0) {
+    return baseErrors;
+  }
+
+  const merged: Record<string, any> = Array.isArray(baseErrors) ? [...baseErrors] : { ...baseErrors };
+
+  for (const [key, extraValue] of Object.entries(extraErrors)) {
+    const baseValue = (merged as Record<string, any>)[key];
+
+    if (baseValue == null) {
+      merged[key] = extraValue;
+      continue;
+    }
+
+    if (isFieldErrorLeaf(baseValue) || isFieldErrorLeaf(extraValue)) {
+      merged[key] = baseValue;
+      continue;
+    }
+
+    merged[key] = mergeFieldErrors(baseValue as FieldErrors<TFieldValues>, extraValue as FieldErrors<TFieldValues>);
+  }
+
+  return merged as FieldErrors<TFieldValues>;
+}
+
+export function translateEslogValidationError(error: ValidationError, translate: (key: string) => string): string {
+  let message = translate(error.message);
+
+  if (!error.params) {
+    return message;
+  }
+
+  for (const [key, value] of Object.entries(error.params)) {
+    message = message.replaceAll(`{{${key}}}`, String(value));
+  }
+
+  return message;
 }

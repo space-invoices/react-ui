@@ -57,11 +57,13 @@ export function EslogInfoDisplay({
   t: translateFn,
   namespace,
   locale,
+  translationLocale,
 }: EslogInfoDisplayProps) {
   const t = createTranslation({
     t: translateFn,
     namespace,
     locale,
+    translationLocale,
     translations,
   });
 

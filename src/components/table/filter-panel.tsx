@@ -144,6 +144,8 @@ type DateRangeFilterProps = {
 
 function DateRangeFilter({ fields, value, onChange, t, locale }: DateRangeFilterProps) {
   const selectedField = value?.field ?? fields[0]?.id;
+  const selectedFieldLabel =
+    fields.find((field) => field.id === selectedField)?.label ?? fields[0]?.label ?? selectedField;
 
   const handleFieldChange = useCallback(
     (field: string) => {
@@ -192,7 +194,7 @@ function DateRangeFilter({ fields, value, onChange, t, locale }: DateRangeFilter
         {/* Field selector */}
         <Select value={selectedField} onValueChange={(v) => v && handleFieldChange(v)}>
           <SelectTrigger size="sm" className="w-[140px]">
-            <SelectValue />
+            <SelectValue>{selectedFieldLabel}</SelectValue>
           </SelectTrigger>
           <SelectContent>
             {fields.map((field) => (
@@ -204,7 +206,13 @@ function DateRangeFilter({ fields, value, onChange, t, locale }: DateRangeFilter
         </Select>
 
         {/* From date */}
-        <DatePicker value={value?.range.from} onChange={handleFromChange} placeholder={t("From")} locale={locale} />
+        <DatePicker
+          value={value?.range.from}
+          onChange={handleFromChange}
+          placeholder={t("From")}
+          t={t}
+          locale={locale}
+        />
 
         <span className="text-muted-foreground">–</span>
 
@@ -213,6 +221,7 @@ function DateRangeFilter({ fields, value, onChange, t, locale }: DateRangeFilter
           value={value?.range.to}
           onChange={handleToChange}
           placeholder={t("To")}
+          t={t}
           locale={locale}
           minDate={value?.range.from}
         />
@@ -225,11 +234,12 @@ type DatePickerProps = {
   value?: Date;
   onChange: (date: Date | undefined) => void;
   placeholder: string;
+  t: (key: string) => string;
   locale?: string;
   minDate?: Date;
 };
 
-function DatePicker({ value, onChange, placeholder, minDate }: DatePickerProps) {
+function DatePicker({ value, onChange, placeholder, t, locale, minDate }: DatePickerProps) {
   const [open, setOpen] = useState(false);
 
   const handleSelect = useCallback(
@@ -241,7 +251,7 @@ function DatePicker({ value, onChange, placeholder, minDate }: DatePickerProps) 
   );
 
   const formatDate = (date: Date) => {
-    return date.toLocaleDateString(undefined, {
+    return date.toLocaleDateString(locale, {
       year: "numeric",
       month: "short",
       day: "numeric",
@@ -249,22 +259,36 @@ function DatePicker({ value, onChange, placeholder, minDate }: DatePickerProps) 
   };
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" className="h-8 w-[130px] cursor-pointer justify-start gap-2 font-normal">
-          <CalendarIcon className="h-3.5 w-3.5 text-muted-foreground" />
-          {value ? formatDate(value) : <span className="text-muted-foreground">{placeholder}</span>}
+    <div className="flex items-center gap-1">
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button variant="outline" size="sm" className="h-8 w-[130px] cursor-pointer justify-start gap-2 font-normal">
+            <CalendarIcon className="h-3.5 w-3.5 text-muted-foreground" />
+            {value ? formatDate(value) : <span className="text-muted-foreground">{placeholder}</span>}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0" align="start">
+          <Calendar
+            mode="single"
+            selected={value}
+            onSelect={handleSelect}
+            disabled={minDate ? { before: minDate } : undefined}
+          />
+        </PopoverContent>
+      </Popover>
+      {value ? (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 w-8 cursor-pointer p-0"
+          onClick={() => onChange(undefined)}
+          aria-label={`${t("Clear filters")} ${placeholder}`}
+          title={`${t("Clear filters")} ${placeholder}`}
+        >
+          <XIcon className="h-3.5 w-3.5" />
         </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-auto p-0" align="start">
-        <Calendar
-          mode="single"
-          selected={value}
-          onSelect={handleSelect}
-          disabled={minDate ? { before: minDate } : undefined}
-        />
-      </PopoverContent>
-    </Popover>
+      ) : null}
+    </div>
   );
 }
 
@@ -277,8 +301,7 @@ type StatusFilterSectionProps = {
 function StatusFilterSection({ value, onChange, t }: StatusFilterSectionProps) {
   const handleChange = useCallback(
     (status: string) => {
-      // Empty string means "clear selection"
-      if (status === "") {
+      if (status === "all") {
         onChange([]);
       } else {
         onChange([status as StatusFilter]);
@@ -298,10 +321,16 @@ function StatusFilterSection({ value, onChange, t }: StatusFilterSectionProps) {
     <div className="space-y-3">
       <Label className="font-medium text-muted-foreground text-xs uppercase">{t("Status")}</Label>
       <RadioGroup
-        value={value[0] ?? ""}
+        value={value[0] ?? "all"}
         onValueChange={(v) => handleChange(v as string)}
         className="flex h-8 flex-wrap items-center gap-4"
       >
+        <div className="flex cursor-pointer items-center gap-2">
+          <RadioGroupItem value="all" id="status-all" className="cursor-pointer" />
+          <Label htmlFor="status-all" className="cursor-pointer font-normal text-sm">
+            {t("All statuses")}
+          </Label>
+        </div>
         {STATUS_OPTIONS.map((status) => (
           <div key={status} className="flex cursor-pointer items-center gap-2">
             <RadioGroupItem value={status} id={`status-${status}`} className="cursor-pointer" />

@@ -11,9 +11,12 @@ import type {
   Invoice,
 } from "@spaceinvoices/js-sdk";
 import { useQuery } from "@tanstack/react-query";
-
 import { useEntities } from "@/ui/providers/entities-context";
-import { useSDK } from "@/ui/providers/sdk-provider";
+import { advanceInvoices } from "../../../js-sdk/src/sdk/advance-invoices";
+import { creditNotes } from "../../../js-sdk/src/sdk/credit-notes";
+import { deliveryNotes } from "../../../js-sdk/src/sdk/delivery-notes";
+import { estimates } from "../../../js-sdk/src/sdk/estimates";
+import { invoices } from "../../../js-sdk/src/sdk/invoices";
 
 const DUPLICATE_TIMING_EVENT = "si:duplicate-timing";
 
@@ -199,7 +202,6 @@ export function useDuplicateDocument({
   targetType,
   enabled = true,
 }: UseDuplicateDocumentOptions): UseDuplicateDocumentResult {
-  const { sdk } = useSDK();
   const { activeEntity } = useEntities();
 
   const sourceType = sourceId ? getDocumentTypeFromId(sourceId) : null;
@@ -221,16 +223,16 @@ export function useDuplicateDocument({
       // Fetch source document based on its type
       let source: Document;
       if (sourceType === "invoice") {
-        source = await sdk.invoices.get(sourceId, undefined, { entity_id: activeEntity.id });
+        source = await invoices.get(sourceId, undefined, { entity_id: activeEntity.id });
       } else if (sourceType === "estimate") {
-        source = await sdk.estimates.get(sourceId, undefined, { entity_id: activeEntity.id });
+        source = await estimates.get(sourceId, undefined, { entity_id: activeEntity.id });
       } else if (sourceType === "advance_invoice") {
-        source = await sdk.advanceInvoices.get(sourceId, undefined, { entity_id: activeEntity.id });
+        source = await advanceInvoices.get(sourceId, undefined, { entity_id: activeEntity.id });
       } else if (sourceType === "delivery_note") {
-        source = await sdk.deliveryNotes.get(sourceId, undefined, { entity_id: activeEntity.id });
+        source = await deliveryNotes.get(sourceId, undefined, { entity_id: activeEntity.id });
       } else {
         // Credit note
-        source = await sdk.creditNotes.get(sourceId, undefined, { entity_id: activeEntity.id });
+        source = await creditNotes.get(sourceId, undefined, { entity_id: activeEntity.id });
       }
 
       if (!source) {

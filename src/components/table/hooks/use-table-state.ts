@@ -113,6 +113,55 @@ export function buildQueryFromFilterState(state: FilterState | null): string | u
   return JSON.stringify(query);
 }
 
+function parseQueryObject(query: string | undefined): Record<string, unknown> | null {
+  if (!query) return null;
+
+  try {
+    const parsed = JSON.parse(query);
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return null;
+    return parsed as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+}
+
+function mergeApiQueries(baseQuery: string | undefined, filterQuery: string | undefined): string | undefined {
+  if (!baseQuery) return filterQuery;
+  if (!filterQuery) return baseQuery;
+
+  const parsedBase = parseQueryObject(baseQuery);
+  const parsedFilter = parseQueryObject(filterQuery);
+
+  if (!parsedBase || !parsedFilter) return filterQuery;
+
+  return JSON.stringify({
+    ...parsedBase,
+    ...parsedFilter,
+  });
+}
+
+function syncParamsToUrl(params: TableQueryParams) {
+  const searchParams = new URLSearchParams();
+
+  Object.entries(params).forEach(([key, value]) => {
+    if (value === undefined || value === null) {
+      return;
+    }
+
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        searchParams.append(key, item);
+      }
+      return;
+    }
+
+    searchParams.set(key, String(value));
+  });
+
+  const newUrl = `${window.location.pathname}${searchParams.toString() ? `?${searchParams.toString()}` : ""}`;
+  window.history.pushState({}, "", newUrl);
+}
+
 /**
  * Manages table state (search, pagination, filters) with optional URL sync
  */
@@ -164,16 +213,7 @@ export function useTableState({ initialParams = {}, onChangeParams, disableUrlSy
       changeHandler(params);
     } else {
       // Update URL directly
-      const searchParams = new URLSearchParams();
-
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined && value !== null) {
-          searchParams.set(key, String(value));
-        }
-      });
-
-      const newUrl = `${window.location.pathname}${searchParams.toString() ? `?${searchParams.toString()}` : ""}`;
-      window.history.pushState({}, "", newUrl);
+      syncParamsToUrl(params);
     }
   }, [params, disableUrlSync]);
 
@@ -234,6 +274,18 @@ export function useTableState({ initialParams = {}, onChangeParams, disableUrlSy
   }, []);
 
   /**
+   * Handle sort change - sorting invalidates existing cursors.
+   */
+  const handleSortChange = useCallback((orderBy: TableQueryParams["order_by"]) => {
+    setParams((prevParams) => ({
+      ...prevParams,
+      order_by: orderBy,
+      prev_cursor: undefined,
+      next_cursor: undefined,
+    }));
+  }, []);
+
+  /**
    * Parse current filter state from URL params
    */
   const filterState = useMemo(() => {
@@ -254,7 +306,7 @@ export function useTableState({ initialParams = {}, onChangeParams, disableUrlSy
    * while query JSON is added for tables that use it (like invoices)
    */
   const apiParams = useMemo(() => {
-    const query = buildQueryFromFilterState(filterState);
+    const query = mergeApiQueries(params.query, buildQueryFromFilterState(filterState));
     return { ...params, query };
   }, [params, filterState]);
 
@@ -265,5 +317,6 @@ export function useTableState({ initialParams = {}, onChangeParams, disableUrlSy
     handleSearch,
     handlePageChange,
     handleFilterChange,
+    handleSortChange,
   };
 }

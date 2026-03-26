@@ -9,7 +9,7 @@ import {
   DialogTitle,
 } from "@/ui/components/ui/dialog";
 import { Input } from "@/ui/components/ui/input";
-import { useUpdateUserFinaSettings } from "./fina-settings.hooks";
+import { useUpdateFinaSettings, useUpdateUserFinaSettings } from "./fina-settings.hooks";
 
 interface FinaOperatorRequiredDialogProps {
   open: boolean;
@@ -17,6 +17,7 @@ interface FinaOperatorRequiredDialogProps {
   entityId: string;
   onSaved: () => void;
   t: (key: string) => string;
+  saveScope?: "user" | "entity";
 }
 
 export const FinaOperatorRequiredDialog: FC<FinaOperatorRequiredDialogProps> = ({
@@ -25,28 +26,52 @@ export const FinaOperatorRequiredDialog: FC<FinaOperatorRequiredDialogProps> = (
   entityId,
   onSaved,
   t,
+  saveScope = "user",
 }) => {
   const [operatorOib, setOperatorOib] = useState("");
   const [operatorLabel, setOperatorLabel] = useState("");
 
-  const { mutate: updateUserSettings, isPending } = useUpdateUserFinaSettings({
+  const handleSuccess = () => {
+    setOperatorOib("");
+    setOperatorLabel("");
+    onSaved();
+  };
+
+  const { mutate: updateUserSettings, isPending: isUserPending } = useUpdateUserFinaSettings({
     onSuccess: () => {
-      setOperatorOib("");
-      setOperatorLabel("");
-      onSaved();
+      handleSuccess();
     },
   });
+
+  const { mutate: updateEntitySettings, isPending: isEntityPending } = useUpdateFinaSettings({
+    onSuccess: () => {
+      handleSuccess();
+    },
+  });
+
+  const isPending = isUserPending || isEntityPending;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     e.stopPropagation();
     if (!operatorOib) return;
+
+    const payload = {
+      operator_oib: operatorOib,
+      operator_label: operatorLabel || undefined,
+    };
+
+    if (saveScope === "entity") {
+      updateEntitySettings({
+        entityId,
+        data: payload,
+      });
+      return;
+    }
+
     updateUserSettings({
       entityId,
-      data: {
-        operator_oib: operatorOib,
-        operator_label: operatorLabel || undefined,
-      },
+      data: payload,
     });
   };
 

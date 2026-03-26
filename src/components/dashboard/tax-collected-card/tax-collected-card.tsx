@@ -1,8 +1,8 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/ui/components/ui/card";
-import { createTranslation } from "@/ui/lib/translation";
 import { Skeleton } from "@/ui/components/ui/skeleton";
+import { createTranslation } from "@/ui/lib/translation";
 import translations from "./locales";
 import type { TaxByRate } from "./use-tax-collected";
 
@@ -14,6 +14,7 @@ export type TaxCollectedCardProps = {
   currency: string;
   isLoading?: boolean;
   locale?: string;
+  translationLocale?: string;
   t?: (key: string) => string;
 };
 
@@ -33,17 +34,18 @@ export function TaxCollectedCard({
   currency,
   isLoading,
   locale,
+  translationLocale,
   t: externalT,
 }: TaxCollectedCardProps) {
-  const t = createTranslation({ t: externalT, locale, translations });
+  const t = createTranslation({ t: externalT, locale, translationLocale, translations });
 
   if (isLoading) {
     return (
-      <Card>
-        <CardHeader className="pb-2">
+      <Card className="gap-2">
+        <CardHeader className="pb-1">
           <CardTitle className="font-medium text-muted-foreground text-sm">{title}</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-2">
+        <CardContent className="space-y-2 pt-0">
           <Skeleton className="h-6 w-24" />
           <Skeleton className="h-4 w-32" />
           <Skeleton className="h-4 w-28" />
@@ -53,14 +55,14 @@ export function TaxCollectedCard({
   }
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
+    <Card className="gap-2">
+      <CardHeader className="flex flex-row items-center justify-between pb-1">
         <CardTitle className="font-medium text-muted-foreground text-sm">{title}</CardTitle>
         <span className="text-muted-foreground text-xs">{periodLabel}</span>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-0">
         {/* Total */}
-        <div className="mb-3 font-bold text-2xl">{formatCurrency(total, currency, locale)}</div>
+        <div className="mb-2 font-bold text-2xl">{formatCurrency(total, currency, locale)}</div>
 
         {/* Tax breakdown */}
         {taxes.length > 0 ? (

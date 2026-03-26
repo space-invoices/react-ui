@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import type { Invoice } from "@spaceinvoices/js-sdk";
+import { customers, email } from "@spaceinvoices/js-sdk";
 import { AlertCircle, Mail } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { Resolver } from "react-hook-form";
@@ -29,11 +29,13 @@ import { Input } from "@/ui/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui/components/ui/select";
 import { Spinner } from "@/ui/components/ui/spinner";
 import { type SendEmailSchema, sendEmailSchema } from "@/ui/generated/schemas";
+import { getFullLocale } from "@/ui/lib/locale";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
 import { useEntities } from "@/ui/providers/entities-context";
-import { useSDK } from "@/ui/providers/sdk-provider";
+import type { SendEmailBodyLanguage } from "../../../../../js-sdk/src/generated/model/sendEmailBodyLanguage";
 import de from "./locales/de";
+import en from "./locales/en";
 import es from "./locales/es";
 import fr from "./locales/fr";
 import hr from "./locales/hr";
@@ -43,33 +45,99 @@ import pl from "./locales/pl";
 import pt from "./locales/pt";
 import sl from "./locales/sl";
 
-const translations = { de, sl, it, fr, es, pt, nl, pl, hr } as const;
+const translations = { en, de, sl, it, fr, es, pt, nl, pl, hr } as const;
 
 const LOCALE_OPTIONS = [
-  { value: "en-US", label: "English (US)" },
-  { value: "de-DE", label: "German" },
-  { value: "it-IT", label: "Italian" },
-  { value: "fr-FR", label: "French" },
-  { value: "es-ES", label: "Spanish" },
-  { value: "sl-SI", label: "Slovenian" },
-  { value: "pt-PT", label: "Portuguese" },
-  { value: "nl-NL", label: "Dutch" },
-  { value: "pl-PL", label: "Polish" },
-  { value: "hr-HR", label: "Croatian" },
-  { value: "sv-SE", label: "Swedish" },
-  { value: "fi-FI", label: "Finnish" },
-  { value: "et-EE", label: "Estonian" },
-  { value: "bg-BG", label: "Bulgarian" },
-  { value: "cs-CZ", label: "Czech" },
-  { value: "sk-SK", label: "Slovak" },
-  { value: "nb-NO", label: "Norwegian" },
-  { value: "is-IS", label: "Icelandic" },
+  "en-US",
+  "de-DE",
+  "it-IT",
+  "fr-FR",
+  "es-ES",
+  "sl-SI",
+  "pt-PT",
+  "nl-NL",
+  "pl-PL",
+  "hr-HR",
+  "sv-SE",
+  "fi-FI",
+  "et-EE",
+  "bg-BG",
+  "cs-CZ",
+  "sk-SK",
+  "nb-NO",
+  "is-IS",
 ] as const;
 
 const DEFAULT_LANGUAGE_VALUE = "__default__";
 
+function getLocalizedLocaleLabel(localeCode: string, displayLocale: string): string {
+  const resolvedDisplayLocale = getFullLocale(displayLocale);
+  const [languageCode, regionCode] = localeCode.split("-");
+  const languageNames = new Intl.DisplayNames([resolvedDisplayLocale], { type: "language" });
+  const regionNames = new Intl.DisplayNames([resolvedDisplayLocale], { type: "region" });
+
+  const languageLabel = languageNames.of(languageCode) ?? localeCode;
+  if (!regionCode) return languageLabel;
+
+  const regionLabel = regionNames.of(regionCode) ?? regionCode;
+  return `${languageLabel} (${regionLabel})`;
+}
+
+export const DOCUMENT_EMAIL_CONFIG = {
+  inv: {
+    subjectKey: "invoice_subject",
+    bodyKey: "invoice_body",
+    label: "Invoice",
+    dialogTitle: "Send Invoice by Email",
+    description: "Send invoice by email description",
+    successPrefix: "Invoice sent to",
+  },
+  est: {
+    subjectKey: "estimate_subject",
+    bodyKey: "estimate_body",
+    label: "Estimate",
+    dialogTitle: "Send Estimate by Email",
+    description: "Send estimate by email description",
+    successPrefix: "Estimate sent to",
+  },
+  cre: {
+    subjectKey: "credit_note_subject",
+    bodyKey: "credit_note_body",
+    label: "Credit Note",
+    dialogTitle: "Send Credit Note by Email",
+    description: "Send credit note by email description",
+    successPrefix: "Credit note sent to",
+  },
+  adv: {
+    subjectKey: "advance_invoice_subject",
+    bodyKey: "advance_invoice_body",
+    label: "Advance Invoice",
+    dialogTitle: "Send Advance Invoice by Email",
+    description: "Send advance invoice by email description",
+    successPrefix: "Advance invoice sent to",
+  },
+  del: {
+    subjectKey: "delivery_note_subject",
+    bodyKey: "delivery_note_body",
+    label: "Delivery Note",
+    dialogTitle: "Send Delivery Note by Email",
+    description: "Send delivery note by email description",
+    successPrefix: "Delivery note sent to",
+  },
+} as const;
+
+export function getDocumentEmailConfig(documentId: string) {
+  const prefix = documentId.split("_")[0] as keyof typeof DOCUMENT_EMAIL_CONFIG;
+  return DOCUMENT_EMAIL_CONFIG[prefix] ?? DOCUMENT_EMAIL_CONFIG.inv;
+}
+
 type SendEmailDialogProps = {
-  invoice: Invoice;
+  document?: {
+    id: string;
+    number?: string | null;
+    customer?: { email?: string | null } | null;
+    customer_id?: string | null;
+  };
   defaultEmail?: string;
   defaultSubject?: string;
   defaultBody?: string;
@@ -84,10 +152,12 @@ type SendEmailDialogProps = {
   open?: boolean;
   /** Controlled mode: callback when open state changes */
   onOpenChange?: (open: boolean) => void;
+  /** UI language used to display locale names in the selector. */
+  translationLocale?: string;
 } & ComponentTranslationProps;
 
 export function SendEmailDialog({
-  invoice,
+  document,
   defaultEmail = "",
   defaultSubject = "",
   defaultBody = "",
@@ -96,12 +166,19 @@ export function SendEmailDialog({
   ButtonLoader,
   renderAsDropdownItem = false,
   translationFn,
+  translationLocale,
   open: controlledOpen,
   onOpenChange,
   locale = "en",
   ...i18nProps
 }: SendEmailDialogProps) {
-  const t = translationFn || createTranslation({ translations, locale, ...i18nProps });
+  const t = createTranslation({
+    t: translationFn,
+    locale,
+    translationLocale,
+    translations,
+    ...i18nProps,
+  });
 
   const [internalOpen, setInternalOpen] = useState(false);
 
@@ -111,18 +188,23 @@ export function SendEmailDialog({
   // biome-ignore lint/suspicious/noEmptyBlockStatements: noop fallback for controlled mode
   const setOpen = isControlled ? onOpenChange || (() => {}) : setInternalOpen;
   const [isLoading, setIsLoading] = useState(false);
-  const [language, setLanguage] = useState<string>("");
-  const { sdk } = useSDK();
+  const [language, setLanguage] = useState<string>(DEFAULT_LANGUAGE_VALUE);
   const { activeEntity } = useEntities();
+  const documentConfig = getDocumentEmailConfig(document?.id ?? "inv_missing");
+  const documentNumber = document?.number ?? "";
+  const customerId = document?.customer_id ?? null;
 
   // Get entity email defaults if not provided
   const entitySettings = (activeEntity?.settings as Record<string, any>) || {};
   const emailDefaults = entitySettings.email_defaults || {};
   const entityLocale = (activeEntity as any)?.locale || "en-US";
 
-  const finalSubject = defaultSubject || emailDefaults.invoice_subject || `Invoice #${invoice.number}`;
+  const finalSubject =
+    defaultSubject || emailDefaults[documentConfig.subjectKey] || `${documentConfig.label} #${documentNumber}`;
   const finalBody =
-    defaultBody || emailDefaults.invoice_body || `Please find your invoice #${invoice.number} attached.`;
+    defaultBody ||
+    emailDefaults[documentConfig.bodyKey] ||
+    `Please find your ${documentConfig.label.toLowerCase()} #${documentNumber} attached.`;
 
   const form = useForm<SendEmailSchema>({
     resolver: zodResolver(sendEmailSchema) as Resolver<SendEmailSchema>,
@@ -138,8 +220,13 @@ export function SendEmailDialog({
     setLanguage(value ?? DEFAULT_LANGUAGE_VALUE);
   };
 
-  const entityLocaleLabel = t(LOCALE_OPTIONS.find((option) => option.value === entityLocale)?.label ?? entityLocale);
+  const displayLocale = translationLocale || locale;
+  const entityLocaleLabel = getLocalizedLocaleLabel(entityLocale, displayLocale);
   const defaultLanguageLabel = `${t("Default")} (${entityLocaleLabel})`;
+  const selectedLanguageLabel =
+    language === DEFAULT_LANGUAGE_VALUE
+      ? defaultLanguageLabel
+      : getLocalizedLocaleLabel(language || entityLocale, displayLocale);
 
   // Reset form and fetch customer email when dialog opens
   useEffect(() => {
@@ -156,13 +243,13 @@ export function SendEmailDialog({
 
     // Fetch customer email from linked customer if not in invoice snapshot
     const fetchCustomerEmail = async () => {
-      if (defaultEmail || !invoice.customer_id || !sdk || !activeEntity?.id) {
+      if (defaultEmail || !customerId || !activeEntity?.id) {
         return;
       }
 
       try {
-        const response = await sdk.customers.list({
-          query: JSON.stringify({ id: invoice.customer_id }),
+        const response = await customers.list({
+          query: JSON.stringify({ id: customerId }),
           limit: 1,
           entity_id: activeEntity.id,
         });
@@ -177,45 +264,35 @@ export function SendEmailDialog({
     };
 
     fetchCustomerEmail();
-  }, [
-    open,
-    defaultEmail,
-    invoice.customer_id,
-    sdk,
-    activeEntity?.id,
-    reset,
-    setValue,
-    finalSubject,
-    finalBody,
-    entityLocale,
-  ]);
+  }, [open, defaultEmail, customerId, activeEntity?.id, reset, setValue, finalSubject, finalBody]);
+
+  if (!document?.id) {
+    return null;
+  }
 
   const onSubmit = async (values: SendEmailSchema) => {
     setIsLoading(true);
     try {
-      if (!sdk) throw new Error("SDK not initialized");
-
       // Ensure we have an active entity
       if (!activeEntity?.id) throw new Error("Entity context required");
 
-      const localeOverride =
-        language && language !== DEFAULT_LANGUAGE_VALUE && language !== entityLocale ? language : undefined;
+      const languageOverride =
+        language && language !== DEFAULT_LANGUAGE_VALUE ? (language as SendEmailBodyLanguage) : undefined;
 
       // Call the email API endpoint using SDK
-      await (sdk.email as any).send(
+      await email.sendEmail(
         {
           to: values.to,
           subject: values.subject,
           body_text: values.body_text,
-          document_id: invoice.id,
-          locale: localeOverride,
-          language: localeOverride,
+          document_id: document.id,
+          language: languageOverride,
         },
         { entity_id: activeEntity.id },
       );
 
       toast.success(t("Email sent"), {
-        description: `${t("Invoice sent to")} ${values.to}`,
+        description: `${t(documentConfig.successPrefix)} ${values.to}`,
       });
 
       setOpen(false);
@@ -245,16 +322,19 @@ export function SendEmailDialog({
           </Button>
         </DialogTrigger>
       )}
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg" data-demo="marketing-demo-send-dialog">
         <DialogHeader>
-          <DialogTitle>{t("Send Invoice by Email")}</DialogTitle>
+          <DialogTitle>{t(documentConfig.dialogTitle)}</DialogTitle>
           <DialogDescription>
-            {t("Send invoice by email description").replace("{number}", invoice.number)}
+            {t(documentConfig.description).replace("{number}", document.number || "")}
           </DialogDescription>
         </DialogHeader>
 
         {activeEntity?.environment === "sandbox" && (
-          <Alert className="border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950">
+          <Alert
+            className="border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950"
+            data-demo="marketing-demo-send-sandbox-warning"
+          >
             <AlertCircle className="h-4 w-4 text-amber-600" />
             <AlertDescription className="text-amber-800 dark:text-amber-200">
               {t("Sandbox email warning")}
@@ -271,31 +351,18 @@ export function SendEmailDialog({
                 <FormItem>
                   <FormLabel>{t("Recipient Email")}</FormLabel>
                   <FormControl>
-                    <Input type="email" placeholder="customer@example.com" {...field} disabled={isLoading} />
+                    <Input
+                      type="email"
+                      placeholder="customer@example.com"
+                      {...field}
+                      disabled={isLoading}
+                      data-demo="marketing-demo-send-email-input"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-
-            <div className="space-y-2">
-              <label htmlFor="pdf-language" className="font-medium text-sm leading-none">
-                {t("PDF Language")}
-              </label>
-              <Select value={language} onValueChange={handleLanguageChange}>
-                <SelectTrigger id="pdf-language">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={DEFAULT_LANGUAGE_VALUE}>{defaultLanguageLabel}</SelectItem>
-                  {LOCALE_OPTIONS.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>
-                      {t(opt.label)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
 
             <FormField
               control={control}
@@ -307,9 +374,10 @@ export function SendEmailDialog({
                     <InputWithPreview
                       value={field.value || ""}
                       onChange={field.onChange}
-                      placeholder={t("Invoice Subject")}
+                      placeholder={t(`${documentConfig.label} Subject`)}
                       entity={activeEntity!}
-                      document={invoice}
+                      document={document}
+                      translatePreviewLabel={t}
                       disabled={isLoading}
                       className="h-10"
                     />
@@ -332,7 +400,8 @@ export function SendEmailDialog({
                       onChange={field.onChange}
                       placeholder={t("Email message placeholder")}
                       entity={activeEntity!}
-                      document={invoice}
+                      document={document}
+                      translatePreviewLabel={t}
                       disabled={isLoading}
                       multiline
                       rows={8}
@@ -344,19 +413,45 @@ export function SendEmailDialog({
               )}
             />
 
-            <div className="flex justify-end gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                className="cursor-pointer"
-                onClick={() => setOpen(false)}
-                disabled={isLoading}
-              >
-                {t("Cancel")}
-              </Button>
-              <Button type="submit" className="min-w-[100px] cursor-pointer" disabled={isLoading}>
-                {isLoading ? ButtonLoader ? <ButtonLoader /> : <Spinner /> : t("Send Email")}
-              </Button>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+              <div className="space-y-2 sm:w-64">
+                <label htmlFor="pdf-language" className="font-medium text-sm leading-none">
+                  {t("PDF Language")}
+                </label>
+                <Select value={language} onValueChange={handleLanguageChange}>
+                  <SelectTrigger id="pdf-language" className="w-full">
+                    <SelectValue>{selectedLanguageLabel}</SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={DEFAULT_LANGUAGE_VALUE}>{defaultLanguageLabel}</SelectItem>
+                    {LOCALE_OPTIONS.map((value) => (
+                      <SelectItem key={value} value={value}>
+                        {getLocalizedLocaleLabel(value, displayLocale)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex justify-end gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="cursor-pointer"
+                  onClick={() => setOpen(false)}
+                  disabled={isLoading}
+                >
+                  {t("Cancel")}
+                </Button>
+                <Button
+                  type="submit"
+                  className="min-w-[100px] cursor-pointer"
+                  disabled={isLoading}
+                  data-demo="marketing-demo-send-email-submit"
+                >
+                  {isLoading ? ButtonLoader ? <ButtonLoader /> : <Spinner /> : t("Send Email")}
+                </Button>
+              </div>
             </div>
           </form>
         </Form>

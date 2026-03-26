@@ -16,9 +16,10 @@ type LinkedDocumentsInfoProps = {
 };
 
 export function LinkedDocumentsInfo({ documents, locale, t }: LinkedDocumentsInfoProps) {
-  if (documents.length === 0) return null;
+  const validDocuments = documents.filter((document): document is LinkedDocumentSummary => !!document && !!document.id);
+  if (validDocuments.length === 0) return null;
 
-  const currencyCode = documents[0].currency_code || "EUR";
+  const currencyCode = validDocuments[0].currency_code || "EUR";
 
   const formatDate = (dateStr: string) => {
     try {
@@ -67,7 +68,7 @@ export function LinkedDocumentsInfo({ documents, locale, t }: LinkedDocumentsInf
           </TableRow>
         </TableHeader>
         <TableBody>
-          {documents.map((doc) => (
+          {validDocuments.map((doc) => (
             <TableRow key={doc.id}>
               <TableCell className="py-1.5 text-sm">{typeLabel(doc.type)}</TableCell>
               <TableCell className="py-1.5 text-sm">{doc.number}</TableCell>

@@ -1,7 +1,7 @@
 import type { AdvanceInvoice, CreateAdvanceInvoice } from "@spaceinvoices/js-sdk";
+import { advanceInvoices } from "@spaceinvoices/js-sdk";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { NEXT_DOCUMENT_NUMBER_CACHE_KEY } from "@/ui/hooks/use-next-document-number";
-import { useSDK } from "@/ui/providers/sdk-provider";
 
 // Define constants for cache keys
 export const ADVANCE_INVOICES_CACHE_KEY = "advance-invoices";
@@ -17,12 +17,11 @@ type UseCreateAdvanceInvoiceOptions = {
 };
 
 export function useCreateAdvanceInvoice({ entityId, onSuccess, onError }: UseCreateAdvanceInvoiceOptions) {
-  const { sdk } = useSDK();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (data: CreateAdvanceInvoice) => {
-      return sdk.advanceInvoices.create(data, { entity_id: entityId });
+      return advanceInvoices.create(data, { entity_id: entityId });
     },
     onSuccess: (data) => {
       // Invalidate advance invoices list cache

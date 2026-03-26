@@ -2,7 +2,7 @@ export default {
   "FURS is for Slovenian Entities": "FURS je samo za slovenska podjetja",
   "FURS fiscalization is only available for entities with country code SI":
     "Fiskalizacija FURS je na voljo samo za podjetja z državo SI (Slovenija)",
-  "Test Mode (Sandbox)": "Testni način (Sandbox)",
+  "Test Mode (Sandbox)": "Testni način (Peskovnik)",
   "This entity is in test mode. FURS invoices will be sent to the test/demo environment. No real fiscalization will occur.":
     "To podjetje je v testnem načinu. FURS računi bodo poslani v testno/demo okolje. Prava fiskalizacija se ne bo izvedla.",
   "General Settings": "Splošne nastavitve",
@@ -18,6 +18,9 @@ export default {
   "Register at least one business premise before fiscalizing invoices":
     "Registrirajte vsaj en poslovni prostor, preden fiskalizirate račune",
   "Configure FURS fiscalization behavior": "Konfigurirajte obnašanje fiskalizacije FURS",
+  "Skip Fiscalization by Default": "Privzeto preskoči fiskalizacijo",
+  "New invoices and advance invoices start with fiscalization turned off when payment type allows it. Non-bank-transfer payments still force fiscalization back on.":
+    "Novi računi in avansni računi se začnejo z izklopljeno fiskalizacijo, kadar to vrsta plačila dovoljuje. Plačila, ki niso bančno nakazilo, fiskalizacijo ponovno vključijo.",
   "Configure how FURS fiscalization works for your entity. Enable fiscalization, choose your numbering strategy, and set operator information.":
     "Konfigurirajte, kako deluje fiskalizacija FURS za vaše podjetje. Omogočite fiskalizacijo, izberite strategijo številčenja in nastavite informacije o operaterju.",
   "Enable FURS Fiscalization": "Omogoči fiskalizacijo FURS",
@@ -76,7 +79,7 @@ export default {
   "Each premise must be registered with FURS before you can issue fiscalized invoices from that location. You can register both real estate premises (physical locations) and movable premises (vehicles, market stalls, etc.).":
     "Vsak prostor mora biti registriran pri FURS, preden lahko s te lokacije izdajate fiskalizirane račune. Registrirate lahko tako nepremične prostore (fizične lokacije) kot premične prostore (vozila, stojnice na tržnici itd.).",
   "After registering a premise, you must manually add at least one electronic device (cash register, POS terminal) for that premise. Click on a premise to manage its devices.":
-    "Po registraciji prostora morate ročno dodati vsaj eno elektronsko napravo (blagajno, POS terminal) za ta prostor. Kliknite na prostor za upravljanje njegovih naprav.",
+    "Po registraciji prostora morate ročno dodati vsaj eno elektronsko napravo (blagajno, POS terminal) za ta prostor. Kliknite prostor za upravljanje njegovih naprav.",
   "Add Real Estate": "Dodaj nepremičnino",
   "Add Movable": "Dodaj premičnino",
   "No premises registered yet": "Še ni registriranih prostorov",
@@ -138,7 +141,7 @@ export default {
   "Save Settings": "Shrani nastavitve",
   "Saving...": "Shranjevanje...",
   "Loading...": "Nalaganje...",
-  "FURS Fiscalization": "FURS Fiskalisacija",
+  "FURS Fiscalization": "FURS fiskalizacija",
   "Slovenian tax authority fiscalization details": "Podrobnosti fiskalizacije pri Finančni upravi RS",
   Fiscalized: "Fiskalizirano",
   Pending: "V teku",
@@ -171,11 +174,29 @@ export default {
     "Opozorilo: Onemogočenje fiskalizacije bo preprečilo fiskalizacijo novih računov.",
   "Register at least one business premise first": "Najprej registrirajte vsaj en poslovni prostor",
   "Register at least one electronic device first": "Najprej registrirajte vsaj eno elektronsko napravo",
-  "Activate FURS fiscalization for your invoices": "Aktivirajte fiskalizacijo FURS za vaše račune",
+  "Activate FURS fiscalization for your invoices": "Aktivirajte fiskalizacijo FURS za svoje račune",
   "Once enabled, all new invoices will be automatically sent to FURS for fiscalization. Make sure you have completed all the setup steps before enabling.":
     "Po omogočenju bodo vsi novi računi samodejno poslani FURS za fiskalizacijo. Prepričajte se, da ste pred omogočenjem dokončali vse korake nastavitve.",
   "You can disable fiscalization at any time, but note that invoices issued while disabled will not be fiscalized.":
     "Fiskalizacijo lahko kadarkoli onemogočite, vendar vedite, da računi, izdani med onemogočenjem, ne bodo fiskalizirani.",
+  "Internal Act": "Interni akt",
+  "Download the internal act in printable PDF or editable DOCX form before enabling FURS fiscalization.":
+    "Pred vklopom fiskalizacije FURS prenesite interni akt v tiskljivi obliki PDF ali urejljivi obliki DOCX.",
+  "The internal act contains your current business premises, devices, and invoice numbering setup.":
+    "Interni akt vsebuje trenutne poslovne prostore, naprave in nastavitev številčenja računov.",
+  "Download PDF": "Prenesi PDF",
+  "Download DOCX": "Prenesi DOCX",
+  "Preparing PDF...": "Priprava PDF-ja...",
+  "Preparing DOCX...": "Priprava DOCX-ja...",
+  "Upload a valid certificate to download the internal act": "Za prenos internega akta naložite veljaven certifikat.",
+  "Register at least one active business premise to download the internal act":
+    "Za prenos internega akta registrirajte vsaj en aktiven poslovni prostor.",
+  "Register at least one electronic device to download the internal act":
+    "Za prenos internega akta registrirajte vsaj eno elektronsko napravo.",
+  "Internal act PDF downloaded": "Interni akt PDF je prenesen",
+  "Internal act DOCX downloaded": "Interni akt DOCX je prenesen",
+  "Failed to download internal act": "Prenos internega akta ni uspel",
+  "Internal act download unavailable": "Prenos internega akta trenutno ni na voljo",
   "You must upload a digital certificate before you can register business premises":
     "Naložiti morate digitalni certifikat, preden lahko registrirate poslovne prostore",
   // User FURS settings
@@ -214,12 +235,15 @@ export default {
   "Set entity tax number in General Settings first":
     "Najprej nastavite davčno številko podjetja v splošnih nastavitvah",
   "Set operator tax number and label in General Settings first":
-    "Set operator tax number and label in General Settings first",
-  "Complete General Settings first": "Complete General Settings first",
+    "Najprej nastavite davčno številko in oznako operaterja v splošnih nastavitvah",
+  "Complete General Settings first": "Najprej dokončajte splošne nastavitve",
   "Operator tax number and label are required for FURS fiscalization":
-    "Operator tax number and label are required for FURS fiscalization",
-  "FURS Operator Settings Required": "FURS Operator Settings Required",
+    "Davčna številka in oznaka operaterja sta obvezni za fiskalizacijo FURS",
+  "FURS Operator Settings Required": "Nastavitve operaterja FURS so obvezne",
   "Your FURS operator information is needed to fiscalize this document. Please enter your operator details.":
-    "Your FURS operator information is needed to fiscalize this document. Please enter your operator details.",
-  "Save & Retry": "Save & Retry",
+    "Za fiskalizacijo tega dokumenta potrebujemo vaše podatke operaterja FURS. Prosimo, vnesite podatke operaterja.",
+  "Save & Retry": "Shrani in ponovi",
+  "A premise with this name already exists": "Poslovni prostor s tem imenom že obstaja",
+  "Exactly 4 digits": "Točno 4 številke",
+  "Your Name": "Vaše ime",
 } as const;

@@ -16,6 +16,10 @@ const createOrderIntegrationSchemaDefinition = z.object({
     .optional()
     .default("manual"),
   auto_process: z.boolean().optional(),
+  auto_reissue_on_update: z.boolean().optional(),
+  locale: z.union([z.string(), z.null()]).optional(),
+  business_premise_id: z.union([z.string(), z.null()]).optional(),
+  electronic_device_id: z.union([z.string(), z.null()]).optional(),
   metadata: z.union([z.record(z.string(), z.any()), z.null()]).optional(),
 });
 
@@ -28,6 +32,10 @@ const updateOrderIntegrationSchemaDefinition = z
   .object({
     name: z.string().min(1),
     auto_process: z.boolean(),
+    auto_reissue_on_update: z.boolean(),
+    locale: z.union([z.string(), z.null()]),
+    business_premise_id: z.string().max(36),
+    electronic_device_id: z.string().max(36),
     metadata: z.union([z.record(z.string(), z.any()), z.null()]),
     is_active: z.boolean(),
     auto_process_on: z.enum(["created", "paid", "fulfilled"]),
@@ -37,10 +45,6 @@ const updateOrderIntegrationSchemaDefinition = z
     issue_invoice_for_bank: z.boolean(),
     issue_invoice_on_complete: z.boolean(),
     auto_process_delay_seconds: z.number().int().gte(0),
-    auto_reissue_on_update: z.boolean(),
-    locale: z.string().max(10),
-    business_premise_id: z.string().max(36),
-    electronic_device_id: z.string().max(36),
   })
   .partial();
 

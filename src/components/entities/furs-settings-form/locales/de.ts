@@ -20,6 +20,9 @@ export default {
   "Register at least one business premise before fiscalizing invoices":
     "Registrieren Sie mindestens einen Geschäftsraum, bevor Sie Rechnungen fiskalisieren",
   "Configure FURS fiscalization behavior": "FURS-Fiskalisierungsverhalten konfigurieren",
+  "Skip Fiscalization by Default": "Fiskalisierung standardmäßig überspringen",
+  "New invoices and advance invoices start with fiscalization turned off when payment type allows it. Non-bank-transfer payments still force fiscalization back on.":
+    "Neue Rechnungen und Anzahlungsrechnungen starten mit deaktivierter Fiskalisierung, wenn die Zahlungsart dies erlaubt. Andere Zahlungen als Banküberweisung aktivieren die Fiskalisierung wieder.",
   "Configure how FURS fiscalization works for your entity. Enable fiscalization, choose your numbering strategy, and set operator information.":
     "Konfigurieren Sie, wie die FURS-Fiskalisierung für Ihre Entität funktioniert. Aktivieren Sie die Fiskalisierung, wählen Sie Ihre Nummerierungsstrategie und legen Sie Betreiberinformationen fest.",
   "Enable FURS Fiscalization": "FURS-Fiskalisierung aktivieren",
@@ -177,6 +180,25 @@ export default {
     "Nach der Aktivierung werden alle neuen Rechnungen automatisch zur Fiskalisierung an FURS gesendet. Stellen Sie sicher, dass Sie alle Einrichtungsschritte abgeschlossen haben, bevor Sie aktivieren.",
   "You can disable fiscalization at any time, but note that invoices issued while disabled will not be fiscalized.":
     "Sie können die Fiskalisierung jederzeit deaktivieren, beachten Sie jedoch, dass Rechnungen, die während der Deaktivierung ausgestellt werden, nicht fiskalisiert werden.",
+  "Internal Act": "Interner Akt",
+  "Download the internal act in printable PDF or editable DOCX form before enabling FURS fiscalization.":
+    "Laden Sie den internen Akt im druckbaren PDF- oder bearbeitbaren DOCX-Format herunter, bevor Sie die FURS-Fiskalisierung aktivieren.",
+  "The internal act contains your current business premises, devices, and invoice numbering setup.":
+    "Der interne Akt enthält Ihre aktuellen Geschäftsräume, Geräte und die Einrichtung der Rechnungsnummerierung.",
+  "Download PDF": "PDF herunterladen",
+  "Download DOCX": "DOCX herunterladen",
+  "Preparing PDF...": "PDF wird vorbereitet...",
+  "Preparing DOCX...": "DOCX wird vorbereitet...",
+  "Upload a valid certificate to download the internal act":
+    "Laden Sie ein gültiges Zertifikat hoch, um den internen Akt herunterzuladen",
+  "Register at least one active business premise to download the internal act":
+    "Registrieren Sie mindestens einen aktiven Geschäftsraum, um den internen Akt herunterzuladen",
+  "Register at least one electronic device to download the internal act":
+    "Registrieren Sie mindestens ein elektronisches Gerät, um den internen Akt herunterzuladen",
+  "Internal act PDF downloaded": "Interner Akt als PDF heruntergeladen",
+  "Internal act DOCX downloaded": "Interner Akt als DOCX heruntergeladen",
+  "Failed to download internal act": "Interner Akt konnte nicht heruntergeladen werden",
+  "Internal act download unavailable": "Download des internen Akts nicht verfügbar",
   "You must upload a digital certificate before you can register business premises":
     "Sie müssen ein digitales Zertifikat hochladen, bevor Sie Geschäftsräume registrieren können",
   "Your Operator Settings": "Ihre Betreibereinstellungen",
@@ -202,22 +224,27 @@ export default {
   "Certificate uploaded successfully": "Zertifikat erfolgreich hochgeladen",
   "Loading certificate details...": "Zertifikatsdetails werden geladen...",
   // Entity info section
-  "Entity Information": "Entity Information",
-  "Required company details for FURS fiscalization": "Required company details for FURS fiscalization",
-  "Entity Tax Number": "Entity Tax Number",
-  "Your company's tax number (must match FURS certificate)": "Your company's tax number (must match FURS certificate)",
-  Address: "Address",
-  "Post Code": "Post Code",
-  "Save Entity Info": "Save Entity Info",
-  "Tax number is required for FURS fiscalization": "Tax number is required for FURS fiscalization",
-  "Set entity tax number in General Settings first": "Set entity tax number in General Settings first",
+  "Entity Information": "Unternehmensinformationen",
+  "Required company details for FURS fiscalization": "Erforderliche Unternehmensdaten für die FURS-Fiskalisierung",
+  "Entity Tax Number": "Steuernummer der Entität",
+  "Your company's tax number (must match FURS certificate)":
+    "Die Steuernummer Ihres Unternehmens (muss mit dem FURS-Zertifikat übereinstimmen)",
+  Address: "Adresse",
+  "Post Code": "Postleitzahl",
+  "Save Entity Info": "Unternehmensdaten speichern",
+  "Tax number is required for FURS fiscalization": "Die Steuernummer ist für die FURS-Fiskalisierung erforderlich",
+  "Set entity tax number in General Settings first":
+    "Legen Sie zuerst die Steuernummer der Entität in den Allgemeinen Einstellungen fest",
   "Set operator tax number and label in General Settings first":
-    "Set operator tax number and label in General Settings first",
-  "Complete General Settings first": "Complete General Settings first",
+    "Legen Sie zuerst Steuernummer und Bezeichnung des Betreibers in den Allgemeinen Einstellungen fest",
+  "Complete General Settings first": "Schließen Sie zuerst die Allgemeinen Einstellungen ab",
   "Operator tax number and label are required for FURS fiscalization":
-    "Operator tax number and label are required for FURS fiscalization",
-  "FURS Operator Settings Required": "FURS Operator Settings Required",
+    "Steuernummer und Bezeichnung des Betreibers sind für die FURS-Fiskalisierung erforderlich",
+  "FURS Operator Settings Required": "FURS-Betreibereinstellungen erforderlich",
   "Your FURS operator information is needed to fiscalize this document. Please enter your operator details.":
-    "Your FURS operator information is needed to fiscalize this document. Please enter your operator details.",
-  "Save & Retry": "Save & Retry",
+    "Ihre FURS-Betreiberinformationen werden benötigt, um dieses Dokument zu fiskalisieren. Bitte geben Sie Ihre Betreiberdaten ein.",
+  "Save & Retry": "Speichern und erneut versuchen",
+  "A premise with this name already exists": "Ein Geschäftsraum mit diesem Namen existiert bereits",
+  "Exactly 4 digits": "Genau 4 Ziffern",
+  "Your Name": "Ihr Name",
 } as const;

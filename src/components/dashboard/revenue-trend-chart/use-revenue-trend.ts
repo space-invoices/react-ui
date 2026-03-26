@@ -4,6 +4,7 @@
  * Sends 2 queries in a single batch request.
  */
 import type { StatsQueryDataItem, StatsQueryRequest } from "@spaceinvoices/js-sdk";
+import { formatLocalDate, formatLocalMonth } from "../shared/local-date";
 import { useStatsBatchQuery } from "../shared/use-stats-query";
 
 export const REVENUE_TREND_CACHE_KEY = "dashboard-revenue-trend";
@@ -17,13 +18,13 @@ function getLastMonths(count: number): { months: string[]; startDate: string; en
 
   for (let i = count - 1; i >= 0; i--) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    months.push(d.toISOString().substring(0, 7));
+    months.push(formatLocalMonth(d));
   }
 
   return {
     months,
-    startDate: startDate.toISOString().substring(0, 10),
-    endDate: endDate.toISOString().substring(0, 10),
+    startDate: formatLocalDate(startDate),
+    endDate: formatLocalDate(endDate),
   };
 }
 

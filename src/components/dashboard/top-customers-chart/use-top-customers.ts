@@ -20,34 +20,21 @@ export function useTopCustomersData(entityId: string | undefined, limit = 5) {
       ],
       table: "invoices",
       filters: { is_draft: false, voided_at: null },
-      group_by: ["customer_name", "quote_currency"],
+      group_by: ["customer_name"],
       order_by: [{ field: "revenue", direction: "desc" }],
-      limit: limit * 2,
+      limit,
     },
     {
       select: (response) => {
         const data = response.data || [];
-
-        // Aggregate by customer name (in case of multiple quote_currency rows)
-        const customerMap: Record<string, number> = {};
-        let currency = "EUR";
-
-        for (const row of data as StatsQueryDataItem[]) {
-          const name = String(row.customer_name || "Unknown");
-          customerMap[name] = (customerMap[name] || 0) + (Number(row.revenue) || 0);
-          if (row.quote_currency && currency === "EUR") {
-            currency = String(row.quote_currency);
-          }
-        }
-
-        const customers = Object.entries(customerMap)
-          .map(([name, revenue]) => ({ name, revenue }))
-          .sort((a, b) => b.revenue - a.revenue)
-          .slice(0, limit);
+        const customers = (data as StatsQueryDataItem[]).map((row) => ({
+          name: String(row.customer_name || "Unknown"),
+          revenue: Number(row.revenue) || 0,
+        }));
 
         return {
           data: customers,
-          currency,
+          currency: "EUR",
         };
       },
     },

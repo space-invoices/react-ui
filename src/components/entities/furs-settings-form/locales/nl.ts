@@ -18,6 +18,9 @@ export default {
   "Register at least one business premise before fiscalizing invoices":
     "Registreer ten minste één bedrijfsruimte voordat u facturen fiscaliseert",
   "Configure FURS fiscalization behavior": "FURS-fiscalisatiegedrag configureren",
+  "Skip Fiscalization by Default": "Fiscalisatie standaard overslaan",
+  "New invoices and advance invoices start with fiscalization turned off when payment type allows it. Non-bank-transfer payments still force fiscalization back on.":
+    "Nieuwe facturen en vooruitbetalingsfacturen starten met fiscalisatie uitgeschakeld wanneer het betaaltype dat toestaat. Betalingen anders dan bankoverschrijving schakelen fiscalisatie weer in.",
   "Configure how FURS fiscalization works for your entity. Enable fiscalization, choose your numbering strategy, and set operator information.":
     "Configureer hoe FURS-fiscalisatie werkt voor uw entiteit. Schakel fiscalisatie in, kies uw nummeringsstrategie en stel operatorinformatie in.",
   "Enable FURS Fiscalization": "FURS-fiscalisatie inschakelen",
@@ -175,6 +178,25 @@ export default {
     "Eenmaal ingeschakeld worden alle nieuwe facturen automatisch naar FURS gestuurd voor fiscalisatie. Zorg ervoor dat u alle installatiestappen hebt voltooid voordat u inschakelt.",
   "You can disable fiscalization at any time, but note that invoices issued while disabled will not be fiscalized.":
     "U kunt fiscalisatie op elk moment uitschakelen, maar merk op dat facturen die worden uitgegeven terwijl het is uitgeschakeld niet worden gefiscaliseerd.",
+  "Internal Act": "Interne akte",
+  "Download the internal act in printable PDF or editable DOCX form before enabling FURS fiscalization.":
+    "Download de interne akte in afdrukbare PDF- of bewerkbare DOCX-vorm voordat u FURS-fiscalisatie inschakelt.",
+  "The internal act contains your current business premises, devices, and invoice numbering setup.":
+    "De interne akte bevat uw huidige bedrijfsruimtes, apparaten en de ingestelde factuurnummering.",
+  "Download PDF": "PDF downloaden",
+  "Download DOCX": "DOCX downloaden",
+  "Preparing PDF...": "PDF voorbereiden...",
+  "Preparing DOCX...": "DOCX voorbereiden...",
+  "Upload a valid certificate to download the internal act":
+    "Upload een geldig certificaat om de interne akte te downloaden",
+  "Register at least one active business premise to download the internal act":
+    "Registreer minstens één actieve bedrijfsruimte om de interne akte te downloaden",
+  "Register at least one electronic device to download the internal act":
+    "Registreer minstens één elektronisch apparaat om de interne akte te downloaden",
+  "Internal act PDF downloaded": "Interne akte PDF gedownload",
+  "Internal act DOCX downloaded": "Interne akte DOCX gedownload",
+  "Failed to download internal act": "Interne akte downloaden mislukt",
+  "Internal act download unavailable": "Download van interne akte niet beschikbaar",
   "You must upload a digital certificate before you can register business premises":
     "U moet een digitaal certificaat uploaden voordat u bedrijfsruimten kunt registreren",
   "Your Operator Settings": "Uw operatorinstellingen",
@@ -199,22 +221,27 @@ export default {
   "Certificate uploaded successfully": "Certificaat succesvol geüpload",
   "Loading certificate details...": "Certificaatgegevens worden geladen...",
   // Entity info section
-  "Entity Information": "Entity Information",
-  "Required company details for FURS fiscalization": "Required company details for FURS fiscalization",
-  "Entity Tax Number": "Entity Tax Number",
-  "Your company's tax number (must match FURS certificate)": "Your company's tax number (must match FURS certificate)",
-  Address: "Address",
-  "Post Code": "Post Code",
-  "Save Entity Info": "Save Entity Info",
-  "Tax number is required for FURS fiscalization": "Tax number is required for FURS fiscalization",
-  "Set entity tax number in General Settings first": "Set entity tax number in General Settings first",
+  "Entity Information": "Entiteitsgegevens",
+  "Required company details for FURS fiscalization": "Vereiste bedrijfsgegevens voor FURS-fiscalisatie",
+  "Entity Tax Number": "Fiscaal nummer van de entiteit",
+  "Your company's tax number (must match FURS certificate)":
+    "Het fiscale nummer van uw bedrijf (moet overeenkomen met het FURS-certificaat)",
+  Address: "Adres",
+  "Post Code": "Postcode",
+  "Save Entity Info": "Entiteitsgegevens opslaan",
+  "Tax number is required for FURS fiscalization": "Fiscaal nummer is vereist voor FURS-fiscalisatie",
+  "Set entity tax number in General Settings first":
+    "Stel eerst het fiscale nummer van de entiteit in bij Algemene instellingen",
   "Set operator tax number and label in General Settings first":
-    "Set operator tax number and label in General Settings first",
-  "Complete General Settings first": "Complete General Settings first",
+    "Stel eerst het fiscale nummer en label van de operator in bij Algemene instellingen",
+  "Complete General Settings first": "Rond eerst Algemene instellingen af",
   "Operator tax number and label are required for FURS fiscalization":
-    "Operator tax number and label are required for FURS fiscalization",
-  "FURS Operator Settings Required": "FURS Operator Settings Required",
+    "Het fiscale nummer en label van de operator zijn vereist voor FURS-fiscalisatie",
+  "FURS Operator Settings Required": "Instellingen voor FURS-operator vereist",
   "Your FURS operator information is needed to fiscalize this document. Please enter your operator details.":
-    "Your FURS operator information is needed to fiscalize this document. Please enter your operator details.",
-  "Save & Retry": "Save & Retry",
+    "Uw FURS-operatorgegevens zijn nodig om dit document te fiscaliseren. Vul uw operatorgegevens in.",
+  "Save & Retry": "Opslaan en opnieuw proberen",
+  "A premise with this name already exists": "Er bestaat al een vestiging met deze naam",
+  "Exactly 4 digits": "Precies 4 cijfers",
+  "Your Name": "Uw naam",
 } as const;

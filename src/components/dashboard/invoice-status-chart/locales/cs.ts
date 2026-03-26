@@ -1,10 +1,10 @@
 export default {
   "Invoice Status": "Stav faktur",
   "Breakdown of invoices by payment status": "Rozdělení faktur podle stavu platby",
-  "Paid": "Uhrazené",
-  "Pending": "Čekající",
-  "Overdue": "Po splatnosti",
-  "Voided": "Stornované",
+  Paid: "Zaplaceno",
+  Pending: "Čeká",
+  Overdue: "Po splatnosti",
+  Voided: "Stornováno",
   "No data available": "Žádná data k dispozici",
-  "Invoices": "Faktury",
+  Invoices: "Faktury",
 } as const;

@@ -5,12 +5,26 @@
  * and advance invoice forms where this logic was duplicated.
  */
 
-export type FursSubmitOptions = { skip: true } | { business_premise_name: string; electronic_device_name: string };
+export type FiscalizationOperatorOverride = {
+  label?: string;
+  tax_number?: string;
+};
+
+export type FursSubmitOptions =
+  | { skip: true }
+  | {
+      business_premise_name: string;
+      electronic_device_name: string;
+      operator_tax_number?: string;
+      operator_label?: string;
+    };
 
 export type FinaSubmitOptions = {
   business_premise_name: string;
   electronic_device_name: string;
   payment_type: string;
+  operator_oib?: string;
+  operator_label?: string;
 };
 
 export type EslogSubmitOptions = {
@@ -29,6 +43,7 @@ export function buildFursOptions(opts: {
   skipFiscalization?: boolean;
   premiseName?: string;
   deviceName?: string;
+  operator?: FiscalizationOperatorOverride;
 }): FursSubmitOptions | undefined {
   if (opts.isDraft || opts.isEditMode || !opts.isEnabled) return undefined;
   if (opts.skipFiscalization) return { skip: true };
@@ -36,6 +51,8 @@ export function buildFursOptions(opts: {
     return {
       business_premise_name: opts.premiseName,
       electronic_device_name: opts.deviceName,
+      ...(opts.operator?.tax_number ? { operator_tax_number: opts.operator.tax_number } : {}),
+      ...(opts.operator?.label ? { operator_label: opts.operator.label } : {}),
     };
   }
   return undefined;
@@ -53,6 +70,7 @@ export function buildFinaOptions(opts: {
   premiseName?: string;
   deviceName?: string;
   paymentType?: string;
+  operator?: FiscalizationOperatorOverride;
 }): FinaSubmitOptions | undefined {
   if (opts.isDraft || opts.isEditMode || !opts.useFinaNumbering) return undefined;
   if (opts.premiseName && opts.deviceName) {
@@ -60,6 +78,8 @@ export function buildFinaOptions(opts: {
       business_premise_name: opts.premiseName,
       electronic_device_name: opts.deviceName,
       payment_type: opts.paymentType || "bank_transfer",
+      ...(opts.operator?.tax_number ? { operator_oib: opts.operator.tax_number } : {}),
+      ...(opts.operator?.label ? { operator_label: opts.operator.label } : {}),
     };
   }
   return undefined;

@@ -54,8 +54,9 @@ export default function DocumentAddItemTaxRateField({
   t: translateFn,
   namespace,
   locale,
+  translationLocale,
 }: DocumentAddItemTaxRateFieldProps) {
-  const translate = createTranslation({ t: translateFn, namespace, locale, translations });
+  const translate = createTranslation({ t: translateFn, namespace, locale, translationLocale, translations });
   const { setValue } = useFormContext();
 
   // Fetch available taxes

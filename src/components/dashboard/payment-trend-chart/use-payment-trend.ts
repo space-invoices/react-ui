@@ -4,6 +4,7 @@
  * Sends 1 query in a batch request.
  */
 import type { StatsQueryDataItem } from "@spaceinvoices/js-sdk";
+import { formatLocalDate, formatLocalMonth } from "../shared/local-date";
 import { useStatsQuery } from "../shared/use-stats-query";
 
 export const PAYMENT_TREND_CACHE_KEY = "dashboard-payment-trend";
@@ -17,13 +18,13 @@ function getLastMonths(count: number): { months: string[]; startDate: string; en
 
   for (let i = count - 1; i >= 0; i--) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    months.push(d.toISOString().substring(0, 7));
+    months.push(formatLocalMonth(d));
   }
 
   return {
     months,
-    startDate: startDate.toISOString().substring(0, 10),
-    endDate: endDate.toISOString().substring(0, 10),
+    startDate: formatLocalDate(startDate),
+    endDate: formatLocalDate(endDate),
   };
 }
 
@@ -39,7 +40,13 @@ export function usePaymentTrendData(entityId: string | undefined) {
       table: "payments",
       date_from: startDate,
       date_to: endDate,
-      group_by: ["month", "currency_code"],
+      // The dashboard trend should reflect collected invoice payments only.
+      // Exclude AP-linked rows and credit note refunds that otherwise skew monthly totals.
+      filters: {
+        invoice_id: { not: null },
+        credit_note_id: null,
+      },
+      group_by: ["month"],
       order_by: [{ field: "month", direction: "asc" }],
     },
     {
@@ -50,20 +57,16 @@ export function usePaymentTrendData(entityId: string | undefined) {
         }
 
         const data = response.data || [];
-        let currency = "EUR";
         for (const row of data as StatsQueryDataItem[]) {
           const month = String(row.month);
           if (month in monthMap) {
             monthMap[month] += Number(row.amount) || 0;
           }
-          if (row.currency_code && currency === "EUR") {
-            currency = String(row.currency_code);
-          }
         }
 
         return {
           data: months.map((month) => ({ month, amount: monthMap[month] })),
-          currency,
+          currency: "EUR",
         };
       },
     },

@@ -1,10 +1,10 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { CreateTaxRequest, Tax } from "@spaceinvoices/js-sdk";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 import { FormInput } from "@/ui/components/form";
 import { Checkbox } from "@/ui/components/ui/checkbox";
-import { Form, FormControl, FormField, FormItem, FormLabel } from "@/ui/components/ui/form";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel } from "@/ui/components/ui/form";
 import { createTaxSchema as baseCreateTaxSchema } from "@/ui/generated/schemas";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
@@ -43,6 +43,7 @@ type CreateTaxFormProps = {
   onSuccess?: (tax: Tax) => void;
   onError?: (error: Error) => void;
   renderSubmitButton?: (props: { isSubmitting: boolean; submit: () => void }) => React.ReactNode;
+  showPortugalExemptionFields?: boolean;
 } & ComponentTranslationProps;
 
 export default function CreateTaxForm({
@@ -50,6 +51,7 @@ export default function CreateTaxForm({
   onSuccess,
   onError,
   renderSubmitButton,
+  showPortugalExemptionFields = false,
   ...i18nProps
 }: CreateTaxFormProps) {
   const t = createTranslation({
@@ -65,6 +67,11 @@ export default function CreateTaxForm({
       is_default: false,
     },
   });
+  const rate = useWatch({
+    control: form.control,
+    name: "tax_rates.0.rate",
+  });
+  const showPtFields = showPortugalExemptionFields && Number(rate ?? 0) === 0;
 
   const { mutate: createTax, isPending } = useCreateTax({
     entityId,
@@ -102,6 +109,45 @@ export default function CreateTaxForm({
           placeholder={t("Enter rate")}
           type="number"
         />
+
+        {showPtFields && (
+          <div className="space-y-4 rounded-lg border border-dashed p-4">
+            <div className="space-y-1">
+              <p className="font-medium text-sm">{t("Portugal exemption metadata")}</p>
+              <p className="text-muted-foreground text-sm">
+                {t("0% Portugal taxes require an exemption code and legal reason for SAF-T and certified documents.")}
+              </p>
+            </div>
+
+            <FormInput
+              control={form.control}
+              name="pt_exemption_code"
+              label={t("Exemption code")}
+              placeholder={t("Enter exemption code")}
+            />
+
+            <FormField
+              control={form.control}
+              name="pt_exemption_reason"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t("Exemption reason")}</FormLabel>
+                  <FormControl>
+                    <textarea
+                      className="flex min-h-24 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      placeholder={t("Enter exemption reason")}
+                      value={field.value ?? ""}
+                      onChange={(event) => field.onChange(event.target.value || undefined)}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    {t("Keep this aligned with the legal basis used on issued Portugal documents.")}
+                  </FormDescription>
+                </FormItem>
+              )}
+            />
+          </div>
+        )}
 
         <FormField
           control={form.control}

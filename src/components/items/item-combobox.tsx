@@ -5,7 +5,10 @@ import { useEffect, useMemo, useState } from "react";
 
 import { Autocomplete } from "@/ui/common/autocomplete";
 import { useDebounce } from "@/ui/hooks/use-debounce";
+import type { ComponentTranslationProps } from "@/ui/lib/translation";
+import { createTranslation } from "@/ui/lib/translation";
 
+import { autocompleteTranslations } from "../common/autocomplete-locales";
 import { useItemSearch, useRecentItems } from "./items.hooks";
 
 type ItemComboboxProps = {
@@ -13,13 +16,15 @@ type ItemComboboxProps = {
   value?: string;
   onSelect?: (item: Item | null, customName?: string) => void;
   onCommitInlineName?: (value: string) => void;
+  onInlineInputChange?: (value: string) => void;
   commitOnBlurMode?: "create" | "update-inline";
   placeholder?: string;
   className?: string;
   disabled?: boolean;
-  locale?: string;
   inputTestId?: string;
-};
+  inputDataDemo?: string;
+  ariaInvalid?: boolean;
+} & ComponentTranslationProps;
 
 /**
  * Autocomplete for selecting saved catalog items
@@ -30,16 +35,30 @@ export function ItemCombobox({
   value,
   onSelect,
   onCommitInlineName,
+  onInlineInputChange,
   commitOnBlurMode = "create",
   placeholder = "Search or enter item name...",
   className,
   disabled,
-  locale,
+  ariaInvalid = false,
+  locale = "en",
+  translationLocale,
   inputTestId,
+  inputDataDemo,
+  t: translationFn,
+  namespace,
 }: ItemComboboxProps) {
+  const t = createTranslation({
+    t: translationFn,
+    namespace,
+    locale,
+    translationLocale,
+    translations: autocompleteTranslations,
+  });
   const [search, setSearch] = useState("");
   const [displayValue, setDisplayValue] = useState(value || "");
   const debouncedSearch = useDebounce(search, 300);
+  const resolvedPlaceholder = placeholder ? t(placeholder) : placeholder;
 
   // Fetch recent items (non-blocking, cached)
   const { data: recentData } = useRecentItems(entityId);
@@ -64,18 +83,27 @@ export function ItemCombobox({
     return ` - ${new Intl.NumberFormat(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(price)}`;
   };
 
-  const options = items.map((item) => ({
-    value: item.id,
-    label: (
-      <div className="flex flex-col overflow-hidden">
-        <span className="truncate">{item.name}</span>
-        <span className="truncate text-muted-foreground text-xs">
-          {formatPrice(item)}
-          {item.description && ` · ${item.description}`}
-        </span>
-      </div>
-    ),
-  }));
+  const options = items.map((item) => {
+    const itemIndex = items.findIndex((entry) => entry.id === item.id);
+    return {
+      value: item.id,
+      ...(itemIndex === 0
+        ? {
+            testId: "marketing-demo-item-option-0",
+            dataDemo: "marketing-demo-item-option-0",
+          }
+        : {}),
+      label: (
+        <div className="flex flex-col overflow-hidden">
+          <span className="truncate">{item.name}</span>
+          <span className="truncate text-muted-foreground text-xs">
+            {formatPrice(item)}
+            {item.description && ` · ${item.description}`}
+          </span>
+        </div>
+      ),
+    };
+  });
 
   // Add "Use custom name" option when there's search text
   if (debouncedSearch?.trim()) {
@@ -84,7 +112,7 @@ export function ItemCombobox({
       label: (
         <span className="flex items-center gap-2">
           <Plus className="size-4" />
-          Use "{debouncedSearch}"
+          {t("Use")} "{debouncedSearch}"
         </span>
       ),
     });
@@ -92,6 +120,9 @@ export function ItemCombobox({
 
   const handleSearch = (value: string) => {
     setSearch(value);
+    if (commitOnBlurMode === "update-inline") {
+      onInlineInputChange?.(value);
+    }
     // Clear displayValue when user starts typing
     if (displayValue && value !== displayValue) {
       setDisplayValue("");
@@ -156,14 +187,16 @@ export function ItemCombobox({
       onCommitUnselectedInput={commitCustomName}
       commitUnselectedOnBlur={true}
       options={options}
-      placeholder={placeholder}
+      placeholder={resolvedPlaceholder}
       className={className}
       disabled={disabled}
       loading={isLoading}
-      emptyText={debouncedSearch ? "No items found" : "Recent items"}
+      emptyText={debouncedSearch ? t("No items found") : t("Recent items")}
       displayValue={displayValue}
       inputTestId={inputTestId}
+      inputDataDemo={inputDataDemo}
       committedDisplayValue={value}
+      ariaInvalid={ariaInvalid}
     />
   );
 }

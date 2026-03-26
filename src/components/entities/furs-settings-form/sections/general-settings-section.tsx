@@ -5,6 +5,7 @@ import type { UseFormReturn } from "react-hook-form";
 import { useUpdateEntity } from "@/ui/components/entities/entities.hooks";
 import { Alert, AlertDescription } from "@/ui/components/ui/alert";
 import { Button } from "@/ui/components/ui/button";
+import { Checkbox } from "@/ui/components/ui/checkbox";
 import { FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/ui/components/ui/form";
 import { Input } from "@/ui/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/ui/components/ui/radio-group";
@@ -263,6 +264,32 @@ export const GeneralSettingsSection: FC<GeneralSettingsSectionProps> = ({
       </div>
 
       <div className="space-y-4">
+        <FormField
+          control={form.control}
+          name="default_skip_fiscalization"
+          render={({ field }) => (
+            <FormItem className="rounded-lg border p-4">
+              <div className="flex items-start gap-3">
+                <FormControl>
+                  <Checkbox
+                    checked={field.value === true}
+                    onCheckedChange={(checked) => field.onChange(checked === true)}
+                  />
+                </FormControl>
+                <div className="space-y-1">
+                  <FormLabel className="font-medium text-sm">{t("Skip Fiscalization by Default")}</FormLabel>
+                  <FormDescription className="text-xs">
+                    {t(
+                      "New invoices and advance invoices start with fiscalization turned off when payment type allows it. Non-bank-transfer payments still force fiscalization back on.",
+                    )}
+                  </FormDescription>
+                </div>
+              </div>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
         <FormField
           control={form.control}
           name="numbering_strategy"

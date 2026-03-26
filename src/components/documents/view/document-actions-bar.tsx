@@ -1,4 +1,4 @@
-import type { AdvanceInvoice, CreditNote, Estimate, Invoice } from "@spaceinvoices/js-sdk";
+import type { AdvanceInvoice, CreditNote, DeliveryNote, Estimate, Invoice } from "@spaceinvoices/js-sdk";
 import {
   Ban,
   Check,
@@ -26,8 +26,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/ui/components/ui/dropdown-menu";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/ui/components/ui/tooltip";
+import { actionMenuTooltipProps, Tooltip, TooltipContent, TooltipTrigger } from "@/ui/components/ui/tooltip";
 import { type DocumentType, getAllowedDuplicateTargets } from "@/ui/hooks/use-duplicate-document";
+import { getDocumentCountryCapabilities } from "@/ui/lib/country-capabilities";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
 import type { Entity } from "@/ui/providers/entities-context";
@@ -44,9 +45,9 @@ import { useDocumentDownload } from "./use-document-download";
 
 const translations = { sl, de, it, fr, es, pt, nl, pl, hr } as const;
 
-type Document = Invoice | Estimate | CreditNote | AdvanceInvoice;
+type Document = Invoice | Estimate | CreditNote | AdvanceInvoice | DeliveryNote;
 
-/** Language options for PDF label translations (formatting always uses entity locale) */
+/** Language options for explicit PDF output language override. */
 const PDF_LANGUAGE_CODES = [
   { label: "English", code: "en-US" },
   { label: "German", code: "de-DE" },
@@ -71,6 +72,7 @@ const PDF_LANGUAGE_CODES = [
 interface DocumentActionsBarProps extends ComponentTranslationProps {
   document: Document;
   documentType: DocumentType;
+  allowedDuplicateTargets?: DocumentType[];
   entity: Entity;
   currentLocale: string;
   onAddPayment?: () => void;
@@ -89,12 +91,16 @@ interface DocumentActionsBarProps extends ComponentTranslationProps {
   isUnsharing?: boolean;
   /** Called when user wants to duplicate/convert document */
   onDuplicate?: (targetType: DocumentType) => void;
+  /** Disable specific duplicate/convert targets while keeping the action visible */
+  duplicateTargetDisabledReasons?: Partial<Record<DocumentType, string>>;
   /** Called when user wants to edit the document */
   onEdit?: () => void;
   /** Whether the document is editable (not voided, not fiscalized) */
   isEditable?: boolean;
   /** Reason why editing is disabled (shown as tooltip) */
   editDisabledReason?: string;
+  /** Reason why adding payment is disabled (shown as tooltip) */
+  paymentDisabledReason?: string;
   /** Called when user wants to finalize a draft document */
   onFinalize?: () => void;
   /** Whether finalization is in progress */
@@ -111,11 +117,16 @@ interface DocumentActionsBarProps extends ComponentTranslationProps {
   onVoid?: () => void;
   /** Whether voiding is in progress */
   isVoiding?: boolean;
+  /** Reason why voiding is disabled (shown as tooltip) */
+  voidDisabledReason?: string;
+  /** Whether users can choose alternative PDF label languages */
+  allowPdfLanguageSelection?: boolean;
 }
 
 export function DocumentActionsBar({
   document,
   documentType,
+  allowedDuplicateTargets,
   entity,
   currentLocale,
   onAddPayment,
@@ -129,9 +140,11 @@ export function DocumentActionsBar({
   isSharing,
   isUnsharing,
   onDuplicate,
+  duplicateTargetDisabledReasons,
   onEdit,
   isEditable,
   editDisabledReason,
+  paymentDisabledReason,
   onFinalize,
   isFinalizing,
   onDeleteDraft,
@@ -140,16 +153,20 @@ export function DocumentActionsBar({
   recurringLabel,
   onVoid,
   isVoiding,
+  voidDisabledReason,
+  allowPdfLanguageSelection = true,
   ...i18nProps
 }: DocumentActionsBarProps) {
   const t = createTranslation({ ...i18nProps, translations, locale: currentLocale });
   const [linkCopied, setLinkCopied] = useState(false);
+  const duplicateTargets = allowedDuplicateTargets ?? getAllowedDuplicateTargets(documentType);
 
   const { isDownloadingPdf, isDownloadingEslog, downloadPdf, downloadEslog } = useDocumentDownload({
     onDownloadStart,
     onDownloadSuccess,
     onDownloadError,
   });
+  const countryCapabilities = getDocumentCountryCapabilities(entity, documentType, document);
 
   const supportsPayments =
     documentType === "invoice" || documentType === "advance_invoice" || documentType === "credit_note";
@@ -158,11 +175,35 @@ export function DocumentActionsBar({
   const eslogValid = (document as Invoice).eslog?.validation_status === "valid";
   const showEslogDownload = eslogFeatureAvailable && eslogValid;
 
-  const shareableId = (document as Invoice).shareable_id;
-  const shareUrl = shareableId ? `${window.location.origin}/public/invoices/${shareableId}` : null;
+  const shareableId = (document as Invoice | Estimate | CreditNote | AdvanceInvoice | DeliveryNote).shareable_id;
+  const shareUrl = shareableId ? `${window.location.origin}/documents/shareable/${shareableId}` : null;
 
   const handleDownloadPdf = (language?: string) => downloadPdf(document, documentType, language);
   const handleDownloadEslog = () => downloadEslog(document, documentType);
+
+  const getDocumentTypeActionLabel = (type: DocumentType) => {
+    const translated = t(type);
+    if (translated !== type) return translated;
+
+    const englishFallbacks: Record<DocumentType, string> = {
+      invoice: "invoice",
+      estimate: "estimate",
+      credit_note: "credit note",
+      advance_invoice: "advance invoice",
+      delivery_note: "delivery note",
+    };
+
+    return englishFallbacks[type];
+  };
+
+  const getDuplicateActionLabel = (targetType: DocumentType) => {
+    const specificKey = targetType === documentType ? `Duplicate ${targetType}` : `Create ${targetType}`;
+    const translated = t(specificKey);
+    if (translated !== specificKey) return translated;
+
+    const typeLabel = getDocumentTypeActionLabel(targetType);
+    return targetType === documentType ? `Duplicate ${typeLabel}` : `Create ${typeLabel}`;
+  };
 
   const handleCopyShareLink = async () => {
     if (!shareUrl) return;
@@ -179,7 +220,9 @@ export function DocumentActionsBar({
   const isDraft = (document as any).is_draft === true;
 
   // --- Primary actions (always visible) ---
-  const pdfButton = (
+  const showPdfLanguageSelection = allowPdfLanguageSelection && countryCapabilities.allowPdfLanguageSelection;
+
+  const pdfButton = showPdfLanguageSelection ? (
     <div className="flex">
       <Button
         variant="outline"
@@ -211,6 +254,17 @@ export function DocumentActionsBar({
         </DropdownMenuContent>
       </DropdownMenu>
     </div>
+  ) : (
+    <Button
+      variant="outline"
+      size="sm"
+      disabled={isDownloadingPdf}
+      onClick={() => handleDownloadPdf()}
+      className="cursor-pointer"
+    >
+      {isDownloadingPdf ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+      {t("PDF")}
+    </Button>
   );
 
   const eslogButton = showEslogDownload ? (
@@ -226,19 +280,45 @@ export function DocumentActionsBar({
     </Button>
   ) : null;
 
-  const sendButton = (
-    <Button variant="outline" size="sm" onClick={onSendEmail} className="cursor-pointer">
+  const sendButton = onSendEmail ? (
+    <Button
+      variant="outline"
+      size="sm"
+      onClick={onSendEmail}
+      className="cursor-pointer"
+      data-demo="marketing-demo-send-email"
+    >
       <Mail className="mr-2 h-4 w-4" />
       {t("Send")}
     </Button>
-  );
-
-  const paymentButton = supportsPayments ? (
-    <Button variant="outline" size="sm" onClick={onAddPayment} className="cursor-pointer">
-      <Plus className="mr-2 h-4 w-4" />
-      {t("Payment")}
-    </Button>
   ) : null;
+  const paymentAllowed = countryCapabilities.allowPaymentAction;
+
+  const paymentButton =
+    supportsPayments && paymentAllowed && (onAddPayment || paymentDisabledReason) ? (
+      paymentDisabledReason ? (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              aria-disabled="true"
+              className="pointer-events-auto opacity-50"
+              onClick={(e) => e.preventDefault()}
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              {t("Payment")}
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent {...actionMenuTooltipProps}>{paymentDisabledReason}</TooltipContent>
+        </Tooltip>
+      ) : (
+        <Button variant="outline" size="sm" onClick={onAddPayment} className="cursor-pointer">
+          <Plus className="mr-2 h-4 w-4" />
+          {t("Payment")}
+        </Button>
+      )
+    ) : null;
 
   // --- Secondary actions (desktop: inline buttons, mobile: overflow menu) ---
   const editButton = onEdit ? (
@@ -317,32 +397,77 @@ export function DocumentActionsBar({
     </Button>
   ) : null;
 
-  const duplicateButton = onDuplicate ? (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" className="cursor-pointer">
-          <Copy className="mr-2 h-4 w-4" />
-          {t("Duplicate")}
-          <ChevronDown className="ml-1 h-4 w-4" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        {getAllowedDuplicateTargets(documentType).map((targetType) => (
-          <DropdownMenuItem key={targetType} onClick={() => onDuplicate(targetType)} className="cursor-pointer">
-            {targetType === documentType ? t(`Duplicate ${documentType}`) : t(`Create ${targetType}`)}
-          </DropdownMenuItem>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  ) : null;
+  const duplicateButton =
+    onDuplicate && duplicateTargets.length > 0 ? (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" size="sm" className="cursor-pointer">
+            <Copy className="mr-2 h-4 w-4" />
+            {t("Duplicate")}
+            <ChevronDown className="ml-1 h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          {duplicateTargets.map((targetType) => {
+            const disabledReason = duplicateTargetDisabledReasons?.[targetType];
+            const item = (
+              <DropdownMenuItem
+                key={targetType}
+                onClick={disabledReason ? undefined : () => onDuplicate(targetType)}
+                disabled={!!disabledReason}
+                className="cursor-pointer"
+              >
+                {getDuplicateActionLabel(targetType)}
+              </DropdownMenuItem>
+            );
+
+            if (!disabledReason) return item;
+
+            return (
+              <Tooltip key={targetType}>
+                <TooltipTrigger asChild>
+                  <div>{item}</div>
+                </TooltipTrigger>
+                <TooltipContent {...actionMenuTooltipProps}>{disabledReason}</TooltipContent>
+              </Tooltip>
+            );
+          })}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    ) : null;
+
+  const isAlreadyVoided = !!(document as any)?.voided_at;
+  const effectiveVoidDisabledReason =
+    voidDisabledReason || (isAlreadyVoided ? t("This document is already voided.") : undefined);
 
   const voidButton =
-    !isDraft && onVoid ? (
-      <Button variant="destructive" size="sm" onClick={onVoid} disabled={isVoiding} className="cursor-pointer">
-        {isVoiding ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Ban className="mr-2 h-4 w-4" />}
-        {isVoiding ? t("Voiding...") : t("Void")}
-      </Button>
-    ) : null;
+    !isDraft && onVoid
+      ? (() => {
+          const button = (
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={effectiveVoidDisabledReason ? undefined : onVoid}
+              disabled={isVoiding || !!effectiveVoidDisabledReason}
+              className="cursor-pointer"
+            >
+              {isVoiding ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Ban className="mr-2 h-4 w-4" />}
+              {isVoiding ? t("Voiding...") : t("Void")}
+            </Button>
+          );
+
+          if (!effectiveVoidDisabledReason) return button;
+
+          return (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span>{button}</span>
+              </TooltipTrigger>
+              <TooltipContent {...actionMenuTooltipProps}>{effectiveVoidDisabledReason}</TooltipContent>
+            </Tooltip>
+          );
+        })()
+      : null;
 
   const finalizeButton =
     isDraft && onFinalize ? (
@@ -378,14 +503,14 @@ export function DocumentActionsBar({
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      {/* Primary actions — always visible */}
+      {/* Always-visible compact actions */}
       {pdfButton}
-      {eslogButton}
       {sendButton}
-      {paymentButton}
 
-      {/* Secondary actions — visible on md+ screens as inline buttons */}
+      {/* Additional actions — visible on md+ screens as inline buttons */}
       <div className="hidden flex-wrap items-center gap-2 md:flex">
+        {eslogButton}
+        {paymentButton}
         {editButton}
         {shareButton}
         {recurringButton}
@@ -396,7 +521,7 @@ export function DocumentActionsBar({
       </div>
 
       {/* Mobile overflow — visible on small screens only */}
-      {hasSecondaryActions && (
+      {(eslogButton || paymentButton || hasSecondaryActions) && (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="sm" className="cursor-pointer md:hidden">
@@ -404,6 +529,26 @@ export function DocumentActionsBar({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
+            {eslogButton && (
+              <DropdownMenuItem onClick={handleDownloadEslog} disabled={isDownloadingEslog} className="cursor-pointer">
+                <FileCode2 className="mr-2 h-4 w-4" />
+                e-SLOG
+              </DropdownMenuItem>
+            )}
+            {supportsPayments && paymentAllowed && (onAddPayment || paymentDisabledReason) ? (
+              paymentDisabledReason ? (
+                <DropdownMenuItem disabled className="cursor-pointer">
+                  <Plus className="mr-2 h-4 w-4" />
+                  {t("Payment")}
+                </DropdownMenuItem>
+              ) : (
+                <DropdownMenuItem onClick={onAddPayment} className="cursor-pointer">
+                  <Plus className="mr-2 h-4 w-4" />
+                  {t("Payment")}
+                </DropdownMenuItem>
+              )
+            ) : null}
+            {(eslogButton || paymentButton) && hasSecondaryActions && <DropdownMenuSeparator />}
             {onEdit && (
               <DropdownMenuItem
                 onClick={isEditable ? onEdit : undefined}
@@ -431,15 +576,34 @@ export function DocumentActionsBar({
                 {recurringLabel || t("Recurring")}
               </DropdownMenuItem>
             )}
-            {onDuplicate && (
+            {onDuplicate && duplicateTargets.length > 0 && (
               <>
                 <DropdownMenuSeparator />
-                {getAllowedDuplicateTargets(documentType).map((targetType) => (
-                  <DropdownMenuItem key={targetType} onClick={() => onDuplicate(targetType)} className="cursor-pointer">
-                    <Copy className="mr-2 h-4 w-4" />
-                    {targetType === documentType ? t(`Duplicate ${documentType}`) : t(`Create ${targetType}`)}
-                  </DropdownMenuItem>
-                ))}
+                {duplicateTargets.map((targetType) => {
+                  const disabledReason = duplicateTargetDisabledReasons?.[targetType];
+                  const item = (
+                    <DropdownMenuItem
+                      key={targetType}
+                      onClick={disabledReason ? undefined : () => onDuplicate(targetType)}
+                      disabled={!!disabledReason}
+                      className="cursor-pointer"
+                    >
+                      <Copy className="mr-2 h-4 w-4" />
+                      {getDuplicateActionLabel(targetType)}
+                    </DropdownMenuItem>
+                  );
+
+                  if (!disabledReason) return item;
+
+                  return (
+                    <Tooltip key={targetType}>
+                      <TooltipTrigger asChild>
+                        <div>{item}</div>
+                      </TooltipTrigger>
+                      <TooltipContent {...actionMenuTooltipProps}>{disabledReason}</TooltipContent>
+                    </Tooltip>
+                  );
+                })}
               </>
             )}
             {(voidButton || finalizeButton || deleteDraftButton) && <DropdownMenuSeparator />}
@@ -449,16 +613,31 @@ export function DocumentActionsBar({
                 {t("Finalize")}
               </DropdownMenuItem>
             )}
-            {!isDraft && onVoid && (
-              <DropdownMenuItem
-                onClick={onVoid}
-                disabled={isVoiding}
-                className="hover:!bg-destructive hover:!text-destructive-foreground focus:!bg-destructive focus:!text-destructive-foreground cursor-pointer text-destructive"
-              >
-                <Ban className="mr-2 h-4 w-4" />
-                {t("Void")}
-              </DropdownMenuItem>
-            )}
+            {!isDraft &&
+              onVoid &&
+              (() => {
+                const item = (
+                  <DropdownMenuItem
+                    onClick={effectiveVoidDisabledReason ? undefined : onVoid}
+                    disabled={isVoiding || !!effectiveVoidDisabledReason}
+                    className="hover:!bg-destructive hover:!text-destructive-foreground focus:!bg-destructive focus:!text-destructive-foreground cursor-pointer text-destructive"
+                  >
+                    <Ban className="mr-2 h-4 w-4" />
+                    {t("Void")}
+                  </DropdownMenuItem>
+                );
+
+                if (!effectiveVoidDisabledReason) return item;
+
+                return (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div>{item}</div>
+                    </TooltipTrigger>
+                    <TooltipContent {...actionMenuTooltipProps}>{effectiveVoidDisabledReason}</TooltipContent>
+                  </Tooltip>
+                );
+              })()}
             {isDraft && onDeleteDraft && (
               <DropdownMenuItem
                 onClick={onDeleteDraft}

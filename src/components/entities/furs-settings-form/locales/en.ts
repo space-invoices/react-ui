@@ -18,6 +18,9 @@ export default {
   "Register at least one business premise before fiscalizing invoices":
     "Register at least one business premise before fiscalizing invoices",
   "Configure FURS fiscalization behavior": "Configure FURS fiscalization behavior",
+  "Skip Fiscalization by Default": "Skip Fiscalization by Default",
+  "New invoices and advance invoices start with fiscalization turned off when payment type allows it. Non-bank-transfer payments still force fiscalization back on.":
+    "New invoices and advance invoices start with fiscalization turned off when payment type allows it. Non-bank-transfer payments still force fiscalization back on.",
   "Configure how FURS fiscalization works for your entity. Enable fiscalization, choose your numbering strategy, and set operator information.":
     "Configure how FURS fiscalization works for your entity. Enable fiscalization, choose your numbering strategy, and set operator information.",
   "Enable FURS Fiscalization": "Enable FURS Fiscalization",
@@ -175,6 +178,24 @@ export default {
     "Once enabled, all new invoices will be automatically sent to FURS for fiscalization. Make sure you have completed all the setup steps before enabling.",
   "You can disable fiscalization at any time, but note that invoices issued while disabled will not be fiscalized.":
     "You can disable fiscalization at any time, but note that invoices issued while disabled will not be fiscalized.",
+  "Internal Act": "Internal Act",
+  "Download the internal act in printable PDF or editable DOCX form before enabling FURS fiscalization.":
+    "Download the internal act in printable PDF or editable DOCX form before enabling FURS fiscalization.",
+  "The internal act contains your current business premises, devices, and invoice numbering setup.":
+    "The internal act contains your current business premises, devices, and invoice numbering setup.",
+  "Download PDF": "Download PDF",
+  "Download DOCX": "Download DOCX",
+  "Preparing PDF...": "Preparing PDF...",
+  "Preparing DOCX...": "Preparing DOCX...",
+  "Upload a valid certificate to download the internal act": "Upload a valid certificate to download the internal act",
+  "Register at least one active business premise to download the internal act":
+    "Register at least one active business premise to download the internal act",
+  "Register at least one electronic device to download the internal act":
+    "Register at least one electronic device to download the internal act",
+  "Internal act PDF downloaded": "Internal act PDF downloaded",
+  "Internal act DOCX downloaded": "Internal act DOCX downloaded",
+  "Failed to download internal act": "Failed to download internal act",
+  "Internal act download unavailable": "Internal act download unavailable",
   "You must upload a digital certificate before you can register business premises":
     "You must upload a digital certificate before you can register business premises",
   // User FURS settings
@@ -219,4 +240,7 @@ export default {
   "Your FURS operator information is needed to fiscalize this document. Please enter your operator details.":
     "Your FURS operator information is needed to fiscalize this document. Please enter your operator details.",
   "Save & Retry": "Save & Retry",
+  "A premise with this name already exists": "A premise with this name already exists",
+  "Exactly 4 digits": "Exactly 4 digits",
+  "Your Name": "Your Name",
 } as const;

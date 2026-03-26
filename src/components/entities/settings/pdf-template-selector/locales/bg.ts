@@ -1,0 +1,20 @@
+export default {
+  "PDF Template": "PDF шаблон",
+  "Choose the design template for your invoices and documents":
+    "Изберете дизайнерски шаблон за вашите фактури и документи",
+  Preview: "Преглед",
+  Template: "Шаблон",
+  Modern: "Модерен",
+  "Modern template description": "Modern template description",
+  Classic: "Класически",
+  "Classic template description": "Classic template description",
+  Condensed: "Компактен",
+  "Condensed template description": "Condensed template description",
+  Minimal: "Минимален",
+  "Minimal template description": "Minimal template description",
+  Fashion: "Моден",
+  "Fashion template description": "Fashion template description",
+  "Save Template": "Запази шаблон",
+  "Template saved successfully": "Шаблонът е запазен успешно",
+  "Failed to save template": "Неуспешно запазване на шаблон",
+} as const;

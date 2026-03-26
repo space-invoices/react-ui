@@ -1,19 +1,29 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { CreateCreditNoteRequest, CreditNote } from "@spaceinvoices/js-sdk";
 import { useQueryClient } from "@tanstack/react-query";
+import { Check, X } from "lucide-react";
+import type { ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Resolver } from "react-hook-form";
 import { useForm, useWatch } from "react-hook-form";
 import type { z } from "zod";
+import { Button } from "@/ui/components/ui/button";
 import { Form } from "@/ui/components/ui/form";
 import { Skeleton } from "@/ui/components/ui/skeleton";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/ui/components/ui/tooltip";
 import { createCreditNoteSchema } from "@/ui/generated/schemas";
 import { useNextDocumentNumber } from "@/ui/hooks/use-next-document-number";
 import { usePremiseSelection } from "@/ui/hooks/use-premise-selection";
 import { useTransactionTypeCheck } from "@/ui/hooks/use-transaction-type-check";
-import { buildFinaOptions, buildFursOptions } from "@/ui/lib/fiscalization-options";
+import { buildFinaOptions, buildFursOptions, type FiscalizationOperatorOverride } from "@/ui/lib/fiscalization-options";
+import {
+  normalizePtDocumentInput,
+  type PtDocumentInputForm,
+  ptDocumentInputFormSchema,
+} from "@/ui/lib/pt-document-input";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
+import { cn } from "@/ui/lib/utils";
 import { useEntities } from "@/ui/providers/entities-context";
 import { useFormFooterRegistration } from "@/ui/providers/form-footer-context";
 import { CUSTOMERS_CACHE_KEY } from "../../customers/customers.hooks";
@@ -25,10 +35,19 @@ import {
   DocumentSignatureField,
   DocumentTaxClauseField,
 } from "../../documents/create/document-details-section";
+import { withRequiredDocumentItemFields } from "../../documents/create/document-item-validation";
 import { DocumentItemsSection, type PriceModesMap } from "../../documents/create/document-items-section";
 import { DocumentRecipientSection } from "../../documents/create/document-recipient-section";
 import { MarkAsPaidSection } from "../../documents/create/mark-as-paid-section";
-import { prepareDocumentSubmission } from "../../documents/create/prepare-document-submission";
+import {
+  calculateDocumentTotal,
+  coercePaymentRowsToType,
+  createEmptyPaymentRow,
+  type DraftPaymentRow,
+  getFirstValidPaymentType,
+  serializePaymentRows,
+  validatePaymentRows,
+} from "../../documents/create/payment-rows";
 import { useDocumentCustomerForm } from "../../documents/create/use-document-customer-form";
 import type { DocumentTypes } from "../../documents/types";
 import { useCreateCreditNote } from "../credit-notes.hooks";
@@ -41,6 +60,7 @@ import nl from "./locales/nl";
 import pl from "./locales/pl";
 import pt from "./locales/pt";
 import sl from "./locales/sl";
+import { prepareCreditNoteSubmission } from "./prepare-credit-note-submission";
 
 const translations = {
   sl,
@@ -53,14 +73,19 @@ const translations = {
   pl,
   hr,
 } as const;
+const createCreditNoteFormSchema = withRequiredDocumentItemFields(
+  createCreditNoteSchema.extend({
+    pt: ptDocumentInputFormSchema.optional(),
+  }),
+);
 
 // Form values: extend schema with local-only fields (number is for display, not sent to API)
-type CreateCreditNoteFormValues = z.infer<typeof createCreditNoteSchema> & {
+type CreateCreditNoteFormValues = z.infer<typeof createCreditNoteFormSchema> & {
   number?: string;
 };
 
 /** Preview payload extends request with display-only fields */
-type CreditNotePreviewPayload = Partial<CreateCreditNoteRequest> & { number?: string };
+type CreditNotePreviewPayload = Partial<CreateCreditNoteRequest> & { number?: string; pt?: PtDocumentInputForm };
 
 type CreateCreditNoteFormProps = {
   type: DocumentTypes;
@@ -69,8 +94,16 @@ type CreateCreditNoteFormProps = {
   onError?: (error: unknown) => void;
   onChange?: (data: CreditNotePreviewPayload) => void;
   onAddNewTax?: () => void;
+  onHeaderActionChange?: (action: ReactNode | null) => void;
   /** Initial values for form fields (used for document duplication) */
   initialValues?: Partial<CreateCreditNoteRequest>;
+  /** Whether draft actions should be available in the UI */
+  allowDrafts?: boolean;
+  /** Optional app-level content rendered inside the details section. */
+  detailsExtras?: ReactNode;
+  /** Request-scoped operator override for embed fiscalization flows. */
+  operatorPrefill?: FiscalizationOperatorOverride;
+  translationLocale?: string;
 } & ComponentTranslationProps;
 
 export default function CreateCreditNoteForm({
@@ -80,7 +113,12 @@ export default function CreateCreditNoteForm({
   onError,
   onChange,
   onAddNewTax,
+  onHeaderActionChange,
   initialValues,
+  allowDrafts = true,
+  detailsExtras,
+  operatorPrefill,
+  translationLocale,
   t: translateProp,
   namespace,
   locale,
@@ -89,6 +127,7 @@ export default function CreateCreditNoteForm({
     t: translateProp,
     namespace,
     locale,
+    translationLocale,
     translations,
   });
 
@@ -100,10 +139,12 @@ export default function CreateCreditNoteForm({
   // ============================================================================
   const furs = usePremiseSelection({ entityId, type: "furs" });
   const fina = usePremiseSelection({ entityId, type: "fina" });
+  const [skipFiscalization, setSkipFiscalization] = useState(false);
 
   // UI-only state (not part of API schema)
   const [markAsPaid, setMarkAsPaid] = useState(false);
-  const [paymentTypes, setPaymentTypes] = useState<string[]>(["bank_transfer"]);
+  const [paymentRows, setPaymentRows] = useState<DraftPaymentRow[]>([createEmptyPaymentRow()]);
+  const [paymentValidationMessage, setPaymentValidationMessage] = useState<string | undefined>();
   const [isDraftPending, setIsDraftPending] = useState(false);
 
   // Service date type state (single date or range)
@@ -127,7 +168,7 @@ export default function CreateCreditNoteForm({
 
   const form = useForm<CreateCreditNoteFormValues>({
     // Cast resolver to accept extended form type (includes UI-only fields)
-    resolver: zodResolver(createCreditNoteSchema) as Resolver<CreateCreditNoteFormValues>,
+    resolver: zodResolver(createCreditNoteFormSchema) as Resolver<CreateCreditNoteFormValues>,
     defaultValues: {
       number: "",
       date: initialValues?.date || new Date().toISOString(),
@@ -164,12 +205,23 @@ export default function CreateCreditNoteForm({
       tax_clause: (initialValues as any)?.tax_clause ?? "",
       payment_terms: initialValues?.payment_terms ?? defaultPaymentTerms,
       footer: (initialValues as any)?.footer ?? defaultFooter,
+      pt: ((initialValues as any)?.pt as PtDocumentInputForm | undefined) ?? undefined,
     },
   });
 
   const formValues = useWatch({
     control: form.control,
   });
+  const paymentDocumentTotal = useMemo(
+    () => calculateDocumentTotal((formValues as any)?.items ?? [], priceModesRef.current),
+    [formValues],
+  );
+  const hasExplicitNonBankTransferPayment =
+    markAsPaid && paymentRows.some((row) => row.type != null && row.type !== "bank_transfer");
+  const skipPreferenceInitializedRef = useRef(false);
+  const skipPaymentCoercionPendingRef = useRef(false);
+  const previousSkipFiscalizationRef = useRef(skipFiscalization);
+  const previousMarkAsPaidRef = useRef(markAsPaid);
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
   const prevPayloadRef = useRef("");
@@ -197,17 +249,61 @@ export default function CreateCreditNoteForm({
   const useFinaNumbering =
     !!fina.isActive && (finaUnifiedNumbering || transactionType == null || transactionType === "domestic");
   const isFinaNonDomestic = !!fina.isActive && !useFinaNumbering;
+  const isFursActive = furs.isActive && !skipFiscalization;
+
+  useEffect(() => {
+    if (skipPreferenceInitializedRef.current || furs.isLoading) return;
+
+    skipPreferenceInitializedRef.current = true;
+    if (furs.settings?.default_skip_fiscalization === true) {
+      setSkipFiscalization(true);
+    }
+  }, [furs.isLoading, furs.settings?.default_skip_fiscalization]);
+
+  useEffect(() => {
+    const skipJustEnabled = skipFiscalization && !previousSkipFiscalizationRef.current;
+    const paidJustEnabled = markAsPaid && !previousMarkAsPaidRef.current;
+
+    if (skipFiscalization && markAsPaid && (skipJustEnabled || paidJustEnabled)) {
+      const nextPaymentRows = coercePaymentRowsToType(paymentRows, "bank_transfer");
+      const hasChanged = nextPaymentRows.some((row, index) => row.type !== paymentRows[index]?.type);
+
+      if (hasChanged) {
+        skipPaymentCoercionPendingRef.current = true;
+        setPaymentRows(nextPaymentRows);
+      }
+    }
+
+    previousSkipFiscalizationRef.current = skipFiscalization;
+    previousMarkAsPaidRef.current = markAsPaid;
+  }, [markAsPaid, paymentRows, skipFiscalization]);
+
+  useEffect(() => {
+    if (skipPaymentCoercionPendingRef.current) return;
+
+    if (hasExplicitNonBankTransferPayment && skipFiscalization) {
+      setSkipFiscalization(false);
+    }
+  }, [hasExplicitNonBankTransferPayment, skipFiscalization]);
+
+  useEffect(() => {
+    if (!skipPaymentCoercionPendingRef.current) return;
+
+    if (!markAsPaid || paymentRows.every((row) => row.type === "bank_transfer")) {
+      skipPaymentCoercionPendingRef.current = false;
+    }
+  }, [markAsPaid, paymentRows]);
 
   // ============================================================================
   // Next Credit Note Number Preview
   // ============================================================================
   // Use same premise/device params for both FURS and FINA (entity is either one, never both)
-  const activePremiseNameForNumber = furs.isActive
+  const activePremiseNameForNumber = isFursActive
     ? furs.selectedPremiseName
     : useFinaNumbering
       ? fina.selectedPremiseName
       : undefined;
-  const activeDeviceNameForNumber = furs.isActive
+  const activeDeviceNameForNumber = isFursActive
     ? furs.selectedDeviceName
     : useFinaNumbering
       ? fina.selectedDeviceName
@@ -222,6 +318,54 @@ export default function CreateCreditNoteForm({
   // Overall loading state
   const isFormDataLoading =
     furs.isLoading || !furs.isSelectionReady || fina.isLoading || !fina.isSelectionReady || isNextNumberLoading;
+
+  useEffect(() => {
+    if (!onHeaderActionChange) return;
+
+    if (furs.isLoading || fina.isLoading) {
+      onHeaderActionChange(null);
+      return;
+    }
+
+    const showFursToggle = furs.isEnabled && furs.hasPremises;
+    if (!showFursToggle) {
+      onHeaderActionChange(null);
+      return;
+    }
+
+    const isFursChecked = !skipFiscalization;
+
+    onHeaderActionChange(
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              type="button"
+              variant={isFursChecked ? "outline" : "ghost"}
+              size="sm"
+              className={cn("h-8 cursor-pointer gap-2", !isFursChecked && "text-destructive hover:text-destructive")}
+              onClick={() => setSkipFiscalization(!skipFiscalization)}
+            >
+              <div
+                className={cn(
+                  "flex size-4 items-center justify-center rounded border",
+                  isFursChecked
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-destructive bg-destructive text-destructive-foreground",
+                )}
+              >
+                {isFursChecked ? <Check className="size-3" /> : <X className="size-3" />}
+              </div>
+              <span>{t("Fiscally verify")}</span>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom" className="max-w-xs">
+            {isFursChecked ? t("Click to skip fiscalization for this credit note") : t("Click to enable fiscalization")}
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>,
+    );
+  }, [fina.isLoading, furs.hasPremises, furs.isEnabled, furs.isLoading, onHeaderActionChange, skipFiscalization, t]);
 
   // Auto-populate tax_clause from entity settings when transaction type changes
   const effectiveTransactionType = transactionType ?? "domestic";
@@ -280,12 +424,14 @@ export default function CreateCreditNoteForm({
   // Shared submit logic for both regular save and save as draft
   const submitCreditNote = useCallback(
     (values: CreateCreditNoteFormValues, isDraft: boolean) => {
-      // Build FURS options (skip for drafts; no skip toggle for credit notes)
+      // Build FURS options (skip for drafts; user can also skip fiscalization explicitly)
       const fursOptions = buildFursOptions({
         isDraft,
         isEnabled: furs.isEnabled,
+        skipFiscalization,
         premiseName: furs.selectedPremiseName,
         deviceName: furs.selectedDeviceName,
+        operator: operatorPrefill,
       });
 
       // Build FINA options (skip for drafts; FINA can't be skipped)
@@ -294,15 +440,26 @@ export default function CreateCreditNoteForm({
         useFinaNumbering,
         premiseName: fina.selectedPremiseName,
         deviceName: fina.selectedDeviceName,
-        paymentType: paymentTypes[0],
+        paymentType: getFirstValidPaymentType(paymentRows),
+        operator: operatorPrefill,
       });
 
-      const payload = prepareDocumentSubmission(values, {
+      if (!isDraft && markAsPaid) {
+        const paymentValidation = validatePaymentRows(paymentRows, paymentDocumentTotal, "partial_allowed");
+        const paymentMessage =
+          paymentValidation.typeError ?? paymentValidation.amountError ?? paymentValidation.totalError;
+
+        if (paymentMessage) {
+          setPaymentValidationMessage(paymentMessage);
+          return;
+        }
+      }
+
+      const payload = prepareCreditNoteSubmission(values, {
         originalCustomer,
         wasCustomerFormShown: showCustomerForm,
         markAsPaid: isDraft ? false : markAsPaid,
-        paymentTypes,
-        documentType: "credit_note",
+        payments: serializePaymentRows(paymentRows, paymentDocumentTotal),
         priceModes: priceModesRef.current,
         isDraft,
       });
@@ -319,7 +476,19 @@ export default function CreateCreditNoteForm({
 
       createCreditNote(payload as CreateCreditNoteRequest);
     },
-    [createCreditNote, furs, fina, useFinaNumbering, markAsPaid, originalCustomer, paymentTypes, showCustomerForm],
+    [
+      createCreditNote,
+      fina,
+      furs,
+      markAsPaid,
+      originalCustomer,
+      paymentDocumentTotal,
+      paymentRows,
+      showCustomerForm,
+      skipFiscalization,
+      operatorPrefill,
+      useFinaNumbering,
+    ],
   );
 
   // Handle save as draft
@@ -341,11 +510,13 @@ export default function CreateCreditNoteForm({
     isPending,
     isDirty: form.formState.isDirty || !!initialValues,
     label: t("Save"),
-    secondaryAction: {
-      label: t("Save as Draft"),
-      onClick: handleSaveAsDraft,
-      isPending: isDraftPending,
-    },
+    secondaryAction: allowDrafts
+      ? {
+          label: t("Save as Draft"),
+          onClick: handleSaveAsDraft,
+          isPending: isDraftPending,
+        }
+      : undefined,
   });
 
   // Set default note and payment terms from entity settings when entity data is available
@@ -400,6 +571,7 @@ export default function CreateCreditNoteForm({
       note: values.note,
       payment_terms: values.payment_terms,
       signature: values.signature,
+      ...(normalizePtDocumentInput(values.pt) ? { pt: normalizePtDocumentInput(values.pt) } : {}),
     };
   }, []);
 
@@ -490,11 +662,13 @@ export default function CreateCreditNoteForm({
             selectedCustomerId={selectedCustomerId}
             initialCustomerName={initialCustomerName}
             t={t}
+            locale={locale}
           />
           <DocumentDetailsSection
             control={form.control}
             documentType={_type}
             t={t}
+            locale={locale}
             fursInline={
               furs.isEnabled && furs.hasPremises
                 ? {
@@ -510,6 +684,7 @@ export default function CreateCreditNoteForm({
                     selectedDevice: furs.selectedDeviceName,
                     onPremiseChange: furs.setSelectedPremiseName,
                     onDeviceChange: furs.setSelectedDeviceName,
+                    isSkipped: skipFiscalization,
                   }
                 : undefined
             }
@@ -539,24 +714,38 @@ export default function CreateCreditNoteForm({
             {/* Credit note specific: Mark as paid section (UI-only state, not in form schema) */}
             <MarkAsPaidSection
               checked={markAsPaid}
-              onCheckedChange={setMarkAsPaid}
-              paymentTypes={paymentTypes}
-              onPaymentTypesChange={setPaymentTypes}
+              onCheckedChange={(checked) => {
+                setMarkAsPaid(checked);
+                setPaymentValidationMessage(undefined);
+              }}
+              paymentRows={paymentRows}
+              onPaymentRowsChange={(rows) => {
+                setPaymentRows(rows);
+                setPaymentValidationMessage(undefined);
+              }}
+              documentTotal={paymentDocumentTotal}
               t={t}
               alwaysShowPaymentType={!!fina.isActive}
+              validationMessage={paymentValidationMessage}
             />
+            {detailsExtras}
           </DocumentDetailsSection>
         </div>
 
         <DocumentItemsSection
           control={form.control}
+          documentType={_type}
           watch={form.watch}
           setValue={form.setValue}
+          clearErrors={form.clearErrors}
+          trigger={form.trigger}
+          isSubmitted={form.formState.isSubmitted}
           getValues={form.getValues}
           entityId={entityId}
           currencyCode={activeEntity?.currency_code ?? undefined}
           onAddNewTax={onAddNewTax}
           t={t}
+          locale={locale}
           maxTaxesPerItem={activeEntity?.country_rules?.max_taxes_per_item}
           priceModesRef={priceModesRef}
           initialPriceModes={initialPriceModes}

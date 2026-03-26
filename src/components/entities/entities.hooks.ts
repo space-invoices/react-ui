@@ -1,18 +1,28 @@
 import type { CreateEntityBody, Entity, PatchEntityBody } from "@spaceinvoices/js-sdk";
-
+import { entities } from "@spaceinvoices/js-sdk";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createResourceHooks } from "@/ui/hooks/create-resource-hooks";
-import { useSDK } from "@/ui/providers/sdk-provider";
 
 // Cache key for entities queries
 export const ENTITIES_CACHE_KEY = "entities";
+
+const disableEntity = async (id: string): Promise<void> => {
+  await entities.disableEntity(id);
+};
 
 // Create hooks for entity operations (create and delete only)
 // Note: Update hook is custom because SDK uses "patchEntity" not "updateEntity"
 const { useCreateResource: useCreateEntity, useDeleteResource: useDeleteEntity } = createResourceHooks<
   Entity,
   CreateEntityBody
->("entities", ENTITIES_CACHE_KEY);
+>(
+  {
+    create: entities.create,
+    update: entities.update,
+    delete: disableEntity,
+  },
+  ENTITIES_CACHE_KEY,
+);
 
 // Custom update hook because entities API uses "patchEntity" with different param naming
 type UpdateEntityOptions = {
@@ -23,13 +33,11 @@ type UpdateEntityOptions = {
 };
 
 function useUpdateEntity(options: UpdateEntityOptions = {}) {
-  const { sdk } = useSDK();
   const queryClient = useQueryClient();
 
   return useMutation<Entity, Error, { id: string; data: PatchEntityBody }>({
     mutationFn: async (variables) => {
-      // SDK update expects: (id, body, options?)
-      return sdk.entities.update(variables.id, variables.data, {
+      return entities.update(variables.id, variables.data, {
         entity_id: options.entityId ?? undefined,
       });
     },
@@ -47,4 +55,4 @@ function useUpdateEntity(options: UpdateEntityOptions = {}) {
 // Export the type for the create entity data for convenience
 export type CreateEntityData = CreateEntityBody;
 
-export { useCreateEntity, useUpdateEntity, useDeleteEntity };
+export { useCreateEntity, useDeleteEntity, useUpdateEntity };

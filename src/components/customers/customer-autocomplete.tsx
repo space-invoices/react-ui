@@ -5,7 +5,10 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import { Autocomplete } from "@/ui/common/autocomplete";
 import { useDebounce } from "@/ui/hooks/use-debounce";
+import type { ComponentTranslationProps } from "@/ui/lib/translation";
+import { createTranslation } from "@/ui/lib/translation";
 
+import { autocompleteTranslations } from "../common/autocomplete-locales";
 import { useCustomerSearch, useRecentCustomers } from "./customers.hooks";
 
 const MAX_TEXT_LENGTH = 100;
@@ -28,9 +31,11 @@ type CustomerAutocompleteProps = {
   /** Initial display name when pre-populating with a customer (e.g., for duplication) */
   initialDisplayName?: string;
   inputTestId?: string;
+  inputDataDemo?: string;
   inputRef?: React.Ref<HTMLInputElement>;
   commitOnBlurMode?: "none" | "create" | "update-inline";
-};
+  ariaInvalid?: boolean;
+} & ComponentTranslationProps;
 
 export function CustomerAutocomplete({
   entityId,
@@ -44,9 +49,22 @@ export function CustomerAutocomplete({
   onBlur: onBlurPropFromParent, // Destructure the onBlur prop from parent
   initialDisplayName,
   inputTestId,
+  inputDataDemo,
   inputRef,
   commitOnBlurMode = "none",
+  ariaInvalid = false,
+  locale = "en",
+  translationLocale,
+  t: translationFn,
+  namespace,
 }: CustomerAutocompleteProps) {
+  const t = createTranslation({
+    t: translationFn,
+    namespace,
+    locale,
+    translationLocale,
+    translations: autocompleteTranslations,
+  });
   const [search, setSearch] = useState(initialDisplayName || "");
   const [displayValue, setDisplayValue] = useState(initialDisplayName || "");
   const preserveSearchOnClearRef = useRef(false);
@@ -77,12 +95,19 @@ export function CustomerAutocomplete({
   }, [debouncedSearch, searchResults, recentCustomers]);
 
   const options = customers.map((customer) => {
+    const customerIndex = customers.findIndex((entry) => entry.id === customer.id);
     const truncatedName = truncateText(customer.name);
     const address = [customer.address, customer.city, customer.country].filter(Boolean).join(", ");
     const truncatedAddress = truncateText(address);
 
     return {
       value: customer.id,
+      ...(customerIndex === 0
+        ? {
+            testId: "marketing-demo-customer-option-0",
+            dataDemo: "marketing-demo-customer-option-0",
+          }
+        : {}),
       label: (
         <div className="flex flex-col overflow-hidden">
           <span className="truncate">{truncatedName}</span>
@@ -93,7 +118,8 @@ export function CustomerAutocomplete({
   });
 
   // Always add "Create new" option at the top
-  const createNewLabel = debouncedSearch?.trim() ? `Create "${debouncedSearch}"` : "Create new";
+  const createNewLabel = debouncedSearch?.trim() ? `${t("Create")} "${debouncedSearch}"` : t("Create new");
+  const resolvedPlaceholder = placeholder ? t(placeholder) : placeholder;
 
   options.unshift({
     value: `__create__:${debouncedSearch || ""}`,
@@ -212,15 +238,17 @@ export function CustomerAutocomplete({
       commitUnselectedOnBlur={commitOnBlurMode !== "none"}
       onBlur={handleBlur} // Pass the new handleBlur to Autocomplete
       options={options}
-      placeholder={placeholder}
+      placeholder={resolvedPlaceholder}
       className={className}
       disabled={disabled}
       loading={isLoading}
-      emptyText={debouncedSearch ? "No customers found" : "Recent customers"}
+      emptyText={debouncedSearch ? t("No customers found") : t("Recent customers")}
       displayValue={displayValue}
       inputTestId={inputTestId}
+      inputDataDemo={inputDataDemo}
       committedDisplayValue={committedDisplayName}
       inputRef={inputRef}
+      ariaInvalid={ariaInvalid}
     />
   );
 }

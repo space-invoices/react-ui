@@ -23,6 +23,7 @@ import {
   DocumentSignatureField,
   DocumentTaxClauseField,
 } from "../../documents/create/document-details-section";
+import { withRequiredDocumentItemFields } from "../../documents/create/document-item-validation";
 import { DocumentItemsSection, type PriceModesMap } from "../../documents/create/document-items-section";
 import { DocumentRecipientSection } from "../../documents/create/document-recipient-section";
 import type { DocumentTypes } from "../../documents/types";
@@ -68,6 +69,9 @@ type CreateDeliveryNoteFormProps = {
   onAddNewTax?: () => void;
   /** Initial values for form fields (used for document duplication) */
   initialValues?: Partial<CreateDeliveryNoteRequest>;
+  /** Whether draft actions should be available in the UI */
+  allowDrafts?: boolean;
+  translationLocale?: string;
 } & ComponentTranslationProps;
 
 export default function CreateDeliveryNoteForm({
@@ -78,6 +82,8 @@ export default function CreateDeliveryNoteForm({
   onChange,
   onAddNewTax,
   initialValues,
+  allowDrafts = true,
+  translationLocale,
   t: translateProp,
   namespace,
   locale,
@@ -86,6 +92,7 @@ export default function CreateDeliveryNoteForm({
     t: translateProp,
     namespace,
     locale,
+    translationLocale,
     translations,
   });
 
@@ -97,6 +104,7 @@ export default function CreateDeliveryNoteForm({
 
   // Hide prices state (delivery note specific)
   const defaultHidePrices = (activeEntity?.settings as any)?.delivery_note_hide_prices ?? false;
+  const defaultNote = (activeEntity?.settings as any)?.default_delivery_note_note || "";
   const defaultFooter = (activeEntity?.settings as any)?.document_footer || "";
   const [hidePrices, setHidePrices] = useState<boolean>((initialValues as any)?.hide_prices ?? defaultHidePrices);
 
@@ -106,7 +114,9 @@ export default function CreateDeliveryNoteForm({
   });
 
   const form = useForm<CreateDeliveryNoteFormValues>({
-    resolver: zodResolver(createDeliveryNoteSchema) as Resolver<CreateDeliveryNoteFormValues>,
+    resolver: zodResolver(
+      withRequiredDocumentItemFields(createDeliveryNoteSchema),
+    ) as Resolver<CreateDeliveryNoteFormValues>,
     defaultValues: {
       number: "",
       date: initialValues?.date || new Date().toISOString(),
@@ -138,7 +148,7 @@ export default function CreateDeliveryNoteForm({
           ],
       currency_code: initialValues?.currency_code || activeEntity?.currency_code || "EUR",
       reference: (initialValues as any)?.reference ?? "",
-      note: initialValues?.note ?? "",
+      note: initialValues?.note ?? defaultNote,
       tax_clause: (initialValues as any)?.tax_clause ?? "",
       footer: (initialValues as any)?.footer ?? defaultFooter,
     },
@@ -169,6 +179,14 @@ export default function CreateDeliveryNoteForm({
     const entityDefaultFooter = (activeEntity?.settings as any)?.document_footer;
     if (entityDefaultFooter && !form.getValues("footer")) {
       form.setValue("footer", entityDefaultFooter);
+    }
+  }, [activeEntity, form]);
+
+  // Set default note from entity settings when entity data is available
+  useEffect(() => {
+    const entityDefaultNote = (activeEntity?.settings as any)?.default_delivery_note_note;
+    if (entityDefaultNote && !form.getValues("note")) {
+      form.setValue("note", entityDefaultNote);
     }
   }, [activeEntity, form]);
 
@@ -286,12 +304,15 @@ export default function CreateDeliveryNoteForm({
   }, [form, submitDeliveryNote]);
 
   const secondaryAction = useMemo(
-    () => ({
-      label: t("Save as Draft"),
-      onClick: handleSaveAsDraft,
-      isPending: isDraftPending,
-    }),
-    [t, handleSaveAsDraft, isDraftPending],
+    () =>
+      allowDrafts
+        ? {
+            label: t("Save as Draft"),
+            onClick: handleSaveAsDraft,
+            isPending: isDraftPending,
+          }
+        : undefined,
+    [allowDrafts, t, handleSaveAsDraft, isDraftPending],
   );
 
   useFormFooterRegistration({
@@ -302,28 +323,31 @@ export default function CreateDeliveryNoteForm({
     secondaryAction,
   });
 
-  const buildPreviewPayload = useCallback((values: CreateDeliveryNoteFormValues): DeliveryNotePreviewPayload => {
-    const currentItems = values.items || [];
+  const buildPreviewPayload = useCallback(
+    (values: CreateDeliveryNoteFormValues): DeliveryNotePreviewPayload => {
+      const currentItems = values.items || [];
 
-    const transformedItems = currentItems.map((item: any, index: number) => {
-      const { price, ...rest } = item;
-      const isGross = priceModesRef.current[index] ?? false;
-      return isGross ? { ...rest, gross_price: price } : { ...rest, price };
-    });
+      const transformedItems = currentItems.map((item: any, index: number) => {
+        const { price, ...rest } = item;
+        const isGross = priceModesRef.current[index] ?? false;
+        return isGross ? { ...rest, gross_price: price } : { ...rest, price };
+      });
 
-    return {
-      number: values.number,
-      date: values.date,
-      customer_id: values.customer_id,
-      customer: values.customer,
-      items: transformedItems,
-      currency_code: values.currency_code,
-      reference: values.reference,
-      note: values.note,
-      signature: values.signature,
-      hide_prices: hidePrices,
-    };
-  }, [hidePrices]);
+      return {
+        number: values.number,
+        date: values.date,
+        customer_id: values.customer_id,
+        customer: values.customer,
+        items: transformedItems,
+        currency_code: values.currency_code,
+        reference: values.reference,
+        note: values.note,
+        signature: values.signature,
+        hide_prices: hidePrices,
+      };
+    },
+    [hidePrices],
+  );
 
   const emitPreviewPayload = useCallback((payload: DeliveryNotePreviewPayload) => {
     const callback = onChangeRef.current;
@@ -362,9 +386,10 @@ export default function CreateDeliveryNoteForm({
             selectedCustomerId={selectedCustomerId}
             initialCustomerName={initialCustomerName}
             t={t}
+            locale={locale}
           />
 
-          <DocumentDetailsSection control={form.control} documentType={type} t={t}>
+          <DocumentDetailsSection control={form.control} documentType={type} t={t} locale={locale}>
             {/* Delivery note specific: Hide prices toggle */}
             <div className="flex items-center gap-2">
               <Checkbox
@@ -381,13 +406,18 @@ export default function CreateDeliveryNoteForm({
 
         <DocumentItemsSection
           control={form.control}
+          documentType={type}
           watch={form.watch}
           setValue={form.setValue}
+          clearErrors={form.clearErrors}
+          trigger={form.trigger}
+          isSubmitted={form.formState.isSubmitted}
           getValues={form.getValues}
           entityId={entityId}
           currencyCode={activeEntity?.currency_code ?? undefined}
           onAddNewTax={onAddNewTax}
           t={t}
+          locale={locale}
           maxTaxesPerItem={activeEntity?.country_rules?.max_taxes_per_item}
           priceModesRef={priceModesRef}
           initialPriceModes={initialPriceModes}

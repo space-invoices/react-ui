@@ -1,7 +1,7 @@
 import type { TransactionTypeCheckRequest, TransactionTypeCheckResponse } from "@spaceinvoices/js-sdk";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
-import { useSDK } from "../providers/sdk-provider";
+import { transactionType } from "../../../js-sdk/src/sdk/transaction-type";
 import { useDebounce } from "./use-debounce";
 
 export const TRANSACTION_TYPE_CHECK_CACHE_KEY = "transaction-type-check";
@@ -77,8 +77,6 @@ export function useTransactionTypeCheck({
   customerIsEndConsumer,
   enabled = true,
 }: UseTransactionTypeCheckParams): UseTransactionTypeCheckResult {
-  const { sdk } = useSDK();
-
   // Build the request object
   const requestData = useMemo((): TransactionTypeCheckRequest | null => {
     // Need at least issuer info to make a check
@@ -120,12 +118,9 @@ export function useTransactionTypeCheck({
     queryKey,
     queryFn: async () => {
       if (!debouncedRequest) throw new Error("No request data");
-      // Use sdk.vies.checkVies which hits the same endpoint types
-      // (sdk.transactionType is not reliably available in Vite pre-bundled builds)
-      const checkFn = sdk.transactionType?.checkTransactionType ?? sdk.vies.checkVies;
-      return checkFn(debouncedRequest);
+      return transactionType.checkTransactionType(debouncedRequest);
     },
-    enabled: enabled && !!sdk && !!debouncedRequest,
+    enabled: enabled && !!debouncedRequest,
     staleTime: CHECK_STALE_TIME,
     refetchOnWindowFocus: false,
   });

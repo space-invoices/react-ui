@@ -6,5 +6,5 @@ export default {
   Overdue: "En retard",
   Voided: "Annule",
   "No data available": "Aucune donnee disponible",
-  "Invoices": "Factures",
+  Invoices: "Factures",
 } as const;

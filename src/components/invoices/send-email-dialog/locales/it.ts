@@ -1,10 +1,26 @@
 export default {
   "Send Invoice by Email": "Invia fattura via e-mail",
+  "Send Estimate by Email": "Invia preventivo via e-mail",
+  "Send Credit Note by Email": "Invia nota di credito via e-mail",
+  "Send Advance Invoice by Email": "Invia fattura anticipata via e-mail",
+  "Send Delivery Note by Email": "Invia bolla di consegna via e-mail",
   "Send invoice by email description":
     "Invia la fattura #{number} al cliente via e-mail. La formattazione Markdown è supportata nel testo.",
+  "Send estimate by email description":
+    "Invia il preventivo #{number} al cliente via e-mail. La formattazione Markdown è supportata nel testo.",
+  "Send credit note by email description":
+    "Invia la nota di credito #{number} al cliente via e-mail. La formattazione Markdown è supportata nel testo.",
+  "Send advance invoice by email description":
+    "Invia la fattura anticipata #{number} al cliente via e-mail. La formattazione Markdown è supportata nel testo.",
+  "Send delivery note by email description":
+    "Invia la bolla di consegna #{number} al cliente via e-mail. La formattazione Markdown è supportata nel testo.",
   "Recipient Email": "E-mail del destinatario",
   "Subject (Optional)": "Oggetto (facoltativo)",
   "Invoice Subject": "Oggetto della fattura",
+  "Estimate Subject": "Oggetto del preventivo",
+  "Credit Note Subject": "Oggetto della nota di credito",
+  "Advance Invoice Subject": "Oggetto della fattura anticipata",
+  "Delivery Note Subject": "Oggetto della bolla di consegna",
   "Leave empty to use default": "Lascia vuoto per usare il valore predefinito",
   "Message (Optional)": "Messaggio (facoltativo)",
   "Email message placeholder": "Messaggio e-mail... Supporta **grassetto**, *corsivo*, [link](url) e liste",
@@ -12,11 +28,16 @@ export default {
   "Send Email": "Invia e-mail",
   "Email sent": "E-mail inviata",
   "Invoice sent to": "Fattura inviata a",
+  "Estimate sent to": "Preventivo inviato a",
+  "Credit note sent to": "Nota di credito inviata a",
+  "Advance invoice sent to": "Fattura anticipata inviata a",
+  "Delivery note sent to": "Bolla di consegna inviata a",
   "Failed to send email": "Invio dell'e-mail non riuscito",
   "Sandbox email warning":
     "In modalità sandbox è possibile inviare e-mail solo ai membri del team verificati di questo account.",
   "PDF Language": "Lingua del PDF",
   Default: "Predefinito",
+  "English (US)": "Inglese (USA)",
   English: "Inglese",
   German: "Tedesco",
   Slovenian: "Sloveno",

@@ -7,7 +7,11 @@
 
 import { useEffect, useState } from "react";
 
-type EslogError = { field: string; message: string };
+type EslogError = {
+  field: string;
+  message: string;
+  params?: Record<string, number | string>;
+};
 
 type Entity = {
   country_code?: string;

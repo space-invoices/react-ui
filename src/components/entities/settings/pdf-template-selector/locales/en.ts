@@ -1,0 +1,20 @@
+export default {
+  "PDF Template": "PDF Template",
+  "Choose the design template for your invoices and documents":
+    "Choose the design template for your invoices and documents",
+  Preview: "Preview",
+  Template: "Template",
+  Modern: "Modern",
+  "Modern template description": "Modern template description",
+  Classic: "Classic",
+  "Classic template description": "Classic template description",
+  Condensed: "Condensed",
+  "Condensed template description": "Condensed template description",
+  Minimal: "Minimal",
+  "Minimal template description": "Minimal template description",
+  Fashion: "Fashion",
+  "Fashion template description": "Fashion template description",
+  "Save Template": "Save Template",
+  "Template saved successfully": "Template saved successfully",
+  "Failed to save template": "Failed to save template",
+} as const;

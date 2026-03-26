@@ -1,11 +1,11 @@
 "use client";
 
 import type { CreateInvoiceRequest } from "@spaceinvoices/js-sdk";
+import { advanceInvoices, creditNotes, deliveryNotes, estimates, invoices } from "@spaceinvoices/js-sdk";
 import { Loader2 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "@/ui/lib/utils";
 import { useEntities } from "@/ui/providers/entities-context";
-import { useSDK } from "@/ui/providers/sdk-provider";
 import { DocumentPreviewSkeleton } from "../shared/document-preview-skeleton";
 import { ScaledDocumentPreview } from "../shared/scaled-document-preview";
 import { useA4Scaling } from "../shared/use-a4-scaling";
@@ -29,8 +29,6 @@ type LiveInvoicePreviewProps = {
   className?: string;
   apiBaseUrl?: string;
   getAuthToken?: () => string | undefined;
-  /** Locale for document rendering (e.g., "en-US", "sl-SI"). Uses user's UI language. */
-  locale?: string;
   /** Fixed scale to use instead of dynamic scaling. Useful to prevent layout shifts. */
   fixedScale?: number;
   /** Translation function for UI strings */
@@ -66,7 +64,6 @@ export function LiveInvoicePreview({
   currency: _currency = "EUR",
   template,
   className,
-  locale: _locale,
   fixedScale,
   t: tProp,
   documentTypeLabel: _documentTypeLabel,
@@ -80,7 +77,6 @@ export function LiveInvoicePreview({
   const [isRefreshPending, setIsRefreshPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { activeEntity } = useEntities();
-  const { sdk } = useSDK();
   const abortControllerRef = useRef<AbortController | null>(null);
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastRequestKeyRef = useRef<string | null>(null);
@@ -122,7 +118,7 @@ export function LiveInvoicePreview({
       setError(null);
 
       try {
-        if (!sdk || !activeEntity?.id) {
+        if (!activeEntity?.id) {
           throw new Error("Authentication required");
         }
         const startedAt = performance.now();
@@ -173,7 +169,8 @@ export function LiveInvoicePreview({
         });
 
         // Call the render API using the appropriate SDK method for the document type
-        // Don't send locale — let entity locale drive formatting (decimal separators, date format)
+        // Frontend preview requests intentionally avoid locale/language overrides.
+        // Backend/entity defaults drive document formatting and default output language.
         const renderParams: Record<string, any> = { partial: "true" as const, template };
         if (qrOverrides?.upn_qr_enabled !== undefined) {
           renderParams.upn_qr_enabled = qrOverrides.upn_qr_enabled ? "true" : "false";
@@ -188,19 +185,19 @@ export function LiveInvoicePreview({
         let html: string;
         switch (documentType) {
           case "estimate":
-            html = await sdk.estimates.renderEstimatePreview(previewData as any, renderParams, requestOpts);
+            html = await estimates.renderEstimatePreview(previewData as any, renderParams, requestOpts);
             break;
           case "credit_note":
-            html = await sdk.creditNotes.renderCreditNotePreview(previewData as any, renderParams, requestOpts);
+            html = await creditNotes.renderCreditNotePreview(previewData as any, renderParams, requestOpts);
             break;
           case "advance_invoice":
-            html = await sdk.advanceInvoices.renderAdvanceInvoicePreview(previewData as any, renderParams, requestOpts);
+            html = await advanceInvoices.renderAdvanceInvoicePreview(previewData as any, renderParams, requestOpts);
             break;
           case "delivery_note":
-            html = await sdk.deliveryNotes.renderDeliveryNotePreview(previewData as any, renderParams, requestOpts);
+            html = await deliveryNotes.renderDeliveryNotePreview(previewData as any, renderParams, requestOpts);
             break;
           default:
-            html = await sdk.invoices.renderInvoicePreview(previewData as any, renderParams, requestOpts);
+            html = await invoices.renderInvoicePreview(previewData as any, renderParams, requestOpts);
             break;
         }
 
@@ -258,7 +255,6 @@ export function LiveInvoicePreview({
       activeEntity?.city,
       activeEntity?.name,
       template,
-      sdk,
       documentType,
       qrOverrides,
       qrOverrides?.upn_qr_enabled,
@@ -325,7 +321,12 @@ export function LiveInvoicePreview({
   const showRefreshBadge = !!previewHtml && (isRefreshPending || isLoading);
 
   return (
-    <div ref={containerRef} className={cn("relative", className)}>
+    <div
+      ref={containerRef}
+      className={cn("relative", className)}
+      data-testid="live-preview"
+      data-demo="marketing-demo-live-preview"
+    >
       {/* Error state */}
       {error && !isLoading && (
         <div className="flex min-h-[200px] items-center justify-center rounded-lg border border-destructive/50 bg-destructive/10 p-8">
@@ -351,7 +352,10 @@ export function LiveInvoicePreview({
             </div>
           )}
           {isLoading && <div className="absolute inset-0 z-10 rounded-lg bg-background/35 backdrop-blur-[1.5px]" />}
-          <div className={cn(isLoading && "opacity-75 transition-opacity duration-200")}>
+          <div
+            className={cn(isLoading && "opacity-75 transition-opacity duration-200")}
+            data-demo="marketing-demo-totals-root"
+          >
             <ScaledDocumentPreview
               htmlContent={previewHtml}
               scale={scale}

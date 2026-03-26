@@ -21,7 +21,7 @@ type UpgradeModalProps = {
  *
  * Shows available plans and allows users to upgrade their subscription.
  * Highlights the feature that triggered the modal and which plans include it.
- * Includes monthly/yearly toggle with 20% yearly discount.
+ * Includes monthly/yearly toggle for white-label pricing.
  */
 export function UpgradeModal({ isOpen, onClose, feature, onUpgrade }: UpgradeModalProps) {
   const { plan: currentPlan, availablePlans, createCheckout } = useWLSubscription();
@@ -76,7 +76,7 @@ export function UpgradeModal({ isOpen, onClose, feature, onUpgrade }: UpgradeMod
           <span className={`text-sm ${isYearly ? "font-medium" : "text-muted-foreground"}`}>Yearly</span>
           {isYearly && (
             <Badge variant="secondary" className="ml-1">
-              Save 20%
+              2 months free
             </Badge>
           )}
         </div>
@@ -139,11 +139,13 @@ function PlanCard({
   onSelect,
 }: PlanCardProps) {
   const monthlyPrice = plan.base_price_cents ? plan.base_price_cents / 100 : 0;
-  const yearlyTotal = Math.round(monthlyPrice * 12 * 0.8 * 100) / 100;
+  const annualPriceCents = plan.limits?.annual_price_cents;
+  const yearlyTotal =
+    annualPriceCents != null ? annualPriceCents / 100 : Math.round(monthlyPrice * 12 * 0.8 * 100) / 100;
   const yearlyMonthly = Math.round((yearlyTotal / 12) * 100) / 100;
 
   const displayPrice = isYearly ? yearlyMonthly : monthlyPrice;
-  const documentsLimit = plan.limits?.documents_per_month ?? "Unlimited";
+  const documentsLimit = plan.limits?.invoices_per_month ?? plan.limits?.documents_per_month ?? "Unlimited";
 
   return (
     <div
@@ -169,7 +171,7 @@ function PlanCard({
 
       {isYearly && <p className="mb-1 text-muted-foreground text-xs">&euro;{yearlyTotal.toFixed(0)} billed yearly</p>}
 
-      <p className="mb-4 text-muted-foreground text-sm">{documentsLimit} documents/month</p>
+      <p className="mb-4 text-muted-foreground text-sm">{documentsLimit} invoices/month</p>
 
       <ul className="mb-4 flex-1 space-y-2">
         {getPlanFeatures(plan.slug).map((featureText) => (
@@ -206,14 +208,12 @@ function PlanCard({
 
 function PlanIcon({ slug }: { slug: string }) {
   switch (slug) {
-    case "free":
-      return <Zap className="h-5 w-5 text-muted-foreground" />;
-    case "basic":
-      return <Zap className="h-5 w-5 text-blue-500" />;
-    case "starter":
+    case "simple":
       return <Sparkles className="h-5 w-5 text-blue-500" />;
     case "advanced":
       return <Crown className="h-5 w-5 text-amber-500" />;
+    case "pro":
+      return <Zap className="h-5 w-5 text-primary" />;
     default:
       return <Zap className="h-5 w-5 text-muted-foreground" />;
   }
@@ -237,36 +237,33 @@ function getFeatureDisplayName(feature: GatedFeature): string {
 
 function getPlanFeatures(slug: string): string[] {
   switch (slug) {
-    case "free":
-      return ["Basic invoicing", "Estimates & quotes", "Customer management", "PDF export"];
-    case "basic":
+    case "simple":
       return [
-        "Invoices & estimates",
-        "Customer management",
-        "PDF export",
-        "FURS fiscalization",
-        "eSlog export",
-        "Recurring invoices",
+        "15 invoices per month",
+        "Unlimited estimates and delivery notes",
         "Email sending",
-      ];
-    case "starter":
-      return [
-        "Everything in Free",
-        "FURS fiscalization",
-        "eSlog export",
-        "Recurring invoices",
-        "Email sending",
-        "100 docs/month",
+        "1 user",
+        "Clean invoice templates",
       ];
     case "advanced":
       return [
-        "Everything in Basic",
-        "All features unlocked",
-        "Custom templates",
-        "API access",
-        "Webhooks",
+        "500 invoices per month",
+        "FURS and FINA fiscalization",
+        "eSlog and Peppol e-invoicing",
+        "Recurring invoices",
+        "Email sending",
         "Priority support",
-        "2,500 docs/month",
+        "3 users",
+      ];
+    case "pro":
+      return [
+        "1,000 invoices per month",
+        "1 connected store included",
+        "Extra stores at €5.99/month",
+        "Shopify and WooCommerce integrations",
+        "API access and webhooks",
+        "Custom templates",
+        "Overage billed at €0.01/invoice",
       ];
     default:
       return [];

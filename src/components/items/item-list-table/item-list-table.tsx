@@ -1,14 +1,15 @@
 import type { Item } from "@spaceinvoices/js-sdk";
-
-import { withTableTranslations } from "../../table/locales";
+import { items } from "@spaceinvoices/js-sdk";
+import { Package } from "lucide-react";
+import { useMemo } from "react";
+import { Button } from "@/ui/components/ui/button";
 import { createTranslation } from "@/ui/lib/translation";
-import { useSDK } from "@/ui/providers/sdk-provider";
 import { DataTable } from "../../table/data-table";
 import { useTableFetch } from "../../table/hooks/use-table-fetch";
-import type { ListTableProps, TableQueryParams } from "../../table/types";
+import { withTableTranslations } from "../../table/locales";
+import type { Column, ListTableProps, TableQueryParams } from "../../table/types";
 import { ITEMS_CACHE_KEY } from "../items.hooks";
-import ItemListHeader from "./item-list-header";
-import ItemListRow from "./item-list-row";
+import ItemListRowActions from "./item-list-row-actions";
 import de from "./locales/de";
 import en from "./locales/en";
 import es from "./locales/es";
@@ -52,30 +53,53 @@ export default function ItemListTable({
   ...i18nProps
 }: ItemListTableProps) {
   const t = createTranslation({
-    translations,
-    locale: i18nProps.translationLocale ?? i18nProps.locale,
     ...i18nProps,
+    translations,
   });
-  const { sdk } = useSDK();
-
   const handleFetch = useTableFetch((params: TableQueryParams) => {
-    if (!sdk) throw new Error("SDK not initialized");
-    return sdk.items.list(params as any);
+    return items.list(params as any);
   }, entityId);
+
+  const columns: Column<Item>[] = useMemo(
+    () => [
+      {
+        id: "name",
+        header: t("Name"),
+        sort: true,
+        cell: (item) => (
+          <Button variant="link" className="py-0 underline" onClick={() => onRowClick?.(item)}>
+            <Package className="h-4 w-4 flex-shrink-0" />
+            {item.name}
+          </Button>
+        ),
+      },
+      {
+        id: "description",
+        header: t("Description"),
+        cell: (item) => item.description,
+      },
+      {
+        id: "price",
+        header: t("Price"),
+        align: "right",
+        sort: {
+          defaultDirection: "desc",
+        },
+        cell: (item) => item.price,
+      },
+      {
+        id: "actions",
+        header: "",
+        align: "right",
+        cell: (item) => <ItemListRowActions item={item} onView={onView} t={t} />,
+      },
+    ],
+    [t, onRowClick, onView],
+  );
 
   return (
     <DataTable
-      columns={[
-        { id: "name", header: t("Name") },
-        { id: "description", header: t("Description") },
-        { id: "unit", header: t("Unit") },
-        { id: "price", header: t("Price"), align: "right" },
-        { id: "actions", header: "", align: "right" },
-      ]}
-      renderRow={(item) => (
-        <ItemListRow item={item} key={item.id} onRowClick={(item) => onRowClick?.(item)} onView={onView} t={t} />
-      )}
-      renderHeader={() => <ItemListHeader t={t} />}
+      columns={columns}
       queryParams={queryParams}
       resourceName="item"
       cacheKey={ITEMS_CACHE_KEY}

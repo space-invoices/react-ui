@@ -12,6 +12,9 @@ import { z } from 'zod';
 const createItemSchemaDefinition = z.object({
   name: z.string().min(1),
   description: z.union([z.string().max(4000, "Description must not exceed 4000 characters"), z.null()]).optional(),
+  classification: z
+    .union([z.enum(["product", "service", "advance", null]), z.null()])
+    .optional(),
   price: z.number().optional(),
   gross_price: z.number().optional(),
   tax_ids: z.array(z.string().max(36)).optional(),
@@ -35,4 +38,37 @@ const createItemSchemaDefinition = z.object({
 // Type for create item operation
 export type CreateItemSchema = z.infer<typeof createItemSchemaDefinition>;
 
+
+// Schema for update item operation
+const updateItemSchemaDefinition = z
+  .object({
+    name: z.string().min(1),
+    description: z.union([z.string().max(4000, "Description must not exceed 4000 characters"), z.null()]),
+    classification: z.union([
+      z.enum(["product", "service", "advance", null]),
+      z.null(),
+    ]),
+    price: z.number(),
+    gross_price: z.number(),
+    tax_ids: z.array(z.string().max(36)),
+    metadata: z.union([z.record(z.string(), z.any()), z.null()]),
+    taxes: z.union([
+      z.array(
+        z
+          .object({
+            rate: z.number().gte(0).lte(100),
+            classification: z.string().max(50),
+          })
+          .partial()
+          .passthrough()
+      ),
+      z.null(),
+    ]),
+  })
+  .partial();
+
+// Type for update item operation
+export type UpdateItemSchema = z.infer<typeof updateItemSchemaDefinition>;
+
 export const createItemSchema = createItemSchemaDefinition;
+export const updateItemSchema = updateItemSchemaDefinition;

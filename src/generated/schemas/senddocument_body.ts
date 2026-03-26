@@ -15,6 +15,7 @@ const sendDocumentSchemaDefinition = z.object({
   body_text: z.string().min(1).optional(),
   attach_pdf: z.boolean().optional().default(false),
   attach_eslog: z.boolean().optional().default(false),
+  sandbox_skip_delivery: z.boolean().optional().default(false),
 });
 
 // Type for send document operation

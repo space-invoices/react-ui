@@ -5,18 +5,28 @@ import type { ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Resolver } from "react-hook-form";
 import { useForm, useWatch } from "react-hook-form";
+import type { z } from "zod";
 import { Alert, AlertDescription, AlertTitle } from "@/ui/components/ui/alert";
 import { Button } from "@/ui/components/ui/button";
-import { Form } from "@/ui/components/ui/form";
+import { Form, FormRoot } from "@/ui/components/ui/form";
 import { Skeleton } from "@/ui/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/ui/components/ui/tooltip";
-import type { CreateAdvanceInvoiceSchema } from "@/ui/generated/schemas";
 import { createAdvanceInvoiceSchema } from "@/ui/generated/schemas";
 import { useEslogValidation } from "@/ui/hooks/use-eslog-validation";
 import { useNextDocumentNumber } from "@/ui/hooks/use-next-document-number";
 import { usePremiseSelection } from "@/ui/hooks/use-premise-selection";
 import { useTransactionTypeCheck } from "@/ui/hooks/use-transaction-type-check";
-import { buildEslogOptions, buildFinaOptions, buildFursOptions } from "@/ui/lib/fiscalization-options";
+import {
+  buildEslogOptions,
+  buildFinaOptions,
+  buildFursOptions,
+  type FiscalizationOperatorOverride,
+} from "@/ui/lib/fiscalization-options";
+import {
+  normalizePtDocumentInput,
+  type PtDocumentInputForm,
+  ptDocumentInputFormSchema,
+} from "@/ui/lib/pt-document-input";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
 import { cn } from "@/ui/lib/utils";
@@ -29,12 +39,39 @@ import {
   DocumentSignatureField,
   DocumentTaxClauseField,
 } from "../../documents/create/document-details-section";
+import { withRequiredDocumentItemFields } from "../../documents/create/document-item-validation";
 import { DocumentItemsSection, type PriceModesMap } from "../../documents/create/document-items-section";
 import { DocumentRecipientSection } from "../../documents/create/document-recipient-section";
 import { MarkAsPaidSection } from "../../documents/create/mark-as-paid-section";
+import {
+  calculateDocumentTotal,
+  coercePaymentRowsToType,
+  createEmptyPaymentRow,
+  type DraftPaymentRow,
+  getFirstValidPaymentType,
+  serializePaymentRows,
+  validatePaymentRows,
+} from "../../documents/create/payment-rows";
+import { scrollToFirstInvalidField } from "../../documents/create/scroll-to-first-invalid-field";
 import { useDocumentCustomerForm } from "../../documents/create/use-document-customer-form";
 import type { DocumentTypes } from "../../documents/types";
-import { getEntityErrors, getFormFieldErrors, validateEslogForm } from "../../invoices/create/eslog-validation";
+import {
+  buildEslogFieldErrors,
+  getEntityErrors,
+  getFormFieldErrors,
+  mergeFieldErrors,
+  translateEslogValidationError,
+  validateEslogForm,
+} from "../../invoices/create/eslog-validation";
+import invoiceDe from "../../invoices/create/locales/de";
+import invoiceEs from "../../invoices/create/locales/es";
+import invoiceFr from "../../invoices/create/locales/fr";
+import invoiceHr from "../../invoices/create/locales/hr";
+import invoiceIt from "../../invoices/create/locales/it";
+import invoiceNl from "../../invoices/create/locales/nl";
+import invoicePl from "../../invoices/create/locales/pl";
+import invoicePt from "../../invoices/create/locales/pt";
+import invoiceSl from "../../invoices/create/locales/sl";
 import { useCreateAdvanceInvoice } from "../advance-invoices.hooks";
 import de from "./locales/de";
 import es from "./locales/es";
@@ -48,24 +85,33 @@ import sl from "./locales/sl";
 import { prepareAdvanceInvoiceSubmission } from "./prepare-advance-invoice-submission";
 
 const translations = {
-  sl,
-  de,
-  it,
-  fr,
-  es,
-  pt,
-  nl,
-  pl,
-  hr,
+  sl: { ...invoiceSl, ...sl },
+  de: { ...invoiceDe, ...de },
+  it: { ...invoiceIt, ...it },
+  fr: { ...invoiceFr, ...fr },
+  es: { ...invoiceEs, ...es },
+  pt: { ...invoicePt, ...pt },
+  nl: { ...invoiceNl, ...nl },
+  pl: { ...invoicePl, ...pl },
+  hr: { ...invoiceHr, ...hr },
 } as const;
+const FORM_ID = "create-advance-invoice-form";
+const createAdvanceInvoiceFormSchema = withRequiredDocumentItemFields(
+  createAdvanceInvoiceSchema.extend({
+    pt: ptDocumentInputFormSchema.optional(),
+  }),
+);
 
 // Form values: extend schema with local-only fields (number is for display, not sent to API)
-type CreateAdvanceInvoiceFormValues = CreateAdvanceInvoiceSchema & {
+type CreateAdvanceInvoiceFormValues = z.infer<typeof createAdvanceInvoiceFormSchema> & {
   number?: string;
 };
 
 /** Preview payload extends request with display-only fields */
-type AdvanceInvoicePreviewPayload = Partial<CreateAdvanceInvoiceRequest> & { number?: string };
+type AdvanceInvoicePreviewPayload = Partial<CreateAdvanceInvoiceRequest> & {
+  number?: string;
+  pt?: PtDocumentInputForm;
+};
 
 type CreateAdvanceInvoiceFormProps = {
   type: DocumentTypes;
@@ -77,6 +123,13 @@ type CreateAdvanceInvoiceFormProps = {
   onHeaderActionChange?: (action: ReactNode) => void;
   /** Initial values for form fields (used for document duplication) */
   initialValues?: Partial<CreateAdvanceInvoiceRequest>;
+  /** Whether draft actions should be available in the UI */
+  allowDrafts?: boolean;
+  /** Optional app-level content rendered inside the details section. */
+  detailsExtras?: ReactNode;
+  /** Request-scoped operator override for embed fiscalization flows. */
+  operatorPrefill?: FiscalizationOperatorOverride;
+  translationLocale?: string;
 } & ComponentTranslationProps;
 
 export default function CreateAdvanceInvoiceForm({
@@ -88,6 +141,10 @@ export default function CreateAdvanceInvoiceForm({
   onAddNewTax,
   onHeaderActionChange,
   initialValues,
+  allowDrafts = true,
+  detailsExtras,
+  operatorPrefill,
+  translationLocale,
   t: translateProp,
   namespace,
   locale,
@@ -96,14 +153,18 @@ export default function CreateAdvanceInvoiceForm({
     t: translateProp,
     namespace,
     locale,
+    translationLocale,
     translations,
   });
 
   const { activeEntity } = useEntities();
 
-  // Get default note from entity settings (use invoice defaults)
-  // Note: Advance invoices don't have payment terms - they are documents requesting payment
-  const defaultNote = (activeEntity?.settings as any)?.default_invoice_note || "";
+  // Advance invoices have their own default note setting.
+  // Note: Advance invoices don't have payment terms - they are documents requesting payment.
+  const defaultNote =
+    (activeEntity?.settings as any)?.default_advance_invoice_note ||
+    (activeEntity?.settings as any)?.default_invoice_note ||
+    "";
   const defaultFooter = (activeEntity?.settings as any)?.document_footer || "";
 
   // ============================================================================
@@ -112,11 +173,15 @@ export default function CreateAdvanceInvoiceForm({
   const furs = usePremiseSelection({ entityId, type: "furs" });
   const fina = usePremiseSelection({ entityId, type: "fina" });
   const eslog = useEslogValidation(activeEntity);
+  const eslogValidationModeRef = useRef<"submit" | "draft">("submit");
+  const eslogEntityErrorsRef = useRef(eslog.entityErrors);
+  eslogEntityErrorsRef.current = eslog.entityErrors;
   const [skipFiscalization, setSkipFiscalization] = useState(false);
 
   // UI-only state (not part of API schema)
   const [markAsPaid, setMarkAsPaid] = useState(true);
-  const [paymentTypes, setPaymentTypes] = useState<string[]>(["bank_transfer"]);
+  const [paymentRows, setPaymentRows] = useState<DraftPaymentRow[]>([createEmptyPaymentRow()]);
+  const [paymentValidationMessage, setPaymentValidationMessage] = useState<string | undefined>();
   const [isDraftPending, setIsDraftPending] = useState(false);
 
   // Price modes per item (gross vs net) - collected from component state at submit
@@ -129,9 +194,57 @@ export default function CreateAdvanceInvoiceForm({
   }, [initialValues?.items]);
   const priceModesRef = useRef<PriceModesMap>(initialPriceModes);
 
+  const baseResolver = useMemo(
+    () => zodResolver(createAdvanceInvoiceFormSchema) as Resolver<CreateAdvanceInvoiceFormValues>,
+    [],
+  );
+  const eslogResolverStateRef = useRef({
+    activeEntity,
+    isEnabled: eslog.isEnabled === true,
+    translate: t,
+    setEntityErrors: eslog.setEntityErrors,
+  });
+  eslogResolverStateRef.current = {
+    activeEntity,
+    isEnabled: eslog.isEnabled === true,
+    translate: t,
+    setEntityErrors: eslog.setEntityErrors,
+  };
+  const resolver = useMemo<Resolver<CreateAdvanceInvoiceFormValues>>(
+    () => async (values, context, options) => {
+      const result = await baseResolver(values, context, options);
+      const resolverState = eslogResolverStateRef.current;
+      const shouldValidateEslog = eslogValidationModeRef.current === "submit" && resolverState.isEnabled;
+
+      if (!shouldValidateEslog) {
+        eslogEntityErrorsRef.current = [];
+        resolverState.setEntityErrors([]);
+        return result;
+      }
+
+      const validationErrors = validateEslogForm(values as any, resolverState.activeEntity);
+      const entityErrors = getEntityErrors(validationErrors);
+      eslogEntityErrorsRef.current = entityErrors;
+      resolverState.setEntityErrors(entityErrors);
+
+      const fieldErrors = getFormFieldErrors(validationErrors);
+      if (fieldErrors.length === 0) {
+        return result;
+      }
+
+      return {
+        values: {},
+        errors: mergeFieldErrors(
+          result.errors,
+          buildEslogFieldErrors<CreateAdvanceInvoiceFormValues>(fieldErrors, resolverState.translate),
+        ),
+      };
+    },
+    [baseResolver],
+  );
+
   const form = useForm<CreateAdvanceInvoiceFormValues>({
-    // Cast resolver to accept extended form type (includes UI-only fields)
-    resolver: zodResolver(createAdvanceInvoiceSchema) as Resolver<CreateAdvanceInvoiceFormValues>,
+    resolver,
     defaultValues: {
       number: "", // Will be set by useNextAdvanceInvoiceNumber
       date: initialValues?.date || new Date().toISOString(),
@@ -166,18 +279,65 @@ export default function CreateAdvanceInvoiceForm({
       note: initialValues?.note ?? defaultNote,
       tax_clause: "",
       footer: (initialValues as any)?.footer ?? defaultFooter,
+      pt: ((initialValues as any)?.pt as PtDocumentInputForm | undefined) ?? undefined,
     },
   });
 
-  // Skip fiscalization is only allowed for bank transfers or unpaid invoices
-  const canSkipFiscalization = !markAsPaid || paymentTypes.every((type) => type === "bank_transfer");
+  const watchedItems = useWatch({ control: form.control, name: "items" });
+  const paymentDocumentTotal = useMemo(
+    () => calculateDocumentTotal((watchedItems as any[]) ?? [], priceModesRef.current),
+    [watchedItems],
+  );
+  const hasExplicitNonBankTransferPayment =
+    markAsPaid && paymentRows.some((row) => row.type != null && row.type !== "bank_transfer");
+  const skipPreferenceInitializedRef = useRef(false);
+  const skipPaymentCoercionPendingRef = useRef(false);
+  const previousSkipFiscalizationRef = useRef(skipFiscalization);
+  const previousMarkAsPaidRef = useRef(markAsPaid);
 
-  // Auto-disable skip when it becomes invalid (e.g., user changes payment type to cash)
   useEffect(() => {
-    if (!canSkipFiscalization && skipFiscalization) {
+    if (skipPreferenceInitializedRef.current || furs.isLoading) return;
+
+    skipPreferenceInitializedRef.current = true;
+    if (furs.settings?.default_skip_fiscalization === true) {
+      setSkipFiscalization(true);
+    }
+  }, [furs.isLoading, furs.settings?.default_skip_fiscalization]);
+
+  useEffect(() => {
+    const skipJustEnabled = skipFiscalization && !previousSkipFiscalizationRef.current;
+    const paidJustEnabled = markAsPaid && !previousMarkAsPaidRef.current;
+
+    if (skipFiscalization && markAsPaid && (skipJustEnabled || paidJustEnabled)) {
+      const nextPaymentRows = coercePaymentRowsToType(paymentRows, "bank_transfer");
+      const hasChanged = nextPaymentRows.some((row, index) => row.type !== paymentRows[index]?.type);
+
+      if (hasChanged) {
+        skipPaymentCoercionPendingRef.current = true;
+        setPaymentRows(nextPaymentRows);
+      }
+    }
+
+    previousSkipFiscalizationRef.current = skipFiscalization;
+    previousMarkAsPaidRef.current = markAsPaid;
+  }, [markAsPaid, paymentRows, skipFiscalization]);
+
+  // Auto-disable skip when the user explicitly changes payment away from bank transfer.
+  useEffect(() => {
+    if (skipPaymentCoercionPendingRef.current) return;
+
+    if (hasExplicitNonBankTransferPayment && skipFiscalization) {
       setSkipFiscalization(false);
     }
-  }, [canSkipFiscalization, skipFiscalization]);
+  }, [hasExplicitNonBankTransferPayment, skipFiscalization]);
+
+  useEffect(() => {
+    if (!skipPaymentCoercionPendingRef.current) return;
+
+    if (!markAsPaid || paymentRows.every((row) => row.type === "bank_transfer")) {
+      skipPaymentCoercionPendingRef.current = false;
+    }
+  }, [markAsPaid, paymentRows]);
 
   // FURS is "active" for this advance invoice if enabled and we have a valid selection (and not skipped)
   const isFursActive = furs.isActive && !skipFiscalization;
@@ -245,10 +405,9 @@ export default function CreateAdvanceInvoiceForm({
                     size="sm"
                     className={cn(
                       "h-8 cursor-pointer gap-2",
-                      !canSkipFiscalization && "cursor-not-allowed opacity-50",
                       !isFursChecked && "text-destructive hover:text-destructive",
                     )}
-                    onClick={() => canSkipFiscalization && setSkipFiscalization(!skipFiscalization)}
+                    onClick={() => setSkipFiscalization(!skipFiscalization)}
                   >
                     <div
                       className={cn(
@@ -264,11 +423,9 @@ export default function CreateAdvanceInvoiceForm({
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent side="bottom" className="max-w-xs">
-                  {canSkipFiscalization
-                    ? isFursChecked
-                      ? t("Click to skip fiscalization for this advance invoice")
-                      : t("Click to enable fiscalization")
-                    : t("Cannot skip fiscalization for cash payments")}
+                  {isFursChecked
+                    ? t("Click to skip fiscalization for this advance invoice")
+                    : t("Click to enable fiscalization")}
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -284,7 +441,6 @@ export default function CreateAdvanceInvoiceForm({
     furs.isEnabled,
     furs.hasPremises,
     skipFiscalization,
-    canSkipFiscalization,
     eslog.isAvailable,
     eslog.isEnabled,
     eslog.setEnabled,
@@ -295,6 +451,47 @@ export default function CreateAdvanceInvoiceForm({
   const formValues = useWatch({
     control: form.control,
   });
+  const watchedValidationSnapshot = useMemo(
+    () =>
+      JSON.stringify({
+        date: formValues.date,
+        currency_code: formValues.currency_code,
+        customer: formValues.customer,
+        items: formValues.items,
+      }),
+    [formValues.customer, formValues.currency_code, formValues.date, formValues.items],
+  );
+  const lastRevalidatedSnapshotRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!form.formState.isSubmitted || form.formState.isSubmitting) {
+      return;
+    }
+
+    const hasErrors = Object.keys(form.formState.errors).length > 0 || eslog.entityErrors.length > 0;
+    if (!hasErrors) {
+      lastRevalidatedSnapshotRef.current = watchedValidationSnapshot;
+      return;
+    }
+
+    if (lastRevalidatedSnapshotRef.current === watchedValidationSnapshot) {
+      return;
+    }
+
+    lastRevalidatedSnapshotRef.current = watchedValidationSnapshot;
+    const timeoutId = window.setTimeout(() => {
+      void form.trigger();
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [
+    eslog.entityErrors.length,
+    form,
+    form.formState.errors,
+    form.formState.isSubmitted,
+    form.formState.isSubmitting,
+    watchedValidationSnapshot,
+  ]);
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
   const prevPayloadRef = useRef("");
@@ -394,23 +591,8 @@ export default function CreateAdvanceInvoiceForm({
   // Shared submit logic for both regular save and save as draft
   const submitAdvanceInvoice = useCallback(
     (values: CreateAdvanceInvoiceFormValues, isDraft: boolean) => {
-      // Skip e-SLOG and FURS validation for drafts
-      if (!isDraft && eslog.isEnabled) {
-        const validationErrors = validateEslogForm(values as any, activeEntity);
-
-        if (validationErrors.length > 0) {
-          const entityErrors = getEntityErrors(validationErrors);
-          const formErrors = getFormFieldErrors(validationErrors);
-          eslog.setEntityErrors(entityErrors);
-          for (const error of formErrors) {
-            form.setError(error.field as any, {
-              type: "eslog",
-              message: error.message,
-            });
-          }
-          return;
-        }
-        eslog.setEntityErrors([]);
+      if (!isDraft && eslog.isEnabled && eslogEntityErrorsRef.current.length > 0) {
+        return;
       }
 
       const fursOptions = buildFursOptions({
@@ -419,6 +601,7 @@ export default function CreateAdvanceInvoiceForm({
         skipFiscalization,
         premiseName: furs.selectedPremiseName,
         deviceName: furs.selectedDeviceName,
+        operator: operatorPrefill,
       });
 
       const finaOptions = buildFinaOptions({
@@ -426,7 +609,8 @@ export default function CreateAdvanceInvoiceForm({
         useFinaNumbering,
         premiseName: fina.selectedPremiseName,
         deviceName: fina.selectedDeviceName,
-        paymentType: paymentTypes[0],
+        paymentType: getFirstValidPaymentType(paymentRows),
+        operator: operatorPrefill,
       });
 
       const eslogOptions = buildEslogOptions({
@@ -435,11 +619,22 @@ export default function CreateAdvanceInvoiceForm({
         isEnabled: eslog.isEnabled,
       });
 
+      if (!isDraft && markAsPaid) {
+        const paymentValidation = validatePaymentRows(paymentRows, paymentDocumentTotal, "full_required");
+        const paymentMessage =
+          paymentValidation.typeError ?? paymentValidation.amountError ?? paymentValidation.totalError;
+
+        if (paymentMessage) {
+          setPaymentValidationMessage(paymentMessage);
+          return;
+        }
+      }
+
       const payload = prepareAdvanceInvoiceSubmission(values, {
         originalCustomer,
         wasCustomerFormShown: showCustomerForm,
         markAsPaid: isDraft ? false : markAsPaid,
-        paymentTypes,
+        payments: serializePaymentRows(paymentRows, paymentDocumentTotal),
         furs: fursOptions,
         fina: finaOptions,
         eslog: eslogOptions,
@@ -450,18 +645,18 @@ export default function CreateAdvanceInvoiceForm({
       createAdvanceInvoice(payload);
     },
     [
-      activeEntity,
       createAdvanceInvoice,
       eslog,
       furs,
       fina,
-      form,
       useFinaNumbering,
       markAsPaid,
       originalCustomer,
-      paymentTypes,
+      paymentDocumentTotal,
+      paymentRows,
       showCustomerForm,
       skipFiscalization,
+      operatorPrefill,
     ],
   );
 
@@ -469,12 +664,16 @@ export default function CreateAdvanceInvoiceForm({
   const handleSaveAsDraft = useCallback(async () => {
     setIsDraftPending(true);
     try {
+      eslogValidationModeRef.current = "draft";
       const isValid = await form.trigger();
       if (isValid) {
         const values = form.getValues();
         submitAdvanceInvoice(values, true);
+      } else {
+        scrollToFirstInvalidField(FORM_ID);
       }
     } finally {
+      eslogValidationModeRef.current = "submit";
       setIsDraftPending(false);
     }
   }, [form, submitAdvanceInvoice]);
@@ -484,16 +683,20 @@ export default function CreateAdvanceInvoiceForm({
     isPending,
     isDirty: form.formState.isDirty || !!initialValues,
     label: t("Save"),
-    secondaryAction: {
-      label: t("Save as Draft"),
-      onClick: handleSaveAsDraft,
-      isPending: isDraftPending,
-    },
+    secondaryAction: allowDrafts
+      ? {
+          label: t("Save as Draft"),
+          onClick: handleSaveAsDraft,
+          isPending: isDraftPending,
+        }
+      : undefined,
   });
 
   // Set default note, footer, and signature from entity settings (advance invoices don't have payment terms)
   useEffect(() => {
-    const entityDefaultNote = (activeEntity?.settings as any)?.default_invoice_note;
+    const entityDefaultNote =
+      (activeEntity?.settings as any)?.default_advance_invoice_note ||
+      (activeEntity?.settings as any)?.default_invoice_note;
     if (entityDefaultNote && !form.getValues("note")) {
       form.setValue("note", entityDefaultNote);
     }
@@ -536,6 +739,7 @@ export default function CreateAdvanceInvoiceForm({
       reference: values.reference,
       note: values.note,
       signature: values.signature,
+      ...(normalizePtDocumentInput(values.pt) ? { pt: normalizePtDocumentInput(values.pt) } : {}),
     };
   }, []);
 
@@ -620,10 +824,10 @@ export default function CreateAdvanceInvoiceForm({
 
   return (
     <Form {...form}>
-      <form id="create-advance-invoice-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+      <FormRoot id={FORM_ID} onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         {/* e-SLOG entity-level validation errors */}
         {eslog.entityErrors.length > 0 && (
-          <Alert variant="destructive">
+          <Alert variant="destructive" data-form-error-summary="true">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>{t("e-SLOG Validation Failed")}</AlertTitle>
             <AlertDescription>
@@ -631,7 +835,7 @@ export default function CreateAdvanceInvoiceForm({
               <ul className="list-disc space-y-1 pl-4">
                 {eslog.entityErrors.map((error) => (
                   <li key={error.field} className="text-sm">
-                    {error.message}
+                    {translateEslogValidationError(error, t)}
                   </li>
                 ))}
               </ul>
@@ -650,11 +854,13 @@ export default function CreateAdvanceInvoiceForm({
             selectedCustomerId={selectedCustomerId}
             initialCustomerName={initialCustomerName}
             t={t}
+            locale={locale}
           />
           <DocumentDetailsSection
             control={form.control}
             documentType={_type}
             t={t}
+            locale={locale}
             fursInline={
               furs.isEnabled && furs.hasPremises
                 ? {
@@ -696,25 +902,40 @@ export default function CreateAdvanceInvoiceForm({
             {/* Mark as paid section (UI-only state, not in form schema) */}
             <MarkAsPaidSection
               checked={markAsPaid}
-              onCheckedChange={setMarkAsPaid}
-              paymentTypes={paymentTypes}
-              onPaymentTypesChange={setPaymentTypes}
+              onCheckedChange={(checked) => {
+                setMarkAsPaid(checked);
+                setPaymentValidationMessage(undefined);
+              }}
+              paymentRows={paymentRows}
+              onPaymentRowsChange={(rows) => {
+                setPaymentRows(rows);
+                setPaymentValidationMessage(undefined);
+              }}
+              documentTotal={paymentDocumentTotal}
               t={t}
               alwaysShowPaymentType={!!fina.isActive}
               forced
+              validationMessage={paymentValidationMessage}
+              requireFullPayment
             />
+            {detailsExtras}
           </DocumentDetailsSection>
         </div>
 
         <DocumentItemsSection
           control={form.control}
+          documentType={_type}
           watch={form.watch}
           setValue={form.setValue}
+          clearErrors={form.clearErrors}
+          trigger={form.trigger}
+          isSubmitted={form.formState.isSubmitted}
           getValues={form.getValues}
           entityId={entityId}
           currencyCode={activeEntity?.currency_code ?? undefined}
           onAddNewTax={onAddNewTax}
           t={t}
+          locale={locale}
           taxesDisabled={reverseChargeApplies}
           taxesDisabledMessage={
             reverseChargeApplies ? t("Reverse charge - tax exempt EU B2B sale") : viesWarning ? viesWarning : undefined
@@ -775,7 +996,7 @@ export default function CreateAdvanceInvoiceForm({
             customer: formValues.customer as any,
           }}
         />
-      </form>
+      </FormRoot>
     </Form>
   );
 }

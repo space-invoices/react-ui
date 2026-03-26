@@ -27,24 +27,24 @@ export default {
   Paid: "Plačano",
   "Credit note will be marked as fully paid upon creation": "Dobropis bo označen kot plačan ob ustvarjanju",
   "Payment Type": "Vrsta plačila",
-  "Select payment type": "Izberite vrsto plačila",
+  "Select payment type": "Izberi vrsto plačila",
   Cash: "Gotovina",
   "Bank Transfer": "Bančno nakazilo",
   Card: "Kartica",
   Check: "Ček",
   Other: "Drugo",
   // Note field
-  Note: "Opomba",
+  Note: "Pripis",
   "Insert variable": "Vstavi spremenljivko",
-  "Add payment instructions, terms, or other notes...": "Dodajte navodila za plačilo, pogoje ali druge opombe...",
+  "Add payment instructions, terms, or other notes...": "Dodaj navodila za plačilo, pogoje ali druge pripise...",
   // Signature field
   Signature: "Podpis",
   "Add signature text...": "Dodaj besedilo podpisa...",
   // Payment terms field
   "Payment Terms": "Plačilni pogoji",
-  "Add payment terms...": "Dodajte plačilne pogoje...",
+  "Add payment terms...": "Dodaj plačilne pogoje...",
   // Recipient fields
-  "Search or create customer...": "Išči ali ustvari stranko...",
+  "Search or create customer...": "Poiščite ali ustvarite stranko...",
   Clear: "Počisti",
   Address: "Naslov",
   "Address 2": "Naslov 2",
@@ -69,8 +69,8 @@ export default {
   "Net price (before tax)": "Neto cena (brez davka)",
   // FINA fiscalization
   "Fiscally verify": "Davčno potrdi",
-  "Click to skip fiscalization for this credit note": "Klikni za preskok davčnega potrjevanja za ta dobropis",
-  "Click to enable fiscalization": "Klikni za vključitev davčnega potrjevanja",
+  "Click to skip fiscalization for this credit note": "Kliknite za preskočitev davčnega potrjevanja za ta dobropis",
+  "Click to enable fiscalization": "Kliknite za omogočanje davčnega potrjevanja",
   "Cannot skip fiscalization for cash payments": "Za gotovinska plačila ni mogoče preskočiti davčnega potrjevanja",
   Premise: "Poslovni prostor",
   Device: "Naprava",
@@ -90,8 +90,8 @@ export default {
   "This invoice will not be fiscalized (non-domestic transaction)":
     "Ta račun ne bo fiskaliziran (nedomača transakcija)",
   "Tax Clause": "Davčna klavzula",
-  "Add tax clause...": "Dodajte davčno klavzulo...",
+  "Add tax clause...": "Dodaj davčno klavzulo...",
   Footer: "Noga dokumenta",
-  "Add document footer...": "Dodajte nogo dokumenta...",
+  "Add document footer...": "Dodaj nogo dokumenta...",
   "Reverse charge - tax exempt EU B2B sale": "Obrnjena davčna obveznost - davka oproščena EU B2B prodaja",
 } as const;

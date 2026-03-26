@@ -1,5 +1,5 @@
+import { documents } from "@spaceinvoices/js-sdk";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useSDK } from "@/ui/providers/sdk-provider";
 
 // Document type union for API calls
 export type DocumentType = "invoice" | "estimate" | "credit_note" | "advance_invoice" | "delivery_note";
@@ -35,7 +35,6 @@ type FinalizeDocumentVariables = {
  * Assigns a document number and runs fiscalization (if applicable)
  */
 export function useFinalizeDocument(options: FinalizeDocumentOptions) {
-  const { sdk } = useSDK();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -43,7 +42,7 @@ export function useFinalizeDocument(options: FinalizeDocumentOptions) {
       const body: Record<string, unknown> = {};
       if (furs) body.furs = furs;
       if (fina) body.fina = fina;
-      return sdk.documents.finalizeDocument(documentId, body, { type: documentType });
+      return documents.finalizeDocument(documentId, body, { type: documentType });
     },
     onSuccess: (data, variables) => {
       // Invalidate list cache
@@ -83,12 +82,11 @@ type DeleteDraftDocumentVariables = {
  * Only draft documents can be deleted
  */
 export function useDeleteDraftDocument(options: DeleteDraftDocumentOptions) {
-  const { sdk } = useSDK();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async ({ documentId, documentType }: DeleteDraftDocumentVariables) => {
-      return sdk.documents.delete(documentId, { type: documentType });
+      return documents.delete(documentId, { type: documentType });
     },
     onSuccess: (_, variables) => {
       // Invalidate list cache

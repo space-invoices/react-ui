@@ -23,6 +23,7 @@ const DocumentEntity = z
     tax_number: z.union([z.string(), z.null()]),
     tax_number_2: z.union([z.string(), z.null()]),
     company_number: z.union([z.string(), z.null()]),
+    phone: z.union([z.string(), z.null()]),
     peppol_id: z.union([z.string(), z.null()]),
     is_end_consumer: z.union([z.boolean(), z.null()]),
     bank_account: z.union([
@@ -113,8 +114,8 @@ const PartialDeliveryNotePreview = z.object({
         .passthrough()
     )
     .min(1),
-  linked_documents: z.array(z.string().min(1)).optional(),
-  expected_total_with_tax: z.number().gt(0).optional(),
+  linked_documents: z.union([z.array(z.string().min(1)), z.null()]).optional(),
+  expected_total_with_tax: z.union([z.number(), z.null()]).optional(),
 });
 
 
@@ -126,6 +127,8 @@ const DocumentItemTax = z
     classification: z.union([z.string(), z.null()]),
     reverse_charge: z.union([z.boolean(), z.null()]),
     amount: z.union([z.number(), z.null()]),
+    pt_exemption_code: z.union([z.string(), z.null()]),
+    pt_exemption_reason: z.union([z.string(), z.null()]),
   })
   .partial();
 
@@ -140,9 +143,13 @@ const LineDiscount = z.object({
 // Dependency schema for renderdeliverynotepreview_body
 const CreateDocumentItem = z
   .object({
-    type: z.union([z.literal("separator"), z.null()]),
+    type: z.union([z.enum(["separator", null]), z.null()]),
     name: z.union([z.string(), z.null()]),
     description: z.union([z.string(), z.null()]),
+    classification: z.union([
+      z.enum(["product", "service", "advance", null]),
+      z.null(),
+    ]),
     price: z.union([z.number(), z.null()]),
     gross_price: z.union([z.number(), z.null()]),
     quantity: z.union([z.number(), z.null()]),
@@ -179,8 +186,8 @@ const CompleteDeliveryNotePreview = z.object({
   date_service: z.union([z.string(), z.null()]).optional(),
   date_service_to: z.union([z.string(), z.null()]).optional(),
   items: z.array(CreateDocumentItem).min(1),
-  linked_documents: z.array(z.string().min(1)).optional(),
-  expected_total_with_tax: z.number().gt(0).optional(),
+  linked_documents: z.union([z.array(z.string().min(1)), z.null()]).optional(),
+  expected_total_with_tax: z.union([z.number(), z.null()]).optional(),
 });
 
 

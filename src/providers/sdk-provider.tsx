@@ -1,9 +1,13 @@
-import SDK from "@spaceinvoices/js-sdk";
+import type SDK from "@spaceinvoices/js-sdk";
 import type { ReactNode } from "react";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-
 import { AUTH_COOKIES } from "@/ui/lib/auth";
 import { flushCookies, getCookie } from "@/ui/lib/browser-cookies";
+import {
+  SpaceInvoicesProvider,
+  useAccessToken as useRuntimeAccessToken,
+  useSpaceInvoicesRuntime,
+} from "@/ui/providers/space-invoices-provider";
 
 /**
  * SDK context type definition
@@ -37,6 +41,8 @@ type SDKProviderProps = {
   fallbackError?: (error: Error) => ReactNode;
   fallbackUnauthorized?: ReactNode;
 };
+
+type LegacySDKContextBridgeProps = SDKProviderProps;
 
 /**
  * SDK Provider component
@@ -76,7 +82,8 @@ export function SDKProvider({
       }
 
       const basePath = import.meta.env?.VITE_API_URL || import.meta.env?.BUN_PUBLIC_API_URL || undefined;
-      const newSDK = new SDK({
+      const { default: SDKConstructor } = await import("@spaceinvoices/js-sdk");
+      const newSDK = new SDKConstructor({
         accessToken: token,
         ...(basePath && { basePath }),
         onUnauthorized: (response: Response) => {
@@ -110,6 +117,7 @@ export function SDKProvider({
       isLoading,
       error,
       reinitialize: initializeSDK,
+      accessToken: getCookie(AUTH_COOKIES.TOKEN) ?? null,
     }),
     [sdk, isInitialized, isLoading, error, initializeSDK],
   );
@@ -125,6 +133,104 @@ export function SDKProvider({
   }
 
   if (!sdk || !isInitialized) {
+    return <>{fallbackUnauthorized}</>;
+  }
+
+  return (
+    <SpaceInvoicesProvider
+      accessToken={value.accessToken ?? ""}
+      basePath={import.meta.env?.VITE_API_URL || import.meta.env?.BUN_PUBLIC_API_URL || undefined}
+      onUnauthorized={(response) => {
+        flushCookies();
+        onUnauthorized?.(response);
+      }}
+    >
+      <SDKContext.Provider value={value}>{children}</SDKContext.Provider>
+    </SpaceInvoicesProvider>
+  );
+}
+
+export function LegacySDKContextBridge({
+  children,
+  onUnauthorized,
+  fallbackLoading = (
+    <div className="fixed inset-0 flex items-center justify-center bg-background/50">
+      <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+    </div>
+  ),
+  fallbackError = (error) => <div className="p-4 text-red-500">Error initializing SDK: {error.message}</div>,
+  fallbackUnauthorized = <div className="p-4 text-amber-500">No SDK available. Please log in first.</div>,
+}: LegacySDKContextBridgeProps) {
+  const runtime = useSpaceInvoicesRuntime();
+  const [sdk, setSdk] = useState<SDK | null>(null);
+  const [error, setError] = useState<Error | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const initializeSDK = useCallback(async () => {
+    if (runtime.isResolvingAccessToken) {
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      if (!runtime.accessToken) {
+        setSdk(null);
+        return;
+      }
+
+      const { default: SDKConstructor } = await import("@spaceinvoices/js-sdk");
+      const newSDK = new SDKConstructor({
+        accessToken: runtime.accessToken,
+        ...(runtime.basePath && { basePath: runtime.basePath }),
+        ...(runtime.clientName && { clientName: runtime.clientName }),
+        ...(onUnauthorized && { onUnauthorized }),
+      });
+
+      setSdk(newSDK);
+    } catch (cause) {
+      setSdk(null);
+      setError(cause instanceof Error ? cause : new Error("Failed to initialize SDK"));
+    } finally {
+      setIsLoading(false);
+    }
+  }, [onUnauthorized, runtime.accessToken, runtime.basePath, runtime.clientName, runtime.isResolvingAccessToken]);
+
+  useEffect(() => {
+    void initializeSDK();
+  }, [initializeSDK]);
+
+  const combinedError = runtime.error ?? error;
+  const value = useMemo(
+    () => ({
+      sdk: sdk as SDK,
+      isInitialized: Boolean(sdk) && runtime.hasAccessToken,
+      isLoading: runtime.isResolvingAccessToken || isLoading,
+      error: combinedError,
+      reinitialize: initializeSDK,
+      accessToken: runtime.accessToken,
+    }),
+    [
+      sdk,
+      runtime.hasAccessToken,
+      runtime.isResolvingAccessToken,
+      isLoading,
+      combinedError,
+      initializeSDK,
+      runtime.accessToken,
+    ],
+  );
+
+  if (runtime.isResolvingAccessToken || isLoading) {
+    return <>{fallbackLoading}</>;
+  }
+
+  if (combinedError) {
+    return <>{fallbackError(combinedError)}</>;
+  }
+
+  if (!sdk || !runtime.hasAccessToken) {
     return <>{fallbackUnauthorized}</>;
   }
 
@@ -159,13 +265,7 @@ export function useSDKOptional() {
  * Checks context.accessToken first (set by embed mode), then falls back to cookies
  */
 export function useAccessToken(): string | null {
-  const context = useContext(SDKContext);
-  if (!context?.sdk) return null;
-
-  // Embed mode passes token explicitly via context
-  if (context.accessToken) return context.accessToken;
-
-  // Normal mode: read from auth cookie
-  const token = getCookie(AUTH_COOKIES.TOKEN);
-  return token ?? null;
+  const runtimeToken = useRuntimeAccessToken();
+  if (runtimeToken) return runtimeToken;
+  return getCookie(AUTH_COOKIES.TOKEN) ?? null;
 }

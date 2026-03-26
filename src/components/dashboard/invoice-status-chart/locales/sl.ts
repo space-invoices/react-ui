@@ -6,5 +6,5 @@ export default {
   Overdue: "Zapadlo",
   Voided: "Stornirano",
   "No data available": "Ni podatkov",
-  "Invoices": "Računi",
+  Invoices: "Računi",
 } as const;

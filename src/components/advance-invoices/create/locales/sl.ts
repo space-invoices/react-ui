@@ -4,10 +4,12 @@ export default {
   "Create Advance Invoice": "Ustvari avansni račun",
   "e-SLOG": "e-SLOG",
   "Fiscally verify": "Davčno potrdi",
-  "Click to skip e-SLOG validation for this advance invoice": "Klikni za preskok e-SLOG validacije za ta avansni račun",
-  "Click to enable e-SLOG validation": "Klikni za vključitev e-SLOG validacije",
-  "Click to skip fiscalization for this advance invoice": "Klikni za preskok davčnega potrjevanja za ta avansni račun",
-  "Click to enable fiscalization": "Klikni za vključitev davčnega potrjevanja",
+  "Click to skip e-SLOG validation for this advance invoice":
+    "Kliknite za preskočitev preverjanja e-SLOG za ta avansni račun",
+  "Click to enable e-SLOG validation": "Kliknite za omogočanje preverjanja e-SLOG",
+  "Click to skip fiscalization for this advance invoice":
+    "Kliknite za preskočitev davčnega potrjevanja za ta avansni račun",
+  "Click to enable fiscalization": "Kliknite za omogočanje davčnega potrjevanja",
   "Cannot skip fiscalization for cash payments": "Za gotovinska plačila ni mogoče preskočiti davčnega potrjevanja",
   "e-SLOG Validation Failed": "e-SLOG validacija ni uspela",
   "The following entity settings need to be updated:": "Naslednje nastavitve entitete je treba posodobiti:",
@@ -16,7 +18,7 @@ export default {
   Paid: "Plačano",
   "Advance invoice will be marked as fully paid upon creation": "Avansni račun bo označen kot plačan ob ustvarjanju",
   "Payment Type": "Vrsta plačila",
-  "Select payment type": "Izberite vrsto plačila",
+  "Select payment type": "Izberi vrsto plačila",
   Cash: "Gotovina",
   "Bank Transfer": "Bančno nakazilo",
   Card: "Kartica",
@@ -43,7 +45,7 @@ export default {
   "This invoice will not be fiscalized (non-domestic transaction)":
     "Ta račun ne bo fiskaliziran (nedomača transakcija)",
   "Tax Clause": "Davčna klavzula",
-  "Add tax clause...": "Dodajte davčno klavzulo...",
+  "Add tax clause...": "Dodaj davčno klavzulo...",
   Footer: "Noga dokumenta",
-  "Add document footer...": "Dodajte nogo dokumenta...",
+  "Add document footer...": "Dodaj nogo dokumenta...",
 } as const;

@@ -4,6 +4,7 @@
  * Sends 7 queries in a single batch request.
  */
 import type { StatsQueryDataItem, StatsQueryRequest } from "@spaceinvoices/js-sdk";
+import { formatLocalDate } from "./local-date";
 import { useStatsBatchQuery } from "./use-stats-query";
 
 export const REVENUE_DATA_CACHE_KEY = "dashboard-revenue-data";
@@ -13,8 +14,8 @@ function getMonthDateRange() {
   const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
   const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
   return {
-    from: firstDay.toISOString().split("T")[0],
-    to: lastDay.toISOString().split("T")[0],
+    from: formatLocalDate(firstDay),
+    to: formatLocalDate(lastDay),
   };
 }
 
@@ -61,7 +62,7 @@ export function useRevenueData(entityId: string | undefined) {
     {
       metrics: [{ type: "sum", field: "total_due", alias: "outstanding" }],
       table: "invoices",
-      filters: { is_draft: false, paid_in_full: false },
+      filters: { is_draft: false, voided_at: null, paid_in_full: false },
     },
     // [3] Overdue (past due date, unpaid)
     {
@@ -70,7 +71,7 @@ export function useRevenueData(entityId: string | undefined) {
         { type: "count", alias: "count" },
       ],
       table: "invoices",
-      filters: { is_draft: false, paid_in_full: false },
+      filters: { is_draft: false, voided_at: null, paid_in_full: false },
       group_by: ["overdue_bucket"],
     },
     // [4] Credit notes: this month
@@ -93,7 +94,7 @@ export function useRevenueData(entityId: string | undefined) {
     {
       metrics: [{ type: "sum", field: "total_due", alias: "outstanding" }],
       table: "credit_notes",
-      filters: { is_draft: false, paid_in_full: false },
+      filters: { is_draft: false, voided_at: null, paid_in_full: false },
     },
   ];
 

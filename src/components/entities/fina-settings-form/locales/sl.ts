@@ -114,7 +114,7 @@ export default {
     "Opozorilo: Onemogočenje fiskalizacije bo preprečilo fiskalizacijo novih računov.",
   "Register at least one business premise first": "Najprej registrirajte vsaj en poslovni prostor",
   "Register at least one electronic device first": "Najprej registrirajte vsaj eno elektronsko napravo",
-  "Activate FINA fiscalization for your invoices": "Aktivirajte fiskalizacijo FINA za vaše račune",
+  "Activate FINA fiscalization for your invoices": "Aktivirajte fiskalizacijo FINA za svoje račune",
   "You must upload a digital certificate before you can register business premises":
     "Naložiti morate digitalni certifikat, preden lahko registrirate poslovne prostore",
   "FINA Fiscalization": "FINA fiskalizacija",
@@ -152,14 +152,15 @@ export default {
   Address: "Naslov",
   "Post Code": "Poštna številka",
   "Save Entity Info": "Shrani podatke o podjetju",
-  "Set operator OIB and label in General Settings first": "Set operator OIB and label in General Settings first",
-  "Complete General Settings first": "Complete General Settings first",
+  "Set operator OIB and label in General Settings first":
+    "Najprej nastavite OIB in oznako operaterja v splošnih nastavitvah",
+  "Complete General Settings first": "Najprej dokončajte splošne nastavitve",
   "Operator OIB and label are required for FINA fiscalization":
-    "Operator OIB and label are required for FINA fiscalization",
-  "FINA Operator Settings Required": "FINA Operator Settings Required",
+    "OIB in oznaka operaterja sta obvezna za fiskalizacijo FINA",
+  "FINA Operator Settings Required": "Nastavitve operaterja FINA so obvezne",
   "Your FINA operator information is needed to fiscalize this document. Please enter your operator details.":
-    "Your FINA operator information is needed to fiscalize this document. Please enter your operator details.",
-  "Save & Retry": "Save & Retry",
+    "Za fiskalizacijo tega dokumenta potrebujemo vaše podatke operaterja FINA. Prosimo, vnesite podatke operaterja.",
+  "Save & Retry": "Shrani in ponovi",
   "Unified document numbering": "Enotno številčenje dokumentov",
   "Use the same numbering sequence for all documents, including non-fiscalized ones":
     "Uporabite enako zaporedje številčenja za vse dokumente, tudi za nefiskalizirane",

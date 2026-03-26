@@ -14,12 +14,14 @@
     --popover: oklch(1 0 0);
     --popover-foreground: oklch(0.141 0.005 285.823);
     --primary: oklch(0.488 0.243 264.376);
+    --primary-readable: oklch(0.488 0.243 264.376);
     --primary-foreground: oklch(0.97 0.014 254.604);
     --secondary: oklch(0.967 0.001 286.375);
     --secondary-foreground: oklch(0.21 0.006 285.885);
     --muted: oklch(0.967 0.001 286.375);
     --muted-foreground: oklch(0.552 0.016 285.938);
     --accent: oklch(0.488 0.243 264.376);
+    --accent-readable: oklch(0.488 0.243 264.376);
     --accent-foreground: oklch(0.97 0.014 254.604);
     --destructive: oklch(0.577 0.245 27.325);
     --border: oklch(0.92 0.004 286.32);
@@ -34,8 +36,10 @@
     --sidebar: oklch(0.985 0 0);
     --sidebar-foreground: oklch(0.141 0.005 285.823);
     --sidebar-primary: oklch(0.546 0.245 262.881);
+    --sidebar-primary-readable: oklch(0.546 0.245 262.881);
     --sidebar-primary-foreground: oklch(0.97 0.014 254.604);
     --sidebar-accent: oklch(0.488 0.243 264.376);
+    --sidebar-accent-readable: oklch(0.488 0.243 264.376);
     --sidebar-accent-foreground: oklch(0.97 0.014 254.604);
     --sidebar-border: oklch(0.92 0.004 286.32);
     --sidebar-ring: oklch(0.705 0.015 286.067);
@@ -49,12 +53,14 @@
     --popover: oklch(0.21 0.006 285.885);
     --popover-foreground: oklch(0.985 0 0);
     --primary: oklch(0.65 0.2 262);
+    --primary-readable: oklch(0.65 0.2 262);
     --primary-foreground: oklch(0.98 0 0);
     --secondary: oklch(0.274 0.006 286.033);
     --secondary-foreground: oklch(0.985 0 0);
     --muted: oklch(0.274 0.006 286.033);
     --muted-foreground: oklch(0.705 0.015 286.067);
     --accent: oklch(0.65 0.2 262);
+    --accent-readable: oklch(0.65 0.2 262);
     --accent-foreground: oklch(0.98 0 0);
     --destructive: oklch(0.704 0.191 22.216);
     --border: oklch(1 0 0 / 10%);
@@ -68,8 +74,10 @@
     --sidebar: oklch(0.21 0.006 285.885);
     --sidebar-foreground: oklch(0.985 0 0);
     --sidebar-primary: oklch(0.65 0.2 262);
+    --sidebar-primary-readable: oklch(0.65 0.2 262);
     --sidebar-primary-foreground: oklch(0.98 0 0);
     --sidebar-accent: oklch(0.65 0.2 262);
+    --sidebar-accent-readable: oklch(0.65 0.2 262);
     --sidebar-accent-foreground: oklch(0.98 0 0);
     --sidebar-border: oklch(1 0 0 / 10%);
     --sidebar-ring: oklch(0.65 0.2 262);
@@ -84,12 +92,14 @@
     --color-popover: var(--popover);
     --color-popover-foreground: var(--popover-foreground);
     --color-primary: var(--primary);
+    --color-primary-readable: var(--primary-readable);
     --color-primary-foreground: var(--primary-foreground);
     --color-secondary: var(--secondary);
     --color-secondary-foreground: var(--secondary-foreground);
     --color-muted: var(--muted);
     --color-muted-foreground: var(--muted-foreground);
     --color-accent: var(--accent);
+    --color-accent-readable: var(--accent-readable);
     --color-accent-foreground: var(--accent-foreground);
     --color-destructive: var(--destructive);
     --color-border: var(--border);
@@ -103,8 +113,10 @@
     --color-sidebar: var(--sidebar);
     --color-sidebar-foreground: var(--sidebar-foreground);
     --color-sidebar-primary: var(--sidebar-primary);
+    --color-sidebar-primary-readable: var(--sidebar-primary-readable);
     --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
     --color-sidebar-accent: var(--sidebar-accent);
+    --color-sidebar-accent-readable: var(--sidebar-accent-readable);
     --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
     --color-sidebar-border: var(--sidebar-border);
     --color-sidebar-ring: var(--sidebar-ring);
@@ -164,4 +176,35 @@
 [data-slot="dropdown-menu-checkbox-item"][data-disabled],
 [data-slot="dropdown-menu-radio-item"][data-disabled] {
   cursor: not-allowed;
+}
+
+@keyframes progress-indicator-shimmer {
+  0% {
+    background-position: -180px 0;
+  }
+  100% {
+    background-position: 180px 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+.progress-indicator-shimmer {
+    animation: none !important;
+  }
+}
+
+.progress-indicator-shimmer {
+  background-color: var(--primary);
+  background-image:
+    linear-gradient(
+      110deg,
+      transparent 0%,
+      transparent 30%,
+      color-mix(in oklch, var(--primary-foreground) 35%, transparent) 45%,
+      transparent 60%,
+      transparent 100%
+    );
+  background-repeat: repeat;
+  background-size: 180px 100%;
+  animation: progress-indicator-shimmer 1.8s linear infinite;
 }

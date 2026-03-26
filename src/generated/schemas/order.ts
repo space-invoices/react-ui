@@ -53,10 +53,12 @@ const OrderItem = z
     total: z.number(),
     total_with_tax: z.number(),
     tax_rate: z.number().optional(),
+    taxes: z.array(z.object({ rate: z.number() }).passthrough()).optional(),
     sku: z.string().optional(),
     source_id: z.string().optional(),
     discount: z.number().optional(),
     unit: z.string().optional(),
+    kind: z.enum(["line_item", "shipping"]).optional(),
   })
   .passthrough();
 

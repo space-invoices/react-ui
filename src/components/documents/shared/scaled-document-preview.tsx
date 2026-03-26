@@ -9,6 +9,7 @@ interface ScaledDocumentPreviewProps {
   A4_WIDTH_PX: number;
   contentRef: React.RefObject<HTMLDivElement | null>;
   entityUpdatedAt?: Date | null;
+  containedScroll?: boolean;
 }
 
 /** Extract @font-face rules from CSS so they can be hoisted to the document head */
@@ -53,7 +54,12 @@ function hoistFontFaces(html: string): string {
  * Uses Shadow DOM to completely isolate template CSS from the parent page.
  * @font-face rules are hoisted to document <head> for reliable font loading.
  */
-export const ScaledDocumentPreview: FC<ScaledDocumentPreviewProps> = ({ htmlContent, scale, A4_WIDTH_PX }) => {
+export const ScaledDocumentPreview: FC<ScaledDocumentPreviewProps> = ({
+  htmlContent,
+  scale,
+  A4_WIDTH_PX,
+  containedScroll = false,
+}) => {
   const shadowHostRef = useRef<HTMLDivElement>(null);
   const shadowRootRef = useRef<ShadowRoot | null>(null);
   // A4 height in pixels at 96 DPI (297mm)
@@ -84,27 +90,35 @@ export const ScaledDocumentPreview: FC<ScaledDocumentPreviewProps> = ({ htmlCont
     setTimeout(measureHeight, 100);
   }, [htmlContent]);
 
-  return (
-    <div className="rounded-lg border bg-neutral-100 p-4">
+  const scaledPage = (
+    <div
+      style={{
+        width: A4_WIDTH_PX * scale,
+        height: contentHeight * scale,
+        margin: "0 auto",
+        overflow: "hidden",
+      }}
+    >
       <div
+        ref={shadowHostRef}
         style={{
-          width: A4_WIDTH_PX * scale,
-          height: contentHeight * scale,
-          margin: "0 auto",
-          overflow: "hidden",
+          width: A4_WIDTH_PX,
+          minHeight: contentHeight,
+          transform: `scale(${scale})`,
+          transformOrigin: "top left",
+          background: "white",
         }}
-      >
-        <div
-          ref={shadowHostRef}
-          style={{
-            width: A4_WIDTH_PX,
-            minHeight: contentHeight,
-            transform: `scale(${scale})`,
-            transformOrigin: "top left",
-            background: "white",
-          }}
-        />
-      </div>
+      />
     </div>
   );
+
+  if (containedScroll) {
+    return (
+      <div className="flex h-full min-h-0 flex-col rounded-lg border bg-neutral-100 p-4">
+        <div className="min-h-0 flex-1 overflow-y-auto">{scaledPage}</div>
+      </div>
+    );
+  }
+
+  return <div className="rounded-lg border bg-neutral-100 p-4">{scaledPage}</div>;
 };

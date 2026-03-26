@@ -73,9 +73,9 @@ export default {
     "Condiciones de pago completadas previamente al crear nuevos presupuestos",
   "Payment terms pre-filled when creating new credit notes":
     "Condiciones de pago completadas previamente al crear nuevas notas de crédito",
-  "Payment due by {document_due_date}. Please reference invoice {document_number}.":
-    "Pago antes del {document_due_date}. Por favor, indique el número de factura {document_number}.",
-  "Net 30 days. Payment due by {document_due_date}.": "Neto 30 días. Pago antes del {document_due_date}.",
+  "Optional note for the document.": "Nota opcional para el documento.",
+  "Please remit payment using the bank details shown on the document.":
+    "Realice el pago utilizando los datos bancarios que figuran en el documento.",
   "This estimate is valid until {document_valid_until}.": "Este presupuesto es válido hasta el {document_valid_until}.",
   "Payment due upon acceptance.": "Pago al aceptar.",
   "Credit note for invoice {document_number}.": "Nota de crédito para la factura {document_number}.",
@@ -120,6 +120,11 @@ export default {
   "Document Signature": "Firma del documento",
   "Signature text displayed on all PDF documents": "Texto de firma mostrado en todos los documentos PDF",
   "Add signature text...": "Añadir texto de firma...",
+  "Delivery Note": "Albarán",
+  "Default note for advance invoices": "Nota predeterminada para facturas anticipadas",
+  "Default note for all new advance invoices": "Nota predeterminada para todas las nuevas facturas anticipadas",
+  "Default note for delivery notes": "Nota predeterminada para albaranes",
+  "Default note for all new delivery notes": "Nota predeterminada para todos los nuevos albaranes",
   // Overdue Notifications section
   "Overdue Notifications": "Notificaciones de vencimiento",
   "Automatically remind customers about overdue invoices":

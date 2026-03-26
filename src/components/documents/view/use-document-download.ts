@@ -4,14 +4,16 @@ import {
   type DeliveryNote,
   downloadBlob,
   type Estimate,
+  eSlog,
   type Invoice,
+  invoices,
 } from "@spaceinvoices/js-sdk";
 import { useState } from "react";
 import { useEntities } from "@/ui/providers/entities-context";
-import { useSDK } from "@/ui/providers/sdk-provider";
 
 type Document = Invoice | Estimate | CreditNote | AdvanceInvoice | DeliveryNote;
 type DocumentType = "invoice" | "estimate" | "credit_note" | "advance_invoice" | "delivery_note";
+type ESlogDocumentType = "invoice" | "estimate" | "credit_note";
 
 // Document type labels for PDF filename
 const TYPE_LABELS: Record<string, string> = {
@@ -36,18 +38,17 @@ export function useDocumentDownload({
   onDownloadSuccess,
   onDownloadError,
 }: UseDocumentDownloadOptions = {}) {
-  const { sdk } = useSDK();
   const { activeEntity } = useEntities();
 
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
   const [isDownloadingEslog, setIsDownloadingEslog] = useState(false);
 
   /**
-   * Download PDF with optional locale override.
-   * When a locale is selected, it is sent as both the formatting locale and label language.
+   * Download PDF with an optional language override.
+   * Formatting locale always falls back to backend/entity defaults.
    */
-  const downloadPdf = async (document: Document, documentType: DocumentType, locale?: string) => {
-    if (!sdk || !activeEntity?.id) {
+  const downloadPdf = async (document: Document, documentType: DocumentType, language?: string) => {
+    if (!activeEntity?.id) {
       onDownloadError?.("Download failed");
       return;
     }
@@ -59,11 +60,14 @@ export function useDocumentDownload({
       // SDK signature: renderPdf(id, params?, SDKMethodOptions?)
       // entity_id goes in SDKMethodOptions (last arg), not params
       // Note: renderPdf is on invoices module but works with any document ID via /documents/{id}/pdf
-      const params = locale ? { locale, language: locale } : {};
-      const typeLabel = TYPE_LABELS[documentType] || "Document";
+      const typeLabel =
+        documentType === "estimate" && (document as Estimate).title_type === "quote"
+          ? "Quote"
+          : TYPE_LABELS[documentType] || "Document";
+      const params = language ? { language } : {};
       const fileName = `${typeLabel} ${document.number}.pdf`;
 
-      await sdk.invoices.downloadPdf(document.id, fileName, params, { entity_id: activeEntity.id });
+      await invoices.downloadPdf(document.id, fileName, params, { entity_id: activeEntity.id });
 
       onDownloadSuccess?.(fileName);
     } catch (error) {
@@ -78,7 +82,7 @@ export function useDocumentDownload({
    * Download e-SLOG XML
    */
   const downloadEslog = async (document: Document, documentType: DocumentType) => {
-    if (!sdk || !activeEntity?.id) {
+    if (!activeEntity?.id) {
       onDownloadError?.("Download failed");
       return;
     }
@@ -86,20 +90,17 @@ export function useDocumentDownload({
     setIsDownloadingEslog(true);
 
     try {
-      const typeMap: Record<DocumentType, string> = {
+      const typeMap: Partial<Record<DocumentType, ESlogDocumentType>> = {
         invoice: "invoice",
-        advance_invoice: "advance_invoice",
         credit_note: "credit_note",
         estimate: "estimate",
-        delivery_note: "delivery_note",
       };
+      const eslogType = typeMap[documentType];
 
-      // e-SLOG download - cast to any since the SDK structure may vary
-      const eSlogModule = (sdk as any).eSlog;
-      if (!eSlogModule?.download) {
+      if (!eslogType) {
         throw new Error("e-SLOG download not available");
       }
-      const xml = await eSlogModule.download(document.id, typeMap[documentType], { entity_id: activeEntity.id });
+      const xml = await eSlog.download(document.id, { type: eslogType }, { entity_id: activeEntity.id });
 
       const blob = new Blob([xml], { type: "application/xml" });
       downloadBlob(blob, `${document.number}.xml`);

@@ -5,7 +5,7 @@ export default {
   Number: "Broj",
   "Number format can be changed in settings": "Format broja može se promijeniti u postavkama",
   Date: "Datum",
-  "Pick a date": "Odaberite datum",
+  "Pick a date": "Odaberi datum",
   "Due Date": "Rok plaćanja",
   "Valid Until": "Vrijedi do",
   Items: "Stavke",
@@ -29,7 +29,7 @@ export default {
   Paid: "Plaćeno",
   "Invoice will be marked as fully paid upon creation": "Račun će biti označen kao potpuno plaćen prilikom kreiranja",
   "Payment Type": "Vrsta plaćanja",
-  "Select payment type": "Odaberite vrstu plaćanja",
+  "Select payment type": "Odaberi vrstu plaćanja",
   Cash: "Gotovina",
   "Bank Transfer": "Bankovni prijenos",
   Card: "Kartica",
@@ -37,12 +37,12 @@ export default {
   Other: "Ostalo",
   Note: "Napomena",
   "Insert variable": "Umetni varijablu",
-  "Add payment instructions, terms, or other notes...": "Dodajte upute za plaćanje, uvjete ili druge napomene...",
+  "Add payment instructions, terms, or other notes...": "Dodaj upute za plaćanje, uvjete ili druge napomene...",
   // Signature field
   Signature: "Potpis",
   "Add signature text...": "Dodaj tekst potpisa...",
   "Payment Terms": "Uvjeti plaćanja",
-  "Add payment terms...": "Dodajte uvjete plaćanja...",
+  "Add payment terms...": "Dodaj uvjete plaćanja...",
   Entity: "Tvrtka",
   Document: "Dokument",
   Customer: "Kupac",
@@ -58,7 +58,7 @@ export default {
   "Customer email": "E-pošta kupca",
   "Today's date": "Današnji datum",
   "Current year": "Tekuća godina",
-  "Search or create customer...": "Pretraži ili kreiraj kupca...",
+  "Search or create customer...": "Pretražite ili izradite kupca...",
   Clear: "Očisti",
   Address: "Adresa",
   "Address 2": "Adresa 2",
@@ -76,8 +76,8 @@ export default {
   "Electronic Device": "Elektronički uređaj",
   Premise: "Prostor",
   Device: "Uređaj",
-  "Select premise": "Odaberite prostor",
-  "Select device": "Odaberite uređaj",
+  "Select premise": "Odaberi prostor",
+  "Select device": "Odaberi uređaj",
   "Skip Fiscalization": "Preskoči fiskalizaciju",
   "Skip fiscalization for this invoice (e.g., bank transfers or unpaid invoices)":
     "Preskoči fiskalizaciju za ovaj račun (npr. bankovni prijenosi ili neplaćeni računi)",
@@ -92,6 +92,29 @@ export default {
   "Click to enable e-SLOG validation": "Kliknite za omogućavanje e-SLOG provjere",
   "e-SLOG Validation Failed": "e-SLOG provjera nije uspjela",
   "The following entity settings need to be updated:": "Sljedeće postavke subjekta moraju se ažurirati:",
+  "Entity name is required for e-SLOG. Update in Settings > Company.":
+    "Naziv subjekta je obavezan za e-SLOG. Ažurirajte ga u Postavke > Tvrtka.",
+  "Entity address is required for e-SLOG. Update in Settings > Company.":
+    "Adresa subjekta je obavezna za e-SLOG. Ažurirajte je u Postavke > Tvrtka.",
+  "Entity postal code is required for e-SLOG. Update in Settings > Company.":
+    "Poštanski broj subjekta je obavezan za e-SLOG. Ažurirajte ga u Postavke > Tvrtka.",
+  "Entity city is required for e-SLOG. Update in Settings > Company.":
+    "Grad subjekta je obavezan za e-SLOG. Ažurirajte ga u Postavke > Tvrtka.",
+  "Entity must be from Slovenia (SI) for e-SLOG.": "Subjekt mora biti iz Slovenije (SI) za e-SLOG.",
+  "Entity tax number is required for e-SLOG. Update in Settings > Company.":
+    "Porezni broj subjekta je obavezan za e-SLOG. Ažurirajte ga u Postavke > Tvrtka.",
+  "Slovenian tax number must be 8 digits.": "Slovenski porezni broj mora imati 8 znamenki.",
+  "Invoice date is required for e-SLOG.": "Datum računa je obavezan za e-SLOG.",
+  "Currency is required for e-SLOG.": "Valuta je obavezna za e-SLOG.",
+  "Entity currency must be EUR for e-SLOG when invoice uses a different currency.":
+    "Valuta subjekta mora biti EUR za e-SLOG kada račun koristi drugu valutu.",
+  "Customer name is required when customer is provided.": "Naziv kupca je obavezan kada je kupac unesen.",
+  "At least one line item is required for e-SLOG.": "Za e-SLOG je potrebna barem jedna stavka.",
+  "Item name is required for e-SLOG.": "Naziv stavke je obavezan za e-SLOG.",
+  "Quantity must be greater than 0.": "Količina mora biti veća od 0.",
+  "Price is required for e-SLOG.": "Cijena je obavezna za e-SLOG.",
+  "Invalid Slovenian tax rate {{rate}}%. Valid: {{validRates}}":
+    "Neispravna slovenska porezna stopa {{rate}}%. Važeće: {{validRates}}",
   "Reverse charge - tax exempt EU B2B sale": "Prijenos porezne obveznosti - porezno oslobođena EU B2B prodaja",
   "Taxes disabled": "Porezi onemogućeni",
   "Gross price": "Bruto cijena",
@@ -136,9 +159,9 @@ export default {
   "This invoice will not be fiscalized (non-domestic transaction)":
     "Ovaj račun neće biti fiskaliziran (nedomaća transakcija)",
   "Tax Clause": "Porezna klauzula",
-  "Add tax clause...": "Dodajte poreznu klauzulu...",
+  "Add tax clause...": "Dodaj poreznu klauzulu...",
   Footer: "Podnožje",
-  "Add document footer...": "Dodajte podnožje dokumenta...",
+  "Add document footer...": "Dodaj podnožje dokumenta...",
   // Croatian domestic invoice validation
   "End consumer": "Krajnji potrošač",
   "Domestic B2B invoicing in Croatia is not supported":

@@ -9,7 +9,7 @@ import {
   DialogTitle,
 } from "@/ui/components/ui/dialog";
 import { Input } from "@/ui/components/ui/input";
-import { useUpdateUserFursSettings } from "./furs-settings.hooks";
+import { useUpdateFursSettings, useUpdateUserFursSettings } from "./furs-settings.hooks";
 
 interface FursOperatorRequiredDialogProps {
   open: boolean;
@@ -17,6 +17,7 @@ interface FursOperatorRequiredDialogProps {
   entityId: string;
   onSaved: () => void;
   t: (key: string) => string;
+  saveScope?: "user" | "entity";
 }
 
 export const FursOperatorRequiredDialog: FC<FursOperatorRequiredDialogProps> = ({
@@ -25,28 +26,52 @@ export const FursOperatorRequiredDialog: FC<FursOperatorRequiredDialogProps> = (
   entityId,
   onSaved,
   t,
+  saveScope = "user",
 }) => {
   const [operatorTaxNumber, setOperatorTaxNumber] = useState("");
   const [operatorLabel, setOperatorLabel] = useState("");
 
-  const { mutate: updateUserSettings, isPending } = useUpdateUserFursSettings({
+  const handleSuccess = () => {
+    setOperatorTaxNumber("");
+    setOperatorLabel("");
+    onSaved();
+  };
+
+  const { mutate: updateUserSettings, isPending: isUserPending } = useUpdateUserFursSettings({
     onSuccess: () => {
-      setOperatorTaxNumber("");
-      setOperatorLabel("");
-      onSaved();
+      handleSuccess();
     },
   });
+
+  const { mutate: updateEntitySettings, isPending: isEntityPending } = useUpdateFursSettings({
+    onSuccess: () => {
+      handleSuccess();
+    },
+  });
+
+  const isPending = isUserPending || isEntityPending;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     e.stopPropagation();
     if (!operatorTaxNumber || !operatorLabel) return;
+
+    const payload = {
+      operator_tax_number: operatorTaxNumber,
+      operator_label: operatorLabel,
+    };
+
+    if (saveScope === "entity") {
+      updateEntitySettings({
+        entityId,
+        data: payload,
+      });
+      return;
+    }
+
     updateUserSettings({
       entityId,
-      data: {
-        operator_tax_number: operatorTaxNumber,
-        operator_label: operatorLabel,
-      },
+      data: payload,
     });
   };
 

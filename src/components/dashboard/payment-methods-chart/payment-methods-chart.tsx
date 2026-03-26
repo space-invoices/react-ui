@@ -16,8 +16,8 @@ import { LoadingCard } from "../loading-card";
 import bg from "./locales/bg";
 import cs from "./locales/cs";
 import de from "./locales/de";
-import et from "./locales/et";
 import es from "./locales/es";
+import et from "./locales/et";
 import fi from "./locales/fi";
 import fr from "./locales/fr";
 import hr from "./locales/hr";
@@ -38,6 +38,7 @@ export type PaymentMethodsChartData = { type: string; count: number; amount: num
 
 type BaseProps = {
   locale?: string;
+  translationLocale?: string;
   t?: (key: string) => string;
   namespace?: string;
 };
@@ -75,8 +76,8 @@ const PAYMENT_TYPE_LABELS: Record<string, string> = {
 };
 
 export function PaymentMethodsChart(props: PaymentMethodsChartProps) {
-  const { locale, t: externalT, namespace } = props;
-  const t = createTranslation({ t: externalT, namespace, locale, translations });
+  const { locale, translationLocale, t: externalT, namespace } = props;
+  const t = createTranslation({ t: externalT, namespace, locale, translationLocale, translations });
 
   // Turnkey mode - fetch own data
   const hookResult = usePaymentMethodsData("entityId" in props ? props.entityId : undefined);

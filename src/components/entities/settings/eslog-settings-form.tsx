@@ -39,10 +39,11 @@ export function EslogSettingsForm({
   t: translateProp,
   namespace,
   locale,
+  translationLocale,
   onSuccess,
   onError,
 }: EslogSettingsFormProps) {
-  const t = createTranslation({ t: translateProp, namespace, locale, translations });
+  const t = createTranslation({ t: translateProp, namespace, locale, translationLocale, translations });
 
   const currentSettings = (entity.settings as Record<string, unknown>) || {};
 

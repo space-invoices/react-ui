@@ -1,10 +1,26 @@
 export default {
   "Send Invoice by Email": "Wyślij fakturę e-mailem",
+  "Send Estimate by Email": "Wyślij kosztorys e-mailem",
+  "Send Credit Note by Email": "Wyślij note kredytową e-mailem",
+  "Send Advance Invoice by Email": "Wyślij fakturę zaliczkową e-mailem",
+  "Send Delivery Note by Email": "Wyślij dokument dostawy e-mailem",
   "Send invoice by email description":
     "Wyślij fakturę #{number} do klienta e-mailem. Formatowanie Markdown jest obsługiwane w treści.",
+  "Send estimate by email description":
+    "Wyślij kosztorys #{number} do klienta e-mailem. Formatowanie Markdown jest obsługiwane w treści.",
+  "Send credit note by email description":
+    "Wyślij notę kredytową #{number} do klienta e-mailem. Formatowanie Markdown jest obsługiwane w treści.",
+  "Send advance invoice by email description":
+    "Wyślij fakturę zaliczkową #{number} do klienta e-mailem. Formatowanie Markdown jest obsługiwane w treści.",
+  "Send delivery note by email description":
+    "Wyślij dokument dostawy #{number} do klienta e-mailem. Formatowanie Markdown jest obsługiwane w treści.",
   "Recipient Email": "E-mail odbiorcy",
   "Subject (Optional)": "Temat (opcjonalnie)",
   "Invoice Subject": "Temat faktury",
+  "Estimate Subject": "Temat kosztorysu",
+  "Credit Note Subject": "Temat noty kredytowej",
+  "Advance Invoice Subject": "Temat faktury zaliczkowej",
+  "Delivery Note Subject": "Temat dokumentu dostawy",
   "Leave empty to use default": "Pozostaw puste, aby użyć wartości domyślnej",
   "Message (Optional)": "Wiadomość (opcjonalnie)",
   "Email message placeholder": "Wiadomość e-mail... Obsługuje **pogrubienie**, *kursywę*, [linki](url) i listy",
@@ -12,11 +28,16 @@ export default {
   "Send Email": "Wyślij e-mail",
   "Email sent": "E-mail wysłany",
   "Invoice sent to": "Faktura wysłana do",
+  "Estimate sent to": "Kosztorys wysłany do",
+  "Credit note sent to": "Nota kredytowa wysłana do",
+  "Advance invoice sent to": "Faktura zaliczkowa wysłana do",
+  "Delivery note sent to": "Dokument dostawy wysłany do",
   "Failed to send email": "Nie udało się wysłać e-maila",
   "Sandbox email warning":
     "W trybie sandbox e-maile można wysyłać tylko do zweryfikowanych członków zespołu tego konta.",
   "PDF Language": "Język PDF",
   Default: "Domyślnie",
+  "English (US)": "Angielski (USA)",
   English: "Angielski",
   German: "Niemiecki",
   Slovenian: "Słoweński",

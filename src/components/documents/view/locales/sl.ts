@@ -49,10 +49,18 @@ export default {
   "Partially paid": "Delno plačano",
   Unpaid: "Neplačano",
   Voided: "Stornirano",
+  Overdue: "Zapadlo",
+  Shareable: "Deljivo",
+  Quote: "Ponudba",
+  "Packing list": "Pakirni list",
+  "FURS fiscalization failed": "FURS fiskalizacija ni uspela",
+  "FINA fiscalization failed": "FINA fiskalizacija ni uspela",
 
   // Payments list
   Payments: "Plačila",
+  Refunds: "Vračila",
   "No payments": "Ni plačil",
+  "No refunds": "Ni vračil",
   "Add payment": "Dodaj plačilo",
   Edit: "Uredi",
   Delete: "Izbriši",
@@ -68,6 +76,7 @@ export default {
   credit_note: "Dobropis",
   other: "Drugo",
   advance_invoice: "Avansni račun",
+  advance_payment: "Avansno plačilo",
 
   // Errors
   "Delete failed": "Brisanje ni uspelo",
@@ -100,8 +109,12 @@ export default {
   Deleted: "Izbrisano",
   by: "od",
   me: "jaz",
+  User: "Uporabnik",
   System: "Sistem",
   Scheduled: "Načrtovano",
+  "Version history": "Zgodovina različic",
+  "No version history": "Ni zgodovine različic",
+  Version: "Različica",
 
   // Fiscalization
   Fiscalization: "Fiskalizacija",

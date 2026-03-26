@@ -1,11 +1,12 @@
+import { advanceInvoices, creditNotes, deliveryNotes, invoices } from "@spaceinvoices/js-sdk";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useSDK } from "@/ui/providers/sdk-provider";
 
 interface VoidDocumentParams {
   documentId: string;
   documentType: "invoice" | "credit_note" | "advance_invoice" | "delivery_note";
   entityId: string;
   reason?: string;
+  hasOriginalDocument?: boolean;
 }
 
 /**
@@ -13,23 +14,25 @@ interface VoidDocumentParams {
  * Automatically handles FURS/FINA technical cancellation for fiscalized documents
  */
 export function useVoidDocument() {
-  const { sdk } = useSDK();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ documentId, documentType, entityId, reason }: VoidDocumentParams) => {
-      const body = { reason: reason || undefined };
+    mutationFn: async ({ documentId, documentType, entityId, reason, hasOriginalDocument }: VoidDocumentParams) => {
+      const body = {
+        reason: reason || undefined,
+        has_original_document: hasOriginalDocument,
+      };
       const opts = { entity_id: entityId };
 
       switch (documentType) {
         case "invoice":
-          return sdk.invoices.void(documentId, body, opts);
+          return invoices.void(documentId, body, opts);
         case "credit_note":
-          return sdk.creditNotes.void(documentId, body, opts);
+          return creditNotes.void(documentId, body, opts);
         case "advance_invoice":
-          return sdk.advanceInvoices.void(documentId, body, opts);
+          return advanceInvoices.void(documentId, body, opts);
         case "delivery_note":
-          return sdk.deliveryNotes.void(documentId, body, opts);
+          return deliveryNotes.void(documentId, body, opts);
       }
     },
     onSuccess: (_, variables) => {

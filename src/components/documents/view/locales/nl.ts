@@ -49,10 +49,18 @@ export default {
   "Partially paid": "Gedeeltelijk betaald",
   Unpaid: "Onbetaald",
   Voided: "Nietig verklaard",
+  Overdue: "Achterstallig",
+  Shareable: "Deelbaar",
+  Quote: "Offerte",
+  "Packing list": "Paklijst",
+  "FURS fiscalization failed": "FURS-fiscalisatie mislukt",
+  "FINA fiscalization failed": "FINA-fiscalisatie mislukt",
 
   // Payments list
   Payments: "Betalingen",
+  Refunds: "Terugbetalingen",
   "No payments": "Geen betalingen",
+  "No refunds": "Geen terugbetalingen",
   "Add payment": "Betaling toevoegen",
   Edit: "Bewerken",
   Delete: "Verwijderen",
@@ -68,6 +76,7 @@ export default {
   credit_note: "Creditnota",
   other: "Overig",
   advance_invoice: "Voorschotfactuur",
+  advance_payment: "Vooruitbetaling",
 
   // Errors
   "Delete failed": "Verwijderen mislukt",
@@ -100,8 +109,12 @@ export default {
   Deleted: "Verwijderd",
   by: "door",
   me: "mij",
+  User: "Gebruiker",
   System: "Systeem",
   Scheduled: "Gepland",
+  "Version history": "Versiegeschiedenis",
+  "No version history": "Geen versiegeschiedenis",
+  Version: "Versie",
 
   // Fiscalization
   Fiscalization: "Fiscalisatie",

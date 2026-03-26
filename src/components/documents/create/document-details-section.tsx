@@ -86,6 +86,7 @@ type DocumentDetailsSectionProps = {
   control: AnyControl;
   documentType: DocumentTypes;
   t: (key: string) => string;
+  locale?: string;
   children?: React.ReactNode; // For document-specific additions (e.g., mark as paid for invoices)
   fursInline?: FursInlineProps; // FURS premise/device inline with number
   finaInline?: FinaInlineProps; // FINA premise/device inline with number
@@ -97,6 +98,7 @@ export function DocumentDetailsSection({
   control,
   documentType,
   t,
+  locale = "en-US",
   children,
   fursInline,
   finaInline,
@@ -114,7 +116,7 @@ export function DocumentDetailsSection({
   const showFinaSelects = !!finaInline;
 
   return (
-    <div className="flex-1 space-y-3">
+    <div className="mt-6 flex-1 space-y-3 md:mt-0">
       <h2 className="font-bold text-xl">{t("Details")}</h2>
 
       {/* Number field - inline with optional FURS/FINA premise/device + sequence number */}
@@ -262,7 +264,7 @@ export function DocumentDetailsSection({
                   <TooltipTrigger asChild>
                     <FormControl>
                       <Button variant="outline" disabled className="flex-1 pl-3 text-left font-normal">
-                        {new Date().toLocaleDateString()}
+                        {new Date().toLocaleDateString(locale)}
                         <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                       </Button>
                     </FormControl>
@@ -279,7 +281,11 @@ export function DocumentDetailsSection({
                         variant="outline"
                         className={cn("flex-1 pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
                       >
-                        {field.value ? new Date(field.value).toLocaleDateString() : <span>{t("Pick a date")}</span>}
+                        {field.value ? (
+                          new Date(field.value).toLocaleDateString(locale)
+                        ) : (
+                          <span>{t("Pick a date")}</span>
+                        )}
                         <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                       </Button>
                     </FormControl>
@@ -334,7 +340,11 @@ export function DocumentDetailsSection({
                           variant="outline"
                           className={cn("flex-1 pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
                         >
-                          {field.value ? new Date(field.value).toLocaleDateString() : <span>{t("Pick a date")}</span>}
+                          {field.value ? (
+                            new Date(field.value).toLocaleDateString(locale)
+                          ) : (
+                            <span>{t("Pick a date")}</span>
+                          )}
                           <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                         </Button>
                       </FormControl>
@@ -357,7 +367,7 @@ export function DocumentDetailsSection({
                             variant="outline"
                             className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
                           >
-                            {field.value ? new Date(field.value).toLocaleDateString() : <span>{t("From")}</span>}
+                            {field.value ? new Date(field.value).toLocaleDateString(locale) : <span>{t("From")}</span>}
                             <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                           </Button>
                         </FormControl>
@@ -385,7 +395,11 @@ export function DocumentDetailsSection({
                                 !toField.value && "text-muted-foreground",
                               )}
                             >
-                              {toField.value ? new Date(toField.value).toLocaleDateString() : <span>{t("To")}</span>}
+                              {toField.value ? (
+                                new Date(toField.value).toLocaleDateString(locale)
+                              ) : (
+                                <span>{t("To")}</span>
+                              )}
                               <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                             </Button>
                           </PopoverTrigger>
@@ -448,7 +462,11 @@ export function DocumentDetailsSection({
                         variant="outline"
                         className={cn("flex-1 pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
                       >
-                        {field.value ? new Date(field.value).toLocaleDateString() : <span>{t("Pick a date")}</span>}
+                        {field.value ? (
+                          new Date(field.value).toLocaleDateString(locale)
+                        ) : (
+                          <span>{t("Pick a date")}</span>
+                        )}
                         <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                       </Button>
                     </FormControl>
@@ -549,7 +567,7 @@ export function DocumentNoteField({
       render={({ field }) => {
         const hasContent = field.value;
         const showPreview = !isFocused && hasContent && entity;
-        const preview = showPreview ? replaceTemplateVariablesForPreview(field.value || "", entity, document) : null;
+        const preview = showPreview ? replaceTemplateVariablesForPreview(field.value || "", entity, document, t) : null;
 
         return (
           <FormItem>
@@ -644,7 +662,7 @@ export function DocumentTaxClauseField({
       render={({ field }) => {
         const hasContent = field.value;
         const showPreview = !isFocused && hasContent && entity;
-        const preview = showPreview ? replaceTemplateVariablesForPreview(field.value || "", entity, document) : null;
+        const preview = showPreview ? replaceTemplateVariablesForPreview(field.value || "", entity, document, t) : null;
 
         return (
           <FormItem>
@@ -738,7 +756,7 @@ export function DocumentSignatureField({
       render={({ field }) => {
         const hasContent = field.value;
         const showPreview = !isFocused && hasContent && entity;
-        const preview = showPreview ? replaceTemplateVariablesForPreview(field.value || "", entity, document) : null;
+        const preview = showPreview ? replaceTemplateVariablesForPreview(field.value || "", entity, document, t) : null;
 
         return (
           <FormItem>
@@ -806,7 +824,7 @@ export function DocumentPaymentTermsField({
       render={({ field }) => {
         const hasContent = field.value;
         const showPreview = !isFocused && hasContent && entity;
-        const preview = showPreview ? replaceTemplateVariablesForPreview(field.value || "", entity, document) : null;
+        const preview = showPreview ? replaceTemplateVariablesForPreview(field.value || "", entity, document, t) : null;
 
         return (
           <FormItem>
@@ -874,7 +892,7 @@ export function DocumentFooterField({
       render={({ field }) => {
         const hasContent = field.value;
         const showPreview = !isFocused && hasContent && entity;
-        const preview = showPreview ? replaceTemplateVariablesForPreview(field.value || "", entity, document) : null;
+        const preview = showPreview ? replaceTemplateVariablesForPreview(field.value || "", entity, document, t) : null;
 
         return (
           <FormItem>

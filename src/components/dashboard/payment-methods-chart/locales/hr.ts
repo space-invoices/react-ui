@@ -1,10 +1,10 @@
 export default {
-  "Payment Methods": "Nacini placanja",
-  "Breakdown of payments by method": "Raspodjela placanja prema nacinu",
+  "Payment Methods": "Načini plaćanja",
+  "Breakdown of payments by method": "Raspodjela plaćanja prema načinu",
   Cash: "Gotovina",
   "Bank Transfer": "Bankovni prijenos",
   Card: "Kartica",
-  Check: "Cek",
+  Check: "Ček",
   "Credit Note": "Odobrenje",
   Advance: "Avans",
   Other: "Ostalo",

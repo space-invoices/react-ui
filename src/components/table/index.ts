@@ -28,6 +28,9 @@ export { TableSkeleton } from "./table-skeleton";
 export type {
   Column,
   ListTableProps,
+  TableColumnSort,
+  TableOrderByValue,
   TableQueryParams,
   TableQueryResponse,
+  TableSortDirection,
 } from "./types";

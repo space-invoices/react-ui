@@ -3,8 +3,7 @@ import { Building2, Cpu, MapPin, MoreVertical, Truck } from "lucide-react";
 import { type FC, type ReactNode, useState } from "react";
 import type { SectionType } from "../furs-settings-form";
 
-// Extended premise type - SDK type is incomplete, so we extend it locally
-// TODO: Update SDK types when backend OpenAPI spec is fixed
+// Local UI view model extends the SDK type with the response fields this section reads.
 type ExtendedFursBusinessPremise = {
   id: string;
   entity_id: string;
@@ -13,11 +12,11 @@ type ExtendedFursBusinessPremise = {
   real_estate?: {
     cadastral_number?: string; // String in DB, not number
     building_number?: string; // String in DB, not number
-    building_section?: string; // Renamed from building_section_number
+    building_section?: string; // Stored as string in DB/API
     street?: string;
     house_number?: string;
     house_number_additional?: string | null;
-    community?: string; // Added - required by FURS
+    community?: string;
     city?: string;
     postal_code?: string;
   };
@@ -84,6 +83,12 @@ export const PremisesManagementSection: FC<PremisesManagementSectionProps> = ({
   const [selectedPremiseId, setSelectedPremiseId] = useState<string | null>(null);
   const [deviceName, setDeviceName] = useState("");
 
+  const getSuggestedDeviceName = (premiseId: string) => {
+    const premise = premises.find((item) => item.id === premiseId);
+    const nextIndex = (premise?.Devices?.length || 0) + 1;
+    return `E${nextIndex}`;
+  };
+
   const { mutate: closePremise } = useClosePremise({
     onSuccess: () => {
       onSuccess?.();
@@ -121,7 +126,7 @@ export const PremisesManagementSection: FC<PremisesManagementSectionProps> = ({
 
   const handleAddDevice = (premiseId: string) => {
     setSelectedPremiseId(premiseId);
-    setDeviceName("");
+    setDeviceName(getSuggestedDeviceName(premiseId));
     setAddDeviceDialogOpen(true);
   };
 
@@ -283,16 +288,18 @@ export const PremisesManagementSection: FC<PremisesManagementSectionProps> = ({
                           <span className="text-sm">
                             ⚠️ {t("No devices registered. Add at least one device to fiscalize invoices.")}
                           </span>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleAddDevice(premise.id)}
-                            className="cursor-pointer"
-                            data-testid={`furs-add-device-${premise.business_premise_name}`}
-                          >
-                            <Cpu className="mr-2 h-4 w-4" />
-                            {t("Add Electronic Device")}
-                          </Button>
+                          {premise.is_active ? (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleAddDevice(premise.id)}
+                              className="cursor-pointer"
+                              data-testid={`furs-add-device-${premise.business_premise_name}`}
+                            >
+                              <Cpu className="mr-2 h-4 w-4" />
+                              {t("Add Electronic Device")}
+                            </Button>
+                          ) : null}
                         </AlertDescription>
                       </Alert>
                     )}
@@ -322,7 +329,7 @@ export const PremisesManagementSection: FC<PremisesManagementSectionProps> = ({
           entity={entity}
           type={registerType}
           t={t}
-          existingPremiseNames={premises.map((p) => p.business_premise_name)}
+          premises={premises}
           onSuccess={() => {
             setRegisterDialogOpen(false);
             onSuccess?.();

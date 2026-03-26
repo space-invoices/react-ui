@@ -1,4 +1,5 @@
 import type { DeliveryNote } from "@spaceinvoices/js-sdk";
+import { deliveryNotes } from "@spaceinvoices/js-sdk";
 import { useCallback, useMemo, useState } from "react";
 import { DataTable } from "@/ui/components/table/data-table";
 import { FormattedDate } from "@/ui/components/table/date-cell";
@@ -15,7 +16,6 @@ import type {
 import { Badge } from "@/ui/components/ui/badge";
 import { Button } from "@/ui/components/ui/button";
 import { createTranslation } from "@/ui/lib/translation";
-import { useSDK } from "@/ui/providers/sdk-provider";
 
 import DeliveryNoteListRowActions from "./list-row-actions";
 import de from "./locales/de";
@@ -54,6 +54,8 @@ type DeliveryNoteListTableProps = {
   onDownloadSuccess?: (fileName: string) => void;
   onDownloadError?: (error: string) => void;
   onExportSelected?: (documentIds: string[]) => void;
+  pdfExportDisabled?: boolean;
+  pdfExportDisabledTooltip?: string;
   onCopyToInvoice?: (documentIds: string[]) => void;
   onCreateNew?: () => void;
   onVoid?: (deliveryNote: DeliveryNote) => void;
@@ -71,6 +73,8 @@ export default function DeliveryNoteListTable({
   onDownloadSuccess,
   onDownloadError,
   onExportSelected,
+  pdfExportDisabled,
+  pdfExportDisabledTooltip,
   onCopyToInvoice,
   onCreateNew,
   onVoid,
@@ -78,23 +82,21 @@ export default function DeliveryNoteListTable({
   ...i18nProps
 }: DeliveryNoteListTableProps) {
   const t = createTranslation({
-    translations,
-    locale: i18nProps.translationLocale ?? i18nProps.locale,
     ...i18nProps,
+    translations,
   });
 
-  const { sdk } = useSDK();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const handleFetch = useTableFetch(async (params: TableQueryParams) => {
-    if (!sdk) throw new Error("SDK not initialized");
     if (!params.entity_id) throw new Error("Entity ID required");
 
-    const response = await sdk.deliveryNotes.list({
+    const response = await deliveryNotes.list({
       entity_id: params.entity_id,
       limit: params.limit,
       next_cursor: params.next_cursor,
       prev_cursor: params.prev_cursor,
+      order_by: params.order_by,
       search: params.search,
       query: params.query,
       include: "document_relations",
@@ -132,20 +134,39 @@ export default function DeliveryNoteListTable({
   const selectionToolbar = useCallback(
     (count: number, data: DeliveryNote[]) => {
       const hasDrafts = data.some((d) => selectedIds.has(d.id) && (d as any).is_draft);
+      const hasVoided = data.some((d) => selectedIds.has(d.id) && !!(d as any).voided_at);
+      const copyDisabled = hasDrafts || hasVoided;
+      const copyTooltip = hasDrafts
+        ? t("Finalize draft documents before copying to invoice")
+        : hasVoided
+          ? t("Voided documents cannot be copied to invoices")
+          : undefined;
 
       return (
         <SelectionToolbar
           selectedCount={count}
           onExportPdfs={onExportSelected ? handleExportPdfs : undefined}
+          exportPdfsDisabled={pdfExportDisabled}
+          exportPdfsTooltip={pdfExportDisabledTooltip}
           onCopyToInvoice={onCopyToInvoice ? handleCopyToInvoice : undefined}
-          copyToInvoiceDisabled={hasDrafts}
-          copyToInvoiceTooltip={hasDrafts ? t("Finalize draft documents before copying to invoice") : undefined}
+          copyToInvoiceDisabled={copyDisabled}
+          copyToInvoiceTooltip={copyTooltip}
           onDeselectAll={handleDeselectAll}
           t={t}
         />
       );
     },
-    [handleExportPdfs, handleCopyToInvoice, handleDeselectAll, onExportSelected, onCopyToInvoice, selectedIds, t],
+    [
+      handleExportPdfs,
+      handleCopyToInvoice,
+      handleDeselectAll,
+      onExportSelected,
+      pdfExportDisabled,
+      pdfExportDisabledTooltip,
+      onCopyToInvoice,
+      selectedIds,
+      t,
+    ],
   );
 
   const columns: Column<DeliveryNote>[] = useMemo(
@@ -153,6 +174,9 @@ export default function DeliveryNoteListTable({
       {
         id: "number",
         header: t("Number"),
+        sort: {
+          defaultDirection: "desc",
+        },
         cell: (deliveryNote) => (
           <div className="flex items-center gap-2">
             <Button variant="link" className="cursor-pointer py-0 underline" onClick={() => onRowClick?.(deliveryNote)}>
@@ -177,18 +201,27 @@ export default function DeliveryNoteListTable({
       {
         id: "date",
         header: t("Date"),
+        sort: {
+          defaultDirection: "desc",
+        },
         cell: (deliveryNote) => <FormattedDate date={deliveryNote.date} locale={i18nProps.locale} />,
       },
       {
         id: "total",
         header: t("Total"),
         align: "right",
+        sort: {
+          defaultDirection: "desc",
+        },
         cell: (deliveryNote) => deliveryNote.total,
       },
       {
         id: "total_with_tax",
         header: t("Total with Tax"),
         align: "right",
+        sort: {
+          defaultDirection: "desc",
+        },
         cell: (deliveryNote) => deliveryNote.total_with_tax,
       },
       {

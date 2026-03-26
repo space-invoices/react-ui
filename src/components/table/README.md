@@ -1,6 +1,6 @@
 # Table Component Library
 
-A comprehensive, type-safe table system with built-in search, pagination, and loading states.
+A comprehensive, type-safe table system with built-in search, ordering, pagination, and loading states.
 
 ## Features
 
@@ -12,6 +12,7 @@ A comprehensive, type-safe table system with built-in search, pagination, and lo
 - **Responsive**: Mobile-friendly with proper breakpoints
 - **Loading States**: Skeleton loaders and empty states
 - **Cursor Pagination**: Efficient server-side pagination
+- **Sortable Headers**: Optional clickable column headers for asc/desc/clear sorting
 
 ## Quick Start
 
@@ -22,10 +23,9 @@ The new API allows you to define columns with built-in cell renderers:
 ```tsx
 import { DataTable, FormattedDate } from "@space-invoices/ui";
 import type { Invoice } from "@spaceinvoices/js-sdk";
+import { invoices } from "@spaceinvoices/js-sdk";
 
 function InvoiceTable() {
-  const { sdk } = useSDK();
-
   return (
     <DataTable<Invoice>
       columns={[
@@ -57,7 +57,7 @@ function InvoiceTable() {
       ]}
       cacheKey="invoices"
       resourceName="invoice"
-      onFetch={(params) => sdk.invoices.getInvoices(params)}
+      onFetch={(params) => invoices.list(params)}
     />
   );
 }
@@ -69,12 +69,11 @@ For more control, use custom row and header renderers:
 
 ```tsx
 import { DataTable } from "@space-invoices/ui";
+import { invoices } from "@spaceinvoices/js-sdk";
 import InvoiceListHeader from "./invoice-list-header";
 import InvoiceListRow from "./invoice-list-row";
 
 function InvoiceTable() {
-  const { sdk } = useSDK();
-
   return (
     <DataTable<Invoice>
       columns={[
@@ -93,7 +92,7 @@ function InvoiceTable() {
       )}
       cacheKey="invoices"
       resourceName="invoice"
-      onFetch={(params) => sdk.invoices.getInvoices(params)}
+      onFetch={(params) => invoices.list(params)}
     />
   );
 }
@@ -127,8 +126,45 @@ type Column<T> = {
   align?: "left" | "center" | "right"; // Text alignment
   cell?: (item: T) => ReactNode; // Cell renderer function
   className?: string;            // Optional CSS classes
+  sort?: boolean | TableColumnSort; // Optional header click sorting
+};
+
+type TableColumnSort = {
+  asc?: string | string[];       // Explicit ascending order_by payload
+  desc?: string | string[];      // Explicit descending order_by payload
+  defaultDirection?: "asc" | "desc"; // First click direction
+  clearOnThirdClick?: boolean;   // Defaults to true
 };
 ```
+
+### Sortable Headers
+
+Use `sort: true` when the API sort field matches the column id:
+
+```tsx
+const columns = [
+  { id: "name", header: "Name", sort: true, cell: (item) => item.name },
+  { id: "created_at", header: "Created", sort: { defaultDirection: "desc" } },
+];
+```
+
+Use explicit sort mappings when the column header should drive a custom `order_by` payload:
+
+```tsx
+const columns = [
+  {
+    id: "number",
+    header: "Invoice #",
+    sort: {
+      asc: "number",
+      desc: "-number",
+      defaultDirection: "desc",
+    },
+  },
+];
+```
+
+Clickable sortable headers cycle `unsorted -> asc -> desc -> unsorted` and reset both cursor params through the shared table state.
 
 ## Hooks
 
@@ -154,10 +190,11 @@ TanStack Query wrapper for table data:
 
 ```tsx
 import { useTableQuery } from "@space-invoices/ui";
+import { customers } from "@spaceinvoices/js-sdk";
 
 const { data, isFetching } = useTableQuery({
   cacheKey: "customers",
-  fetchFn: (params) => sdk.customers.getCustomers(params),
+  fetchFn: (params) => customers.list(params),
   params: { search: "acme" },
   entityId: "entity-123",
 });
@@ -169,9 +206,10 @@ Wraps fetch function to include entity ID:
 
 ```tsx
 import { useTableFetch } from "@space-invoices/ui";
+import { customers } from "@spaceinvoices/js-sdk";
 
 const handleFetch = useTableFetch(
-  (params) => sdk.customers.getCustomers(params),
+  (params) => customers.list(params),
   entityId
 );
 ```

@@ -1,5 +1,61 @@
-import type { Entity, Estimate, Invoice } from "@spaceinvoices/js-sdk";
+import type { Entity } from "@spaceinvoices/js-sdk";
 import { cn } from "@/ui/lib/utils";
+
+type PreviewDocument = {
+  number?: string | null;
+  date?: string | Date | null;
+  date_due?: string | Date | null;
+  date_valid_till?: string | Date | null;
+  total_with_tax?: number | null;
+  currency_code?: string | null;
+  customer?: { name?: string | null; email?: string | null } | null;
+  customer_id?: string | null;
+};
+
+type TemplateVariableDefinition = {
+  name: string;
+  label: string;
+  category: string;
+  translationAliases?: string[];
+};
+
+const TEMPLATE_VARIABLE_DEFINITIONS: TemplateVariableDefinition[] = [
+  { name: "entity_name", label: "Company name", category: "Entity" },
+  { name: "entity_email", label: "Email address", category: "Entity" },
+  { name: "entity_address", label: "Address", category: "Entity" },
+  { name: "entity_post_code", label: "Post code", category: "Entity", translationAliases: ["Postal Code"] },
+  { name: "entity_city", label: "City", category: "Entity" },
+  { name: "entity_country", label: "Country", category: "Entity" },
+  { name: "entity_tax_number", label: "Tax number", category: "Entity", translationAliases: ["tax-number"] },
+  {
+    name: "entity_company_number",
+    label: "Company number",
+    category: "Entity",
+    translationAliases: ["company-number"],
+  },
+  { name: "entity_starting_capital", label: "Starting capital", category: "Entity" },
+  { name: "document_number", label: "Invoice number", category: "Document" },
+  { name: "document_date", label: "Invoice date", category: "Document" },
+  { name: "document_due_date", label: "Due date", category: "Document" },
+  { name: "document_valid_until", label: "Valid until", category: "Document" },
+  { name: "document_total", label: "Total amount", category: "Document" },
+  { name: "document_currency", label: "Currency", category: "Document" },
+  { name: "customer_name", label: "Customer name", category: "Customer" },
+  { name: "customer_email", label: "Customer email", category: "Customer" },
+  { name: "bank_account", label: "Bank Account", category: "Bank Account" },
+  { name: "bank_account.iban", label: "IBAN", category: "Bank Account" },
+  { name: "bank_account.bank_name", label: "Bank Name", category: "Bank Account" },
+  { name: "bank_account.bic", label: "BIC/SWIFT", category: "Bank Account" },
+  { name: "bank_account.account_number", label: "Account number", category: "Bank Account" },
+  { name: "current_date", label: "Today's date", category: "Other" },
+  { name: "current_year", label: "Current year", category: "Other" },
+];
+
+const TEMPLATE_VARIABLE_LOOKUP = new Map(
+  TEMPLATE_VARIABLE_DEFINITIONS.map((definition) => [definition.name, definition] as const),
+);
+
+type TranslationFunction = (key: string) => string;
 
 /**
  * Convert snake_case variable name to Title Case for display
@@ -20,7 +76,7 @@ export function formatVariableName(varName: string): string {
 export function getVariableValue(
   varName: string,
   entity?: Entity | null,
-  document?: Partial<Invoice | Estimate> | null,
+  document?: PreviewDocument | null,
 ): string | null {
   if (!entity) return null;
 
@@ -33,6 +89,9 @@ export function getVariableValue(
   if (varName === "entity_country") return entity.country || null;
   if (varName === "entity_tax_number") return entity.tax_number || null;
   if (varName === "entity_company_number") return entity.company_number || null;
+  if (varName === "entity_starting_capital") {
+    return entity.starting_capital != null ? String(entity.starting_capital) : null;
+  }
 
   // Date variables
   if (varName === "current_date") {
@@ -117,6 +176,44 @@ export function getVariableValue(
   return null;
 }
 
+function translateLabel(label: string, aliases: string[] | undefined, translate?: TranslationFunction): string {
+  if (!translate) return label;
+
+  const translatedLabel = translate(label);
+  if (translatedLabel !== label) return translatedLabel;
+
+  for (const alias of aliases ?? []) {
+    const translatedAlias = translate(alias);
+    if (translatedAlias !== alias) return translatedAlias;
+  }
+
+  return label;
+}
+
+export function getTemplateVariableLabel(varName: string, translate?: TranslationFunction): string {
+  const definition = TEMPLATE_VARIABLE_LOOKUP.get(varName);
+  if (!definition) return formatVariableName(varName);
+  return translateLabel(definition.label, definition.translationAliases, translate);
+}
+
+export function getTemplateVariableGroups(translate?: TranslationFunction) {
+  const groupedVariables = new Map<string, Array<{ code: string; label: string }>>();
+
+  for (const definition of TEMPLATE_VARIABLE_DEFINITIONS) {
+    const group = groupedVariables.get(definition.category) ?? [];
+    group.push({
+      code: `{${definition.name}}`,
+      label: getTemplateVariableLabel(definition.name, translate),
+    });
+    groupedVariables.set(definition.category, group);
+  }
+
+  return Array.from(groupedVariables.entries()).map(([category, variables]) => ({
+    category: translate ? translate(category) : category,
+    variables,
+  }));
+}
+
 /**
  * Replace template variables in a string with styled React nodes for preview.
  * Resolved values get a secondary bg, unresolved show as primary-colored placeholders.
@@ -124,7 +221,8 @@ export function getVariableValue(
 export function replaceTemplateVariablesForPreview(
   template: string,
   entity?: Entity | null,
-  document?: Partial<Invoice | Estimate> | null,
+  document?: PreviewDocument | null,
+  translate?: TranslationFunction,
 ): React.ReactNode[] {
   if (!template) return [];
 
@@ -141,7 +239,7 @@ export function replaceTemplateVariablesForPreview(
 
     const varName = match[1];
     const actualValue = getVariableValue(varName, entity, document);
-    const displayValue = actualValue || formatVariableName(varName);
+    const displayValue = actualValue || getTemplateVariableLabel(varName, translate);
 
     parts.push(
       <span

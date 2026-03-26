@@ -53,7 +53,7 @@ export function FilterBar({
   if (!hasFilters) {
     // No filters configured, just show search
     return (
-      <div className="px-4 pt-4">
+      <div className="flex flex-col gap-2 px-4 pt-4 sm:flex-row sm:items-center">
         <SearchInput
           initialValue={searchValue}
           onSearch={onSearch}

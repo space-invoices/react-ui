@@ -1,4 +1,5 @@
 import type { GetActivities200DataItem } from "@spaceinvoices/js-sdk";
+import { activities as activitiesApi } from "@spaceinvoices/js-sdk";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useState } from "react";
@@ -7,7 +8,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/ui/components/ui/car
 import { Skeleton } from "@/ui/components/ui/skeleton";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
-import { useSDK } from "@/ui/providers/sdk-provider";
 import de from "./locales/de";
 import es from "./locales/es";
 import fr from "./locales/fr";
@@ -52,8 +52,24 @@ function getActionLabel(action: string, t: (key: string) => string): string {
 }
 
 function getActorLabel(activity: GetActivities200DataItem, t: (key: string) => string, currentUserId?: string): string {
-  if (currentUserId && activity.actor_id === currentUserId) return t("me");
-  if (activity.actor_label) return activity.actor_label;
+  const meLabel = (() => {
+    const translated = t("Me");
+    if (translated !== "Me") return translated;
+    const fallback = t("me");
+    if (fallback === "me") return "Me";
+    return `${fallback.charAt(0).toUpperCase()}${fallback.slice(1)}`;
+  })();
+
+  if (currentUserId && activity.actor_id === currentUserId) return meLabel;
+  if (activity.actor_label) {
+    const actorLabelMap: Record<string, string> = {
+      User: t("User"),
+      user: t("User"),
+      Me: meLabel,
+      me: meLabel,
+    };
+    return actorLabelMap[activity.actor_label] || activity.actor_label;
+  }
   const typeLabels: Record<string, string> = {
     system: t("System"),
     api_key: "API",
@@ -72,25 +88,21 @@ export function DocumentActivitiesList({
   ...i18nProps
 }: DocumentActivitiesListProps) {
   const t = createTranslation({ translations, locale, ...i18nProps });
-  const { sdk } = useSDK();
 
   const [cursors, setCursors] = useState<string[]>([]);
   const currentCursor = cursors.length > 0 ? cursors[cursors.length - 1] : undefined;
 
   const { data: activitiesData, isLoading } = useQuery({
     queryKey: ["activities", documentId, entityId, currentCursor],
-    queryFn: async () => {
-      if (!sdk) throw new Error("SDK not initialized");
-
-      return sdk.activities.list({
+    queryFn: async () =>
+      activitiesApi.list({
         entity_id: entityId,
         resource_id: documentId,
         order_by: "-created_at",
         limit: PAGE_SIZE,
         next_cursor: currentCursor,
-      });
-    },
-    enabled: !!sdk && !!entityId && !!documentId,
+      }),
+    enabled: !!entityId && !!documentId,
     staleTime: 15_000,
     gcTime: 300_000,
     refetchOnWindowFocus: false,

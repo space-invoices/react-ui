@@ -1,4 +1,5 @@
 import type { CreditNote } from "@spaceinvoices/js-sdk";
+import { creditNotes } from "@spaceinvoices/js-sdk";
 import { AlertTriangle } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { DataTable } from "@/ui/components/table/data-table";
@@ -16,9 +17,9 @@ import type {
 import { Badge } from "@/ui/components/ui/badge";
 import { Button } from "@/ui/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/ui/components/ui/tooltip";
+import { getEslogSelectionState } from "@/ui/lib/eslog-export";
 import { getFiscalizationFailureType } from "@/ui/lib/fiscalization";
 import { createTranslation } from "@/ui/lib/translation";
-import { useSDK } from "@/ui/providers/sdk-provider";
 
 import CreditNoteListRowActions from "./list-row-actions";
 import de from "./locales/de";
@@ -58,6 +59,11 @@ type CreditNoteListTableProps = {
   onDownloadSuccess?: (fileName: string) => void;
   onDownloadError?: (error: string) => void;
   onExportSelected?: (documentIds: string[]) => void;
+  onExportEslogSelected?: (documentIds: string[]) => void;
+  pdfExportDisabled?: boolean;
+  pdfExportDisabledTooltip?: string;
+  eslogExportDisabled?: boolean;
+  eslogExportDisabledTooltip?: string;
   onRetryFiscalization?: (documentIds: string[]) => void;
   fiscalizationFeatures?: ("furs" | "fina")[];
   onCreateNew?: () => void;
@@ -77,6 +83,11 @@ export default function CreditNoteListTable({
   onDownloadSuccess,
   onDownloadError,
   onExportSelected,
+  onExportEslogSelected,
+  pdfExportDisabled,
+  pdfExportDisabledTooltip,
+  eslogExportDisabled,
+  eslogExportDisabledTooltip,
   onRetryFiscalization,
   fiscalizationFeatures,
   onCreateNew,
@@ -85,23 +96,21 @@ export default function CreditNoteListTable({
   ...i18nProps
 }: CreditNoteListTableProps) {
   const t = createTranslation({
-    translations,
-    locale: i18nProps.translationLocale ?? i18nProps.locale,
     ...i18nProps,
+    translations,
   });
 
-  const { sdk } = useSDK();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const handleFetch = useTableFetch(async (params: TableQueryParams) => {
-    if (!sdk) throw new Error("SDK not initialized");
     if (!params.entity_id) throw new Error("Entity ID required");
 
-    const response = await sdk.creditNotes.list({
+    const response = await creditNotes.list({
       entity_id: params.entity_id,
       limit: params.limit,
       next_cursor: params.next_cursor,
       prev_cursor: params.prev_cursor,
+      order_by: params.order_by,
       search: params.search,
       query: params.query,
       include: "document_relations",
@@ -126,6 +135,12 @@ export default function CreditNoteListTable({
     }
   }, [selectedIds, onExportSelected]);
 
+  const handleExportEslog = useCallback(() => {
+    if (selectedIds.size > 0 && onExportEslogSelected) {
+      onExportEslogSelected(Array.from(selectedIds));
+    }
+  }, [selectedIds, onExportEslogSelected]);
+
   const handleDeselectAll = useCallback(() => {
     setSelectedIds(new Set());
   }, []);
@@ -133,6 +148,7 @@ export default function CreditNoteListTable({
   const selectionToolbar = useCallback(
     (count: number, data: CreditNote[]) => {
       const selectedDocs = data.filter((d) => selectedIds.has(d.id));
+      const eslogSelection = getEslogSelectionState(selectedDocs);
       const failedDocs = selectedDocs.filter((d) => {
         const failureType = getFiscalizationFailureType(d as any);
         return failureType && fiscalizationFeatures?.includes(failureType);
@@ -148,6 +164,23 @@ export default function CreditNoteListTable({
         <SelectionToolbar
           selectedCount={count}
           onExportPdfs={onExportSelected ? handleExportPdfs : undefined}
+          exportPdfsDisabled={pdfExportDisabled}
+          exportPdfsTooltip={pdfExportDisabledTooltip}
+          onExportEslog={onExportEslogSelected ? handleExportEslog : undefined}
+          exportEslogDisabled={eslogExportDisabled || eslogSelection.noneEligible}
+          exportEslogTooltip={
+            eslogExportDisabled
+              ? eslogExportDisabledTooltip
+              : eslogSelection.noneEligible
+                ? t("None of the selected documents are valid for e-SLOG export")
+                : undefined
+          }
+          exportEslogWarning={!eslogExportDisabled && eslogSelection.partiallyEligible}
+          exportEslogWarningTooltip={
+            !eslogExportDisabled && eslogSelection.partiallyEligible
+              ? t("Some selected documents are not valid for e-SLOG export and will be skipped")
+              : undefined
+          }
           onRetryFiscalization={showRetry ? () => onRetryFiscalization(failedDocs.map((d) => d.id)) : undefined}
           retryFiscalizationDisabled={someFailed && !allFailed}
           retryFiscalizationTooltip={
@@ -160,8 +193,14 @@ export default function CreditNoteListTable({
     },
     [
       handleExportPdfs,
+      handleExportEslog,
       handleDeselectAll,
       onExportSelected,
+      onExportEslogSelected,
+      pdfExportDisabled,
+      pdfExportDisabledTooltip,
+      eslogExportDisabled,
+      eslogExportDisabledTooltip,
       onRetryFiscalization,
       fiscalizationFeatures,
       selectedIds,
@@ -174,6 +213,9 @@ export default function CreditNoteListTable({
       {
         id: "number",
         header: t("Number"),
+        sort: {
+          defaultDirection: "desc",
+        },
         cell: (creditNote) => {
           const failureType = getFiscalizationFailureType(creditNote as any);
           const showWarning = failureType && fiscalizationFeatures?.includes(failureType);
@@ -212,18 +254,27 @@ export default function CreditNoteListTable({
       {
         id: "date",
         header: t("Date"),
+        sort: {
+          defaultDirection: "desc",
+        },
         cell: (creditNote) => <FormattedDate date={creditNote.date} locale={i18nProps.locale} />,
       },
       {
         id: "total",
         header: t("Total"),
         align: "right",
+        sort: {
+          defaultDirection: "desc",
+        },
         cell: (creditNote) => -creditNote.total,
       },
       {
         id: "total_with_tax",
         header: t("Total with Tax"),
         align: "right",
+        sort: {
+          defaultDirection: "desc",
+        },
         cell: (creditNote) => -creditNote.total_with_tax,
       },
       {
@@ -282,7 +333,7 @@ export default function CreditNoteListTable({
       filterConfig={filterConfig}
       t={t}
       locale={i18nProps.locale}
-      selectable={!!(onExportSelected || onRetryFiscalization)}
+      selectable={!!(onExportSelected || onExportEslogSelected || onRetryFiscalization)}
       selectedIds={selectedIds}
       onSelectionChange={setSelectedIds}
       selectionToolbar={selectionToolbar}

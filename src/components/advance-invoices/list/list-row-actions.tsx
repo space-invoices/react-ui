@@ -11,10 +11,17 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/ui/components/ui/dropdown-menu";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/ui/components/ui/tooltip";
+import { actionMenuTooltipProps, Tooltip, TooltipContent, TooltipTrigger } from "@/ui/components/ui/tooltip";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
 import { useAdvanceInvoiceDownload } from "./use-advance-invoice-download";
+
+const translations = {
+  sl: {
+    "Create invoice": "Ustvari račun",
+    "This document is already voided.": "Ta dokument je že storniran.",
+  },
+} as const;
 
 type AdvanceInvoiceListRowActionsProps = {
   advanceInvoice: AdvanceInvoice;
@@ -44,13 +51,27 @@ export default function AdvanceInvoiceListRowActions({
   isVoiding,
   ...i18nProps
 }: AdvanceInvoiceListRowActionsProps) {
-  const t = createTranslation(i18nProps);
+  const t = createTranslation({ ...i18nProps, translations });
   const { isDownloading, downloadPDF } = useAdvanceInvoiceDownload({
     onDownloadStart,
     onDownloadSuccess,
     onDownloadError,
     ...i18nProps,
   });
+  const createInvoiceDisabledReason = (advanceInvoice as any).voided_at
+    ? t("documents-list-page.copy-to-invoice-voided-not-allowed")
+    : undefined;
+  const voidDisabledReason = (advanceInvoice as any).voided_at ? t("This document is already voided.") : undefined;
+  const createInvoiceItem = onDuplicate ? (
+    <DropdownMenuItem
+      className="cursor-pointer"
+      onClick={createInvoiceDisabledReason ? undefined : () => onDuplicate(advanceInvoice)}
+      disabled={!!createInvoiceDisabledReason}
+    >
+      <Copy className="h-4 w-4" />
+      {t("Create invoice")}
+    </DropdownMenuItem>
+  ) : null;
 
   return (
     <DropdownMenu>
@@ -82,14 +103,21 @@ export default function AdvanceInvoiceListRowActions({
             <Download className="h-4 w-4" />
             {isDownloading ? t("Downloading...") : t("Download PDF")}
           </DropdownMenuItem>
-          {onDuplicate && (
-            <DropdownMenuItem className="cursor-pointer" onClick={() => onDuplicate(advanceInvoice)}>
-              <Copy className="h-4 w-4" />
-              {t("Duplicate")}
-            </DropdownMenuItem>
-          )}
+          {createInvoiceItem &&
+            (createInvoiceDisabledReason ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div>{createInvoiceItem}</div>
+                </TooltipTrigger>
+                <TooltipContent side="left" {...actionMenuTooltipProps}>
+                  {createInvoiceDisabledReason}
+                </TooltipContent>
+              </Tooltip>
+            ) : (
+              createInvoiceItem
+            ))}
         </DropdownMenuGroup>
-        {!advanceInvoice.paid_in_full && (
+        {!advanceInvoice.paid_in_full && onAddPayment && (
           <>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
@@ -116,13 +144,17 @@ export default function AdvanceInvoiceListRowActions({
           </>
         )}
         {onVoid &&
-          !(advanceInvoice as any).voided_at &&
           !(advanceInvoice as any).is_draft &&
           (() => {
-            const isLinked = (advanceInvoice as any).document_relations?.some(
-              (rel: any) => rel.relation_type === "advance_applied" || rel.relation_type === "applied_to",
+            const isLinkedToLiveInvoice = (advanceInvoice as any).document_relations?.some(
+              (rel: any) =>
+                (rel.relation_type === "advance_applied" || rel.relation_type === "applied_to") &&
+                !rel.linked_document_voided_at,
             );
-            const voidDisabled = isVoiding || isLinked;
+            const disabledReason =
+              voidDisabledReason ||
+              (isLinkedToLiveInvoice ? t("Cannot void an advance invoice linked to an invoice") : undefined);
+            const voidDisabled = isVoiding || !!disabledReason;
             const voidItem = (
               <DropdownMenuItem
                 className={
@@ -141,13 +173,13 @@ export default function AdvanceInvoiceListRowActions({
               <>
                 <DropdownMenuSeparator />
                 <DropdownMenuGroup>
-                  {isLinked ? (
+                  {disabledReason ? (
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <div>{voidItem}</div>
                       </TooltipTrigger>
-                      <TooltipContent side="left">
-                        {t("Cannot void an advance invoice linked to an invoice")}
+                      <TooltipContent side="left" {...actionMenuTooltipProps}>
+                        {disabledReason}
                       </TooltipContent>
                     </Tooltip>
                   ) : (

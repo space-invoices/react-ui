@@ -1,5 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Entity } from "@spaceinvoices/js-sdk";
+import { files, upload } from "@spaceinvoices/js-sdk";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -16,7 +17,6 @@ import { Input } from "@/ui/components/ui/input";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
 import { useFormFooterRegistration } from "@/ui/providers/form-footer-context";
-import { useSDK } from "@/ui/providers/sdk-provider";
 import { useUpdateEntity } from "../entities.hooks";
 import { ImageUploadWithCrop } from "../entity-settings-form/image-upload-with-crop";
 import de from "../entity-settings-form/locales/de";
@@ -39,7 +39,6 @@ type BrandingSettingsSchema = z.infer<typeof brandingSettingsSchema>;
 
 export type BrandingSettingsFormProps = {
   entity: Entity;
-  cloudinaryCloudName?: string;
   onSuccess?: (data: Entity) => void;
   onError?: (error: unknown) => void;
   onUploadSuccess?: () => void;
@@ -47,23 +46,20 @@ export type BrandingSettingsFormProps = {
 
 export function BrandingSettingsForm({
   entity,
-  cloudinaryCloudName,
   t: translateProp,
   namespace,
   locale,
+  translationLocale,
   onSuccess,
   onError,
   onUploadSuccess,
 }: BrandingSettingsFormProps) {
-  const t = createTranslation({ t: translateProp, namespace, locale, translations });
-  const { sdk } = useSDK();
+  const t = createTranslation({ t: translateProp, namespace, locale, translationLocale, translations });
 
   const currentSettings = (entity.settings as any) || {};
 
   const [isUploading, setIsUploading] = useState(false);
   const [isUploadingSignature, setIsUploadingSignature] = useState(false);
-  const [logoTimestamp, setLogoTimestamp] = useState(Date.now());
-  const [signatureTimestamp, setSignatureTimestamp] = useState(Date.now());
   const [uploadedLogoUrl, setUploadedLogoUrl] = useState<string | null>(null);
   const [uploadedSignatureUrl, setUploadedSignatureUrl] = useState<string | null>(null);
   const [fetchedLogoUrl, setFetchedLogoUrl] = useState<string | null>(null);
@@ -82,9 +78,9 @@ export function BrandingSettingsForm({
   useEffect(() => {
     async function fetchFileUrls() {
       try {
-        const files = await sdk.files.list({ entity_id: entity.id });
-        const logoFile = files.data.find((f) => f.category === "logo");
-        const signatureFile = files.data.find((f) => f.category === "signature");
+        const entityFiles = await files.list({ entity_id: entity.id });
+        const logoFile = entityFiles.data.find((f) => f.category === "logo");
+        const signatureFile = entityFiles.data.find((f) => f.category === "signature");
 
         if (logoFile) {
           setFetchedLogoUrl(logoFile.secureUrl);
@@ -99,26 +95,13 @@ export function BrandingSettingsForm({
       }
     }
     fetchFileUrls();
-  }, [entity.id, sdk.files, form]);
+  }, [entity.id, form]);
 
   const hasLogo = form.watch("has_logo");
   const hasSignature = form.watch("has_signature");
 
-  const entityTimestamp = entity.updated_at ? new Date(entity.updated_at).getTime() : logoTimestamp;
-  const logoUrl =
-    hasLogo && cloudinaryCloudName
-      ? uploadedLogoUrl ||
-        fetchedLogoUrl ||
-        `https://res.cloudinary.com/${cloudinaryCloudName}/image/upload/leka/entities/${entity.id}/logos/logo_${entity.id}.png?v=${entityTimestamp}`
-      : undefined;
-
-  const signatureEntityTimestamp = entity.updated_at ? new Date(entity.updated_at).getTime() : signatureTimestamp;
-  const signatureUrl =
-    hasSignature && cloudinaryCloudName
-      ? uploadedSignatureUrl ||
-        fetchedSignatureUrl ||
-        `https://res.cloudinary.com/${cloudinaryCloudName}/image/upload/leka/entities/${entity.id}/signatures/signature_${entity.id}.png?v=${signatureEntityTimestamp}`
-      : undefined;
+  const logoUrl = hasLogo ? uploadedLogoUrl || fetchedLogoUrl || undefined : undefined;
+  const signatureUrl = hasSignature ? uploadedSignatureUrl || fetchedSignatureUrl || undefined : undefined;
 
   const { mutate: updateEntity, isPending } = useUpdateEntity({
     entityId: entity.id,
@@ -140,10 +123,9 @@ export function BrandingSettingsForm({
     setIsUploading(true);
     try {
       // SDK expects { file: Blob } as first arg, SDKMethodOptions as last
-      const result = await sdk.upload.uploadImage({ file }, { entity_id: entity.id });
+      const result = await upload.uploadImage({ file }, { entity_id: entity.id });
       form.setValue("has_logo", true);
       setUploadedLogoUrl(result.secureUrl);
-      setLogoTimestamp(Date.now());
       onUploadSuccess?.();
       return result;
     } catch (error) {
@@ -159,10 +141,9 @@ export function BrandingSettingsForm({
     setIsUploadingSignature(true);
     try {
       // SDK expects { file, category } as first arg, SDKMethodOptions as last
-      const result = await sdk.files.uploadFile({ file, category: "signature" }, { entity_id: entity.id });
+      const result = await files.uploadFile({ file, category: "signature" }, { entity_id: entity.id });
       form.setValue("has_signature", true);
       setUploadedSignatureUrl(result.secureUrl);
-      setSignatureTimestamp(Date.now());
       onUploadSuccess?.();
       return { secureUrl: result.secureUrl };
     } catch (error) {

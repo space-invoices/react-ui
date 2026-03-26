@@ -4,9 +4,17 @@
  */
 import { PlusIcon, SeparatorHorizontal } from "lucide-react";
 import type { MutableRefObject } from "react";
-import type { UseFormGetValues, UseFormSetValue, UseFormWatch } from "react-hook-form";
-import { useFieldArray } from "react-hook-form";
+import type {
+  UseFormClearErrors,
+  UseFormGetValues,
+  UseFormSetValue,
+  UseFormTrigger,
+  UseFormWatch,
+} from "react-hook-form";
+import { useController, useFieldArray } from "react-hook-form";
+import type { DocumentTypes } from "@/ui/components/documents/types";
 import { Button } from "@/ui/components/ui/button";
+import { cn } from "@/ui/lib/utils";
 import DocumentAddItemForm from "./document-add-item-form";
 import type { AnyControl } from "./form-types";
 
@@ -23,12 +31,15 @@ function reindexPriceModes(priceModes: PriceModesMap, nextLength: number): Price
 
 type DocumentItemsSectionProps = {
   control: AnyControl;
-
   watch: UseFormWatch<any>;
 
   setValue: UseFormSetValue<any>;
+  clearErrors: UseFormClearErrors<any>;
+  trigger: UseFormTrigger<any>;
+  isSubmitted: boolean;
 
   getValues: UseFormGetValues<any>;
+  documentType?: DocumentTypes;
   entityId: string;
   currencyCode?: string;
   onAddNewTax?: () => void;
@@ -45,12 +56,17 @@ type DocumentItemsSectionProps = {
   initialPriceModes?: PriceModesMap;
   /** Called when item ordering or price mode changes outside normal field edits. */
   onItemsStateChange?: () => void;
+  locale?: string;
 };
 
 export function DocumentItemsSection({
   control,
+  documentType,
   watch,
   setValue,
+  clearErrors,
+  trigger,
+  isSubmitted,
   getValues,
   entityId,
   currencyCode,
@@ -62,11 +78,17 @@ export function DocumentItemsSection({
   priceModesRef,
   initialPriceModes = {},
   onItemsStateChange,
+  locale = "en",
 }: DocumentItemsSectionProps) {
   const { fields, append, remove, move } = useFieldArray({
     control: control as any,
     name: "items",
   });
+  const itemsController = useController({
+    control: control as any,
+    name: "items" as any,
+  });
+  const itemsError = itemsController.fieldState.error?.message;
 
   const syncPriceModes = (updater: (current: PriceModesMap) => PriceModesMap) => {
     if (!priceModesRef) return;
@@ -77,6 +99,7 @@ export function DocumentItemsSection({
     append({
       name: "",
       description: "",
+      classification: undefined,
       quantity: 1,
       price: undefined,
       taxes: [],
@@ -139,10 +162,16 @@ export function DocumentItemsSection({
       <h2 className="font-bold text-xl">{t("Items")}</h2>
 
       {fields.map((field, index: number) => (
-        <div key={field.id}>
+        <div
+          key={field.id}
+          className={cn(
+            index === 0 && itemsError && "rounded-lg border border-destructive/70 ring-1 ring-destructive/20",
+          )}
+        >
           <DocumentAddItemForm
-            form={{ control, watch, setValue, getValues } as any}
+            form={{ control, watch, setValue, clearErrors, trigger, getValues, formState: { isSubmitted } } as any}
             index={index}
+            documentType={documentType}
             control={control}
             entityId={entityId}
             currencyCode={currencyCode}
@@ -164,12 +193,21 @@ export function DocumentItemsSection({
               }
               onItemsStateChange?.();
             }}
+            locale={locale}
           />
         </div>
       ))}
 
+      {itemsError && <p className="font-normal text-destructive text-xs">{itemsError}</p>}
+
       <div className="flex gap-2">
-        <Button type="button" variant="outline" onClick={addItem} className="flex-1 cursor-pointer border-dashed">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={addItem}
+          className="flex-1 cursor-pointer border-dashed"
+          data-demo="marketing-demo-add-item"
+        >
           <PlusIcon className="mr-2 h-4 w-4" /> {t("Add item")}
         </Button>
         <Button type="button" variant="ghost" onClick={addSeparator} className="cursor-pointer text-muted-foreground">

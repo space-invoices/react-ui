@@ -1,0 +1,17 @@
+export default {
+  Name: "Nimi",
+  "Tax Rates": "Maksumäärad",
+  Created: "Loodud",
+  Default: "Vaikimisi",
+  "Unnamed Tax": "Unnamed Tax",
+  "Open menu": "Ava menüü",
+  Actions: "Tegevused",
+  "Copy tax ID": "Copy tax ID",
+  "View tax": "View tax",
+  "Your list is empty": "Your tax list is empty",
+  "Get started by creating your first entry": "Get started by creating your first tax",
+  "No results found": "No taxes found",
+  "Try adjusting your search criteria": "Try adjusting your search criteria",
+  "Clear search": "Clear search",
+  "Clear all": "Clear all",
+} as const;

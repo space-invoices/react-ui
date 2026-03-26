@@ -7,17 +7,19 @@ function Progress({
   className,
   ...props
 }: ProgressPrimitive.Root.Props & { className?: string }) {
+  const normalizedValue = Math.min(Math.max(value ?? 0, 0), 100)
+
   return (
     <ProgressPrimitive.Root
       data-slot="progress"
-      value={value}
+      value={normalizedValue}
       className={cn("relative w-full overflow-hidden rounded-full bg-primary/20", className)}
       {...props}
     >
-      <ProgressPrimitive.Track>
+      <ProgressPrimitive.Track className="block h-full w-full">
         <ProgressPrimitive.Indicator
-          className="h-full bg-primary transition-all duration-500 ease-in-out"
-          style={{ width: `${value ?? 0}%` }}
+          className="progress-indicator-shimmer block h-full rounded-full transition-all duration-500 ease-in-out"
+          style={{ width: `${normalizedValue}%` }}
         />
       </ProgressPrimitive.Track>
     </ProgressPrimitive.Root>

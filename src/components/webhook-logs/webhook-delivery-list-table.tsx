@@ -1,12 +1,13 @@
 "use client";
 
+import { getClientHeaders } from "@spaceinvoices/js-sdk";
 import { formatDistanceToNow } from "date-fns";
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/ui/components/ui/sheet";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/ui/components/ui/tooltip";
+import { useMediaQuery } from "@/ui/hooks/use-media-query";
 import { AUTH_COOKIES } from "@/ui/lib/auth";
 import { getCookie } from "@/ui/lib/browser-cookies";
-import { getClientHeaders } from "@/ui/lib/client-headers";
 import { getDateFnsLocale } from "@/ui/lib/date-fns-locale";
 import { createTranslation } from "@/ui/lib/translation";
 import { cn } from "@/ui/lib/utils";
@@ -83,6 +84,8 @@ type WebhookDeliveryListTableProps = ListTableProps<WebhookDeliveryResponse> & {
   t?: (key: string) => string;
   /** Locale used for relative date formatting */
   locale?: string;
+  /** Locale used for UI string lookup */
+  translationLocale?: string;
 };
 
 export function WebhookDeliveryListTable({
@@ -95,8 +98,32 @@ export function WebhookDeliveryListTable({
   onSelectDelivery,
   t = (key) => key,
   locale,
+  translationLocale,
 }: WebhookDeliveryListTableProps) {
-  const translate = createTranslation({ t, locale, translations: mergedTranslations });
+  const translate = createTranslation({ t, locale, translationLocale, translations: mergedTranslations });
+  const isLargeScreen = useMediaQuery("(min-width: 1280px)");
+  const tableContainerRef = useRef<HTMLDivElement>(null);
+  const [detailPanelHeight, setDetailPanelHeight] = useState<number>();
+
+  useEffect(() => {
+    if (!isLargeScreen) {
+      setDetailPanelHeight(undefined);
+      return;
+    }
+
+    const node = tableContainerRef.current;
+    if (!node) return;
+
+    const updateHeight = () => setDetailPanelHeight(node.offsetHeight);
+    updateHeight();
+
+    if (typeof ResizeObserver === "undefined") return;
+
+    const observer = new ResizeObserver(updateHeight);
+    observer.observe(node);
+
+    return () => observer.disconnect();
+  }, [isLargeScreen]);
 
   const handleFetch = useCallback(
     async (params: TableQueryParams): Promise<TableQueryResponse<WebhookDeliveryResponse>> => {
@@ -233,22 +260,70 @@ export function WebhookDeliveryListTable({
     ? `${WEBHOOK_LOGS_CACHE_KEY}-${entityId}`
     : `${WEBHOOK_LOGS_CACHE_KEY}-account-${environment || "live"}`;
 
+  const detailContent = selectedDelivery ? (
+    <WebhookDeliveryDetail delivery={selectedDelivery} t={translate} locale={locale} />
+  ) : null;
+
+  const desktopDetailPanel = selectedDelivery ? (
+    <>
+      <div className="flex items-start justify-between gap-3 border-b px-5 py-4">
+        <div className="min-w-0">
+          <div className="mb-2 text-muted-foreground text-xs uppercase tracking-wide">
+            {translate("Webhook delivery details")}
+          </div>
+          <div className="flex items-center gap-2">
+            <StatusBadge status={selectedDelivery.status} t={translate} />
+            <span className="truncate font-mono text-sm">{selectedDelivery.event_type}</span>
+          </div>
+        </div>
+        {onSelectDelivery && (
+          <button
+            type="button"
+            className="text-muted-foreground text-sm transition-colors hover:text-foreground"
+            onClick={() => onSelectDelivery(null)}
+          >
+            {translate("Close")}
+          </button>
+        )}
+      </div>
+      <div className="min-h-0 flex-1 overflow-y-auto">{detailContent}</div>
+    </>
+  ) : null;
+
   return (
     <>
-      <DataTable
-        columns={columns}
-        cacheKey={cacheKey}
-        resourceName="webhook delivery"
-        onFetch={handleFetch}
-        queryParams={queryParams}
-        onChangeParams={onChangeParams}
-        entityId={entityId}
-        filterConfig={filterConfig}
-        onRowClick={(d) => onSelectDelivery?.(d)}
-        t={translate}
-      />
+      <div
+        className={cn(
+          isLargeScreen && selectedDelivery && "grid gap-6 xl:grid-cols-[minmax(0,0.9fr)_minmax(28rem,1.1fr)]",
+        )}
+      >
+        <div ref={tableContainerRef} className="min-w-0">
+          <DataTable
+            columns={columns}
+            cacheKey={cacheKey}
+            resourceName="webhook delivery"
+            onFetch={handleFetch}
+            queryParams={queryParams}
+            onChangeParams={onChangeParams}
+            entityId={entityId}
+            filterConfig={filterConfig}
+            onRowClick={(d) => onSelectDelivery?.(d)}
+            t={translate}
+          />
+        </div>
 
-      <Sheet open={!!selectedDelivery} onOpenChange={(open) => !open && onSelectDelivery?.(null)}>
+        {isLargeScreen && selectedDelivery && (
+          <aside
+            className="flex min-w-0 flex-col overflow-hidden rounded-lg border bg-background xl:sticky xl:top-6"
+            aria-label={translate("Webhook delivery details")}
+            style={detailPanelHeight ? { height: `${detailPanelHeight}px` } : undefined}
+          >
+            {desktopDetailPanel}
+          </aside>
+        )}
+      </div>
+
+      <Sheet open={!isLargeScreen && !!selectedDelivery} onOpenChange={(open) => !open && onSelectDelivery?.(null)}>
         <SheetContent className="w-full overflow-y-auto sm:max-w-2xl">
           <SheetHeader>
             <SheetTitle className="flex items-center gap-2">
@@ -260,7 +335,7 @@ export function WebhookDeliveryListTable({
               )}
             </SheetTitle>
           </SheetHeader>
-          {selectedDelivery && <WebhookDeliveryDetail delivery={selectedDelivery} t={translate} locale={locale} />}
+          {detailContent}
         </SheetContent>
       </Sheet>
     </>

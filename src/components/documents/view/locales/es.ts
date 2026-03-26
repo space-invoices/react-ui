@@ -49,10 +49,18 @@ export default {
   "Partially paid": "Parcialmente pagado",
   Unpaid: "No pagado",
   Voided: "Anulado",
+  Overdue: "Vencido",
+  Shareable: "Compartible",
+  Quote: "Cotización",
+  "Packing list": "Lista de empaque",
+  "FURS fiscalization failed": "La fiscalización FURS falló",
+  "FINA fiscalization failed": "La fiscalización FINA falló",
 
   // Payments list
   Payments: "Pagos",
+  Refunds: "Reembolsos",
   "No payments": "Sin pagos",
+  "No refunds": "Sin reembolsos",
   "Add payment": "Añadir pago",
   Edit: "Editar",
   Delete: "Eliminar",
@@ -68,6 +76,7 @@ export default {
   credit_note: "Nota de crédito",
   other: "Otro",
   advance_invoice: "Factura anticipada",
+  advance_payment: "Pago anticipado",
 
   // Errors
   "Delete failed": "Error en la eliminación",
@@ -99,8 +108,12 @@ export default {
   Deleted: "Eliminado",
   by: "por",
   me: "mí",
+  User: "Usuario",
   System: "Sistema",
   Scheduled: "Programado",
+  "Version history": "Historial de versiones",
+  "No version history": "Sin historial de versiones",
+  Version: "Versión",
 
   // Fiscalization
   Fiscalization: "Fiscalización",

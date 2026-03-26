@@ -15,6 +15,7 @@ import { DocumentActivitiesList } from "./document-activities-list";
 import { DocumentDetailsCard } from "./document-details-card";
 import { DocumentPaymentsList } from "./document-payments-list";
 import { DocumentRelationsList } from "./document-relations-list";
+import { DocumentVersionHistory } from "./document-version-history";
 
 type Document = Invoice | Estimate | CreditNote | AdvanceInvoice | DeliveryNote;
 type DocumentType = "invoice" | "estimate" | "credit_note" | "advance_invoice" | "delivery_note";
@@ -25,18 +26,19 @@ interface DocumentSidebarProps extends ComponentTranslationProps {
   entityId: string;
   locale?: string;
   currentUserId?: string;
-  /** Show payments section */
   showPayments?: boolean;
+  payments?: Payment[];
   onAddPayment?: () => void;
   onEditPayment?: (payment: Payment) => void;
   onPaymentDeleteSuccess?: () => void;
   onPaymentDeleteError?: (error: string) => void;
+  addPaymentDisabledReason?: string;
+  editPaymentDisabledReason?: string;
+  deletePaymentDisabledReason?: string;
   /** Navigate to a related document */
   onNavigateRelation?: (documentId: string) => void;
-  /** FURS fiscalization */
   showFurs?: boolean;
   fursFiscalizationData?: any;
-  /** FINA fiscalization */
   showFina?: boolean;
   finaFiscalizationData?: any;
   onRetryFiscalization?: () => void;
@@ -50,10 +52,14 @@ export function DocumentSidebar({
   locale = "en",
   currentUserId,
   showPayments,
+  payments,
   onAddPayment,
   onEditPayment,
   onPaymentDeleteSuccess,
   onPaymentDeleteError,
+  addPaymentDisabledReason,
+  editPaymentDisabledReason,
+  deletePaymentDisabledReason,
   onNavigateRelation,
   showFurs,
   fursFiscalizationData,
@@ -86,11 +92,15 @@ export function DocumentSidebar({
               documentType={documentType as "invoice" | "credit_note" | "advance_invoice"}
               entityId={entityId}
               currencyCode={document.currency_code}
+              payments={payments}
               locale={locale}
               onAddPayment={onAddPayment}
               onEditPayment={onEditPayment}
               onDeleteSuccess={onPaymentDeleteSuccess}
               onDeleteError={onPaymentDeleteError}
+              addDisabledReason={addPaymentDisabledReason}
+              editDisabledReason={editPaymentDisabledReason}
+              deleteDisabledReason={deletePaymentDisabledReason}
               {...i18nProps}
             />
           </>
@@ -120,6 +130,16 @@ export function DocumentSidebar({
           {...i18nProps}
         />
 
+        <Separator />
+        <DocumentVersionHistory
+          variant="inline"
+          documentId={document.id}
+          documentType={documentType}
+          entityId={entityId}
+          locale={locale}
+          {...i18nProps}
+        />
+
         {(showFurs || showFina) && (
           <>
             <Separator />
@@ -131,6 +151,7 @@ export function DocumentSidebar({
                 onRetry={onRetryFiscalization}
                 isRetrying={isRetryingFiscalization}
                 locale={locale}
+                {...i18nProps}
               />
             )}
             {showFina && (
@@ -141,6 +162,7 @@ export function DocumentSidebar({
                 onRetry={onRetryFiscalization}
                 isRetrying={isRetryingFiscalization}
                 locale={locale}
+                {...i18nProps}
               />
             )}
           </>

@@ -14,16 +14,33 @@ import pt from "./locales/pt";
 import sl from "./locales/sl";
 
 const translations = { sl, de, it, fr, es, pt, nl, pl, hr } as const;
+type RelatedDocumentSummary = {
+  id: string;
+  type: "invoice" | "estimate" | "credit_note" | "advance_invoice" | "delivery_note";
+  number: string;
+  title_type?: "estimate" | "quote" | null;
+};
+type DocumentRelationWithSummary = DocumentRelation & {
+  related_document?: RelatedDocumentSummary;
+};
 
 interface DocumentRelationsListProps extends ComponentTranslationProps {
   documentId: string;
-  documentRelations?: DocumentRelation[];
+  documentRelations?: DocumentRelationWithSummary[];
   locale?: string;
   onNavigate?: (documentId: string) => void;
   variant?: "card" | "inline";
 }
 
-function getDocumentTypeLabel(type: string, t: (key: string) => string): string {
+function getDocumentTypeLabel(
+  type: string,
+  t: (key: string) => string,
+  titleType?: "estimate" | "quote" | null,
+): string {
+  if (type === "estimate" && titleType === "quote") {
+    return t("Quote");
+  }
+
   const labels: Record<string, string> = {
     invoice: t("Invoice"),
     estimate: t("Estimate"),
@@ -60,7 +77,6 @@ export function DocumentRelationsList({
   ...i18nProps
 }: DocumentRelationsListProps) {
   const t = createTranslation({ translations, locale, ...i18nProps });
-
   const relations = documentRelations || [];
 
   if (relations.length === 0) {
@@ -72,19 +88,23 @@ export function DocumentRelationsList({
       {relations.map((relation) => {
         const isSource = relation.source_id === documentId;
         const otherType = isSource ? relation.target_type : relation.source_type;
-        const otherId = isSource ? relation.target_id : relation.source_id;
+        const relatedSummary = relation.related_document;
+        const otherId = relatedSummary?.id ?? (isSource ? relation.target_id : relation.source_id);
+        const title = relatedSummary?.number
+          ? `${getDocumentTypeLabel(otherType, t, relatedSummary.title_type)} ${relatedSummary.number}`
+          : getDocumentTypeLabel(otherType, t, relatedSummary?.title_type);
 
         return (
           <div key={relation.id} className="flex items-center justify-between rounded-md border p-3">
             <div className="flex flex-col gap-0.5">
-              <span className="font-medium text-sm">{getDocumentTypeLabel(otherType, t)}</span>
+              <span className="font-medium text-sm">{title}</span>
               <span className="text-muted-foreground text-xs">{getRelationLabel(relation.relation_type, t)}</span>
             </div>
             {onNavigate ? (
               <button
                 type="button"
                 onClick={() => onNavigate(otherId)}
-                className="flex items-center gap-1 text-primary text-sm hover:underline"
+                className="flex items-center gap-1 text-primary-readable text-sm hover:underline"
               >
                 <Link2 className="h-3.5 w-3.5" />
                 {t("View")}

@@ -1,17 +1,22 @@
 import type { CreateAdvanceInvoiceRequest } from "@spaceinvoices/js-sdk";
 import type { CreateAdvanceInvoiceSchema } from "@/ui/generated/schemas";
+import { normalizePtDocumentInput, type PtDocumentInputForm } from "@/ui/lib/pt-document-input";
 import { prepareDocumentSubmission } from "../../documents/create/prepare-document-submission";
 
 type FursData = {
   business_premise_name?: string;
   electronic_device_name?: string;
   skip?: boolean;
+  operator_tax_number?: string;
+  operator_label?: string;
 };
 
 type FinaData = {
   business_premise_name?: string;
   electronic_device_name?: string;
   payment_type?: string;
+  operator_oib?: string;
+  operator_label?: string;
 };
 
 type EslogData = {
@@ -26,6 +31,7 @@ type PrepareOptions = {
   wasCustomerFormShown?: boolean;
   markAsPaid?: boolean;
   paymentTypes?: string[];
+  payments?: Array<{ type: string; amount?: number }>;
   /** FURS fiscalization data (for Slovenia) */
   furs?: FursData;
   /** FINA fiscalization data (for Croatia) */
@@ -43,7 +49,7 @@ type PrepareOptions = {
  * Handles customer data transformation, payment data, and FURS fiscalization
  */
 export function prepareAdvanceInvoiceSubmission(
-  values: CreateAdvanceInvoiceSchema,
+  values: CreateAdvanceInvoiceSchema & { pt?: PtDocumentInputForm | null },
   options: PrepareOptions,
 ): CreateAdvanceInvoiceRequest {
   const payload = prepareDocumentSubmission(values as any, {
@@ -51,6 +57,7 @@ export function prepareAdvanceInvoiceSubmission(
     wasCustomerFormShown: options.wasCustomerFormShown,
     markAsPaid: options.markAsPaid,
     paymentTypes: options.paymentTypes,
+    payments: options.payments,
     documentType: "advance_invoice",
     priceModes: options.priceModes,
     isDraft: options.isDraft,
@@ -66,6 +73,8 @@ export function prepareAdvanceInvoiceSubmission(
       (payload as any).furs = {
         business_premise_name: options.furs.business_premise_name,
         electronic_device_name: options.furs.electronic_device_name,
+        ...(options.furs.operator_tax_number ? { operator_tax_number: options.furs.operator_tax_number } : {}),
+        ...(options.furs.operator_label ? { operator_label: options.furs.operator_label } : {}),
       };
     }
   }
@@ -76,6 +85,8 @@ export function prepareAdvanceInvoiceSubmission(
       business_premise_name: options.fina.business_premise_name,
       electronic_device_name: options.fina.electronic_device_name,
       ...(options.fina.payment_type && { payment_type: options.fina.payment_type }),
+      ...(options.fina.operator_oib ? { operator_oib: options.fina.operator_oib } : {}),
+      ...(options.fina.operator_label ? { operator_label: options.fina.operator_label } : {}),
     };
   }
 
@@ -85,6 +96,9 @@ export function prepareAdvanceInvoiceSubmission(
       validation_enabled: options.eslog.validation_enabled,
     };
   }
-
+  const pt = normalizePtDocumentInput(values.pt);
+  if (pt) {
+    (payload as any).pt = pt;
+  }
   return payload;
 }

@@ -1,4 +1,5 @@
-import type { CreatePaymentRequest, Payment } from "@spaceinvoices/js-sdk";
+import type { CreatePaymentRequest, Payment, UpdatePaymentBody } from "@spaceinvoices/js-sdk";
+import { payments } from "@spaceinvoices/js-sdk";
 
 import { createResourceHooks } from "@/ui/hooks/create-resource-hooks";
 
@@ -12,9 +13,15 @@ const {
   useDeleteResource: useDeletePayment,
   useRestoreResource: useRestorePayment,
   usePermanentDeleteResource: usePermanentDeletePayment,
-} = createResourceHooks<Payment, CreatePaymentRequest>("payments", PAYMENTS_CACHE_KEY, {
-  restoreMethodName: "restorePayment",
-  permanentDeleteMethodName: "permanentDeletePayment",
-});
+} = createResourceHooks<Payment, CreatePaymentRequest, UpdatePaymentBody>(
+  {
+    create: payments.create,
+    update: payments.update,
+    delete: payments.delete,
+    restore: payments.restorePayment,
+    permanentDelete: payments.permanentDeletePayment,
+  },
+  PAYMENTS_CACHE_KEY,
+);
 
-export { useCreatePayment, useUpdatePayment, useDeletePayment, useRestorePayment, usePermanentDeletePayment };
+export { useCreatePayment, useDeletePayment, usePermanentDeletePayment, useRestorePayment, useUpdatePayment };

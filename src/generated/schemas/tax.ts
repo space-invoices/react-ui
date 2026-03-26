@@ -21,6 +21,8 @@ const createTaxSchemaDefinition = z.object({
     .min(1),
   is_default: z.boolean().optional(),
   classification: z.union([z.string(), z.null()]).optional(),
+  pt_exemption_code: z.union([z.string(), z.null()]).optional(),
+  pt_exemption_reason: z.union([z.string(), z.null()]).optional(),
   metadata: z.union([z.record(z.string(), z.any()), z.null()]).optional(),
 });
 

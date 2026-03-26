@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Entity } from "@spaceinvoices/js-sdk";
-import type { FC } from "react";
+import { type FC, useCallback, useEffect } from "react";
 import type { Resolver } from "react-hook-form";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
@@ -35,13 +35,48 @@ const movablePremiseSchema = registerFursMovablePremiseSchema;
 type RealEstatePremiseForm = z.infer<typeof realEstatePremiseSchema>;
 type MovablePremiseForm = z.infer<typeof movablePremiseSchema>;
 
+type ExistingPremiseSummary = {
+  business_premise_name: string;
+  type?: string;
+};
+
+function getNextSuggestedName(prefix: string, count: number) {
+  return `${prefix}${count + 1}`;
+}
+
+function parseEntityAddress(address?: string | null) {
+  const value = address?.trim();
+  if (!value) {
+    return {
+      street: "",
+      house_number: "",
+      house_number_additional: "",
+    };
+  }
+
+  const match = value.match(/^(.*?)(?:\s+(\d+)([A-Za-z]*))$/);
+  if (!match) {
+    return {
+      street: value,
+      house_number: "",
+      house_number_additional: "",
+    };
+  }
+
+  return {
+    street: match[1]?.trim() || value,
+    house_number: match[2] || "",
+    house_number_additional: match[3] || "",
+  };
+}
+
 interface RegisterPremiseDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   entity: Entity;
   type: "real-estate" | "movable";
   t: (key: string) => string;
-  existingPremiseNames?: string[];
+  premises?: ExistingPremiseSummary[];
   onSuccess?: () => void;
   onError?: (error: unknown) => void;
 }
@@ -52,41 +87,66 @@ export const RegisterPremiseDialog: FC<RegisterPremiseDialogProps> = ({
   entity,
   type,
   t,
-  existingPremiseNames = [],
+  premises = [],
   onSuccess,
   onError,
 }) => {
   const isRealEstate = type === "real-estate";
+  const existingPremiseNames = premises.map((premise) => premise.business_premise_name);
+  const hasRealEstatePremise = premises.some((premise) => premise.type === "real_estate");
+
+  const buildRealEstateDefaults = useCallback((): RealEstatePremiseForm => {
+    const shouldPrefillEntityAddress = !hasRealEstatePremise;
+    const parsedAddress = shouldPrefillEntityAddress ? parseEntityAddress(entity.address) : parseEntityAddress();
+
+    return {
+      business_premise_name: getNextSuggestedName("P", premises.length),
+      real_estate: {
+        cadastral_number: "",
+        building_number: "",
+        building_section: "",
+        community: shouldPrefillEntityAddress ? entity.city || "" : "",
+        city: shouldPrefillEntityAddress ? entity.city || "" : "",
+        street: parsedAddress.street,
+        house_number: parsedAddress.house_number,
+        house_number_additional: parsedAddress.house_number_additional,
+        postal_code: shouldPrefillEntityAddress ? entity.post_code || "" : "",
+      },
+    };
+  }, [entity.address, entity.city, entity.post_code, hasRealEstatePremise, premises.length]);
+
+  const buildMovableDefaults = useCallback(
+    (): MovablePremiseForm => ({
+      business_premise_name: getNextSuggestedName("P", premises.length),
+      movable_premise: {
+        premise_type: "A",
+      },
+    }),
+    [premises.length],
+  );
 
   // Real Estate Form
   const realEstateForm = useForm<RealEstatePremiseForm>({
     resolver: zodResolver(realEstatePremiseSchema) as Resolver<RealEstatePremiseForm>,
-    defaultValues: {
-      business_premise_name: "",
-      real_estate: {
-        cadastral_number: "",
-        building_number: "0",
-        building_section: "0",
-        community: "",
-        city: "",
-        street: "",
-        house_number: "",
-        house_number_additional: "",
-        postal_code: "",
-      },
-    },
+    defaultValues: buildRealEstateDefaults(),
   });
 
   // Movable Form
   const movableForm = useForm<MovablePremiseForm>({
     resolver: zodResolver(movablePremiseSchema) as Resolver<MovablePremiseForm>,
-    defaultValues: {
-      business_premise_name: "",
-      movable_premise: {
-        premise_type: "A",
-      },
-    },
+    defaultValues: buildMovableDefaults(),
   });
+
+  useEffect(() => {
+    if (!open) return;
+
+    if (isRealEstate) {
+      realEstateForm.reset(buildRealEstateDefaults());
+      return;
+    }
+
+    movableForm.reset(buildMovableDefaults());
+  }, [buildMovableDefaults, buildRealEstateDefaults, isRealEstate, open, realEstateForm, movableForm]);
 
   const handleMutationError = (error: unknown, form: typeof realEstateForm | typeof movableForm) => {
     const err = error as { status?: number; data?: { message?: string } };
@@ -99,7 +159,7 @@ export const RegisterPremiseDialog: FC<RegisterPremiseDialogProps> = ({
 
   const { mutate: registerRealEstate, isPending: isRealEstatePending } = useRegisterRealEstatePremise({
     onSuccess: () => {
-      realEstateForm.reset();
+      realEstateForm.reset(buildRealEstateDefaults());
       onSuccess?.();
     },
     onError: (error) => handleMutationError(error, realEstateForm),
@@ -107,7 +167,7 @@ export const RegisterPremiseDialog: FC<RegisterPremiseDialogProps> = ({
 
   const { mutate: registerMovable, isPending: isMovablePending } = useRegisterMovablePremise({
     onSuccess: () => {
-      movableForm.reset();
+      movableForm.reset(buildMovableDefaults());
       onSuccess?.();
     },
     onError: (error) => handleMutationError(error, movableForm),
@@ -170,9 +230,9 @@ export const RegisterPremiseDialog: FC<RegisterPremiseDialogProps> = ({
                 name="business_premise_name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t("Premise Name")}</FormLabel>
+                    <FormLabel>{t("Premise Name")} *</FormLabel>
                     <FormControl>
-                      <Input placeholder="P1" {...field} />
+                      <Input placeholder="P1" {...field} data-testid="furs-real-estate-premise-name" />
                     </FormControl>
                     <FormDescription>{t("Unique identifier for this premise (e.g., P1, P2)")}</FormDescription>
                     <FormMessage />
@@ -221,7 +281,6 @@ export const RegisterPremiseDialog: FC<RegisterPremiseDialogProps> = ({
                           data-testid="furs-real-estate-building-number"
                         />
                       </FormControl>
-                      <FormDescription className="text-xs">{t("Numeric, use 0 if not applicable")}</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -242,7 +301,6 @@ export const RegisterPremiseDialog: FC<RegisterPremiseDialogProps> = ({
                           data-testid="furs-real-estate-building-section"
                         />
                       </FormControl>
-                      <FormDescription className="text-xs">{t("Numeric, use 0 if not applicable")}</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -369,7 +427,7 @@ export const RegisterPremiseDialog: FC<RegisterPremiseDialogProps> = ({
                 name="business_premise_name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t("Premise Name")}</FormLabel>
+                    <FormLabel>{t("Premise Name")} *</FormLabel>
                     <FormControl>
                       <Input placeholder="P1" {...field} data-testid="furs-movable-premise-name" />
                     </FormControl>
@@ -385,7 +443,7 @@ export const RegisterPremiseDialog: FC<RegisterPremiseDialogProps> = ({
                 name="movable_premise.premise_type"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t("Premise Type")}</FormLabel>
+                    <FormLabel>{t("Premise Type")} *</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>

@@ -294,10 +294,20 @@ ${exports}
   }
 
   // Create index file - export ALL schema files (not just schemasByGroup)
-  const allSchemaFiles = (await fs.readdir(SCHEMAS_DIR))
-    .filter((f) => f.endsWith(".ts") && f !== "index.ts")
-    .map((f) => f.replace(".ts", ""))
-    .sort();
+  const normalizedSchemaFiles = new Map<string, string>();
+  for (const file of await fs.readdir(SCHEMAS_DIR)) {
+    if (!file.endsWith(".ts") || file === "index.ts") continue;
+
+    const name = file.replace(".ts", "");
+    const normalizedName = name.replace(/_/g, "").toLowerCase();
+    const existing = normalizedSchemaFiles.get(normalizedName);
+
+    if (!existing || (existing.includes("_") && !name.includes("_"))) {
+      normalizedSchemaFiles.set(normalizedName, name);
+    }
+  }
+
+  const allSchemaFiles = [...normalizedSchemaFiles.values()].sort();
 
   const indexContent = `/**
  * This file was automatically generated using 'bun generate-schemas'.

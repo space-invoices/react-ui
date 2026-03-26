@@ -3,8 +3,8 @@ import type { ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useCookies } from "react-cookie";
 import { ACTIVE_ENTITY_COOKIE, ACTIVE_ENVIRONMENT_COOKIE } from "@/ui/components/entities/keys";
-
-import { useSDK } from "@/ui/providers/sdk-provider";
+import { useSpaceInvoicesRuntime } from "@/ui/providers/space-invoices-provider";
+import { entities as entitiesApi } from "../../../js-sdk/src/sdk/entities";
 
 import { EntitiesContext, type Entity, type EntityEnvironment } from "./entities-context";
 
@@ -29,7 +29,7 @@ type EntitiesProviderProps = {
   /** When provided, determines environment from URL instead of cookie. true = sandbox, false = live. */
   isSandbox?: boolean;
   /** Called when urlEntityId is not found in any environment, allowing parent to try other accounts */
-  onEntityNotFound?: (entityId: string) => boolean | void | Promise<boolean | void>;
+  onEntityNotFound?: (entityId: string) => boolean | undefined | Promise<boolean | undefined>;
 };
 
 export function EntitiesProvider({
@@ -41,7 +41,7 @@ export function EntitiesProvider({
   isSandbox,
   onEntityNotFound,
 }: EntitiesProviderProps) {
-  const { sdk, isInitialized } = useSDK();
+  const { hasAccessToken, isResolvingAccessToken } = useSpaceInvoicesRuntime();
   const [cookies, setCookie, removeCookie] = useCookies([ACTIVE_ENTITY_COOKIE, ACTIVE_ENVIRONMENT_COOKIE]);
   const isInitialMount = useRef(true);
   const initialEnvironmentFromCookie = cookies[ACTIVE_ENVIRONMENT_COOKIE] as EntityEnvironment | undefined;
@@ -91,13 +91,10 @@ export function EntitiesProvider({
   } = useQuery({
     queryKey: [...ENTITIES_QUERY_KEY, environment],
     queryFn: async () => {
-      if (!sdk) return [];
-
-      // Pass environment to filter entities for user tokens
-      const response = await sdk.entities.list({ limit: 100, environment });
+      const response = await entitiesApi.list({ limit: 100, environment });
       return response.data;
     },
-    enabled: !!sdk && isInitialized,
+    enabled: hasAccessToken && !isResolvingAccessToken,
     staleTime: 1000 * 60 * 5,
     gcTime: 1000 * 60 * 60,
     retry: 2,
@@ -119,7 +116,28 @@ export function EntitiesProvider({
       const refetchKey = `${urlEntityId}:${environment}`;
       if (emptyUrlEntityRefetchKeyRef.current !== refetchKey) {
         emptyUrlEntityRefetchKeyRef.current = refetchKey;
-        void refetch();
+        void refetch().then((result) => {
+          if ((result.data?.length ?? 0) > 0 || hasCalledNoEntities.current) return;
+          if (resolvingUrlEntityRef.current === urlEntityId) return;
+          resolvingUrlEntityRef.current = urlEntityId;
+
+          if (!onEntityNotFound) {
+            hasCalledNoEntities.current = true;
+            onNoEntities?.();
+            return;
+          }
+
+          void Promise.resolve(onEntityNotFound(urlEntityId))
+            .then((resolved) => {
+              if (resolved) return;
+              hasCalledNoEntities.current = true;
+              onNoEntities?.();
+            })
+            .catch(() => {
+              hasCalledNoEntities.current = true;
+              onNoEntities?.();
+            });
+        });
         return;
       }
 
@@ -153,10 +171,10 @@ export function EntitiesProvider({
     }
 
     // Try the other environment before calling onNoEntities
-    if (!hasTriedFallback.current && sdk) {
+    if (!hasTriedFallback.current && hasAccessToken) {
       hasTriedFallback.current = true;
       const altEnv = environment === "live" ? "sandbox" : "live";
-      sdk.entities
+      entitiesApi
         .list({ limit: 1, environment: altEnv })
         .then((res) => {
           if (res.data.length > 0) {
@@ -184,7 +202,7 @@ export function EntitiesProvider({
     onEntityNotFound,
     onNoEntities,
     refetch,
-    sdk,
+    hasAccessToken,
     environment,
     isSandbox,
     urlEntityId,
@@ -358,7 +376,7 @@ export function EntitiesProvider({
   );
 
   // Show loading state only if entities are still loading
-  if (isLoading) {
+  if (isResolvingAccessToken || isLoading) {
     return <LoadingFallback />;
   }
 

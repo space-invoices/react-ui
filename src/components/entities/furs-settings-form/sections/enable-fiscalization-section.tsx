@@ -6,6 +6,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/ui/components/ui/alert";
 import { FormControl, FormDescription, FormField, FormItem, FormLabel } from "@/ui/components/ui/form";
 import { Switch } from "@/ui/components/ui/switch";
 import type { FursSettingsFormSchema, SectionType } from "../furs-settings-form";
+import { FursInternalActDownloadCard } from "./furs-internal-act-download-card";
 
 // Extended premise type to include devices
 type ExtendedFursBusinessPremise = {
@@ -16,6 +17,7 @@ type ExtendedFursBusinessPremise = {
 };
 
 interface EnableFiscalizationSectionProps {
+  entityId: string;
   form: UseFormReturn<FursSettingsFormSchema>;
   fursSettings?: GetFursSettings200Response;
   premises?: ExtendedFursBusinessPremise[];
@@ -24,6 +26,7 @@ interface EnableFiscalizationSectionProps {
 }
 
 export const EnableFiscalizationSection: FC<EnableFiscalizationSectionProps> = ({
+  entityId,
   form,
   fursSettings,
   premises,
@@ -97,6 +100,14 @@ export const EnableFiscalizationSection: FC<EnableFiscalizationSectionProps> = (
             </AlertDescription>
           </Alert>
         )}
+
+        <FursInternalActDownloadCard
+          entityId={entityId}
+          certificateValid={Boolean(certificateValid)}
+          hasPremises={Boolean(hasPremises)}
+          hasPremiseWithDevice={Boolean(hasPremiseWithDevice)}
+          t={t}
+        />
 
         {/* Enable FURS Toggle */}
         <FormField

@@ -17,8 +17,10 @@ import { Input } from "@/ui/components/ui/input";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/ui/components/ui/tooltip";
 import type { CreateItemSchema } from "@/ui/generated/schemas";
 import { createItemSchema } from "@/ui/generated/schemas";
+import { getEntityCountryCapabilities } from "@/ui/lib/country-capabilities";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
+import { useEntities } from "@/ui/providers/entities-context";
 
 import { useCreateItem } from "../items.hooks";
 import de from "./locales/de";
@@ -63,12 +65,15 @@ export default function CreateItemForm({
   });
 
   const [isGrossPrice, setIsGrossPrice] = useState(false);
+  const { activeEntity } = useEntities();
+  const isPortugal = getEntityCountryCapabilities(activeEntity).isPortugal;
 
   const form = useForm<CreateItemSchema>({
     resolver: zodResolver(createItemSchema),
     defaultValues: {
       name: "",
       description: "",
+      classification: isPortugal ? "product" : undefined,
       price: 0,
     },
   });
@@ -118,6 +123,30 @@ export default function CreateItemForm({
           label={t("Description")}
           placeholder={t("Enter description")}
         />
+
+        {isPortugal && (
+          <FormField
+            control={form.control}
+            name="classification"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t("Classification")}</FormLabel>
+                <FormControl>
+                  <select
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                    value={field.value ?? "product"}
+                    onChange={(event) => field.onChange(event.target.value)}
+                  >
+                    <option value="product">{t("Product")}</option>
+                    <option value="service">{t("Service")}</option>
+                    <option value="advance">{t("Advance")}</option>
+                  </select>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
 
         <FormField
           control={form.control}

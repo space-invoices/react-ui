@@ -64,7 +64,7 @@ export function deleteCookie(name: string, path = "/") {
   });
 
   // Also delete domain cookie (e.g. .spaceinvoices.com) if on spaceinvoices.com
-  const hostname = typeof window !== "undefined" ? window.location.hostname : globalThis.location?.hostname ?? "";
+  const hostname = typeof window !== "undefined" ? window.location.hostname : (globalThis.location?.hostname ?? "");
   if (hostname === "spaceinvoices.com" || hostname.endsWith(".spaceinvoices.com")) {
     setCookie(name, "", {
       path,

@@ -73,6 +73,10 @@ export default function PaymentListRowActions({
     deletePayment({ id: payment.id });
   };
 
+  const isAppliedAdvancePayment = payment.type === "advance" && !!payment.invoice_id && !!payment.advance_invoice_id;
+  const isAppliedCreditNotePayment = payment.type === "credit_note" && !!payment.invoice_id && !!payment.credit_note_id;
+  const isManagedSettlementPayment = isAppliedAdvancePayment || isAppliedCreditNotePayment;
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -84,7 +88,11 @@ export default function PaymentListRowActions({
       <DropdownMenuContent align="end">
         <DropdownMenuLabel>{t("Actions")}</DropdownMenuLabel>
         <DropdownMenuGroup>
-          <DropdownMenuItem className="cursor-pointer" onClick={() => onEditPayment?.(payment)}>
+          <DropdownMenuItem
+            className="cursor-pointer"
+            onClick={() => onEditPayment?.(payment)}
+            disabled={isManagedSettlementPayment}
+          >
             <Pencil className="h-4 w-4" />
             {t("Edit payment")}
           </DropdownMenuItem>
@@ -100,7 +108,7 @@ export default function PaymentListRowActions({
           <DropdownMenuItem
             className="cursor-pointer text-destructive focus:text-destructive"
             onClick={handleDelete}
-            disabled={isDeleting}
+            disabled={isDeleting || isManagedSettlementPayment}
           >
             <Trash2 className="h-4 w-4" />
             {isDeleting ? t("Deleting...") : t("Delete payment")}

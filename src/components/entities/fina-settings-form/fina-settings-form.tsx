@@ -77,6 +77,7 @@ export const FinaSettingsForm: FC<FinaSettingsFormProps> = ({
   t: translateFn,
   namespace,
   locale,
+  translationLocale,
   initialStep = "settings",
   onStepChange,
   renderSection,
@@ -86,6 +87,7 @@ export const FinaSettingsForm: FC<FinaSettingsFormProps> = ({
     t: translateFn,
     namespace,
     locale,
+    translationLocale,
     translations,
   });
 

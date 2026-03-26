@@ -2,7 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import type { Entity, EntitySettings, EntitySettingsTaxClauseDefaults, TaxRules } from "@spaceinvoices/js-sdk";
 import { ChevronDown, Globe, MessageSquareText } from "lucide-react";
 import type { ReactNode } from "react";
-import { useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/ui/components/ui/collapsible";
@@ -60,11 +60,12 @@ export function TaxRulesSettingsForm({
   t: translateProp,
   namespace,
   locale,
+  translationLocale,
   onSuccess,
   onError,
   renderSection,
 }: TaxRulesSettingsFormProps) {
-  const t = createTranslation({ t: translateProp, namespace, locale, translations });
+  const t = createTranslation({ t: translateProp, namespace, locale, translationLocale, translations });
   const [taxClausesOpen, setTaxClausesOpen] = useState(false);
 
   // Helper to wrap section content with render prop if provided
@@ -80,9 +81,8 @@ export function TaxRulesSettingsForm({
   const currentTaxClauseDefaults =
     (currentSettings.tax_clause_defaults as EntitySettingsTaxClauseDefaults | null) || {};
 
-  const form = useForm<TaxRulesSettingsSchema>({
-    resolver: zodResolver(taxRulesSettingsSchema),
-    defaultValues: {
+  const defaultValues = useMemo(
+    (): TaxRulesSettingsSchema => ({
       vies_validate_vat: currentTaxRules.vies_validate_vat ?? true,
       auto_reverse_charge: currentTaxRules.auto_reverse_charge ?? false,
       auto_remove_tax_export: currentTaxRules.auto_remove_tax_export ?? false,
@@ -92,8 +92,23 @@ export function TaxRulesSettingsForm({
       tax_clause_3w_b2c: (currentTaxClauseDefaults as any)["3w_b2c"] ?? currentTaxClauseDefaults.export ?? "",
       tax_clause_domestic: currentTaxClauseDefaults.domestic ?? "",
       tax_clause_intra_eu_b2c: currentTaxClauseDefaults.intra_eu_b2c ?? "",
-    },
+    }),
+    [currentTaxClauseDefaults, currentTaxRules],
+  );
+  const form = useForm<TaxRulesSettingsSchema>({
+    resolver: zodResolver(taxRulesSettingsSchema),
+    defaultValues,
   });
+  const previousDefaultValuesKeyRef = useRef<string | undefined>(undefined);
+  const defaultValuesKey = JSON.stringify(defaultValues);
+
+  useEffect(() => {
+    if (previousDefaultValuesKeyRef.current === defaultValuesKey) {
+      return;
+    }
+    previousDefaultValuesKeyRef.current = defaultValuesKey;
+    form.reset(defaultValues);
+  }, [defaultValues, defaultValuesKey, form]);
 
   const { mutate: updateEntity, isPending } = useUpdateEntity({
     entityId: entity.id,

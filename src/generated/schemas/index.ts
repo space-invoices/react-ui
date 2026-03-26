@@ -5,6 +5,7 @@
  */
 
 export * from './acceptentityinvitation_body';
+export * from './accountwebhook';
 export * from './addentityuser_body';
 export * from './advanceinvoice';
 export * from './authorizeshopify_body';
@@ -19,9 +20,12 @@ export * from './entity';
 export * from './entityapikey';
 export * from './entityuserrole';
 export * from './estimate';
+export * from './exportsloveniavodxml_body';
 export * from './exportsloveniayearlynormiranireport_body';
 export * from './finasettings';
 export * from './furssettings';
+export * from './incomingpurchasedocument';
+export * from './incomingpurchasedocumentpayment';
 export * from './invoice';
 export * from './item';
 export * from './me';
@@ -30,6 +34,7 @@ export * from './orderintegration';
 export * from './payment';
 export * from './previewadvanceinvoice_body';
 export * from './previewestimate_body';
+export * from './ptatcudseries';
 export * from './recurringinvoice';
 export * from './registerfinamovablepremise_body';
 export * from './registerfinarealestatepremise_body';
@@ -44,15 +49,20 @@ export * from './renderinvoicepreview_body';
 export * from './senddocument_body';
 export * from './sendemail_body';
 export * from './sloveniataxprofile';
+export * from './starteslogexport_body';
 export * from './startpdfexport_body';
 export * from './stripeappconnect_body';
 export * from './stripeappcreateinvoice_body';
 export * from './stripeappupdatesettings_body';
+export * from './supplier';
+export * from './syncshopifyorders_body';
 export * from './tax';
 export * from './uploadfile_body';
 export * from './uploadfurscertificate_body';
 export * from './userfinasettings';
 export * from './userfurssettings';
+export * from './userptsettings';
+export * from './voidinvoice_body';
 export * from './webhook';
 
 // Re-export invoice create schema as credit note create schema (same body structure)

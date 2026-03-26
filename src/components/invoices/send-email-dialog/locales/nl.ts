@@ -1,10 +1,26 @@
 export default {
   "Send Invoice by Email": "Factuur per e-mail verzenden",
+  "Send Estimate by Email": "Offerte per e-mail verzenden",
+  "Send Credit Note by Email": "Creditnota per e-mail verzenden",
+  "Send Advance Invoice by Email": "Voorschotfactuur per e-mail verzenden",
+  "Send Delivery Note by Email": "Pakbon per e-mail verzenden",
   "Send invoice by email description":
     "Verstuur factuur #{number} per e-mail naar de klant. Markdown-opmaak wordt ondersteund in de tekst.",
+  "Send estimate by email description":
+    "Verstuur offerte #{number} per e-mail naar de klant. Markdown-opmaak wordt ondersteund in de tekst.",
+  "Send credit note by email description":
+    "Verstuur creditnota #{number} per e-mail naar de klant. Markdown-opmaak wordt ondersteund in de tekst.",
+  "Send advance invoice by email description":
+    "Verstuur voorschotfactuur #{number} per e-mail naar de klant. Markdown-opmaak wordt ondersteund in de tekst.",
+  "Send delivery note by email description":
+    "Verstuur pakbon #{number} per e-mail naar de klant. Markdown-opmaak wordt ondersteund in de tekst.",
   "Recipient Email": "E-mail ontvanger",
   "Subject (Optional)": "Onderwerp (optioneel)",
   "Invoice Subject": "Factuuronderwerp",
+  "Estimate Subject": "Offerteonderwerp",
+  "Credit Note Subject": "Creditnotaonderwerp",
+  "Advance Invoice Subject": "Voorschotfactuuronderwerp",
+  "Delivery Note Subject": "Pakbononderwerp",
   "Leave empty to use default": "Laat leeg voor standaardwaarde",
   "Message (Optional)": "Bericht (optioneel)",
   "Email message placeholder": "E-mailbericht... Ondersteunt **vet**, *cursief*, [links](url) en lijsten",
@@ -12,11 +28,16 @@ export default {
   "Send Email": "E-mail verzenden",
   "Email sent": "E-mail verzonden",
   "Invoice sent to": "Factuur verzonden naar",
+  "Estimate sent to": "Offerte verzonden naar",
+  "Credit note sent to": "Creditnota verzonden naar",
+  "Advance invoice sent to": "Voorschotfactuur verzonden naar",
+  "Delivery note sent to": "Pakbon verzonden naar",
   "Failed to send email": "E-mail verzenden mislukt",
   "Sandbox email warning":
     "In sandbox-modus kunnen e-mails alleen worden verzonden naar geverifieerde teamleden van dit account.",
   "PDF Language": "PDF-taal",
   Default: "Standaard",
+  "English (US)": "Engels (VS)",
   English: "Engels",
   German: "Duits",
   Slovenian: "Sloveens",

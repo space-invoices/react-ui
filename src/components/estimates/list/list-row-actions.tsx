@@ -11,9 +11,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/ui/components/ui/dropdown-menu";
+import { actionMenuTooltipProps, Tooltip, TooltipContent, TooltipTrigger } from "@/ui/components/ui/tooltip";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
 import { useEstimateDownload } from "./use-estimate-download";
+
+const translations = {
+  sl: {
+    "Create invoice": "Ustvari račun",
+  },
+} as const;
 
 type EstimateListRowActionsProps = {
   estimate: Estimate;
@@ -37,13 +44,26 @@ export default function EstimateListRowActions({
   isUnsharing,
   ...i18nProps
 }: EstimateListRowActionsProps) {
-  const t = createTranslation(i18nProps);
+  const t = createTranslation({ ...i18nProps, translations });
   const { isDownloading, downloadPDF } = useEstimateDownload({
     onDownloadStart,
     onDownloadSuccess,
     onDownloadError,
     ...i18nProps,
   });
+  const createInvoiceDisabledReason = estimate.voided_at
+    ? t("documents-list-page.copy-to-invoice-voided-not-allowed")
+    : undefined;
+  const createInvoiceItem = onDuplicate ? (
+    <DropdownMenuItem
+      className="cursor-pointer"
+      onClick={createInvoiceDisabledReason ? undefined : () => onDuplicate(estimate)}
+      disabled={!!createInvoiceDisabledReason}
+    >
+      <Copy className="h-4 w-4" />
+      {t("Create invoice")}
+    </DropdownMenuItem>
+  ) : null;
 
   return (
     <DropdownMenu>
@@ -71,12 +91,19 @@ export default function EstimateListRowActions({
             <Download className="h-4 w-4" />
             {isDownloading ? t("Downloading...") : t("Download PDF")}
           </DropdownMenuItem>
-          {onDuplicate && (
-            <DropdownMenuItem className="cursor-pointer" onClick={() => onDuplicate(estimate)}>
-              <Copy className="h-4 w-4" />
-              {t("Duplicate")}
-            </DropdownMenuItem>
-          )}
+          {createInvoiceItem &&
+            (createInvoiceDisabledReason ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div>{createInvoiceItem}</div>
+                </TooltipTrigger>
+                <TooltipContent side="left" {...actionMenuTooltipProps}>
+                  {createInvoiceDisabledReason}
+                </TooltipContent>
+              </Tooltip>
+            ) : (
+              createInvoiceItem
+            ))}
         </DropdownMenuGroup>
         {estimate.shareable_id && onUnshare && (
           <>

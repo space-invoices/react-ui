@@ -2,7 +2,7 @@ export default {
   "FINA is for Croatian Entities": "FINA je samo za hrvatska poduzeća",
   "FINA fiscalization is only available for entities with country code HR":
     "Fiskalizacija FINA dostupna je samo za subjekte s oznakom države HR (Hrvatska)",
-  "Test Mode (Sandbox)": "Testni način (Sandbox)",
+  "Test Mode (Sandbox)": "Testni način rada",
   "This entity is in test mode. FINA invoices will be sent to the test environment. No real fiscalization will occur.":
     "Ovaj subjekt je u testnom načinu. FINA računi bit će poslani u testno okruženje. Prava fiskalizacija se neće provesti.",
   "General Settings": "Opće postavke",
@@ -45,9 +45,9 @@ export default {
   "Please select a certificate file and enter the passphrase":
     "Molimo odaberite datoteku certifikata i unesite lozinku",
   "Invalid certificate passphrase. Please check your passphrase and try again.":
-    "Nevažeća lozinka certifikata. Provjerite lozinku i pokušajte ponovo.",
+    "Nevažeća lozinka certifikata. Provjerite lozinku i pokušajte ponovno.",
   "Certificate OIB does not match entity OIB. Please upload a certificate for this entity.":
-    "OIB certifikata ne odgovara OIB-u entiteta. Učitajte certifikat za ovaj entitet.",
+    "OIB certifikata ne odgovara OIB-u poslovnog subjekta. Učitajte certifikat za ovaj poslovni subjekt.",
   Valid: "Valjan",
   "Expiring Soon": "Uskoro ističe",
   Expired: "Istekao",
@@ -132,7 +132,7 @@ export default {
   "Fiscalized at": "Fiskalizirano dana",
   "Business Premise": "Poslovni prostor",
   "Electronic Device": "Elektronički uređaj",
-  "Fiscalization Error": "Greška fiskalizacije",
+  "Fiscalization Error": "Pogreška fiskalizacije",
   "Your Operator Settings": "Vaše postavke operatera",
   "Your personal operator info for FINA invoices": "Vaši osobni podaci o operateru za FINA račune",
   "Save Operator Settings": "Spremi postavke operatera",
@@ -152,14 +152,15 @@ export default {
   Address: "Adresa",
   "Post Code": "Poštanski broj",
   "Save Entity Info": "Spremi podatke o subjektu",
-  "Set operator OIB and label in General Settings first": "Set operator OIB and label in General Settings first",
-  "Complete General Settings first": "Complete General Settings first",
+  "Set operator OIB and label in General Settings first":
+    "Najprije postavite OIB i oznaku operatera u Općim postavkama",
+  "Complete General Settings first": "Najprije dovršite Opće postavke",
   "Operator OIB and label are required for FINA fiscalization":
-    "Operator OIB and label are required for FINA fiscalization",
-  "FINA Operator Settings Required": "FINA Operator Settings Required",
+    "OIB i oznaka operatera obavezni su za FINA fiskalizaciju",
+  "FINA Operator Settings Required": "Potrebne su postavke FINA operatera",
   "Your FINA operator information is needed to fiscalize this document. Please enter your operator details.":
-    "Your FINA operator information is needed to fiscalize this document. Please enter your operator details.",
-  "Save & Retry": "Save & Retry",
+    "Podaci vašeg FINA operatera potrebni su za fiskalizaciju ovog dokumenta. Unesite podatke o operateru.",
+  "Save & Retry": "Spremi i pokušaj ponovno",
   "Unified document numbering": "Jedinstveno numeriranje dokumenata",
   "Use the same numbering sequence for all documents, including non-fiscalized ones":
     "Koristite isti redoslijed numeriranja za sve dokumente, uključujući nefiskalizirane",

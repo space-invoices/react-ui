@@ -68,3 +68,27 @@ export const DOCUMENT_CONFIGS: Record<DocumentTypes, DocumentConfig> = {
 export function getDocumentConfig(type: DocumentTypes): DocumentConfig {
   return DOCUMENT_CONFIGS[type];
 }
+
+export function getDocumentSingularName(type: DocumentTypes): string {
+  return DOCUMENT_CONFIGS[type].singularName;
+}
+
+export function getDocumentPluralName(type: DocumentTypes): string {
+  return DOCUMENT_CONFIGS[type].pluralName;
+}
+
+/**
+ * Infer document type from shareable ID prefix.
+ * Falls back to invoices for backwards compatibility.
+ */
+export function getDocumentTypeFromShareableId(shareableId: string): DocumentTypes {
+  if (shareableId.startsWith("est_share_")) return "estimate";
+  if (shareableId.startsWith("cre_share_")) return "credit_note";
+  if (shareableId.startsWith("adv_share_")) return "advance_invoice";
+  if (shareableId.startsWith("del_share_")) return "delivery_note";
+  return "invoice";
+}
+
+export function getDocumentConfigFromShareableId(shareableId: string): DocumentConfig {
+  return getDocumentConfig(getDocumentTypeFromShareableId(shareableId));
+}

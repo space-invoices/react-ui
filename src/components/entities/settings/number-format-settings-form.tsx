@@ -63,10 +63,11 @@ export function NumberFormatSettingsForm({
   t: translateProp,
   namespace,
   locale,
+  translationLocale,
   onSuccess,
   onError,
 }: NumberFormatSettingsFormProps) {
-  const t = createTranslation({ t: translateProp, namespace, locale, translations });
+  const t = createTranslation({ t: translateProp, namespace, locale, translationLocale, translations });
 
   const currentSettings = (entity.settings as any) || {};
   const numberFormats = currentSettings.number_formats || {};

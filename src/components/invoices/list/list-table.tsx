@@ -1,5 +1,7 @@
 import type { Invoice } from "@spaceinvoices/js-sdk";
+import { invoices } from "@spaceinvoices/js-sdk";
 import { AlertTriangle } from "lucide-react";
+import type { ReactNode } from "react";
 import { useCallback, useMemo, useState } from "react";
 import { DataTable } from "@/ui/components/table/data-table";
 import { FormattedDate } from "@/ui/components/table/date-cell";
@@ -16,9 +18,9 @@ import type {
 import { Badge } from "@/ui/components/ui/badge";
 import { Button } from "@/ui/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/ui/components/ui/tooltip";
+import { getEslogSelectionState } from "@/ui/lib/eslog-export";
 import { getFiscalizationFailureType } from "@/ui/lib/fiscalization";
 import { createTranslation } from "@/ui/lib/translation";
-import { useSDK } from "@/ui/providers/sdk-provider";
 
 import InvoiceListRowActions from "./list-row-actions";
 import de from "./locales/de";
@@ -32,7 +34,7 @@ import pl from "./locales/pl";
 import pt from "./locales/pt";
 import sl from "./locales/sl";
 
-const translations = withTableTranslations({
+export const invoiceListTranslations = withTableTranslations({
   en,
   sl,
   de,
@@ -50,6 +52,7 @@ type InvoiceListTableProps = {
   namespace?: string;
   locale?: string;
   translationLocale?: string;
+  cacheKey?: string;
   entityId?: string;
   onView?: (invoice: Invoice) => void;
   onAddPayment?: (invoice: Invoice) => void;
@@ -58,15 +61,28 @@ type InvoiceListTableProps = {
   onDownloadSuccess?: (fileName: string) => void;
   onDownloadError?: (error: string) => void;
   onExportSelected?: (documentIds: string[]) => void;
+  onExportEslogSelected?: (documentIds: string[]) => void;
+  pdfExportDisabled?: boolean;
+  pdfExportDisabledTooltip?: string;
+  eslogExportDisabled?: boolean;
+  eslogExportDisabledTooltip?: string;
   onRetryFiscalization?: (documentIds: string[]) => void;
   fiscalizationFeatures?: ("furs" | "fina")[];
   onVoid?: (invoice: Invoice) => void;
   isVoiding?: boolean;
   onCreateNew?: () => void;
+  allowSendEmail?: boolean;
+  showSearchToolbar?: boolean;
+  showPagination?: boolean;
+  contentInsetClassName?: string;
+  bottomPaddingClassName?: string;
+  emptyState?: ReactNode;
+  hiddenColumnIds?: string[];
 } & ListTableProps<Invoice>;
 
 export default function InvoiceListTable({
   queryParams,
+  cacheKey = "invoices",
   onRowClick,
   onView,
   onAddPayment,
@@ -78,31 +94,41 @@ export default function InvoiceListTable({
   onDownloadSuccess,
   onDownloadError,
   onExportSelected,
+  onExportEslogSelected,
+  pdfExportDisabled,
+  pdfExportDisabledTooltip,
+  eslogExportDisabled,
+  eslogExportDisabledTooltip,
   onRetryFiscalization,
   fiscalizationFeatures,
   onVoid,
   isVoiding,
   onCreateNew,
+  allowSendEmail = true,
+  showSearchToolbar,
+  showPagination,
+  contentInsetClassName,
+  bottomPaddingClassName,
+  emptyState,
+  hiddenColumnIds,
   ...i18nProps
 }: InvoiceListTableProps) {
   const t = createTranslation({
-    translations,
-    locale: i18nProps.translationLocale ?? i18nProps.locale,
     ...i18nProps,
+    translations: invoiceListTranslations,
   });
 
-  const { sdk } = useSDK();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const handleFetch = useTableFetch(async (params: TableQueryParams) => {
-    if (!sdk) throw new Error("SDK not initialized");
     if (!params.entity_id) throw new Error("Entity ID required");
 
-    const response = await sdk.invoices.list({
+    const response = await invoices.list({
       entity_id: params.entity_id,
       limit: params.limit,
       next_cursor: params.next_cursor,
       prev_cursor: params.prev_cursor,
+      order_by: params.order_by,
       search: params.search,
       query: params.query,
     });
@@ -127,6 +153,12 @@ export default function InvoiceListTable({
     }
   }, [selectedIds, onExportSelected]);
 
+  const handleExportEslog = useCallback(() => {
+    if (selectedIds.size > 0 && onExportEslogSelected) {
+      onExportEslogSelected(Array.from(selectedIds));
+    }
+  }, [selectedIds, onExportEslogSelected]);
+
   const handleDeselectAll = useCallback(() => {
     setSelectedIds(new Set());
   }, []);
@@ -134,6 +166,7 @@ export default function InvoiceListTable({
   const selectionToolbar = useCallback(
     (count: number, data: Invoice[]) => {
       const selectedDocs = data.filter((d) => selectedIds.has(d.id));
+      const eslogSelection = getEslogSelectionState(selectedDocs);
       const failedDocs = selectedDocs.filter((d) => {
         const failureType = getFiscalizationFailureType(d as any);
         return failureType && fiscalizationFeatures?.includes(failureType);
@@ -149,6 +182,23 @@ export default function InvoiceListTable({
         <SelectionToolbar
           selectedCount={count}
           onExportPdfs={onExportSelected ? handleExportPdfs : undefined}
+          exportPdfsDisabled={pdfExportDisabled}
+          exportPdfsTooltip={pdfExportDisabledTooltip}
+          onExportEslog={onExportEslogSelected ? handleExportEslog : undefined}
+          exportEslogDisabled={eslogExportDisabled || eslogSelection.noneEligible}
+          exportEslogTooltip={
+            eslogExportDisabled
+              ? eslogExportDisabledTooltip
+              : eslogSelection.noneEligible
+                ? t("None of the selected documents are valid for e-SLOG export")
+                : undefined
+          }
+          exportEslogWarning={!eslogExportDisabled && eslogSelection.partiallyEligible}
+          exportEslogWarningTooltip={
+            !eslogExportDisabled && eslogSelection.partiallyEligible
+              ? t("Some selected documents are not valid for e-SLOG export and will be skipped")
+              : undefined
+          }
           onRetryFiscalization={showRetry ? () => onRetryFiscalization(failedDocs.map((d) => d.id)) : undefined}
           retryFiscalizationDisabled={someFailed && !allFailed}
           retryFiscalizationTooltip={
@@ -161,8 +211,14 @@ export default function InvoiceListTable({
     },
     [
       handleExportPdfs,
+      handleExportEslog,
       handleDeselectAll,
       onExportSelected,
+      onExportEslogSelected,
+      pdfExportDisabled,
+      pdfExportDisabledTooltip,
+      eslogExportDisabled,
+      eslogExportDisabledTooltip,
       onRetryFiscalization,
       fiscalizationFeatures,
       selectedIds,
@@ -175,6 +231,9 @@ export default function InvoiceListTable({
       {
         id: "number",
         header: t("Number"),
+        sort: {
+          defaultDirection: "desc",
+        },
         cell: (invoice) => {
           const failureType = getFiscalizationFailureType(invoice as any);
           const showWarning = failureType && fiscalizationFeatures?.includes(failureType);
@@ -213,23 +272,29 @@ export default function InvoiceListTable({
       {
         id: "date",
         header: t("Date"),
+        sort: {
+          defaultDirection: "desc",
+        },
         cell: (invoice) => <FormattedDate date={invoice.date} locale={i18nProps.locale} />,
       },
       {
         id: "date_due",
         header: t("Date Due"),
+        sort: true,
         cell: (invoice) => <FormattedDate date={invoice.date_due} locale={i18nProps.locale} />,
       },
       {
         id: "total",
         header: t("Total"),
         align: "right",
+        sort: true,
         cell: (invoice) => invoice.total,
       },
       {
         id: "total_with_tax",
         header: t("Total with Tax"),
         align: "right",
+        sort: true,
         cell: (invoice) => invoice.total_with_tax,
       },
       {
@@ -252,6 +317,7 @@ export default function InvoiceListTable({
             onDownloadError={onDownloadError}
             onVoid={onVoid}
             isVoiding={isVoiding}
+            allowSendEmail={allowSendEmail}
             t={t}
             locale={i18nProps.locale}
           />
@@ -269,17 +335,27 @@ export default function InvoiceListTable({
       onDownloadError,
       onVoid,
       isVoiding,
+      allowSendEmail,
       i18nProps.locale,
       fiscalizationFeatures,
     ],
   );
 
+  const visibleColumns = useMemo(() => {
+    if (!hiddenColumnIds?.length) {
+      return columns;
+    }
+
+    const hidden = new Set(hiddenColumnIds);
+    return columns.filter((column) => !hidden.has(column.id));
+  }, [columns, hiddenColumnIds]);
+
   return (
     <DataTable
-      columns={columns}
+      columns={visibleColumns}
       queryParams={queryParams}
       resourceName="invoice"
-      cacheKey="invoices"
+      cacheKey={cacheKey}
       createNewLink={entityId ? `/app/${entityId}/documents/add/invoice` : undefined}
       onCreateNew={onCreateNew}
       onFetch={handleFetch}
@@ -289,16 +365,21 @@ export default function InvoiceListTable({
       filterConfig={filterConfig}
       t={t}
       locale={i18nProps.locale}
-      selectable={!!(onExportSelected || onRetryFiscalization)}
+      selectable={!!(onExportSelected || onExportEslogSelected || onRetryFiscalization)}
       selectedIds={selectedIds}
       onSelectionChange={setSelectedIds}
       selectionToolbar={selectionToolbar}
+      showSearchToolbar={showSearchToolbar}
+      showPagination={showPagination}
+      contentInsetClassName={contentInsetClassName}
+      bottomPaddingClassName={bottomPaddingClassName}
+      emptyState={emptyState}
     />
   );
 }
 
 /** Status badge for invoices */
-function InvoiceStatusBadge({ invoice, t }: { invoice: Invoice; t: (key: string) => string }) {
+export function InvoiceStatusBadge({ invoice, t }: { invoice: Invoice; t: (key: string) => string }) {
   if ((invoice as any).voided_at) {
     return (
       <Badge variant="outline" className="border-red-500 bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-400">

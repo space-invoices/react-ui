@@ -1,0 +1,20 @@
+export default {
+  "PDF Template": "PDF šablóna",
+  "Choose the design template for your invoices and documents":
+    "Vyberte dizajnovu šablónu pre vaše faktúry a dokumenty",
+  Preview: "Náhľad",
+  Template: "Šablóna",
+  Modern: "Moderná",
+  "Modern template description": "Modern template description",
+  Classic: "Klasická",
+  "Classic template description": "Classic template description",
+  Condensed: "Kompaktná",
+  "Condensed template description": "Condensed template description",
+  Minimal: "Minimalistická",
+  "Minimal template description": "Minimal template description",
+  Fashion: "Módna",
+  "Fashion template description": "Fashion template description",
+  "Save Template": "Uložiť šablónu",
+  "Template saved successfully": "Šablóna bola úspešne ulozena",
+  "Failed to save template": "Nepodarilo sa uložiť šablónu",
+} as const;

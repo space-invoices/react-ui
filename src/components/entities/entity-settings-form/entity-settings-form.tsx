@@ -1,5 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Entity } from "@spaceinvoices/js-sdk";
+import { files, upload } from "@spaceinvoices/js-sdk";
 import { CreditCard, FileText, Globe, Mail, Palette, QrCode, Sparkles } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -25,7 +26,6 @@ import { patchEntitySchema } from "@/ui/generated/schemas/entity";
 import { CURRENCY_CODES } from "@/ui/lib/constants";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
-import { useSDK } from "@/ui/providers/sdk-provider";
 import ButtonLoader from "../../button-loader";
 import { useUpdateEntity } from "../entities.hooks";
 import { EmailTemplateVariablesInfo } from "./email-template-variables-info";
@@ -116,6 +116,7 @@ const entitySettingsFormSchema = patchEntitySchema
         message: "Must be a valid hex color (e.g., #5c6ac4)",
       })
       .optional(),
+    logo_scale_percent: z.union([z.number().int().min(30).max(100), z.null()]).optional(),
     has_logo: z.boolean().nullable().optional(),
     has_signature: z.boolean().nullable().optional(),
     email: z
@@ -150,13 +151,13 @@ const entitySettingsFormSchema = patchEntitySchema
       .optional(),
     // EPC QR settings (EU + CH)
     epc_qr_enabled: z.union([z.boolean(), z.null()]).optional(),
+    show_payment_amounts: z.union([z.boolean(), z.null()]).optional(),
   });
 
 export type EntitySettingsFormSchema = z.infer<typeof entitySettingsFormSchema>;
 
 export type EntitySettingsFormProps = {
   entity: Entity;
-  cloudinaryCloudName?: string;
   onSuccess?: (data: Entity) => void;
   onError?: (error: unknown) => void;
   onUploadSuccess?: () => void;
@@ -164,10 +165,10 @@ export type EntitySettingsFormProps = {
 
 export function EntitySettingsForm({
   entity,
-  cloudinaryCloudName,
   t: translateProp,
   namespace,
   locale,
+  translationLocale,
   onSuccess,
   onError,
   onUploadSuccess,
@@ -176,13 +177,11 @@ export function EntitySettingsForm({
     t: translateProp,
     namespace,
     locale,
+    translationLocale,
     translations,
   });
-  const { sdk } = useSDK();
   const [isUploading, setIsUploading] = useState(false);
   const [isUploadingSignature, setIsUploadingSignature] = useState(false);
-  const [logoTimestamp, setLogoTimestamp] = useState(Date.now());
-  const [signatureTimestamp, setSignatureTimestamp] = useState(Date.now());
   const [uploadedLogoUrl, setUploadedLogoUrl] = useState<string | null>(null);
   const [uploadedSignatureUrl, setUploadedSignatureUrl] = useState<string | null>(null);
   const [fetchedLogoUrl, setFetchedLogoUrl] = useState<string | null>(null);
@@ -204,6 +203,7 @@ export function EntitySettingsForm({
       currency_code: entity.currency_code || undefined,
       locale: entity.locale || "en-US",
       primary_color: currentSettings.primary_color || null,
+      logo_scale_percent: currentSettings.logo_scale_percent ?? 100,
       has_logo: currentSettings.has_logo || null,
       has_signature: currentSettings.has_signature || null,
       email: currentSettings.email || null,
@@ -221,6 +221,7 @@ export function EntitySettingsForm({
       upn_qr_display_mode: currentSettings.upn_qr?.display_mode || "qr_only",
       upn_qr_purpose_code: currentSettings.upn_qr?.purpose_code || "OTHR",
       epc_qr_enabled: currentSettings.epc_qr?.enabled || false,
+      show_payment_amounts: currentSettings.show_payment_amounts || false,
     },
   });
 
@@ -237,10 +238,10 @@ export function EntitySettingsForm({
     async function fetchFileUrls() {
       try {
         // SDK auto-unwraps response, returns data array directly
-        const files = await sdk.files.list({ entity_id: entity.id });
+        const entityFiles = await files.list({ entity_id: entity.id });
 
-        const logoFile = files.data.find((f: { category: string }) => f.category === "logo");
-        const signatureFile = files.data.find((f: { category: string }) => f.category === "signature");
+        const logoFile = entityFiles.data.find((f: { category: string }) => f.category === "logo");
+        const signatureFile = entityFiles.data.find((f: { category: string }) => f.category === "signature");
 
         if (logoFile) {
           setFetchedLogoUrl(logoFile.secureUrl);
@@ -263,29 +264,14 @@ export function EntitySettingsForm({
     }
 
     fetchFileUrls();
-  }, [entity.id, sdk.files, form]);
+  }, [entity.id, form]);
 
   // Watch the has_logo and has_signature form fields for changes
   const hasLogo = form.watch("has_logo");
   const hasSignature = form.watch("has_signature");
 
-  // Logo URL priority: freshly uploaded > fetched from API > constructed fallback
-  const entityTimestamp = entity.updated_at ? new Date(entity.updated_at).getTime() : logoTimestamp;
-  const logoUrl =
-    hasLogo && cloudinaryCloudName
-      ? uploadedLogoUrl ||
-        fetchedLogoUrl ||
-        `https://res.cloudinary.com/${cloudinaryCloudName}/image/upload/leka/entities/${entity.id}/logos/logo_${entity.id}.png?v=${entityTimestamp}`
-      : undefined;
-
-  // Signature URL priority: freshly uploaded > fetched from API > constructed fallback
-  const signatureEntityTimestamp = entity.updated_at ? new Date(entity.updated_at).getTime() : signatureTimestamp;
-  const signatureUrl =
-    hasSignature && cloudinaryCloudName
-      ? uploadedSignatureUrl ||
-        fetchedSignatureUrl ||
-        `https://res.cloudinary.com/${cloudinaryCloudName}/image/upload/leka/entities/${entity.id}/signatures/signature_${entity.id}.png?v=${signatureEntityTimestamp}`
-      : undefined;
+  const logoUrl = hasLogo ? uploadedLogoUrl || fetchedLogoUrl || undefined : undefined;
+  const signatureUrl = hasSignature ? uploadedSignatureUrl || fetchedSignatureUrl || undefined : undefined;
 
   const { mutate: updateEntity, isPending } = useUpdateEntity({
     entityId: entity.id,
@@ -301,18 +287,15 @@ export function EntitySettingsForm({
     setIsUploading(true);
     try {
       // SDK expects { file: Blob } as first arg, SDKMethodOptions as last
-      const result = await sdk.upload.uploadImage({ file }, { entity_id: entity.id });
+      const result = await upload.uploadImage({ file }, { entity_id: entity.id });
 
       // Note: The upload endpoint automatically sets has_logo=true in entity settings
       // We just need to update the form state
       form.setValue("has_logo", true);
 
-      // Use the freshly uploaded URL with Cloudinary version (bypasses CDN cache)
-      // This ensures immediate preview update without waiting for CDN invalidation
+      // Use the freshly uploaded URL immediately instead of waiting for a refetch.
+      // This ensures immediate preview update without waiting for a refetch.
       setUploadedLogoUrl(result.secureUrl);
-
-      // Update timestamp to bust cache for future loads
-      setLogoTimestamp(Date.now());
 
       // Trigger entity refetch to get the updated has_logo from database
       onUploadSuccess?.();
@@ -331,16 +314,13 @@ export function EntitySettingsForm({
     setIsUploadingSignature(true);
     try {
       // SDK expects { file, category } as first arg, SDKMethodOptions as last
-      const result = await sdk.files.uploadFile({ file, category: "signature" }, { entity_id: entity.id });
+      const result = await files.uploadFile({ file, category: "signature" }, { entity_id: entity.id });
 
       // Update form state
       form.setValue("has_signature", true);
 
       // Use the freshly uploaded URL
       setUploadedSignatureUrl(result.secureUrl);
-
-      // Update timestamp to bust cache
-      setSignatureTimestamp(Date.now());
 
       // Trigger entity refetch
       onUploadSuccess?.();
@@ -362,6 +342,7 @@ export function EntitySettingsForm({
         settings: {
           ...currentSettings,
           primary_color: values.primary_color || undefined,
+          logo_scale_percent: values.logo_scale_percent ?? 100,
           has_logo: values.has_logo || undefined,
           has_signature: values.has_signature || undefined,
           email: values.email || undefined,
@@ -384,6 +365,7 @@ export function EntitySettingsForm({
           // EPC QR settings - only include if enabled or was previously enabled
           epc_qr:
             values.epc_qr_enabled || currentSettings.epc_qr ? { enabled: values.epc_qr_enabled || false } : undefined,
+          show_payment_amounts: values.show_payment_amounts ?? undefined,
           // Bank accounts - store in array format (preserving other accounts if any)
           bank_accounts: values.bank_account_iban
             ? [
@@ -705,29 +687,72 @@ export function EntitySettingsForm({
                   )}
                 />
 
-                <FormField
-                  control={form.control}
-                  name="has_signature"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="font-medium text-base">{translate("Signature")}</FormLabel>
-                      <FormControl>
-                        <ImageUploadWithCrop
-                          value={signatureUrl || ""}
-                          onChange={(url) => field.onChange(!!url)}
-                          onUpload={handleSignatureUpload}
-                          translate={translate}
-                          isUploading={isUploadingSignature}
-                          imageType="signature"
-                        />
-                      </FormControl>
-                      <FormDescription className="text-xs">
-                        {translate("Upload a signature image for PDFs (optional)")}
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <div className="space-y-6">
+                  <FormField
+                    control={form.control}
+                    name="logo_scale_percent"
+                    render={({ field }) => (
+                      <FormItem className="max-w-xs">
+                        <FormLabel className="font-medium text-base">{translate("Logo size (%)")}</FormLabel>
+                        <FormControl>
+                          <div className="space-y-3">
+                            <input
+                              type="range"
+                              min={30}
+                              max={100}
+                              step={1}
+                              value={field.value ?? 100}
+                              onChange={(e) => field.onChange(Number.parseInt(e.target.value, 10))}
+                              className="h-2 w-full cursor-pointer accent-primary"
+                            />
+                            <div className="flex items-center gap-3">
+                              <Input
+                                type="number"
+                                min={30}
+                                max={100}
+                                step={1}
+                                value={field.value ?? 100}
+                                onChange={(e) =>
+                                  field.onChange(e.target.value === "" ? null : Number.parseInt(e.target.value, 10))
+                                }
+                                className="h-10 w-24"
+                              />
+                              <span className="text-muted-foreground text-sm">{field.value ?? 100}%</span>
+                            </div>
+                          </div>
+                        </FormControl>
+                        <FormDescription className="text-xs">
+                          {translate("Scale the PDF logo relative to the default template size")}
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="has_signature"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="font-medium text-base">{translate("Signature")}</FormLabel>
+                        <FormControl>
+                          <ImageUploadWithCrop
+                            value={signatureUrl || ""}
+                            onChange={(url) => field.onChange(!!url)}
+                            onUpload={handleSignatureUpload}
+                            translate={translate}
+                            isUploading={isUploadingSignature}
+                            imageType="signature"
+                          />
+                        </FormControl>
+                        <FormDescription className="text-xs">
+                          {translate("Upload a signature image for PDFs (optional)")}
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -1148,10 +1173,9 @@ export function EntitySettingsForm({
                         ref={defaultInvoiceNoteRef}
                         value={field.value || ""}
                         onChange={field.onChange}
-                        placeholder={translate(
-                          "Payment due by {document_due_date}. Please reference invoice {document_number}.",
-                        )}
+                        placeholder={translate("Optional note for the document.")}
                         entity={entity}
+                        translatePreviewLabel={translate}
                         multiline
                         rows={3}
                         className="resize-y"
@@ -1164,6 +1188,30 @@ export function EntitySettingsForm({
                   </FormItem>
                 )}
               />
+
+              <div className="border-t pt-6">
+                <FormField
+                  control={form.control}
+                  name="show_payment_amounts"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                      <div className="space-y-0.5 pr-6">
+                        <FormLabel className="font-medium text-base">
+                          {translate("Show payment amounts on rendered documents")}
+                        </FormLabel>
+                        <FormDescription className="text-xs">
+                          {translate(
+                            "Off by default. When enabled, payment and refund rows show the payment type on the left and the paid amount on the right.",
+                          )}
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Switch checked={field.value || false} onCheckedChange={field.onChange} />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              </div>
             </div>
           </div>
 
@@ -1276,6 +1324,7 @@ export function EntitySettingsForm({
                               onChange={field.onChange}
                               placeholder="Invoice {document_number} from {entity_name}"
                               entity={entity}
+                              translatePreviewLabel={translate}
                               className="h-10"
                             />
                           </FormControl>
@@ -1306,8 +1355,11 @@ export function EntitySettingsForm({
                               ref={invoiceEmailBodyRef}
                               value={field.value || ""}
                               onChange={field.onChange}
-                              placeholder="Please find your invoice attached."
+                              placeholder={
+                                "Please find invoice {document_number} attached.\nDue date: {document_due_date}."
+                              }
                               entity={entity}
+                              translatePreviewLabel={translate}
                               multiline
                               className="min-h-[200px] resize-none"
                               rows={8}
@@ -1344,6 +1396,7 @@ export function EntitySettingsForm({
                               onChange={field.onChange}
                               placeholder="Estimate {document_number} from {entity_name}"
                               entity={entity}
+                              translatePreviewLabel={translate}
                               className="h-10"
                             />
                           </FormControl>
@@ -1374,8 +1427,11 @@ export function EntitySettingsForm({
                               ref={estimateEmailBodyRef}
                               value={field.value || ""}
                               onChange={field.onChange}
-                              placeholder="Please find your estimate attached."
+                              placeholder={
+                                "Please find estimate {document_number} attached.\nValid until: {document_valid_until}."
+                              }
                               entity={entity}
+                              translatePreviewLabel={translate}
                               multiline
                               className="min-h-[200px] resize-none"
                               rows={8}

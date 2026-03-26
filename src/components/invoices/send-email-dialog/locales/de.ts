@@ -1,10 +1,26 @@
 export default {
   "Send Invoice by Email": "Rechnung per E-Mail senden",
+  "Send Estimate by Email": "Angebot per E-Mail senden",
+  "Send Credit Note by Email": "Gutschrift per E-Mail senden",
+  "Send Advance Invoice by Email": "Vorauszahlungsrechnung per E-Mail senden",
+  "Send Delivery Note by Email": "Lieferschein per E-Mail senden",
   "Send invoice by email description":
     "Senden Sie Rechnung #{number} per E-Mail an einen Kunden. Markdown-Formatierung wird im Text unterstützt.",
+  "Send estimate by email description":
+    "Senden Sie Angebot #{number} per E-Mail an einen Kunden. Markdown-Formatierung wird im Text unterstützt.",
+  "Send credit note by email description":
+    "Senden Sie Gutschrift #{number} per E-Mail an einen Kunden. Markdown-Formatierung wird im Text unterstützt.",
+  "Send advance invoice by email description":
+    "Senden Sie Vorauszahlungsrechnung #{number} per E-Mail an einen Kunden. Markdown-Formatierung wird im Text unterstützt.",
+  "Send delivery note by email description":
+    "Senden Sie Lieferschein #{number} per E-Mail an einen Kunden. Markdown-Formatierung wird im Text unterstützt.",
   "Recipient Email": "Empfänger E-Mail",
   "Subject (Optional)": "Betreff (Optional)",
   "Invoice Subject": "Rechnungsbetreff",
+  "Estimate Subject": "Angebotsbetreff",
+  "Credit Note Subject": "Gutschriftbetreff",
+  "Advance Invoice Subject": "Vorauszahlungsrechnungsbetreff",
+  "Delivery Note Subject": "Lieferscheinbetreff",
   "Leave empty to use default": "Leer lassen für Standardwert",
   "Message (Optional)": "Nachricht (Optional)",
   "Email message placeholder": "E-Mail-Nachricht... Unterstützt **fett**, *kursiv*, [Links](url) und Listen",
@@ -12,11 +28,16 @@ export default {
   "Send Email": "E-Mail senden",
   "Email sent": "E-Mail gesendet",
   "Invoice sent to": "Rechnung gesendet an",
+  "Estimate sent to": "Angebot gesendet an",
+  "Credit note sent to": "Gutschrift gesendet an",
+  "Advance invoice sent to": "Vorauszahlungsrechnung gesendet an",
+  "Delivery note sent to": "Lieferschein gesendet an",
   "Failed to send email": "E-Mail konnte nicht gesendet werden",
   "Sandbox email warning":
     "Im Sandbox-Modus können E-Mails nur an verifizierte Teammitglieder dieses Kontos gesendet werden.",
   "PDF Language": "PDF-Sprache",
   Default: "Standard",
+  "English (US)": "Englisch (US)",
   English: "Englisch",
   German: "Deutsch",
   Slovenian: "Slowenisch",

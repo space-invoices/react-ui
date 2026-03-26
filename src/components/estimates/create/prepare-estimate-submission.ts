@@ -1,5 +1,6 @@
 import type { CreateEstimateRequest } from "@spaceinvoices/js-sdk";
 import type { CreateEstimateSchema } from "@/ui/generated/schemas";
+import { normalizePtDocumentInput, type PtDocumentInputForm } from "@/ui/lib/pt-document-input";
 import { prepareDocumentSubmission } from "../../documents/create/prepare-document-submission";
 import type { CustomerData } from "../../documents/create/use-document-customer-form";
 
@@ -21,9 +22,10 @@ type PrepareOptions = {
  * Handles customer data transformation (no payment data for estimates)
  */
 export function prepareEstimateSubmission(
-  values: CreateEstimateSchema,
+  values: CreateEstimateSchema & { pt?: PtDocumentInputForm | null },
   options: PrepareOptions,
 ): CreateEstimateRequest {
+  const pt = normalizePtDocumentInput(values.pt);
   const baseSubmission = prepareDocumentSubmission(values, {
     originalCustomer: options.originalCustomer,
     documentType: "estimate",
@@ -35,5 +37,6 @@ export function prepareEstimateSubmission(
   return {
     ...baseSubmission,
     title_type: options.titleType,
+    ...(pt ? { pt } : {}),
   };
 }

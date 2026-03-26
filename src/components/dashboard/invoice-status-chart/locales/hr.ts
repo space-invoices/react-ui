@@ -1,10 +1,10 @@
 export default {
-  "Invoice Status": "Status racuna",
-  "Breakdown of invoices by payment status": "Raspodjela racuna prema statusu placanja",
-  Paid: "Placeno",
-  Pending: "Na cekanju",
+  "Invoice Status": "Status računa",
+  "Breakdown of invoices by payment status": "Raspodjela računa prema statusu plaćanja",
+  Paid: "Plaćeno",
+  Pending: "Na čekanju",
   Overdue: "Dospjelo",
   Voided: "Stornirano",
   "No data available": "Nema dostupnih podataka",
-  "Invoices": "Računi",
+  Invoices: "Računi",
 } as const;

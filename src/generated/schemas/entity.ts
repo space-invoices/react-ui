@@ -19,19 +19,30 @@ const createEntitySchemaDefinition = z.object({
   country: z.string().min(1).max(100),
   country_code: z.union([z.string(), z.null()]).optional(),
   currency_code: z.union([z.string(), z.null()]).optional(),
-  locale: z.string().max(20).optional(),
+  locale: z.union([z.string(), z.null()]).optional(),
   tax_number: z.union([z.string(), z.null()]).optional(),
   tax_number_2: z.union([z.string(), z.null()]).optional(),
   company_number: z.union([z.string(), z.null()]).optional(),
+  phone: z.union([z.string(), z.null()]).optional(),
   email: z.union([z.string(), z.null()]).optional(),
   website: z.union([z.string(), z.null()]).optional(),
+  fiscal_region_code: z.union([z.string(), z.null()]).optional(),
+  starting_capital: z.union([z.number(), z.null()]).optional(),
   environment: z.enum(["live", "sandbox"]).optional(),
   is_tax_subject: z.boolean().optional(),
   is_enabled: z.boolean().optional(),
   settings: z
     .object({
       pdf_template: z.union([
-        z.enum(["modern", "classic", "condensed", "minimal", "fashion"]),
+        z.enum([
+          "modern",
+          "classic",
+          "condensed",
+          "minimal",
+          "fashion",
+          "timeless_modern_full_data",
+          null,
+        ]),
         z.null(),
       ]),
       number_formats: z.union([
@@ -48,6 +59,7 @@ const createEntitySchemaDefinition = z.object({
         z.null(),
       ]),
       primary_color: z.union([z.string(), z.null()]),
+      logo_scale_percent: z.union([z.number(), z.null()]),
       has_logo: z.union([z.boolean(), z.null()]),
       has_signature: z.union([z.boolean(), z.null()]),
       default_invoice_due_days: z.union([z.number(), z.null()]),
@@ -59,6 +71,12 @@ const createEntitySchemaDefinition = z.object({
             invoice_body: z.union([z.string(), z.null()]),
             estimate_subject: z.union([z.string(), z.null()]),
             estimate_body: z.union([z.string(), z.null()]),
+            credit_note_subject: z.union([z.string(), z.null()]),
+            credit_note_body: z.union([z.string(), z.null()]),
+            advance_invoice_subject: z.union([z.string(), z.null()]),
+            advance_invoice_body: z.union([z.string(), z.null()]),
+            delivery_note_subject: z.union([z.string(), z.null()]),
+            delivery_note_body: z.union([z.string(), z.null()]),
           })
           .partial()
           .passthrough(),
@@ -70,25 +88,27 @@ const createEntitySchemaDefinition = z.object({
       default_estimate_payment_terms: z.union([z.string(), z.null()]),
       default_credit_note_note: z.union([z.string(), z.null()]),
       default_credit_note_payment_terms: z.union([z.string(), z.null()]),
+      default_advance_invoice_note: z.union([z.string(), z.null()]),
+      default_delivery_note_note: z.union([z.string(), z.null()]),
       document_footer: z.union([z.string(), z.null()]),
       default_document_signature: z.union([z.string(), z.null()]),
       slovenia: z.union([
         z
           .object({
             business_form: z.union([
-              z.enum(["sp", "doo", "dno", "club"]),
+              z.enum(["sp", "doo", "dno", "club", null]),
               z.null(),
             ]),
             income_tax_regime: z.union([
-              z.enum(["normirani", "dejanski"]),
+              z.enum(["normirani", "dejanski", null]),
               z.null(),
             ]),
             vat_profile: z.union([
-              z.enum(["standard", "special_vat_identified"]),
+              z.enum(["standard", "special_vat_identified", null]),
               z.null(),
             ]),
             tax_residency: z.union([
-              z.enum(["resident", "non_resident"]),
+              z.enum(["resident", "non_resident", null]),
               z.null(),
             ]),
             yearly_reporting: z.union([
@@ -97,11 +117,11 @@ const createEntitySchemaDefinition = z.object({
                   activity_code: z.union([z.string(), z.null()]),
                   registration_number: z.union([z.string(), z.null()]),
                   accounting_type: z.union([
-                    z.enum(["records", "single_entry", "double_entry"]),
+                    z.enum(["records", "single_entry", "double_entry", null]),
                     z.null(),
                   ]),
                   normiranec_insurance_basis: z.union([
-                    z.enum(["full_time_self_employed", "other"]),
+                    z.enum(["full_time_self_employed", "other", null]),
                     z.null(),
                   ]),
                   default_withholding_tax_amount: z.union([
@@ -110,6 +130,91 @@ const createEntitySchemaDefinition = z.object({
                   ]),
                   default_foreign_tax_credit_amount: z.union([
                     z.number(),
+                    z.null(),
+                  ]),
+                })
+                .partial()
+                .passthrough(),
+              z.null(),
+            ]),
+            accounting_exports: z.union([
+              z
+                .object({
+                  preferred_format: z.union([
+                    z.enum(["vod_xml", "vasco_xml", "minimax_xml", null]),
+                    z.null(),
+                  ]),
+                  konto_mappings: z.union([
+                    z
+                      .object({
+                        receivables: z.union([z.string(), z.null()]),
+                        payables: z.union([z.string(), z.null()]),
+                        sales_vat_22: z.union([z.string(), z.null()]),
+                        sales_vat_95: z.union([z.string(), z.null()]),
+                        sales_vat_5: z.union([z.string(), z.null()]),
+                        purchase_vat_recoverable_22: z.union([
+                          z.string(),
+                          z.null(),
+                        ]),
+                        purchase_vat_recoverable_95: z.union([
+                          z.string(),
+                          z.null(),
+                        ]),
+                        purchase_vat_recoverable_5: z.union([
+                          z.string(),
+                          z.null(),
+                        ]),
+                        sales_revenue_22: z.union([z.string(), z.null()]),
+                        sales_revenue_95: z.union([z.string(), z.null()]),
+                        sales_revenue_5: z.union([z.string(), z.null()]),
+                        sales_revenue_exempt: z.union([z.string(), z.null()]),
+                        sales_revenue_eu_goods: z.union([z.string(), z.null()]),
+                        sales_revenue_eu_services: z.union([
+                          z.string(),
+                          z.null(),
+                        ]),
+                        sales_revenue_reverse_charge: z.union([
+                          z.string(),
+                          z.null(),
+                        ]),
+                        sales_revenue_third_country_goods: z.union([
+                          z.string(),
+                          z.null(),
+                        ]),
+                        sales_revenue_third_country_services: z.union([
+                          z.string(),
+                          z.null(),
+                        ]),
+                        purchase_expense_22: z.union([z.string(), z.null()]),
+                        purchase_expense_95: z.union([z.string(), z.null()]),
+                        purchase_expense_5: z.union([z.string(), z.null()]),
+                        purchase_expense_exempt: z.union([
+                          z.string(),
+                          z.null(),
+                        ]),
+                        purchase_expense_eu_goods: z.union([
+                          z.string(),
+                          z.null(),
+                        ]),
+                        purchase_expense_eu_services: z.union([
+                          z.string(),
+                          z.null(),
+                        ]),
+                        purchase_expense_reverse_charge: z.union([
+                          z.string(),
+                          z.null(),
+                        ]),
+                        purchase_expense_third_country_goods: z.union([
+                          z.string(),
+                          z.null(),
+                        ]),
+                        purchase_expense_third_country_services: z.union([
+                          z.string(),
+                          z.null(),
+                        ]),
+                      })
+                      .partial()
+                      .passthrough(),
                     z.null(),
                   ]),
                 })
@@ -126,6 +231,7 @@ const createEntitySchemaDefinition = z.object({
         z
           .object({
             enabled: z.boolean().default(false),
+            default_skip_fiscalization: z.boolean().default(false),
             numbering_strategy: z.enum(["B", "C"]),
             operator_tax_number: z.string(),
             operator_label: z.string(),
@@ -146,6 +252,17 @@ const createEntitySchemaDefinition = z.object({
             numbering_sequence: z.enum(["N", "P"]).default("P"),
             unified_numbering: z.union([z.boolean(), z.null()]),
             certificate_expiry: z.string(),
+          })
+          .partial()
+          .passthrough(),
+        z.null(),
+      ]),
+      pt: z.union([
+        z
+          .object({
+            operator_first_name: z.string().min(1),
+            operator_last_name: z.string().min(1),
+            operator_tax_number: z.string().regex(/^\d{9}$/),
           })
           .partial()
           .passthrough(),
@@ -193,6 +310,7 @@ const createEntitySchemaDefinition = z.object({
       eslog_validation_enabled: z.union([z.boolean(), z.null()]),
       delivery_note_hide_prices: z.union([z.boolean(), z.null()]),
       credit_note_negative_values: z.union([z.boolean(), z.null()]),
+      show_payment_amounts: z.union([z.boolean(), z.null()]),
       receipt_note: z.union([z.string(), z.null()]),
       receipt_footer: z.union([z.string(), z.null()]),
       receipt_signature: z.union([z.string(), z.null()]),
@@ -243,18 +361,29 @@ const patchEntitySchemaDefinition = z
     city: z.union([z.string(), z.null()]),
     state: z.union([z.string(), z.null()]),
     currency_code: z.union([z.string(), z.null()]),
-    locale: z.string().max(20),
+    locale: z.union([z.string(), z.null()]),
     tax_number: z.union([z.string(), z.null()]),
     tax_number_2: z.union([z.string(), z.null()]),
     company_number: z.union([z.string(), z.null()]),
+    phone: z.union([z.string(), z.null()]),
     email: z.union([z.string(), z.null()]),
     website: z.union([z.string(), z.null()]),
+    fiscal_region_code: z.union([z.string(), z.null()]),
+    starting_capital: z.union([z.number(), z.null()]),
     is_tax_subject: z.boolean(),
     is_enabled: z.boolean(),
     settings: z
       .object({
         pdf_template: z.union([
-          z.enum(["modern", "classic", "condensed", "minimal", "fashion"]),
+          z.enum([
+            "modern",
+            "classic",
+            "condensed",
+            "minimal",
+            "fashion",
+            "timeless_modern_full_data",
+            null,
+          ]),
           z.null(),
         ]),
         number_formats: z.union([
@@ -271,6 +400,7 @@ const patchEntitySchemaDefinition = z
           z.null(),
         ]),
         primary_color: z.union([z.string(), z.null()]),
+        logo_scale_percent: z.union([z.number(), z.null()]),
         has_logo: z.union([z.boolean(), z.null()]),
         has_signature: z.union([z.boolean(), z.null()]),
         default_invoice_due_days: z.union([z.number(), z.null()]),
@@ -282,6 +412,12 @@ const patchEntitySchemaDefinition = z
               invoice_body: z.union([z.string(), z.null()]),
               estimate_subject: z.union([z.string(), z.null()]),
               estimate_body: z.union([z.string(), z.null()]),
+              credit_note_subject: z.union([z.string(), z.null()]),
+              credit_note_body: z.union([z.string(), z.null()]),
+              advance_invoice_subject: z.union([z.string(), z.null()]),
+              advance_invoice_body: z.union([z.string(), z.null()]),
+              delivery_note_subject: z.union([z.string(), z.null()]),
+              delivery_note_body: z.union([z.string(), z.null()]),
             })
             .partial()
             .passthrough(),
@@ -293,25 +429,27 @@ const patchEntitySchemaDefinition = z
         default_estimate_payment_terms: z.union([z.string(), z.null()]),
         default_credit_note_note: z.union([z.string(), z.null()]),
         default_credit_note_payment_terms: z.union([z.string(), z.null()]),
+        default_advance_invoice_note: z.union([z.string(), z.null()]),
+        default_delivery_note_note: z.union([z.string(), z.null()]),
         document_footer: z.union([z.string(), z.null()]),
         default_document_signature: z.union([z.string(), z.null()]),
         slovenia: z.union([
           z
             .object({
               business_form: z.union([
-                z.enum(["sp", "doo", "dno", "club"]),
+                z.enum(["sp", "doo", "dno", "club", null]),
                 z.null(),
               ]),
               income_tax_regime: z.union([
-                z.enum(["normirani", "dejanski"]),
+                z.enum(["normirani", "dejanski", null]),
                 z.null(),
               ]),
               vat_profile: z.union([
-                z.enum(["standard", "special_vat_identified"]),
+                z.enum(["standard", "special_vat_identified", null]),
                 z.null(),
               ]),
               tax_residency: z.union([
-                z.enum(["resident", "non_resident"]),
+                z.enum(["resident", "non_resident", null]),
                 z.null(),
               ]),
               yearly_reporting: z.union([
@@ -320,11 +458,11 @@ const patchEntitySchemaDefinition = z
                     activity_code: z.union([z.string(), z.null()]),
                     registration_number: z.union([z.string(), z.null()]),
                     accounting_type: z.union([
-                      z.enum(["records", "single_entry", "double_entry"]),
+                      z.enum(["records", "single_entry", "double_entry", null]),
                       z.null(),
                     ]),
                     normiranec_insurance_basis: z.union([
-                      z.enum(["full_time_self_employed", "other"]),
+                      z.enum(["full_time_self_employed", "other", null]),
                       z.null(),
                     ]),
                     default_withholding_tax_amount: z.union([
@@ -333,6 +471,94 @@ const patchEntitySchemaDefinition = z
                     ]),
                     default_foreign_tax_credit_amount: z.union([
                       z.number(),
+                      z.null(),
+                    ]),
+                  })
+                  .partial()
+                  .passthrough(),
+                z.null(),
+              ]),
+              accounting_exports: z.union([
+                z
+                  .object({
+                    preferred_format: z.union([
+                      z.enum(["vod_xml", "vasco_xml", "minimax_xml", null]),
+                      z.null(),
+                    ]),
+                    konto_mappings: z.union([
+                      z
+                        .object({
+                          receivables: z.union([z.string(), z.null()]),
+                          payables: z.union([z.string(), z.null()]),
+                          sales_vat_22: z.union([z.string(), z.null()]),
+                          sales_vat_95: z.union([z.string(), z.null()]),
+                          sales_vat_5: z.union([z.string(), z.null()]),
+                          purchase_vat_recoverable_22: z.union([
+                            z.string(),
+                            z.null(),
+                          ]),
+                          purchase_vat_recoverable_95: z.union([
+                            z.string(),
+                            z.null(),
+                          ]),
+                          purchase_vat_recoverable_5: z.union([
+                            z.string(),
+                            z.null(),
+                          ]),
+                          sales_revenue_22: z.union([z.string(), z.null()]),
+                          sales_revenue_95: z.union([z.string(), z.null()]),
+                          sales_revenue_5: z.union([z.string(), z.null()]),
+                          sales_revenue_exempt: z.union([z.string(), z.null()]),
+                          sales_revenue_eu_goods: z.union([
+                            z.string(),
+                            z.null(),
+                          ]),
+                          sales_revenue_eu_services: z.union([
+                            z.string(),
+                            z.null(),
+                          ]),
+                          sales_revenue_reverse_charge: z.union([
+                            z.string(),
+                            z.null(),
+                          ]),
+                          sales_revenue_third_country_goods: z.union([
+                            z.string(),
+                            z.null(),
+                          ]),
+                          sales_revenue_third_country_services: z.union([
+                            z.string(),
+                            z.null(),
+                          ]),
+                          purchase_expense_22: z.union([z.string(), z.null()]),
+                          purchase_expense_95: z.union([z.string(), z.null()]),
+                          purchase_expense_5: z.union([z.string(), z.null()]),
+                          purchase_expense_exempt: z.union([
+                            z.string(),
+                            z.null(),
+                          ]),
+                          purchase_expense_eu_goods: z.union([
+                            z.string(),
+                            z.null(),
+                          ]),
+                          purchase_expense_eu_services: z.union([
+                            z.string(),
+                            z.null(),
+                          ]),
+                          purchase_expense_reverse_charge: z.union([
+                            z.string(),
+                            z.null(),
+                          ]),
+                          purchase_expense_third_country_goods: z.union([
+                            z.string(),
+                            z.null(),
+                          ]),
+                          purchase_expense_third_country_services: z.union([
+                            z.string(),
+                            z.null(),
+                          ]),
+                        })
+                        .partial()
+                        .passthrough(),
                       z.null(),
                     ]),
                   })
@@ -349,6 +575,7 @@ const patchEntitySchemaDefinition = z
           z
             .object({
               enabled: z.boolean().default(false),
+              default_skip_fiscalization: z.boolean().default(false),
               numbering_strategy: z.enum(["B", "C"]),
               operator_tax_number: z.string(),
               operator_label: z.string(),
@@ -369,6 +596,17 @@ const patchEntitySchemaDefinition = z
               numbering_sequence: z.enum(["N", "P"]).default("P"),
               unified_numbering: z.union([z.boolean(), z.null()]),
               certificate_expiry: z.string(),
+            })
+            .partial()
+            .passthrough(),
+          z.null(),
+        ]),
+        pt: z.union([
+          z
+            .object({
+              operator_first_name: z.string().min(1),
+              operator_last_name: z.string().min(1),
+              operator_tax_number: z.string().regex(/^\d{9}$/),
             })
             .partial()
             .passthrough(),
@@ -416,6 +654,7 @@ const patchEntitySchemaDefinition = z
         eslog_validation_enabled: z.union([z.boolean(), z.null()]),
         delivery_note_hide_prices: z.union([z.boolean(), z.null()]),
         credit_note_negative_values: z.union([z.boolean(), z.null()]),
+        show_payment_amounts: z.union([z.boolean(), z.null()]),
         receipt_note: z.union([z.string(), z.null()]),
         receipt_footer: z.union([z.string(), z.null()]),
         receipt_signature: z.union([z.string(), z.null()]),

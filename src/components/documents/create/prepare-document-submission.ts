@@ -33,6 +33,8 @@ type PrepareDocumentOptions = {
   markAsPaid?: boolean;
   /** For invoices/credit notes: payment types when markAsPaid is true */
   paymentTypes?: string[];
+  /** Structured payments when amounts were already normalized by the form layer */
+  payments?: Array<{ type: string; amount?: number }>;
   /** Document type for specific date handling */
   documentType: "invoice" | "estimate" | "credit_note" | "advance_invoice" | "delivery_note";
   /** Secondary date field value (date_due for invoices, date_valid_till for estimates) */
@@ -157,8 +159,12 @@ export function prepareDocumentSubmission<T extends BaseDocumentValues>(
         taxes: item.taxes
           ?.map((tax: any) => {
             if (tax.tax_id) {
-              // Only send tax_id, API will resolve the rate
-              return { tax_id: tax.tax_id };
+              // Preserve PT exemption metadata while still allowing the API to resolve the tax rate by tax_id.
+              return {
+                tax_id: tax.tax_id,
+                ...(tax.pt_exemption_code ? { pt_exemption_code: tax.pt_exemption_code } : {}),
+                ...(tax.pt_exemption_reason ? { pt_exemption_reason: tax.pt_exemption_reason } : {}),
+              };
             }
             return tax;
           })
@@ -170,7 +176,7 @@ export function prepareDocumentSubmission<T extends BaseDocumentValues>(
 
   // Build payload with date conversions
   // Destructure to exclude fields we handle explicitly (number is always server-generated)
-  const { number: _number, note, payment_terms, reference, signature, ...restValues } = nextValues as any;
+  const { number: _number, note, payment_terms, reference, signature, pt: _pt, ...restValues } = nextValues as any;
   const payload: any = {
     ...restValues,
     ...(note?.trim() && { note: note.trim() }),
@@ -201,16 +207,21 @@ export function prepareDocumentSubmission<T extends BaseDocumentValues>(
   }
 
   // Handle markAsPaid for invoices and credit notes
-  if (
-    options.documentType !== "estimate" &&
-    options.markAsPaid &&
-    options.paymentTypes &&
-    options.paymentTypes.length > 0
-  ) {
-    payload.payments = options.paymentTypes.map((type: string) => ({
-      type,
-      date: payload.date ?? undefined,
-    }));
+  if (options.documentType !== "estimate" && options.markAsPaid) {
+    const serializedPayments =
+      options.payments?.map((payment) => ({
+        ...payment,
+        date: payload.date ?? undefined,
+      })) ??
+      options.paymentTypes?.map((type: string) => ({
+        type,
+        date: payload.date ?? undefined,
+      })) ??
+      [];
+
+    if (serializedPayments.length > 0) {
+      payload.payments = serializedPayments;
+    }
   }
 
   // Remove UI-only fields from payload

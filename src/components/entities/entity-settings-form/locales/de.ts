@@ -74,9 +74,9 @@ export default {
     "Zahlungsbedingungen werden beim Erstellen neuer Angebote vorausgefüllt",
   "Payment terms pre-filled when creating new credit notes":
     "Zahlungsbedingungen werden beim Erstellen neuer Gutschriften vorausgefüllt",
-  "Payment due by {document_due_date}. Please reference invoice {document_number}.":
-    "Zahlung fällig bis {document_due_date}. Bitte Rechnungsnummer {document_number} angeben.",
-  "Net 30 days. Payment due by {document_due_date}.": "Netto 30 Tage. Zahlung fällig bis {document_due_date}.",
+  "Optional note for the document.": "Optionale Notiz für das Dokument.",
+  "Please remit payment using the bank details shown on the document.":
+    "Bitte verwenden Sie die auf dem Dokument angegebenen Bankdaten.",
   "This estimate is valid until {document_valid_until}.": "Dieses Angebot ist gültig bis {document_valid_until}.",
   "Payment due upon acceptance.": "Zahlung bei Annahme fällig.",
   "Credit note for invoice {document_number}.": "Gutschrift für Rechnung {document_number}.",
@@ -120,6 +120,11 @@ export default {
   "Document Signature": "Dokumentunterschrift",
   "Signature text displayed on all PDF documents": "Unterschriftstext auf allen PDF-Dokumenten",
   "Add signature text...": "Unterschriftstext hinzufügen...",
+  "Delivery Note": "Lieferschein",
+  "Default note for advance invoices": "Standardnotiz für Vorausrechnungen",
+  "Default note for all new advance invoices": "Standardnotiz für alle neuen Vorausrechnungen",
+  "Default note for delivery notes": "Standardnotiz für Lieferscheine",
+  "Default note for all new delivery notes": "Standardnotiz für alle neuen Lieferscheine",
   // Overdue Notifications section
   "Overdue Notifications": "Überfälligkeits-Benachrichtigungen",
   "Automatically remind customers about overdue invoices": "Erinnern Sie Kunden automatisch an überfällige Rechnungen",

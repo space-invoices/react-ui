@@ -3,6 +3,7 @@
  * TanStack Query hooks for FINA fiscalization settings management
  */
 
+import { finaCertificate, finaDevices, finaPremises, finaSettings, users } from "@spaceinvoices/js-sdk";
 import {
   type UseMutationOptions,
   type UseQueryOptions,
@@ -11,7 +12,6 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { useMemo } from "react";
-import { useSDK } from "../../../providers/sdk-provider";
 
 /**
  * Query Keys
@@ -28,16 +28,13 @@ export const finaQueryKeys = {
  * Hook: Get FINA settings
  */
 export function useFinaSettings(entityId: string, options?: Omit<UseQueryOptions<any>, "queryKey" | "queryFn">) {
-  const { sdk } = useSDK();
-
   return useQuery({
     queryKey: finaQueryKeys.settings(entityId),
     queryFn: async () => {
-      if (!sdk) throw new Error("SDK not initialized");
       if (!entityId) throw new Error("Entity ID required");
-      return sdk.finaSettings.list({ entity_id: entityId });
+      return finaSettings.list({ entity_id: entityId });
     },
-    enabled: !!sdk && !!entityId,
+    enabled: !!entityId,
     staleTime: 0,
     ...options,
   });
@@ -47,14 +44,12 @@ export function useFinaSettings(entityId: string, options?: Omit<UseQueryOptions
  * Hook: Update FINA settings
  */
 export function useUpdateFinaSettings(options?: UseMutationOptions<any, Error, { entityId: string; data: any }>) {
-  const { sdk } = useSDK();
   const queryClient = useQueryClient();
 
   return useMutation({
     ...options,
     mutationFn: async ({ entityId, data }) => {
-      if (!sdk) throw new Error("SDK not initialized");
-      return sdk.finaSettings.update(data, { entity_id: entityId });
+      return finaSettings.update(data, { entity_id: entityId });
     },
     onSuccess: (data, variables, context) => {
       queryClient.invalidateQueries({
@@ -73,14 +68,12 @@ export function useUpdateFinaSettings(options?: UseMutationOptions<any, Error, {
 export function useUploadFinaCertificate(
   options?: UseMutationOptions<any, Error, { entityId: string; file: Blob; passphrase: string }>,
 ) {
-  const { sdk } = useSDK();
   const queryClient = useQueryClient();
 
   return useMutation({
     ...options,
     mutationFn: async ({ entityId, file, passphrase }) => {
-      if (!sdk) throw new Error("SDK not initialized");
-      return sdk.finaCertificate.uploadFinaCertificate({ file, passphrase }, { entity_id: entityId });
+      return finaCertificate.uploadFinaCertificate({ file, passphrase }, { entity_id: entityId });
     },
     onSuccess: (data, variables, context) => {
       queryClient.invalidateQueries({
@@ -97,15 +90,10 @@ export function useUploadFinaCertificate(
  * Hook: List FINA business premises
  */
 export function useFinaPremises(entityId: string, options?: Omit<UseQueryOptions<any[]>, "queryKey" | "queryFn">) {
-  const { sdk } = useSDK();
-
   return useQuery({
     queryKey: finaQueryKeys.premises(entityId),
-    queryFn: async () => {
-      if (!sdk) throw new Error("SDK not initialized");
-      return sdk.finaPremises.listFinaPremises({ entity_id: entityId });
-    },
-    enabled: !!sdk,
+    queryFn: async () => finaPremises.listFinaPremises({ entity_id: entityId }),
+    enabled: !!entityId,
     staleTime: 0,
     ...options,
   });
@@ -115,14 +103,12 @@ export function useFinaPremises(entityId: string, options?: Omit<UseQueryOptions
  * Hook: Create premise (simple, local storage only)
  */
 export function useCreateFinaPremise(options?: UseMutationOptions<any, Error, { entityId: string; data: any }>) {
-  const { sdk } = useSDK();
   const queryClient = useQueryClient();
 
   return useMutation({
     ...options,
     mutationFn: async ({ entityId, data }) => {
-      if (!sdk) throw new Error("SDK not initialized");
-      return sdk.finaPremises.create(data, { entity_id: entityId });
+      return finaPremises.create(data, { entity_id: entityId });
     },
     onSuccess: (data, variables, context) => {
       queryClient.invalidateQueries({
@@ -141,14 +127,12 @@ export function useCreateFinaPremise(options?: UseMutationOptions<any, Error, { 
 export function useDeleteFinaPremise(
   options?: UseMutationOptions<any, Error, { entityId: string; premiseId: string }>,
 ) {
-  const { sdk } = useSDK();
   const queryClient = useQueryClient();
 
   return useMutation({
     ...options,
     mutationFn: async ({ entityId, premiseId }) => {
-      if (!sdk) throw new Error("SDK not initialized");
-      return sdk.finaPremises.delete(premiseId, { entity_id: entityId });
+      return finaPremises.delete(premiseId, { entity_id: entityId });
     },
     onSuccess: (data, variables, context) => {
       queryClient.invalidateQueries({
@@ -167,18 +151,12 @@ export function useDeleteFinaPremise(
 export function useRegisterFinaElectronicDevice(
   options?: UseMutationOptions<any, Error, { entityId: string; premiseId: string; deviceId: string }>,
 ) {
-  const { sdk } = useSDK();
   const queryClient = useQueryClient();
 
   return useMutation({
     ...options,
     mutationFn: async ({ entityId, premiseId, deviceId }) => {
-      if (!sdk) throw new Error("SDK not initialized");
-      return sdk.finaDevices.registerFinaDevice(
-        premiseId,
-        { electronic_device_name: deviceId },
-        { entity_id: entityId },
-      );
+      return finaDevices.registerFinaDevice(premiseId, { electronic_device_name: deviceId }, { entity_id: entityId });
     },
     onSuccess: (data, variables, context) => {
       queryClient.invalidateQueries({
@@ -200,14 +178,12 @@ export function useRegisterFinaElectronicDevice(
 export function useDeleteFinaDevice(
   options?: UseMutationOptions<any, Error, { entityId: string; deviceId: string; premiseId?: string }>,
 ) {
-  const { sdk } = useSDK();
   const queryClient = useQueryClient();
 
   return useMutation({
     ...options,
     mutationFn: async ({ entityId, deviceId }) => {
-      if (!sdk) throw new Error("SDK not initialized");
-      return sdk.finaDevices.delete(deviceId, { entity_id: entityId });
+      return finaDevices.delete(deviceId, { entity_id: entityId });
     },
     onSuccess: (data, variables, context) => {
       queryClient.invalidateQueries({
@@ -237,15 +213,10 @@ export interface UserFinaSettings {
  * Hook: Get current user
  */
 function useCurrentUser(options?: Omit<UseQueryOptions<any>, "queryKey" | "queryFn">) {
-  const { sdk } = useSDK();
-
   return useQuery({
     queryKey: finaQueryKeys.currentUser(),
-    queryFn: async () => {
-      if (!sdk) throw new Error("SDK not initialized");
-      return sdk.users.getMe();
-    },
-    enabled: !!sdk,
+    queryFn: async () => users.getMe(),
+    enabled: options?.enabled,
     staleTime: 1000 * 60 * 5,
     ...options,
   });
@@ -284,14 +255,12 @@ export function useUpdateUserFinaSettings(
     { entityId: string; data: { operator_oib?: string; operator_label?: string } }
   >,
 ) {
-  const { sdk } = useSDK();
   const queryClient = useQueryClient();
 
   return useMutation({
     ...options,
     mutationFn: async ({ entityId, data }) => {
-      if (!sdk) throw new Error("SDK not initialized");
-      return sdk.users.updateFinaSettings(data, { entity_id: entityId });
+      return users.updateFinaSettings(data, { entity_id: entityId });
     },
     onSuccess: (data, variables, context) => {
       queryClient.invalidateQueries({

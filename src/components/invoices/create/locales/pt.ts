@@ -94,6 +94,30 @@ export default {
   "e-SLOG Validation Failed": "Validação e-SLOG falhou",
   "The following entity settings need to be updated:":
     "As seguintes definições da entidade precisam de ser atualizadas:",
+  "Entity name is required for e-SLOG. Update in Settings > Company.":
+    "O nome da entidade é obrigatório para e-SLOG. Atualize-o em Definições > Empresa.",
+  "Entity address is required for e-SLOG. Update in Settings > Company.":
+    "O endereço da entidade é obrigatório para e-SLOG. Atualize-o em Definições > Empresa.",
+  "Entity postal code is required for e-SLOG. Update in Settings > Company.":
+    "O código postal da entidade é obrigatório para e-SLOG. Atualize-o em Definições > Empresa.",
+  "Entity city is required for e-SLOG. Update in Settings > Company.":
+    "A cidade da entidade é obrigatória para e-SLOG. Atualize-a em Definições > Empresa.",
+  "Entity must be from Slovenia (SI) for e-SLOG.": "A entidade deve ser da Eslovénia (SI) para e-SLOG.",
+  "Entity tax number is required for e-SLOG. Update in Settings > Company.":
+    "O número fiscal da entidade é obrigatório para e-SLOG. Atualize-o em Definições > Empresa.",
+  "Slovenian tax number must be 8 digits.": "O número fiscal esloveno deve ter 8 dígitos.",
+  "Invoice date is required for e-SLOG.": "A data da fatura é obrigatória para e-SLOG.",
+  "Currency is required for e-SLOG.": "A moeda é obrigatória para e-SLOG.",
+  "Entity currency must be EUR for e-SLOG when invoice uses a different currency.":
+    "A moeda da entidade deve ser EUR para e-SLOG quando a fatura usa uma moeda diferente.",
+  "Customer name is required when customer is provided.":
+    "O nome do cliente é obrigatório quando é fornecido um cliente.",
+  "At least one line item is required for e-SLOG.": "É necessária pelo menos uma linha para e-SLOG.",
+  "Item name is required for e-SLOG.": "O nome do item é obrigatório para e-SLOG.",
+  "Quantity must be greater than 0.": "A quantidade deve ser superior a 0.",
+  "Price is required for e-SLOG.": "O preço é obrigatório para e-SLOG.",
+  "Invalid Slovenian tax rate {{rate}}%. Valid: {{validRates}}":
+    "Taxa de IVA eslovena inválida {{rate}}%. Válidas: {{validRates}}",
   "Reverse charge - tax exempt EU B2B sale": "Autoliquidação - venda B2B UE isenta de imposto",
   "Taxes disabled": "Impostos desativados",
   "Gross price": "Preço bruto",

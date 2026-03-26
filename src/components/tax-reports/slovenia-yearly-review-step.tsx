@@ -1,9 +1,9 @@
 import { AlertCircle, TriangleAlert } from "lucide-react";
 import type { ChangeEvent } from "react";
-import { SloveniaYearlySummary } from "./slovenia-yearly-summary";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
+import { SloveniaYearlySummary } from "./slovenia-yearly-summary";
 
 type Warning = {
   code: string;
@@ -100,7 +100,10 @@ export function SloveniaYearlyReviewStep({
             label: t("slovenia-yearly.review.summary.normative-expenses"),
             value: formatCurrency(draft.auto_values.normative_expenses),
           },
-          { label: t("slovenia-yearly.review.summary.income-tax"), value: formatCurrency(draft.auto_values.income_tax_amount) },
+          {
+            label: t("slovenia-yearly.review.summary.income-tax"),
+            value: formatCurrency(draft.auto_values.income_tax_amount),
+          },
         ]}
       />
 
@@ -118,13 +121,16 @@ export function SloveniaYearlyReviewStep({
           <h4 className="font-medium">{t("slovenia-yearly.review.installments.title")}</h4>
           <div className="mt-3 space-y-2 text-sm">
             <p>
-              {t("slovenia-yearly.review.installments.advance-tax")}: {formatCurrency(draft.auto_values.advance_tax_amount)}
+              {t("slovenia-yearly.review.installments.advance-tax")}:{" "}
+              {formatCurrency(draft.auto_values.advance_tax_amount)}
             </p>
             <p>
-              {t("slovenia-yearly.review.installments.monthly")}: {formatCurrency(draft.auto_values.monthly_installment_amount)}
+              {t("slovenia-yearly.review.installments.monthly")}:{" "}
+              {formatCurrency(draft.auto_values.monthly_installment_amount)}
             </p>
             <p>
-              {t("slovenia-yearly.review.installments.quarterly")}: {formatCurrency(draft.auto_values.quarterly_installment_amount)}
+              {t("slovenia-yearly.review.installments.quarterly")}:{" "}
+              {formatCurrency(draft.auto_values.quarterly_installment_amount)}
             </p>
           </div>
         </div>
@@ -134,7 +140,11 @@ export function SloveniaYearlyReviewStep({
         <div className="space-y-3">
           {draft.warnings.map((warning) => (
             <Alert key={warning.code} variant={warning.severity === "warning" ? "destructive" : "default"}>
-              {warning.severity === "warning" ? <TriangleAlert className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
+              {warning.severity === "warning" ? (
+                <TriangleAlert className="h-4 w-4" />
+              ) : (
+                <AlertCircle className="h-4 w-4" />
+              )}
               <AlertTitle>
                 {warning.severity === "warning"
                   ? t("slovenia-yearly.review.warnings.review-required")
@@ -158,12 +168,12 @@ export function SloveniaYearlyReviewStep({
 
               {issue.official_sources.length > 0 && (
                 <div className="mt-4 space-y-2">
-                  <p className="text-sm font-medium">{t("slovenia-yearly.review.issues.official-guidance")}</p>
+                  <p className="font-medium text-sm">{t("slovenia-yearly.review.issues.official-guidance")}</p>
                   <div className="space-y-1 text-sm">
                     {issue.official_sources.map((source) => (
                       <a
                         key={source.url}
-                        className="text-primary block underline underline-offset-4"
+                        className="block text-primary-readable underline underline-offset-4"
                         href={source.url}
                         rel="noreferrer"
                         target="_blank"
@@ -177,12 +187,12 @@ export function SloveniaYearlyReviewStep({
 
               {issue.affected_documents.length > 0 && (
                 <div className="mt-4 space-y-3">
-                  <p className="text-sm font-medium">{t("slovenia-yearly.review.issues.affected-documents")}</p>
+                  <p className="font-medium text-sm">{t("slovenia-yearly.review.issues.affected-documents")}</p>
                   <div className="space-y-2">
                     {issue.affected_documents.map((document) => (
                       <div
                         key={`${issue.code}-${document.id}`}
-                        className="bg-muted/40 flex flex-col gap-2 rounded-md border p-3 text-sm"
+                        className="flex flex-col gap-2 rounded-md border bg-muted/40 p-3 text-sm"
                       >
                         <div className="flex flex-wrap items-center justify-between gap-2">
                           <div className="font-medium">
@@ -192,7 +202,7 @@ export function SloveniaYearlyReviewStep({
                               : t("slovenia-yearly.review.issues.document-type.credit-note")}
                           </div>
                           <a
-                            className="text-primary underline underline-offset-4"
+                            className="text-primary-readable underline underline-offset-4"
                             href={document.document_path}
                             rel="noreferrer"
                             target="_blank"
@@ -200,18 +210,28 @@ export function SloveniaYearlyReviewStep({
                             {t("slovenia-yearly.review.issues.open-document")}
                           </a>
                         </div>
-                        <div className="text-muted-foreground flex flex-wrap gap-x-4 gap-y-1">
-                          <span>{t("slovenia-yearly.review.issues.fields.date")}: {document.date}</span>
+                        <div className="flex flex-wrap gap-x-4 gap-y-1 text-muted-foreground">
+                          <span>
+                            {t("slovenia-yearly.review.issues.fields.date")}: {document.date}
+                          </span>
                           {document.customer_name && (
-                            <span>{t("slovenia-yearly.review.issues.fields.customer")}: {document.customer_name}</span>
+                            <span>
+                              {t("slovenia-yearly.review.issues.fields.customer")}: {document.customer_name}
+                            </span>
                           )}
                           {document.customer_country_code && (
-                            <span>{t("slovenia-yearly.review.issues.fields.country")}: {document.customer_country_code}</span>
+                            <span>
+                              {t("slovenia-yearly.review.issues.fields.country")}: {document.customer_country_code}
+                            </span>
                           )}
                           {document.customer_tax_number && (
-                            <span>{t("slovenia-yearly.review.issues.fields.tax-number")}: {document.customer_tax_number}</span>
+                            <span>
+                              {t("slovenia-yearly.review.issues.fields.tax-number")}: {document.customer_tax_number}
+                            </span>
                           )}
-                          <span>{t("slovenia-yearly.review.issues.fields.currency")}: {document.currency_code}</span>
+                          <span>
+                            {t("slovenia-yearly.review.issues.fields.currency")}: {document.currency_code}
+                          </span>
                         </div>
                         <p>{document.reason}</p>
                       </div>
@@ -243,7 +263,9 @@ export function SloveniaYearlyReviewStep({
               min="0"
               step="0.01"
               value={String(manualValues[field])}
-              onChange={(event: ChangeEvent<HTMLInputElement>) => onManualValueChange(field, Number(event.target.value) || 0)}
+              onChange={(event: ChangeEvent<HTMLInputElement>) =>
+                onManualValueChange(field, Number(event.target.value) || 0)
+              }
             />
           </div>
         ))}

@@ -73,9 +73,9 @@ export default {
     "Conditions de paiement pré-remplies lors de la création de nouveaux devis",
   "Payment terms pre-filled when creating new credit notes":
     "Conditions de paiement pré-remplies lors de la création de nouveaux avoirs",
-  "Payment due by {document_due_date}. Please reference invoice {document_number}.":
-    "Paiement dû le {document_due_date}. Veuillez référencer la facture {document_number}.",
-  "Net 30 days. Payment due by {document_due_date}.": "Net 30 jours. Paiement dû le {document_due_date}.",
+  "Optional note for the document.": "Note facultative pour le document.",
+  "Please remit payment using the bank details shown on the document.":
+    "Merci d'effectuer le paiement en utilisant les coordonnées bancaires indiquées sur le document.",
   "This estimate is valid until {document_valid_until}.": "Ce devis est valable jusqu'au {document_valid_until}.",
   "Payment due upon acceptance.": "Paiement dû à l'acceptation.",
   "Credit note for invoice {document_number}.": "Avoir pour la facture {document_number}.",
@@ -120,6 +120,11 @@ export default {
   "Document Signature": "Signature du document",
   "Signature text displayed on all PDF documents": "Texte de signature affiché sur tous les documents PDF",
   "Add signature text...": "Ajouter un texte de signature...",
+  "Delivery Note": "Bon de livraison",
+  "Default note for advance invoices": "Note par défaut pour les factures d'acompte",
+  "Default note for all new advance invoices": "Note par défaut pour toutes les nouvelles factures d'acompte",
+  "Default note for delivery notes": "Note par défaut pour les bons de livraison",
+  "Default note for all new delivery notes": "Note par défaut pour tous les nouveaux bons de livraison",
   // Overdue Notifications section
   "Overdue Notifications": "Notifications de retard",
   "Automatically remind customers about overdue invoices":

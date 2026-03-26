@@ -7,6 +7,8 @@ import { cn } from "@/ui/lib/utils";
 export type AutocompleteOption = {
   value: string;
   label: string | React.ReactNode;
+  testId?: string;
+  dataDemo?: string;
 };
 
 type AutocompleteProps = {
@@ -26,7 +28,9 @@ type AutocompleteProps = {
   searchValue?: string;
   displayValue?: string;
   inputTestId?: string;
+  inputDataDemo?: string;
   inputRef?: React.Ref<HTMLInputElement>;
+  ariaInvalid?: boolean;
 };
 
 export function Autocomplete({
@@ -46,19 +50,42 @@ export function Autocomplete({
   searchValue: externalSearchValue,
   displayValue,
   inputTestId,
+  inputDataDemo,
   inputRef: externalInputRef,
+  ariaInvalid = false,
 }: AutocompleteProps) {
   const [open, setOpen] = React.useState(false);
   const [internalSearchValue, setInternalSearchValue] = React.useState("");
   const inputRef = React.useRef<HTMLInputElement>(null);
   const suppressAutoOpenRef = React.useRef(false);
   const blurCloseRef = React.useRef(false);
-  const focusOpenRef = React.useRef(false);
   const selectedValueRef = React.useRef<string | null>(null);
 
   const searchValue = externalSearchValue ?? internalSearchValue;
   // Show displayValue when not typing, otherwise show what user is typing
   const inputValue = searchValue || displayValue;
+
+  const finalizePendingInput = () => {
+    const typedValue = searchValue?.trim();
+    const shouldCommitTypedValue =
+      !!typedValue &&
+      typedValue !== displayValue &&
+      selectedValueRef.current == null &&
+      commitUnselectedOnBlur &&
+      !!onCommitUnselectedInput;
+
+    if (shouldCommitTypedValue) {
+      onCommitUnselectedInput(typedValue);
+      selectedValueRef.current = "__implicit_commit__";
+      return;
+    }
+
+    if (selectedValueRef.current == null) {
+      const restoredValue = committedDisplayValue ?? displayValue ?? "";
+      setInternalSearchValue("");
+      onSearch?.(restoredValue);
+    }
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -101,11 +128,7 @@ export function Autocomplete({
     if (suppressAutoOpenRef.current) return;
     // Only open popover on focus if there's no displayValue (no customer selected)
     if (!displayValue && options.length > 0) {
-      focusOpenRef.current = true;
       setOpen(true);
-      requestAnimationFrame(() => {
-        focusOpenRef.current = false;
-      });
     }
   };
 
@@ -116,21 +139,7 @@ export function Autocomplete({
       return;
     }
 
-    const typedValue = searchValue?.trim();
-    const shouldCommitTypedValue =
-      !!typedValue &&
-      typedValue !== displayValue &&
-      selectedValueRef.current == null &&
-      commitUnselectedOnBlur &&
-      !!onCommitUnselectedInput;
-
-    if (shouldCommitTypedValue) {
-      onCommitUnselectedInput(typedValue);
-    } else if (selectedValueRef.current == null) {
-      const restoredValue = committedDisplayValue ?? displayValue ?? "";
-      setInternalSearchValue("");
-      onSearch?.(restoredValue);
-    }
+    finalizePendingInput();
 
     blurCloseRef.current = true;
     suppressAutoOpenRef.current = false;
@@ -149,14 +158,16 @@ export function Autocomplete({
     }
   };
 
-  // Handle popover open/close - prevent closing when input is focused
-  const handleOpenChange = (newOpen: boolean) => {
-    if (!newOpen && focusOpenRef.current) {
+  // Ignore synthetic "outside press" close events that originate from the anchor input itself.
+  const handleOpenChange = (newOpen: boolean, eventDetails?: { reason?: string; event?: Event }) => {
+    if (!newOpen && eventDetails?.reason === "outside-press" && eventDetails.event?.target === inputRef.current) {
       return;
     }
-    if (!newOpen && document.activeElement === inputRef.current && !blurCloseRef.current) {
-      return;
+
+    if (!newOpen && eventDetails?.reason === "outside-press" && eventDetails.event?.target !== inputRef.current) {
+      finalizePendingInput();
     }
+
     setOpen(newOpen);
   };
 
@@ -181,11 +192,14 @@ export function Autocomplete({
         disabled={disabled}
         autoComplete="off"
         data-testid={inputTestId}
+        data-demo={inputDataDemo}
+        aria-invalid={ariaInvalid || undefined}
       />
       <Popover.Portal>
         <Popover.Positioner anchor={inputRef} align="start" sideOffset={4} className="isolate z-50">
           <Popover.Popup
             initialFocus={false}
+            finalFocus={false}
             className="flex flex-col rounded-md bg-popover p-0 text-popover-foreground shadow-md outline-hidden ring-1 ring-foreground/10"
             style={{ width: inputRef.current?.offsetWidth }}
           >
@@ -199,6 +213,8 @@ export function Autocomplete({
                       value={option.value}
                       onSelect={() => handleSelect(option.value)}
                       className={cn(value === option.value && "font-bold")}
+                      data-testid={option.testId}
+                      data-demo={option.dataDemo}
                     >
                       {option.label}
                     </CommandItem>

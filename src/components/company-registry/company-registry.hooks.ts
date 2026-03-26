@@ -1,7 +1,7 @@
 import type { CompanyRegistryResult } from "@spaceinvoices/js-sdk";
+import { companyRegistry } from "@spaceinvoices/js-sdk";
 import { useQuery } from "@tanstack/react-query";
 import { useDebounce } from "@/ui/hooks/use-debounce";
-import { useSDK } from "@/ui/providers/sdk-provider";
 
 // Cache key for company registry queries
 export const COMPANY_REGISTRY_CACHE_KEY = "company-registry";
@@ -11,7 +11,6 @@ export const COMPANY_REGISTRY_CACHE_KEY = "company-registry";
  * Debounced to reduce API calls while typing
  */
 export function useCompanyRegistrySearch(countryCode: string, query: string) {
-  const { sdk } = useSDK();
   const debouncedQuery = useDebounce(query, 300);
 
   return useQuery({
@@ -22,7 +21,7 @@ export function useCompanyRegistrySearch(countryCode: string, query: string) {
       }
 
       // SDK auto-unwraps response - returns CompanyRegistrySearchResponse directly
-      const response = await sdk.companyRegistry.searchCompanyRegistry({
+      const response = await companyRegistry.searchCompanyRegistry({
         country_code: countryCode,
         q: debouncedQuery,
         limit: "10",
@@ -39,13 +38,10 @@ export function useCompanyRegistrySearch(countryCode: string, query: string) {
  * Get list of countries that have company registry data available
  */
 export function useSupportedCountries() {
-  const { sdk } = useSDK();
-
   return useQuery({
     queryKey: [COMPANY_REGISTRY_CACHE_KEY, "countries"],
     queryFn: async (): Promise<{ data: string[] }> => {
-      // SDK method renamed to `list`, auto-unwraps response
-      const response = await sdk.companyRegistry.list();
+      const response = await companyRegistry.list();
       return { data: response.data };
     },
     staleTime: 1000 * 60 * 60, // Cache for 1 hour - doesn't change often

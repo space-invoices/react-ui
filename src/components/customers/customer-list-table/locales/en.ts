@@ -1,10 +1,25 @@
 export default {
-  // Empty state translations
   "Your list is empty": "Your customer list is empty",
   "Get started by creating your first entry": "Get started by creating your first customer",
   "Edit customer": "Edit customer",
   "Delete customer": "Delete customer",
   "Deleting...": "Deleting...",
-  // No results translations
   "No results found": "No customers found",
+  Name: "Name",
+  Address: "Address",
+  "Post Code": "Post Code",
+  City: "City",
+  State: "State",
+  Country: "Country",
+  "Tax number": "Tax number",
+  Email: "Email",
+  "Created At": "Created At",
+  Actions: "Actions",
+  "Create new customer": "Create new customer",
+  "Copy customer ID": "Copy customer ID",
+  "View customer": "View customer",
+  "Open menu": "Open menu",
+  "Try adjusting your search criteria": "Try adjusting your search criteria",
+  "Clear search": "Clear search",
+  "Clear all": "Clear all",
 } as const;

@@ -1,8 +1,8 @@
 export default {
   // Company settings
   "Tax subject": "Porezni obveznik",
-  "Tax ID 2": "Tax ID 2",
-  "Secondary tax identification number (optional)": "Secondary tax identification number (optional)",
+  "Tax ID 2": "Porezni broj 2",
+  "Secondary tax identification number (optional)": "Sekundarni porezni identifikacijski broj (neobavezno)",
   "Company Information": "Podaci o tvrtki",
   "Basic information about your company": "Osnovni podaci o vašoj tvrtki",
   // Branding settings
@@ -25,7 +25,7 @@ export default {
   "Signature preview": "Pregled potpisa",
   "Crop Your Signature": "Izrežite svoj potpis",
   "Adjust the crop area or upload the full image": "Prilagodite područje izrezivanja ili prenesite cijelu sliku",
-  "Upload failed. Please try again.": "Prijenos nije uspio. Pokušajte ponovo.",
+  "Upload failed. Please try again.": "Prijenos nije uspio. Pokušajte ponovno.",
   "Uploading...": "Prijenos...",
   "Upload & Save": "Prenesi i spremi",
   Cancel: "Odustani",
@@ -34,9 +34,9 @@ export default {
   "ISO 4217 currency code (e.g., USD, EUR, GBP)": "ISO 4217 kod valute (npr. USD, EUR, GBP)",
   Locale: "Regionalne postavke",
   "BCP 47 language tag (e.g., en-US, de-DE, sl-SI)": "BCP 47 jezična oznaka (npr. en-US, de-DE, sl-SI)",
-  "Select currency": "Odaberite valutu",
-  "Select locale": "Odaberite regionalne postavke",
-  "Configure entity localization": "Konfigurirajte lokalizaciju subjekta",
+  "Select currency": "Odaberi valutu",
+  "Select locale": "Odaberi regionalne postavke",
+  "Configure entity localization": "Konfigurirajte lokalizaciju poslovnog subjekta",
   "English (US)": "Engleski (US)",
   "German (DE)": "Njemački (DE)",
   "Italian (IT)": "Talijanski (IT)",
@@ -73,9 +73,9 @@ export default {
     "Uvjeti plaćanja unaprijed popunjeni prilikom kreiranja novih ponuda",
   "Payment terms pre-filled when creating new credit notes":
     "Uvjeti plaćanja unaprijed popunjeni prilikom kreiranja novih knjižnih odobrenja",
-  "Payment due by {document_due_date}. Please reference invoice {document_number}.":
-    "Plaćanje do {document_due_date}. Molimo navedite broj računa {document_number}.",
-  "Net 30 days. Payment due by {document_due_date}.": "Neto 30 dana. Plaćanje do {document_due_date}.",
+  "Optional note for the document.": "Neobavezna napomena za dokument.",
+  "Please remit payment using the bank details shown on the document.":
+    "Plaćanje izvršite koristeći bankovne podatke navedene na dokumentu.",
   "This estimate is valid until {document_valid_until}.": "Ova ponuda vrijedi do {document_valid_until}.",
   "Payment due upon acceptance.": "Plaćanje po prihvatu.",
   "Credit note for invoice {document_number}.": "Knjižno odobrenje za račun {document_number}.",
@@ -108,7 +108,7 @@ export default {
   "This payment terms will be pre-filled when creating new documents":
     "Ovi uvjeti plaćanja će biti unaprijed popunjeni prilikom kreiranja novih dokumenata",
   "Payment Terms": "Uvjeti plaćanja",
-  "Add payment terms...": "Dodajte uvjete plaćanja...",
+  "Add payment terms...": "Dodaj uvjete plaćanja...",
   // Document footer
   "Document Footer": "Podnožje dokumenta",
   "Footer text displayed at the bottom of PDF documents": "Tekst podnožja prikazan na dnu PDF dokumenata",
@@ -119,6 +119,11 @@ export default {
   "Document Signature": "Potpis dokumenta",
   "Signature text displayed on all PDF documents": "Tekst potpisa prikazan na svim PDF dokumentima",
   "Add signature text...": "Dodaj tekst potpisa...",
+  "Delivery Note": "Otpremnica",
+  "Default note for advance invoices": "Zadana napomena za avansne račune",
+  "Default note for all new advance invoices": "Zadana napomena za sve nove avansne račune",
+  "Default note for delivery notes": "Zadana napomena za otpremnice",
+  "Default note for all new delivery notes": "Zadana napomena za sve nove otpremnice",
   // Overdue Notifications section
   "Overdue Notifications": "Obavijesti o dospjelim računima",
   "Automatically remind customers about overdue invoices": "Automatski podsjećajte kupce o dospjelim računima",
@@ -213,5 +218,5 @@ export default {
     "Prikaži SEPA QR kod na EUR fakturama za jednostavno bankovne uplate",
   "EPC QR Payments": "EPC QR plaćanja",
   "EPC QR is a European standard for SEPA credit transfers. When enabled, EUR invoices include a QR code that customers can scan with their banking app to pay instantly.":
-    "EPC QR je europski standard za SEPA kreditne transfere. Kada je omogućen, EUR fakture uključuju QR kod koji kupci mogu skenirati bankovnom aplikacijom za trenutačno plaćanje.",
+    "EPC QR je europski standard za SEPA kreditne transfere. Kada je omogućen, EUR računi uključuju QR kod koji kupci mogu skenirati bankovnom aplikacijom za trenutačno plaćanje.",
 } as const;

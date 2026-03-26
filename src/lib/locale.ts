@@ -6,6 +6,10 @@ export function getLocaleLanguage(locale?: string, fallback = "en"): string {
   return normalizeLocale(locale, fallback).split("-")[0] || fallback;
 }
 
+export function resolveTranslationLocale(translationLocale?: string, locale?: string, fallback = "en"): string {
+  return normalizeLocale(translationLocale ?? locale, fallback);
+}
+
 const LANGUAGE_TO_LOCALE: Record<string, string> = {
   en: "en-US",
   de: "de-DE",

@@ -1,14 +1,13 @@
 "use client";
 
+import { getClientHeaders } from "@spaceinvoices/js-sdk";
 import { formatDistanceToNow } from "date-fns";
-import { useCallback, useMemo } from "react";
-import { Label } from "@/ui/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui/components/ui/select";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/ui/components/ui/sheet";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/ui/components/ui/tooltip";
+import { useMediaQuery } from "@/ui/hooks/use-media-query";
 import { AUTH_COOKIES } from "@/ui/lib/auth";
 import { getCookie } from "@/ui/lib/browser-cookies";
-import { getClientHeaders } from "@/ui/lib/client-headers";
 import { getDateFnsLocale } from "@/ui/lib/date-fns-locale";
 import { createTranslation } from "@/ui/lib/translation";
 import { cn } from "@/ui/lib/utils";
@@ -95,6 +94,8 @@ type RequestLogListTableProps = ListTableProps<RequestLogResponse> & {
   t?: (key: string) => string;
   /** Locale used for relative date formatting */
   locale?: string;
+  /** Locale used for UI string lookup */
+  translationLocale?: string;
 };
 
 export function RequestLogListTable({
@@ -107,8 +108,32 @@ export function RequestLogListTable({
   onSelectLog,
   t = (key) => key,
   locale,
+  translationLocale,
 }: RequestLogListTableProps) {
-  const translate = createTranslation({ t, locale, translations: mergedTranslations });
+  const translate = createTranslation({ t, locale, translationLocale, translations: mergedTranslations });
+  const isLargeScreen = useMediaQuery("(min-width: 1280px)");
+  const tableContainerRef = useRef<HTMLDivElement>(null);
+  const [detailPanelHeight, setDetailPanelHeight] = useState<number>();
+
+  useEffect(() => {
+    if (!isLargeScreen) {
+      setDetailPanelHeight(undefined);
+      return;
+    }
+
+    const node = tableContainerRef.current;
+    if (!node) return;
+
+    const updateHeight = () => setDetailPanelHeight(node.offsetHeight);
+    updateHeight();
+
+    if (typeof ResizeObserver === "undefined") return;
+
+    const observer = new ResizeObserver(updateHeight);
+    observer.observe(node);
+
+    return () => observer.disconnect();
+  }, [isLargeScreen]);
 
   // Custom fetch function that handles both entity-scoped and account-scoped queries
   // Don't use useTableFetch since we need special handling for environment
@@ -141,7 +166,6 @@ export function RequestLogListTable({
 
       // HTTP status code filter
       if (params.filter_http_status) queryParamsUrl.set("status", params.filter_http_status);
-      if (params.filter_client_name) queryParamsUrl.set("client_name", params.filter_client_name);
 
       // Date filters
       if (params.filter_date_from) queryParamsUrl.set("date_from", params.filter_date_from);
@@ -249,48 +273,67 @@ export function RequestLogListTable({
     ? `${REQUEST_LOGS_CACHE_KEY}-${entityId}`
     : `${REQUEST_LOGS_CACHE_KEY}-account-${environment || "live"}`;
 
+  const detailContent = selectedLog ? <RequestLogDetail log={selectedLog} t={translate} locale={locale} /> : null;
+
+  const desktopDetailPanel = selectedLog ? (
+    <>
+      <div className="flex items-start justify-between gap-3 border-b px-5 py-4">
+        <div className="min-w-0">
+          <div className="mb-2 text-muted-foreground text-xs uppercase tracking-wide">
+            {translate("Request log details")}
+          </div>
+          <div className="flex items-center gap-2">
+            <MethodBadge method={selectedLog.method} />
+            <span className="truncate font-mono text-sm">{selectedLog.path}</span>
+          </div>
+        </div>
+        {onSelectLog && (
+          <button
+            type="button"
+            className="text-muted-foreground text-sm transition-colors hover:text-foreground"
+            onClick={() => onSelectLog(null)}
+          >
+            {translate("Close")}
+          </button>
+        )}
+      </div>
+      <div className="min-h-0 flex-1 overflow-y-auto">{detailContent}</div>
+    </>
+  ) : null;
+
   return (
     <>
-      <div className="space-y-2">
-        <Label htmlFor="request-log-client-filter">{translate("Client")}</Label>
-        <Select
-          value={queryParams?.filter_client_name ?? "all"}
-          onValueChange={(value) =>
-            onChangeParams?.({
-              ...queryParams,
-              filter_client_name: !value || value === "all" ? undefined : value,
-              prev_cursor: undefined,
-              next_cursor: undefined,
-            })
-          }
-        >
-          <SelectTrigger id="request-log-client-filter" className="w-full sm:w-56">
-            <SelectValue placeholder={translate("All clients")} />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{translate("All clients")}</SelectItem>
-            <SelectItem value="web">web</SelectItem>
-            <SelectItem value="ui">ui</SelectItem>
-            <SelectItem value="mobile">mobile</SelectItem>
-            <SelectItem value="js-sdk">js-sdk</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      <DataTable
-        columns={columns}
-        cacheKey={cacheKey}
-        resourceName="request log"
-        onFetch={handleFetch}
-        queryParams={queryParams}
-        onChangeParams={onChangeParams}
-        entityId={entityId}
-        filterConfig={filterConfig}
-        onRowClick={(log) => onSelectLog?.(log)}
-        t={translate}
-      />
+      <div
+        className={cn(isLargeScreen && selectedLog && "grid gap-6 xl:grid-cols-[minmax(0,0.9fr)_minmax(28rem,1.1fr)]")}
+      >
+        <div ref={tableContainerRef} className="min-w-0">
+          <DataTable
+            columns={columns}
+            cacheKey={cacheKey}
+            resourceName="request log"
+            onFetch={handleFetch}
+            queryParams={queryParams}
+            onChangeParams={onChangeParams}
+            entityId={entityId}
+            filterConfig={filterConfig}
+            onRowClick={(log) => onSelectLog?.(log)}
+            t={translate}
+          />
+        </div>
 
-      <Sheet open={!!selectedLog} onOpenChange={(open) => !open && onSelectLog?.(null)}>
-        <SheetContent className="w-full overflow-y-auto sm:max-w-2xl">
+        {isLargeScreen && selectedLog && (
+          <aside
+            className="flex min-w-0 flex-col overflow-hidden rounded-lg border bg-background xl:sticky xl:top-6"
+            aria-label={translate("Request log details")}
+            style={detailPanelHeight ? { height: `${detailPanelHeight}px` } : undefined}
+          >
+            {desktopDetailPanel}
+          </aside>
+        )}
+      </div>
+
+      <Sheet open={!isLargeScreen && !!selectedLog} onOpenChange={(open) => !open && onSelectLog?.(null)}>
+        <SheetContent className="w-full overflow-y-auto data-[side=right]:w-full data-[side=right]:sm:w-[72rem] data-[side=right]:sm:max-w-[92vw] data-[side=right]:lg:w-[80rem] data-[side=right]:lg:max-w-[94vw]">
           <SheetHeader>
             <SheetTitle className="flex items-center gap-2">
               {selectedLog && (
@@ -301,7 +344,7 @@ export function RequestLogListTable({
               )}
             </SheetTitle>
           </SheetHeader>
-          {selectedLog && <RequestLogDetail log={selectedLog} t={translate} locale={locale} />}
+          {detailContent}
         </SheetContent>
       </Sheet>
     </>

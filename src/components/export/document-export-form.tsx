@@ -1,6 +1,6 @@
+import { getClientHeaders } from "@spaceinvoices/js-sdk";
 import { Calendar, Download, Loader2 } from "lucide-react";
-import { useRef, useState } from "react";
-import { getClientHeaders } from "@/ui/lib/client-headers";
+import { useEffect, useRef, useState } from "react";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
 import { Button } from "../ui/button";
@@ -10,9 +10,12 @@ import { Label } from "../ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 
 export type DocumentType = "invoice" | "estimate" | "credit_note" | "advance_invoice" | "delivery_note";
-export type ExportFormat = "xlsx" | "csv" | "pdf_zip";
+type EslogDocumentType = Extract<DocumentType, "invoice" | "estimate" | "credit_note">;
+type AsyncArchiveExportFormat = "pdf_zip" | "eslog_zip";
+export type ExportFormat = "xlsx" | "csv" | AsyncArchiveExportFormat;
 
 const ALL_DOCUMENT_TYPES: DocumentType[] = ["invoice", "estimate", "credit_note", "advance_invoice", "delivery_note"];
+const ESLOG_DOCUMENT_TYPES: EslogDocumentType[] = ["invoice", "estimate", "credit_note"];
 
 // Maximum date range for export (1 year in milliseconds)
 const MAX_DATE_RANGE_MS = 365 * 24 * 60 * 60 * 1000;
@@ -46,11 +49,15 @@ export type DocumentExportFormProps = {
   token: string;
   accountId?: string | null;
   language: string;
+  allowEslogZip?: boolean;
+  pdfExportInProgress?: boolean;
+  eslogExportInProgress?: boolean;
   /** Base URL for API calls (required in embed context where relative paths don't reach the API) */
   apiBaseUrl?: string;
   onSuccess?: (fileName: string) => void;
   onError?: (error: Error) => void;
   onPdfExportStarted?: (jobId: string) => void;
+  onEslogExportStarted?: (jobId: string) => void;
   onLoadingChange?: (isLoading: boolean, toastId: string | number | null) => void;
 } & ComponentTranslationProps;
 
@@ -66,8 +73,10 @@ const translations = {
     "export-page.formats.xlsx": "Excel (.xlsx)",
     "export-page.formats.csv": "CSV (.csv)",
     "export-page.formats.pdf_zip": "PDF ZIP archive",
+    "export-page.formats.eslog_zip": "e-SLOG ZIP archive",
     "export-page.pdf-export-info":
       "PDF export runs asynchronously and generates a ZIP archive for the selected document types.",
+    "export-page.eslog-export-info": "Only valid e-SLOG documents are included; invalid documents are skipped.",
     "export-page.date-from": "Date from",
     "export-page.date-to": "Date to",
     "export-page.error.date-range-exceeded": "Date range cannot exceed one year.",
@@ -81,17 +90,22 @@ export function DocumentExportForm({
   entityId,
   token,
   accountId,
-  language,
+  language: _language,
+  allowEslogZip = false,
+  pdfExportInProgress = false,
+  eslogExportInProgress = false,
   t: translateFn,
   namespace,
   locale,
+  translationLocale,
   apiBaseUrl = "",
   onSuccess,
   onError,
   onPdfExportStarted,
+  onEslogExportStarted,
   onLoadingChange,
 }: DocumentExportFormProps) {
-  const t = createTranslation({ t: translateFn, namespace, locale, translations });
+  const t = createTranslation({ t: translateFn, namespace, locale, translationLocale, translations });
   const defaultDates = getPreviousMonthRange();
   const [documentType, setDocumentType] = useState<DocumentType>("invoice");
   const [selectedTypes, setSelectedTypes] = useState<DocumentType[]>(["invoice"]);
@@ -102,6 +116,17 @@ export function DocumentExportForm({
   const [dateRangeError, setDateRangeError] = useState(false);
 
   const toastIdRef = useRef<string | number | null>(null);
+  const isAsyncArchiveFormat = exportFormat === "pdf_zip" || exportFormat === "eslog_zip";
+  const visibleDocumentTypes = exportFormat === "eslog_zip" ? ESLOG_DOCUMENT_TYPES : ALL_DOCUMENT_TYPES;
+  const asyncExportInProgress =
+    exportFormat === "pdf_zip" ? pdfExportInProgress : exportFormat === "eslog_zip" ? eslogExportInProgress : false;
+
+  useEffect(() => {
+    if (!allowEslogZip && exportFormat === "eslog_zip") {
+      setExportFormat("xlsx");
+      setSelectedTypes(["invoice"]);
+    }
+  }, [allowEslogZip, exportFormat]);
 
   const toggleType = (type: DocumentType) => {
     setSelectedTypes((prev) => {
@@ -120,19 +145,43 @@ export function DocumentExportForm({
     return isValid;
   };
 
+  const handleExportFormatChange = (value: ExportFormat) => {
+    setExportFormat(value);
+
+    if (value === "eslog_zip") {
+      setSelectedTypes((prev) => {
+        const filtered = prev.filter((type): type is EslogDocumentType =>
+          ESLOG_DOCUMENT_TYPES.includes(type as EslogDocumentType),
+        );
+        return filtered.length > 0 ? filtered : ["invoice"];
+      });
+
+      if (!ESLOG_DOCUMENT_TYPES.includes(documentType as EslogDocumentType)) {
+        setDocumentType("invoice");
+      }
+    }
+  };
+
   const handleExport = async () => {
     if (!validateDateRange(dateFrom, dateTo)) {
       onError?.(new Error(t("export-page.error.date-range-exceeded")));
       return;
     }
 
+    if (isAsyncArchiveFormat && asyncExportInProgress) {
+      return;
+    }
+
     setIsExporting(true);
     onLoadingChange?.(true, null);
 
-    // PDF export is async - different flow
-    if (exportFormat === "pdf_zip") {
+    // ZIP archive exports run asynchronously
+    if (isAsyncArchiveFormat) {
+      const exportPath = exportFormat === "eslog_zip" ? "/documents/export/eslog" : "/documents/export/pdf";
+      const onAsyncExportStarted = exportFormat === "eslog_zip" ? onEslogExportStarted : onPdfExportStarted;
+
       try {
-        const response = await fetch(`${apiBaseUrl}/documents/export/pdf`, {
+        const response = await fetch(`${apiBaseUrl}${exportPath}`, {
           method: "POST",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -150,11 +199,11 @@ export function DocumentExportForm({
 
         if (!response.ok) {
           const error = await response.json().catch(() => ({}));
-          throw new Error(error.error || `Export failed: ${response.statusText}`);
+          throw new Error(error.message || error.error || `Export failed: ${response.statusText}`);
         }
 
         const data = await response.json();
-        onPdfExportStarted?.(data.id);
+        onAsyncExportStarted?.(data.id);
       } catch (error) {
         onError?.(error instanceof Error ? error : new Error("Unknown error"));
       } finally {
@@ -228,9 +277,9 @@ export function DocumentExportForm({
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="document-type">{t("export-page.document-type")}</Label>
-          {exportFormat === "pdf_zip" ? (
+          {isAsyncArchiveFormat ? (
             <fieldset className="space-y-2 rounded-md border p-3">
-              {ALL_DOCUMENT_TYPES.map((type) => (
+              {visibleDocumentTypes.map((type) => (
                 <div key={type} className="flex items-center gap-2">
                   <Checkbox
                     id={`type-${type}`}
@@ -261,7 +310,7 @@ export function DocumentExportForm({
 
         <div className="space-y-2">
           <Label htmlFor="export-format">{t("export-page.format")}</Label>
-          <Select value={exportFormat} onValueChange={(v) => setExportFormat(v as ExportFormat)}>
+          <Select value={exportFormat} onValueChange={(v) => handleExportFormatChange(v as ExportFormat)}>
             <SelectTrigger id="export-format">
               <SelectValue />
             </SelectTrigger>
@@ -269,12 +318,15 @@ export function DocumentExportForm({
               <SelectItem value="xlsx">{t("export-page.formats.xlsx")}</SelectItem>
               <SelectItem value="csv">{t("export-page.formats.csv")}</SelectItem>
               <SelectItem value="pdf_zip">{t("export-page.formats.pdf_zip")}</SelectItem>
+              {allowEslogZip && <SelectItem value="eslog_zip">{t("export-page.formats.eslog_zip")}</SelectItem>}
             </SelectContent>
           </Select>
         </div>
       </div>
-      {exportFormat === "pdf_zip" && (
-        <p className="text-muted-foreground text-sm">{t("export-page.pdf-export-info")}</p>
+      {isAsyncArchiveFormat && (
+        <p className="text-muted-foreground text-sm">
+          {t(exportFormat === "eslog_zip" ? "export-page.eslog-export-info" : "export-page.pdf-export-info")}
+        </p>
       )}
 
       {/* Date Range */}
@@ -335,7 +387,12 @@ export function DocumentExportForm({
       )}
 
       {/* Export Button */}
-      <Button onClick={handleExport} disabled={isExporting || dateRangeError} className="w-full" size="lg">
+      <Button
+        onClick={handleExport}
+        disabled={isExporting || dateRangeError || asyncExportInProgress}
+        className="w-full"
+        size="lg"
+      >
         {isExporting ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />

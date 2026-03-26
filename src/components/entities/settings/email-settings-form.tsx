@@ -37,6 +37,12 @@ const emailSettingsSchema = z.object({
   invoice_email_body: z.union([z.string(), z.null()]).optional(),
   estimate_email_subject: z.union([z.string(), z.null()]).optional(),
   estimate_email_body: z.union([z.string(), z.null()]).optional(),
+  credit_note_email_subject: z.union([z.string(), z.null()]).optional(),
+  credit_note_email_body: z.union([z.string(), z.null()]).optional(),
+  advance_invoice_email_subject: z.union([z.string(), z.null()]).optional(),
+  advance_invoice_email_body: z.union([z.string(), z.null()]).optional(),
+  delivery_note_email_subject: z.union([z.string(), z.null()]).optional(),
+  delivery_note_email_body: z.union([z.string(), z.null()]).optional(),
 });
 
 type EmailSettingsSchema = z.infer<typeof emailSettingsSchema>;
@@ -52,10 +58,11 @@ export function EmailSettingsForm({
   t: translateProp,
   namespace,
   locale,
+  translationLocale,
   onSuccess,
   onError,
 }: EmailSettingsFormProps) {
-  const t = createTranslation({ t: translateProp, namespace, locale, translations });
+  const t = createTranslation({ t: translateProp, namespace, locale, translationLocale, translations });
 
   const currentSettings = (entity.settings as any) || {};
 
@@ -63,6 +70,12 @@ export function EmailSettingsForm({
   const invoiceEmailBodyRef = useRef<HTMLTextAreaElement>(null);
   const estimateEmailSubjectRef = useRef<HTMLInputElement>(null);
   const estimateEmailBodyRef = useRef<HTMLTextAreaElement>(null);
+  const creditNoteEmailSubjectRef = useRef<HTMLInputElement>(null);
+  const creditNoteEmailBodyRef = useRef<HTMLTextAreaElement>(null);
+  const advanceInvoiceEmailSubjectRef = useRef<HTMLInputElement>(null);
+  const advanceInvoiceEmailBodyRef = useRef<HTMLTextAreaElement>(null);
+  const deliveryNoteEmailSubjectRef = useRef<HTMLInputElement>(null);
+  const deliveryNoteEmailBodyRef = useRef<HTMLTextAreaElement>(null);
 
   const form = useForm<EmailSettingsSchema>({
     resolver: zodResolver(emailSettingsSchema),
@@ -72,6 +85,12 @@ export function EmailSettingsForm({
       invoice_email_body: currentSettings.email_defaults?.invoice_body || null,
       estimate_email_subject: currentSettings.email_defaults?.estimate_subject || null,
       estimate_email_body: currentSettings.email_defaults?.estimate_body || null,
+      credit_note_email_subject: currentSettings.email_defaults?.credit_note_subject || null,
+      credit_note_email_body: currentSettings.email_defaults?.credit_note_body || null,
+      advance_invoice_email_subject: currentSettings.email_defaults?.advance_invoice_subject || null,
+      advance_invoice_email_body: currentSettings.email_defaults?.advance_invoice_body || null,
+      delivery_note_email_subject: currentSettings.email_defaults?.delivery_note_subject || null,
+      delivery_note_email_body: currentSettings.email_defaults?.delivery_note_body || null,
     },
   });
 
@@ -103,6 +122,12 @@ export function EmailSettingsForm({
             invoice_body: values.invoice_email_body || undefined,
             estimate_subject: values.estimate_email_subject || undefined,
             estimate_body: values.estimate_email_body || undefined,
+            credit_note_subject: values.credit_note_email_subject || undefined,
+            credit_note_body: values.credit_note_email_body || undefined,
+            advance_invoice_subject: values.advance_invoice_email_subject || undefined,
+            advance_invoice_body: values.advance_invoice_email_body || undefined,
+            delivery_note_subject: values.delivery_note_email_subject || undefined,
+            delivery_note_body: values.delivery_note_email_body || undefined,
           },
         },
       },
@@ -151,6 +176,15 @@ export function EmailSettingsForm({
               <TabsTrigger value="estimate" className="cursor-pointer">
                 {t("Estimate")}
               </TabsTrigger>
+              <TabsTrigger value="credit_note" className="cursor-pointer">
+                {t("Credit Note")}
+              </TabsTrigger>
+              <TabsTrigger value="advance_invoice" className="cursor-pointer">
+                {t("Advance Invoice")}
+              </TabsTrigger>
+              <TabsTrigger value="delivery_note" className="cursor-pointer">
+                {t("Delivery Note")}
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="invoice" className="mt-4 space-y-4">
@@ -175,6 +209,7 @@ export function EmailSettingsForm({
                         onChange={field.onChange}
                         placeholder="Invoice {document_number} from {entity_name}"
                         entity={entity}
+                        translatePreviewLabel={t}
                         className="h-10"
                       />
                     </FormControl>
@@ -203,8 +238,9 @@ export function EmailSettingsForm({
                         ref={invoiceEmailBodyRef}
                         value={field.value || ""}
                         onChange={field.onChange}
-                        placeholder="Please find your invoice attached."
+                        placeholder={"Please find invoice {document_number} attached.\nDue date: {document_due_date}."}
                         entity={entity}
+                        translatePreviewLabel={t}
                         multiline
                         className="min-h-[200px] resize-none"
                         rows={8}
@@ -239,6 +275,7 @@ export function EmailSettingsForm({
                         onChange={field.onChange}
                         placeholder="Estimate {document_number} from {entity_name}"
                         entity={entity}
+                        translatePreviewLabel={t}
                         className="h-10"
                       />
                     </FormControl>
@@ -267,14 +304,219 @@ export function EmailSettingsForm({
                         ref={estimateEmailBodyRef}
                         value={field.value || ""}
                         onChange={field.onChange}
-                        placeholder="Please find your estimate attached."
+                        placeholder={
+                          "Please find estimate {document_number} attached.\nValid until: {document_valid_until}."
+                        }
                         entity={entity}
+                        translatePreviewLabel={t}
                         multiline
                         className="min-h-[200px] resize-none"
                         rows={8}
                       />
                     </FormControl>
                     <FormDescription className="text-xs">{t("Body content for estimate emails")}</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </TabsContent>
+
+            <TabsContent value="credit_note" className="mt-4 space-y-4">
+              <FormField
+                control={form.control}
+                name="credit_note_email_subject"
+                render={({ field }) => (
+                  <FormItem>
+                    <div className="flex items-center justify-between">
+                      <FormLabel className="font-medium text-sm">{t("Email Subject")}</FormLabel>
+                      <SmartCodeInsertButton
+                        textareaRef={creditNoteEmailSubjectRef as React.RefObject<HTMLTextAreaElement | null>}
+                        value={field.value || ""}
+                        onInsert={(newValue) => field.onChange(newValue)}
+                        t={t}
+                      />
+                    </div>
+                    <FormControl>
+                      <InputWithPreview
+                        ref={creditNoteEmailSubjectRef}
+                        value={field.value || ""}
+                        onChange={field.onChange}
+                        placeholder="Credit note {document_number} from {entity_name}"
+                        entity={entity}
+                        translatePreviewLabel={t}
+                        className="h-10"
+                      />
+                    </FormControl>
+                    <FormDescription className="text-xs">{t("Subject line for credit note emails")}</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="credit_note_email_body"
+                render={({ field }) => (
+                  <FormItem>
+                    <div className="flex items-center justify-between">
+                      <FormLabel className="font-medium text-sm">{t("Email Body")}</FormLabel>
+                      <SmartCodeInsertButton
+                        textareaRef={creditNoteEmailBodyRef}
+                        value={field.value || ""}
+                        onInsert={(newValue) => field.onChange(newValue)}
+                        t={t}
+                      />
+                    </div>
+                    <FormControl>
+                      <InputWithPreview
+                        ref={creditNoteEmailBodyRef}
+                        value={field.value || ""}
+                        onChange={field.onChange}
+                        placeholder="Please find credit note {document_number} attached."
+                        entity={entity}
+                        translatePreviewLabel={t}
+                        multiline
+                        className="min-h-[200px] resize-none"
+                        rows={8}
+                      />
+                    </FormControl>
+                    <FormDescription className="text-xs">{t("Body content for credit note emails")}</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </TabsContent>
+
+            <TabsContent value="advance_invoice" className="mt-4 space-y-4">
+              <FormField
+                control={form.control}
+                name="advance_invoice_email_subject"
+                render={({ field }) => (
+                  <FormItem>
+                    <div className="flex items-center justify-between">
+                      <FormLabel className="font-medium text-sm">{t("Email Subject")}</FormLabel>
+                      <SmartCodeInsertButton
+                        textareaRef={advanceInvoiceEmailSubjectRef as React.RefObject<HTMLTextAreaElement | null>}
+                        value={field.value || ""}
+                        onInsert={(newValue) => field.onChange(newValue)}
+                        t={t}
+                      />
+                    </div>
+                    <FormControl>
+                      <InputWithPreview
+                        ref={advanceInvoiceEmailSubjectRef}
+                        value={field.value || ""}
+                        onChange={field.onChange}
+                        placeholder="Advance invoice {document_number} from {entity_name}"
+                        entity={entity}
+                        translatePreviewLabel={t}
+                        className="h-10"
+                      />
+                    </FormControl>
+                    <FormDescription className="text-xs">
+                      {t("Subject line for advance invoice emails")}
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="advance_invoice_email_body"
+                render={({ field }) => (
+                  <FormItem>
+                    <div className="flex items-center justify-between">
+                      <FormLabel className="font-medium text-sm">{t("Email Body")}</FormLabel>
+                      <SmartCodeInsertButton
+                        textareaRef={advanceInvoiceEmailBodyRef}
+                        value={field.value || ""}
+                        onInsert={(newValue) => field.onChange(newValue)}
+                        t={t}
+                      />
+                    </div>
+                    <FormControl>
+                      <InputWithPreview
+                        ref={advanceInvoiceEmailBodyRef}
+                        value={field.value || ""}
+                        onChange={field.onChange}
+                        placeholder="Please find advance invoice {document_number} attached."
+                        entity={entity}
+                        translatePreviewLabel={t}
+                        multiline
+                        className="min-h-[200px] resize-none"
+                        rows={8}
+                      />
+                    </FormControl>
+                    <FormDescription className="text-xs">
+                      {t("Body content for advance invoice emails")}
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </TabsContent>
+
+            <TabsContent value="delivery_note" className="mt-4 space-y-4">
+              <FormField
+                control={form.control}
+                name="delivery_note_email_subject"
+                render={({ field }) => (
+                  <FormItem>
+                    <div className="flex items-center justify-between">
+                      <FormLabel className="font-medium text-sm">{t("Email Subject")}</FormLabel>
+                      <SmartCodeInsertButton
+                        textareaRef={deliveryNoteEmailSubjectRef as React.RefObject<HTMLTextAreaElement | null>}
+                        value={field.value || ""}
+                        onInsert={(newValue) => field.onChange(newValue)}
+                        t={t}
+                      />
+                    </div>
+                    <FormControl>
+                      <InputWithPreview
+                        ref={deliveryNoteEmailSubjectRef}
+                        value={field.value || ""}
+                        onChange={field.onChange}
+                        placeholder="Delivery note {document_number} from {entity_name}"
+                        entity={entity}
+                        translatePreviewLabel={t}
+                        className="h-10"
+                      />
+                    </FormControl>
+                    <FormDescription className="text-xs">{t("Subject line for delivery note emails")}</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="delivery_note_email_body"
+                render={({ field }) => (
+                  <FormItem>
+                    <div className="flex items-center justify-between">
+                      <FormLabel className="font-medium text-sm">{t("Email Body")}</FormLabel>
+                      <SmartCodeInsertButton
+                        textareaRef={deliveryNoteEmailBodyRef}
+                        value={field.value || ""}
+                        onInsert={(newValue) => field.onChange(newValue)}
+                        t={t}
+                      />
+                    </div>
+                    <FormControl>
+                      <InputWithPreview
+                        ref={deliveryNoteEmailBodyRef}
+                        value={field.value || ""}
+                        onChange={field.onChange}
+                        placeholder="Please find delivery note {document_number} attached."
+                        entity={entity}
+                        translatePreviewLabel={t}
+                        multiline
+                        className="min-h-[200px] resize-none"
+                        rows={8}
+                      />
+                    </FormControl>
+                    <FormDescription className="text-xs">{t("Body content for delivery note emails")}</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}

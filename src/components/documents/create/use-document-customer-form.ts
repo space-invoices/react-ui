@@ -27,17 +27,6 @@ export type DocumentFormWithCustomer = FieldValues & {
 };
 
 /**
- * Type-safe setValue wrapper for document forms.
- */
-function _setFormValue<TForm extends FieldValues>(
-  form: UseFormReturn<TForm>,
-  name: Path<TForm>,
-  value: PathValue<TForm, Path<TForm>>,
-) {
-  form.setValue(name, value);
-}
-
-/**
  * Shared hook for managing customer selection and form state in document forms.
  * Used by invoices, estimates, credit notes, and advance invoices.
  *
@@ -85,6 +74,20 @@ export function useDocumentCustomerForm<TForm extends DocumentFormWithCustomer>(
 
   const handleCustomerSelect = (customerId: string, customer: CustomerData) => {
     const isNewCustomer = !customerId || customerId === "";
+    const customerFieldPaths = [
+      "customer.name",
+      "customer.address",
+      "customer.address_2",
+      "customer.post_code",
+      "customer.city",
+      "customer.state",
+      "customer.country",
+      "customer.tax_number",
+      "customer.is_end_consumer",
+    ] as Path<TForm>[];
+    const setCustomerFieldValue = <K extends Path<TForm>>(name: K, value: PathValue<TForm, K>) => {
+      form.setValue(name, value, { shouldDirty: true, shouldTouch: true, shouldValidate: true });
+    };
 
     // Helper to convert empty/null to undefined for optional fields,
     // but keep empty string for required fields (name) so form shows them
@@ -98,19 +101,41 @@ export function useDocumentCustomerForm<TForm extends DocumentFormWithCustomer>(
     if (isNewCustomer) {
       // New customer - clear customer_id and set customer data
       setValue("customer_id" as Path<TForm>, undefined as PathValue<TForm, Path<TForm>>);
-      setValue(
-        "customer" as Path<TForm>,
-        {
-          name: toFormValue(customer.name, true),
-          address: toFormValue(customer.address),
-          address_2: toFormValue(customer.address_2),
-          post_code: toFormValue(customer.post_code),
-          city: toFormValue(customer.city),
-          state: toFormValue(customer.state),
-          country: toFormValue(customer.country),
-          tax_number: toFormValue(customer.tax_number),
-          is_end_consumer: customer.is_end_consumer ?? undefined,
-        } as PathValue<TForm, Path<TForm>>,
+      setCustomerFieldValue(
+        "customer.name" as Path<TForm>,
+        toFormValue(customer.name, true) as PathValue<TForm, Path<TForm>>,
+      );
+      setCustomerFieldValue(
+        "customer.address" as Path<TForm>,
+        toFormValue(customer.address) as PathValue<TForm, Path<TForm>>,
+      );
+      setCustomerFieldValue(
+        "customer.address_2" as Path<TForm>,
+        toFormValue(customer.address_2) as PathValue<TForm, Path<TForm>>,
+      );
+      setCustomerFieldValue(
+        "customer.post_code" as Path<TForm>,
+        toFormValue(customer.post_code) as PathValue<TForm, Path<TForm>>,
+      );
+      setCustomerFieldValue(
+        "customer.city" as Path<TForm>,
+        toFormValue(customer.city) as PathValue<TForm, Path<TForm>>,
+      );
+      setCustomerFieldValue(
+        "customer.state" as Path<TForm>,
+        toFormValue(customer.state) as PathValue<TForm, Path<TForm>>,
+      );
+      setCustomerFieldValue(
+        "customer.country" as Path<TForm>,
+        toFormValue(customer.country) as PathValue<TForm, Path<TForm>>,
+      );
+      setCustomerFieldValue(
+        "customer.tax_number" as Path<TForm>,
+        toFormValue(customer.tax_number) as PathValue<TForm, Path<TForm>>,
+      );
+      setCustomerFieldValue(
+        "customer.is_end_consumer" as Path<TForm>,
+        (customer.is_end_consumer ?? undefined) as PathValue<TForm, Path<TForm>>,
       );
       setOriginalCustomer(null);
       setSelectedCustomerId(undefined);
@@ -131,12 +156,36 @@ export function useDocumentCustomerForm<TForm extends DocumentFormWithCustomer>(
         is_end_consumer: customer.is_end_consumer ?? undefined,
       };
 
-      setValue("customer" as Path<TForm>, customerData as PathValue<TForm, Path<TForm>>);
+      setCustomerFieldValue("customer.name" as Path<TForm>, customerData.name as PathValue<TForm, Path<TForm>>);
+      setCustomerFieldValue("customer.address" as Path<TForm>, customerData.address as PathValue<TForm, Path<TForm>>);
+      setCustomerFieldValue(
+        "customer.address_2" as Path<TForm>,
+        customerData.address_2 as PathValue<TForm, Path<TForm>>,
+      );
+      setCustomerFieldValue(
+        "customer.post_code" as Path<TForm>,
+        customerData.post_code as PathValue<TForm, Path<TForm>>,
+      );
+      setCustomerFieldValue("customer.city" as Path<TForm>, customerData.city as PathValue<TForm, Path<TForm>>);
+      setCustomerFieldValue("customer.state" as Path<TForm>, customerData.state as PathValue<TForm, Path<TForm>>);
+      setCustomerFieldValue("customer.country" as Path<TForm>, customerData.country as PathValue<TForm, Path<TForm>>);
+      setCustomerFieldValue(
+        "customer.tax_number" as Path<TForm>,
+        customerData.tax_number as PathValue<TForm, Path<TForm>>,
+      );
+      setCustomerFieldValue(
+        "customer.is_end_consumer" as Path<TForm>,
+        customerData.is_end_consumer as PathValue<TForm, Path<TForm>>,
+      );
       setOriginalCustomer(customerData);
       setSelectedCustomerId(customerId);
       setShouldFocusName(false);
     }
 
+    form.clearErrors(["customer_id" as Path<TForm>, ...customerFieldPaths]);
+    if (form.formState.isSubmitted) {
+      void form.trigger();
+    }
     setShowCustomerForm(true);
   };
 

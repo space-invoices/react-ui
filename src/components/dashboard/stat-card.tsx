@@ -11,11 +11,11 @@ export type StatCardProps = {
 
 export function StatCard({ title, value, href, onClick }: StatCardProps) {
   const content = (
-    <Card className="cursor-pointer transition-colors hover:bg-accent/50">
-      <CardHeader className="pb-2">
+    <Card className="cursor-pointer gap-2 transition-colors hover:bg-accent/50">
+      <CardHeader className="pb-1">
         <CardTitle className="font-medium text-muted-foreground text-sm">{title}</CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-0">
         <div className="font-bold text-2xl">{value ?? 0}</div>
       </CardContent>
     </Card>

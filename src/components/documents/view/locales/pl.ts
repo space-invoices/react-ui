@@ -49,10 +49,18 @@ export default {
   "Partially paid": "Częściowo zapłacono",
   Unpaid: "Niezapłacono",
   Voided: "Anulowano",
+  Overdue: "Przeterminowane",
+  Shareable: "Udostępnialne",
+  Quote: "Oferta",
+  "Packing list": "Lista pakowania",
+  "FURS fiscalization failed": "Fiscalizacja FURS nie powiodła się",
+  "FINA fiscalization failed": "Fiscalizacja FINA nie powiodła się",
 
   // Payments list
   Payments: "Płatności",
+  Refunds: "Zwroty",
   "No payments": "Brak płatności",
+  "No refunds": "Brak zwrotów",
   "Add payment": "Dodaj płatność",
   Edit: "Edytuj",
   Delete: "Usuń",
@@ -68,6 +76,7 @@ export default {
   credit_note: "Nota kredytowa",
   other: "Inne",
   advance_invoice: "Faktura zaliczkowa",
+  advance_payment: "Płatność zaliczkowa",
 
   // Errors
   "Delete failed": "Usunięcie nie powiodło się",
@@ -99,8 +108,12 @@ export default {
   Deleted: "Usunięto",
   by: "przez",
   me: "mnie",
+  User: "Użytkownik",
   System: "System",
   Scheduled: "Zaplanowano",
+  "Version history": "Historia wersji",
+  "No version history": "Brak historii wersji",
+  Version: "Wersja",
 
   // Fiscalization
   Fiscalization: "Fiskalizacja",

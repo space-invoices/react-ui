@@ -1,10 +1,26 @@
 export default {
   "Send Invoice by Email": "Enviar factura por correo",
+  "Send Estimate by Email": "Enviar presupuesto por correo",
+  "Send Credit Note by Email": "Enviar nota de crédito por correo",
+  "Send Advance Invoice by Email": "Enviar factura anticipada por correo",
+  "Send Delivery Note by Email": "Enviar albarán por correo",
   "Send invoice by email description":
     "Envíe la factura #{number} al cliente por correo electrónico. Se admite formato Markdown en el texto.",
+  "Send estimate by email description":
+    "Envíe el presupuesto #{number} al cliente por correo electrónico. Se admite formato Markdown en el texto.",
+  "Send credit note by email description":
+    "Envíe la nota de crédito #{number} al cliente por correo electrónico. Se admite formato Markdown en el texto.",
+  "Send advance invoice by email description":
+    "Envíe la factura anticipada #{number} al cliente por correo electrónico. Se admite formato Markdown en el texto.",
+  "Send delivery note by email description":
+    "Envíe el albarán #{number} al cliente por correo electrónico. Se admite formato Markdown en el texto.",
   "Recipient Email": "Correo del destinatario",
   "Subject (Optional)": "Asunto (opcional)",
   "Invoice Subject": "Asunto de la factura",
+  "Estimate Subject": "Asunto del presupuesto",
+  "Credit Note Subject": "Asunto de la nota de crédito",
+  "Advance Invoice Subject": "Asunto de la factura anticipada",
+  "Delivery Note Subject": "Asunto del albarán",
   "Leave empty to use default": "Dejar vacío para usar el valor predeterminado",
   "Message (Optional)": "Mensaje (opcional)",
   "Email message placeholder": "Mensaje de correo... Admite **negrita**, *cursiva*, [enlaces](url) y listas",
@@ -12,11 +28,16 @@ export default {
   "Send Email": "Enviar correo",
   "Email sent": "Correo enviado",
   "Invoice sent to": "Factura enviada a",
+  "Estimate sent to": "Presupuesto enviado a",
+  "Credit note sent to": "Nota de crédito enviada a",
+  "Advance invoice sent to": "Factura anticipada enviada a",
+  "Delivery note sent to": "Albarán enviado a",
   "Failed to send email": "Error al enviar el correo",
   "Sandbox email warning":
     "En modo sandbox solo se pueden enviar correos a los miembros verificados del equipo de esta cuenta.",
   "PDF Language": "Idioma del PDF",
   Default: "Predeterminado",
+  "English (US)": "Inglés (EE. UU.)",
   English: "Inglés",
   German: "Alemán",
   Slovenian: "Esloveno",

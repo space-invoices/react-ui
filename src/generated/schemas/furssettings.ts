@@ -12,6 +12,7 @@ import { z } from 'zod';
 const updateFursSettingsSchemaDefinition = z
   .object({
     enabled: z.boolean(),
+    default_skip_fiscalization: z.boolean(),
     numbering_strategy: z.enum(["B", "C"]),
     operator_tax_number: z.string(),
     operator_label: z.string(),

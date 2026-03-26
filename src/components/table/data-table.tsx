@@ -1,16 +1,21 @@
+import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
 import type { JSX, ReactNode } from "react";
-import { Fragment, memo, useCallback, useMemo, useState } from "react";
+import { Fragment, lazy, memo, Suspense, useCallback, useMemo, useState } from "react";
 
 import { Checkbox } from "@/ui/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/ui/components/ui/table";
-import { FilterBar } from "./filter-bar";
+import { cn } from "@/ui/lib/utils";
 import { useTableQuery } from "./hooks/use-table-query";
 import { useTableState } from "./hooks/use-table-state";
+import { SearchInput } from "./search-input";
+import { getColumnSortDirection, getNextColumnOrderBy, isSortableColumn } from "./sorting";
 import { TableEmptyState } from "./table-empty-state";
 import { TableNoResults } from "./table-no-results";
 import { Pagination } from "./table-pagination";
 import { TableSkeleton } from "./table-skeleton";
 import type { Column, FilterConfig, TableQueryParams, TableQueryResponse } from "./types";
+
+const LazyFilterBar = lazy(() => import("./filter-bar").then((module) => ({ default: module.FilterBar })));
 
 export type DataTableProps<T> = {
   /** Column definitions */
@@ -55,7 +60,48 @@ export type DataTableProps<T> = {
   onSelectionChange?: (selectedIds: Set<string>) => void;
   /** Content to render in selection toolbar (shown when items selected) */
   selectionToolbar?: (selectedCount: number, data: T[]) => ReactNode;
+  /** When false, hides the search / filter toolbar area */
+  showSearchToolbar?: boolean;
+  /** Custom empty state for truly empty collections */
+  emptyState?: ReactNode;
+  /** When false, hides the pagination footer */
+  showPagination?: boolean;
+  /** Horizontal inset around the table block and related states */
+  contentInsetClassName?: string;
+  /** Bottom padding on the overall table wrapper */
+  bottomPaddingClassName?: string;
 };
+
+function hasFilterControls(filterConfig?: FilterConfig) {
+  return Boolean(
+    filterConfig?.dateFields?.length ||
+      filterConfig?.statusFilter ||
+      filterConfig?.httpMethodFilter ||
+      filterConfig?.httpStatusCodeFilter,
+  );
+}
+
+function SearchToolbar({
+  searchValue,
+  onSearch,
+  t,
+}: {
+  searchValue?: string;
+  onSearch: (value: string | null) => void;
+  t: (key: string) => string;
+}) {
+  return (
+    <div className="flex flex-col gap-2 px-4 pt-4 sm:flex-row sm:items-center">
+      <SearchInput
+        initialValue={searchValue}
+        onSearch={onSearch}
+        placeholder={t("Search...")}
+        ariaLabel={t("Search")}
+        clearAriaLabel={t("Clear search")}
+      />
+    </div>
+  );
+}
 
 /**
  * Generic data table with built-in sorting, search, pagination, and loading states
@@ -82,7 +128,14 @@ export function DataTable<T extends { id: string }>({
   selectedIds,
   onSelectionChange,
   selectionToolbar,
+  showSearchToolbar = true,
+  emptyState,
+  showPagination = true,
+  contentInsetClassName = "px-4",
+  bottomPaddingClassName = "pb-4",
 }: DataTableProps<T>) {
+  const hasFilters = hasFilterControls(filterConfig);
+  const displayRows = Math.max(queryParams?.limit ?? 10, 1);
   // Filter panel open state - starts open if filters are active in URL
   const hasInitialFilters = Boolean(
     queryParams?.filter_date_from ||
@@ -95,11 +148,12 @@ export function DataTable<T extends { id: string }>({
   const [filterPanelOpen, setFilterPanelOpen] = useState(hasInitialFilters);
 
   // Manage table state (search, pagination, filters)
-  const { params, apiParams, filterState, handleSearch, handlePageChange, handleFilterChange } = useTableState({
-    initialParams: queryParams,
-    onChangeParams,
-    disableUrlSync,
-  });
+  const { params, apiParams, filterState, handleSearch, handlePageChange, handleFilterChange, handleSortChange } =
+    useTableState({
+      initialParams: queryParams,
+      onChangeParams,
+      disableUrlSync,
+    });
 
   // Fetch table data (use apiParams which has the query JSON for API)
   const { data: queryResult, isFetching } = useTableQuery<T>({
@@ -166,19 +220,33 @@ export function DataTable<T extends { id: string }>({
   // Show skeleton during initial load (with filter bar for consistency)
   if (isFetching && !queryResult) {
     return (
-      <div className="space-y-4">
-        <FilterBar
-          searchValue={params.search}
-          onSearch={handleSearch}
-          filterConfig={filterConfig}
-          filterState={filterState ?? undefined}
-          onFilterChange={handleFilterChange}
-          t={t}
-          locale={locale}
-          isOpen={filterPanelOpen}
-          onToggle={setFilterPanelOpen}
-        />
-        <TableSkeleton columns={columns.length + (selectable ? 1 : 0)} rows={10} />
+      <div className={cn("space-y-4", bottomPaddingClassName)}>
+        {showSearchToolbar &&
+          (hasFilters ? (
+            <Suspense fallback={<SearchToolbar searchValue={params.search} onSearch={handleSearch} t={t} />}>
+              <LazyFilterBar
+                searchValue={params.search}
+                onSearch={handleSearch}
+                filterConfig={filterConfig}
+                filterState={filterState ?? undefined}
+                onFilterChange={handleFilterChange}
+                t={t}
+                locale={locale}
+                isOpen={filterPanelOpen}
+                onToggle={setFilterPanelOpen}
+              />
+            </Suspense>
+          ) : (
+            <SearchToolbar searchValue={params.search} onSearch={handleSearch} t={t} />
+          ))}
+        <div className={contentInsetClassName}>
+          <TableSkeleton
+            columns={columns.length + (selectable ? 1 : 0)}
+            rows={displayRows}
+            showSearch={false}
+            showPagination={showPagination}
+          />
+        </div>
       </div>
     );
   }
@@ -187,84 +255,107 @@ export function DataTable<T extends { id: string }>({
   // (this means truly empty collection, not filtered to zero results)
   if (data.length === 0 && !hasActiveFilters) {
     return (
-      <TableEmptyState
-        resource={resourceName}
-        createNewLink={createNewLink}
-        createNewTrigger={createNewTrigger}
-        onCreateNew={onCreateNew}
-        t={t}
-      />
+      <div className={cn(contentInsetClassName, bottomPaddingClassName)}>
+        {emptyState ? (
+          emptyState
+        ) : (
+          <TableEmptyState
+            resource={resourceName}
+            createNewLink={createNewLink}
+            createNewTrigger={createNewTrigger}
+            onCreateNew={onCreateNew}
+            rows={displayRows}
+            t={t}
+          />
+        )}
+      </div>
     );
   }
 
   return (
-    <div className="space-y-4">
-      <FilterBar
-        searchValue={params.search}
-        onSearch={handleSearch}
-        filterConfig={filterConfig}
-        filterState={filterState ?? undefined}
-        onFilterChange={handleFilterChange}
-        t={t}
-        locale={locale}
-        isOpen={filterPanelOpen}
-        onToggle={setFilterPanelOpen}
-      />
+    <div className={cn("space-y-4", bottomPaddingClassName)}>
+      {showSearchToolbar &&
+        (hasFilters ? (
+          <Suspense fallback={<SearchToolbar searchValue={params.search} onSearch={handleSearch} t={t} />}>
+            <LazyFilterBar
+              searchValue={params.search}
+              onSearch={handleSearch}
+              filterConfig={filterConfig}
+              filterState={filterState ?? undefined}
+              onFilterChange={handleFilterChange}
+              t={t}
+              locale={locale}
+              isOpen={filterPanelOpen}
+              onToggle={setFilterPanelOpen}
+            />
+          </Suspense>
+        ) : (
+          <SearchToolbar searchValue={params.search} onSearch={handleSearch} t={t} />
+        ))}
 
       {selectable && selectedCount > 0 && selectionToolbar && (
-        <div className="flex items-center gap-3 rounded-lg border bg-muted/50 px-4 py-2">
-          {selectionToolbar(selectedCount, data)}
+        <div className={contentInsetClassName}>
+          <div className="flex items-center gap-3 rounded-lg border bg-muted/50 px-4 py-2">
+            {selectionToolbar(selectedCount, data)}
+          </div>
         </div>
       )}
 
-      <div className="rounded-lg border">
-        <Table>
-          {renderHeader ? (
-            renderHeader()
-          ) : (
-            <DefaultTableHeader
-              columns={columns}
-              selectable={selectable}
-              allPageSelected={allPageSelected}
-              somePageSelected={somePageSelected}
-              onToggleAll={handleToggleAll}
-            />
-          )}
-
-          <TableBody>
-            {data.length > 0 ? (
-              data.map((item) => {
-                if (renderRow) {
-                  // Custom row renderer - wrap in Fragment with key
-                  return <Fragment key={item.id}>{renderRow(item)}</Fragment>;
-                }
-
-                // Default row renderer
-                return (
-                  <DefaultTableRow
-                    key={item.id}
-                    item={item}
-                    columns={columns}
-                    onRowClick={onRowClick}
-                    selectable={selectable}
-                    isSelected={selectedIds?.has(item.id)}
-                    onToggleSelect={handleToggleRow}
-                  />
-                );
-              })
+      <div className={contentInsetClassName}>
+        <div className="rounded-lg border">
+          <Table>
+            {renderHeader ? (
+              renderHeader()
             ) : (
-              <TableNoResults resource={resourceName} search={handleSearch} onClear={handleClearAll} t={t} />
+              <DefaultTableHeader
+                columns={columns}
+                selectable={selectable}
+                allPageSelected={allPageSelected}
+                somePageSelected={somePageSelected}
+                onToggleAll={handleToggleAll}
+                orderBy={params.order_by}
+                onSortChange={handleSortChange}
+                t={t}
+              />
             )}
-          </TableBody>
-        </Table>
 
-        <div className="border-t px-4 py-3">
-          <Pagination
-            prevCursor={queryResult?.pagination.prev_cursor}
-            nextCursor={queryResult?.pagination.next_cursor}
-            onPageChange={handlePageChange}
-            t={t}
-          />
+            <TableBody>
+              {data.length > 0 ? (
+                data.map((item) => {
+                  if (renderRow) {
+                    // Custom row renderer - wrap in Fragment with key
+                    return <Fragment key={item.id}>{renderRow(item)}</Fragment>;
+                  }
+
+                  // Default row renderer
+                  return (
+                    <DefaultTableRow
+                      key={item.id}
+                      item={item}
+                      columns={columns}
+                      onRowClick={onRowClick}
+                      selectable={selectable}
+                      isSelected={selectedIds?.has(item.id)}
+                      onToggleSelect={handleToggleRow}
+                    />
+                  );
+                })
+              ) : (
+                <TableNoResults resource={resourceName} search={handleSearch} onClear={handleClearAll} t={t} />
+              )}
+            </TableBody>
+          </Table>
+
+          {showPagination && (
+            <div className="border-t px-4 py-3">
+              <Pagination
+                prevCursor={queryResult?.pagination.prev_cursor}
+                nextCursor={queryResult?.pagination.next_cursor}
+                onPageChange={handlePageChange}
+                t={t}
+              />
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -280,12 +371,18 @@ const DefaultTableHeader = memo(function DefaultTableHeader<T>({
   allPageSelected,
   somePageSelected,
   onToggleAll,
+  orderBy,
+  onSortChange,
+  t,
 }: {
   columns: Column<T>[];
   selectable?: boolean;
   allPageSelected?: boolean;
   somePageSelected?: boolean;
   onToggleAll?: () => void;
+  orderBy?: TableQueryParams["order_by"];
+  onSortChange?: (orderBy: TableQueryParams["order_by"]) => void;
+  t: (key: string) => string;
 }) {
   return (
     <TableHeader>
@@ -299,11 +396,47 @@ const DefaultTableHeader = memo(function DefaultTableHeader<T>({
             />
           </TableHead>
         )}
-        {columns.map((column) => (
-          <TableHead key={column.id} className={column.className} style={{ textAlign: column.align }}>
-            {column.header}
-          </TableHead>
-        ))}
+        {columns.map((column) => {
+          const sortDirection = getColumnSortDirection(column, orderBy);
+          const sortable = isSortableColumn(column);
+          const SortIcon = sortDirection === "asc" ? ArrowUp : sortDirection === "desc" ? ArrowDown : ArrowUpDown;
+          const sortAriaLabel = typeof column.header === "string" ? `${t("Sort by")} ${column.header}` : t("Sort by");
+
+          return (
+            <TableHead
+              key={column.id}
+              className={cn(column.id === "actions" && "w-[52px] whitespace-nowrap", column.className)}
+              style={{ textAlign: column.align }}
+              aria-sort={
+                sortable
+                  ? sortDirection === "asc"
+                    ? "ascending"
+                    : sortDirection === "desc"
+                      ? "descending"
+                      : "none"
+                  : undefined
+              }
+            >
+              {sortable ? (
+                <button
+                  type="button"
+                  className={cn(
+                    "flex w-full items-center gap-1 rounded py-1 text-left transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                    column.align === "center" && "justify-center",
+                    column.align === "right" && "justify-end",
+                  )}
+                  onClick={() => onSortChange?.(getNextColumnOrderBy(column, orderBy))}
+                  aria-label={sortAriaLabel}
+                >
+                  <span>{column.header}</span>
+                  <SortIcon className={cn("h-3.5 w-3.5 shrink-0", sortDirection === null && "text-muted-foreground")} />
+                </button>
+              ) : (
+                column.header
+              )}
+            </TableHead>
+          );
+        })}
       </TableRow>
     </TableHeader>
   );
@@ -313,6 +446,9 @@ const DefaultTableHeader = memo(function DefaultTableHeader<T>({
   allPageSelected?: boolean;
   somePageSelected?: boolean;
   onToggleAll?: () => void;
+  orderBy?: TableQueryParams["order_by"];
+  onSortChange?: (orderBy: TableQueryParams["order_by"]) => void;
+  t: (key: string) => string;
 }) => JSX.Element;
 
 /**
@@ -345,7 +481,11 @@ const DefaultTableRow = memo(function DefaultTableRow<T extends { id: string }>(
         </TableCell>
       )}
       {columns.map((column) => (
-        <TableCell key={column.id} className={column.className} style={{ textAlign: column.align }}>
+        <TableCell
+          key={column.id}
+          className={cn(column.id === "actions" && "w-[52px] whitespace-nowrap", column.className)}
+          style={{ textAlign: column.align }}
+        >
           {column.cell?.(item)}
         </TableCell>
       ))}

@@ -11,9 +11,17 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/ui/components/ui/dropdown-menu";
+import { actionMenuTooltipProps, Tooltip, TooltipContent, TooltipTrigger } from "@/ui/components/ui/tooltip";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
 import { useDeliveryNoteDownload } from "./use-delivery-note-download";
+
+const translations = {
+  sl: {
+    "Create invoice": "Ustvari račun",
+    "This document is already voided.": "Ta dokument je že storniran.",
+  },
+} as const;
 
 type DeliveryNoteListRowActionsProps = {
   deliveryNote: DeliveryNote;
@@ -41,13 +49,27 @@ export default function DeliveryNoteListRowActions({
   isVoiding,
   ...i18nProps
 }: DeliveryNoteListRowActionsProps) {
-  const t = createTranslation(i18nProps);
+  const t = createTranslation({ ...i18nProps, translations });
   const { isDownloading, downloadPDF } = useDeliveryNoteDownload({
     onDownloadStart,
     onDownloadSuccess,
     onDownloadError,
     ...i18nProps,
   });
+  const createInvoiceDisabledReason = deliveryNote.voided_at
+    ? t("documents-list-page.copy-to-invoice-voided-not-allowed")
+    : undefined;
+  const voidDisabledReason = deliveryNote.voided_at ? t("This document is already voided.") : undefined;
+  const createInvoiceItem = onDuplicate ? (
+    <DropdownMenuItem
+      className="cursor-pointer"
+      onClick={createInvoiceDisabledReason ? undefined : () => onDuplicate(deliveryNote)}
+      disabled={!!createInvoiceDisabledReason}
+    >
+      <Copy className="h-4 w-4" />
+      {t("Create invoice")}
+    </DropdownMenuItem>
+  ) : null;
 
   return (
     <DropdownMenu>
@@ -79,25 +101,49 @@ export default function DeliveryNoteListRowActions({
             <Download className="h-4 w-4" />
             {isDownloading ? t("Downloading...") : t("Download PDF")}
           </DropdownMenuItem>
-          {onDuplicate && (
-            <DropdownMenuItem className="cursor-pointer" onClick={() => onDuplicate(deliveryNote)}>
-              <Copy className="h-4 w-4" />
-              {t("Duplicate")}
-            </DropdownMenuItem>
-          )}
+          {createInvoiceItem &&
+            (createInvoiceDisabledReason ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div>{createInvoiceItem}</div>
+                </TooltipTrigger>
+                <TooltipContent side="left" {...actionMenuTooltipProps}>
+                  {createInvoiceDisabledReason}
+                </TooltipContent>
+              </Tooltip>
+            ) : (
+              createInvoiceItem
+            ))}
         </DropdownMenuGroup>
-        {onVoid && !deliveryNote.voided_at && !(deliveryNote as any).is_draft && (
+        {onVoid && !(deliveryNote as any).is_draft && (
           <>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem
-                className="cursor-pointer text-destructive focus:text-destructive"
-                onClick={() => onVoid(deliveryNote)}
-                disabled={isVoiding}
-              >
-                {isVoiding ? <Loader2 className="h-4 w-4 animate-spin" /> : <Ban className="h-4 w-4" />}
-                {t("Void")}
-              </DropdownMenuItem>
+              {(() => {
+                const item = (
+                  <DropdownMenuItem
+                    className="cursor-pointer text-destructive focus:text-destructive"
+                    onClick={voidDisabledReason ? undefined : () => onVoid(deliveryNote)}
+                    disabled={isVoiding || !!voidDisabledReason}
+                  >
+                    {isVoiding ? <Loader2 className="h-4 w-4 animate-spin" /> : <Ban className="h-4 w-4" />}
+                    {t("Void")}
+                  </DropdownMenuItem>
+                );
+
+                if (!voidDisabledReason) return item;
+
+                return (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div>{item}</div>
+                    </TooltipTrigger>
+                    <TooltipContent side="left" {...actionMenuTooltipProps}>
+                      {voidDisabledReason}
+                    </TooltipContent>
+                  </Tooltip>
+                );
+              })()}
             </DropdownMenuGroup>
           </>
         )}

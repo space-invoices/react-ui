@@ -3,15 +3,15 @@ export default {
   "Create Quote": "Ustvari ponudbo",
   Estimate: "Predračun",
   Quote: "Ponudba",
-  "Click to switch to Quote": "Kliknite za zamenjavo v Ponudbo",
-  "Click to switch to Estimate": "Kliknite za zamenjavo v Predračun",
+  "Click to switch to Quote": "Kliknite za preklop na ponudbo",
+  "Click to switch to Estimate": "Kliknite za preklop na predračun",
   Details: "Podrobnosti",
   Number: "Številka",
   Date: "Datum",
   "Due Date": "Rok plačila",
   "Valid Until": "Veljavno do",
   Recipient: "Prejemnik",
-  "Search or create customer...": "Išči ali ustvari stranko...",
+  "Search or create customer...": "Poiščite ali ustvarite stranko...",
   Clear: "Počisti",
   Name: "Ime",
   Address: "Naslov",
@@ -31,15 +31,15 @@ export default {
   "No taxes found": "Ni najdenih davkov",
   "Add new tax...": "Dodaj nov davek...",
   // Note field
-  Note: "Opomba",
+  Note: "Pripis",
   "Insert variable": "Vstavi spremenljivko",
-  "Add payment instructions, terms, or other notes...": "Dodajte navodila za plačilo, pogoje ali druge opombe...",
+  "Add payment instructions, terms, or other notes...": "Dodaj navodila za plačilo, pogoje ali druge pripise...",
   // Signature field
   Signature: "Podpis",
   "Add signature text...": "Dodaj besedilo podpisa...",
   // Payment terms field
   "Payment Terms": "Plačilni pogoji",
-  "Add payment terms...": "Dodajte plačilne pogoje...",
+  "Add payment terms...": "Dodaj plačilne pogoje...",
   // Document item fields
   Quantity: "Količina",
   Price: "Cena",
@@ -78,8 +78,8 @@ export default {
   "This invoice will not be fiscalized (non-domestic transaction)":
     "Ta račun ne bo fiskaliziran (nedomača transakcija)",
   "Tax Clause": "Davčna klavzula",
-  "Add tax clause...": "Dodajte davčno klavzulo...",
+  "Add tax clause...": "Dodaj davčno klavzulo...",
   Footer: "Noga dokumenta",
-  "Add document footer...": "Dodajte nogo dokumenta...",
+  "Add document footer...": "Dodaj nogo dokumenta...",
   "Reverse charge - tax exempt EU B2B sale": "Obrnjena davčna obveznost - davka oproščena EU B2B prodaja",
 } as const;

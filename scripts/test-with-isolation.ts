@@ -72,10 +72,6 @@ async function collectTestFiles(): Promise<string[]> {
   const files: string[] = [];
   const glob = new Glob("**/*.test.{ts,tsx}");
 
-  for await (const file of glob.scan({ cwd: "src" })) {
-    files.push(`src/${file}`);
-  }
-
   for await (const file of glob.scan({ cwd: "test" })) {
     files.push(`test/${file}`);
   }

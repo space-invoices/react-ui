@@ -133,11 +133,12 @@ export function UsageBadge() {
 
   if (!plan || !usage) return null;
 
-  if (plan.limits?.documents_per_month === null) {
+  const limit = plan.limits?.invoices_per_month ?? plan.limits?.documents_per_month;
+  const count = plan.limits?.invoices_per_month != null ? usage.invoices_count : usage.documents_count;
+
+  if (limit == null) {
     return null; // Unlimited - no badge needed
   }
-
-  const limit = plan.limits?.documents_per_month ?? 0;
   const isNearLimit = percentage >= 80;
   const isAtLimit = percentage >= 100;
 
@@ -151,7 +152,7 @@ export function UsageBadge() {
             : "bg-muted text-muted-foreground"
       }`}
     >
-      {usage.documents_count}/{limit} docs
+      {count}/{limit} invoices
     </div>
   );
 }
@@ -159,16 +160,16 @@ export function UsageBadge() {
 // Helper to get default locked message for a feature
 function getDefaultLockedMessage(feature: GatedFeature): string {
   const messages: Record<GatedFeature, string> = {
-    furs: "FURS fiscalization requires a Starter or Advanced plan",
-    fina: "FINA fiscalization requires a Starter or Advanced plan",
-    eslog: "eSlog export requires a Starter or Advanced plan",
-    recurring: "Recurring invoices require a Starter or Advanced plan",
-    email_sending: "Email sending requires a Starter or Advanced plan",
+    furs: "FURS fiscalization requires an Advanced or Pro plan",
+    fina: "FINA fiscalization requires an Advanced or Pro plan",
+    eslog: "eSlog export requires an Advanced or Pro plan",
+    recurring: "Recurring invoices require an Advanced or Pro plan",
+    email_sending: "Email sending requires an Advanced or Pro plan",
     custom_templates: "Custom templates require an Advanced plan",
     api_access: "API access requires an Advanced plan",
     webhooks: "Webhooks require an Advanced plan",
     priority_support: "Priority support requires an Advanced plan",
-    e_invoicing: "E-Invoicing requires a Starter or Advanced plan",
+    e_invoicing: "E-Invoicing requires an Advanced or Pro plan",
   };
 
   return messages[feature] || "This feature requires a plan upgrade";

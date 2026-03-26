@@ -1,4 +1,5 @@
 import type { RecurringInvoice } from "@spaceinvoices/js-sdk";
+import { recurringInvoices } from "@spaceinvoices/js-sdk";
 import { useMemo } from "react";
 import { DataTable } from "@/ui/components/table/data-table";
 import { FormattedDate } from "@/ui/components/table/date-cell";
@@ -7,7 +8,6 @@ import { withTableTranslations } from "@/ui/components/table/locales";
 import type { Column, ListTableProps, TableQueryParams, TableQueryResponse } from "@/ui/components/table/types";
 import { Badge } from "@/ui/components/ui/badge";
 import { createTranslation } from "@/ui/lib/translation";
-import { useSDK } from "@/ui/providers/sdk-provider";
 
 import RecurringInvoiceListRowActions from "./list-row-actions";
 import de from "./locales/de";
@@ -66,22 +66,19 @@ export default function RecurringInvoiceListTable({
   ...i18nProps
 }: RecurringInvoiceListTableProps) {
   const t = createTranslation({
-    translations,
-    locale: i18nProps.translationLocale ?? i18nProps.locale,
     ...i18nProps,
+    translations,
   });
 
-  const { sdk } = useSDK();
-
   const handleFetch = useTableFetch(async (params: TableQueryParams) => {
-    if (!sdk) throw new Error("SDK not initialized");
     if (!params.entity_id) throw new Error("Entity ID required");
 
-    const response = await sdk.recurringInvoices.list({
+    const response = await recurringInvoices.list({
       entity_id: params.entity_id,
       limit: params.limit,
       next_cursor: params.next_cursor,
       prev_cursor: params.prev_cursor,
+      order_by: params.order_by,
       search: params.search,
       query: params.query,
     });
@@ -103,6 +100,7 @@ export default function RecurringInvoiceListTable({
       {
         id: "name",
         header: t("Name"),
+        sort: true,
         cell: (ri) => <span className="font-medium">{ri.name}</span>,
       },
       {
@@ -116,11 +114,13 @@ export default function RecurringInvoiceListTable({
       {
         id: "status",
         header: t("Status"),
+        sort: true,
         cell: (ri) => <Badge variant={statusVariant(ri.status)}>{t(`status.${ri.status}`)}</Badge>,
       },
       {
         id: "next_run_date",
         header: t("Next Run"),
+        sort: true,
         cell: (ri) =>
           ri.next_run_date ? (
             <FormattedDate date={ri.next_run_date} locale={i18nProps.locale} />
@@ -137,6 +137,9 @@ export default function RecurringInvoiceListTable({
       {
         id: "created_at",
         header: t("Created"),
+        sort: {
+          defaultDirection: "desc",
+        },
         cell: (ri) => <FormattedDate date={ri.created_at} locale={i18nProps.locale} />,
       },
       {

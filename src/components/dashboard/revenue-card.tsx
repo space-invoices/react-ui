@@ -35,12 +35,12 @@ export function RevenueCard({ title, value, currency, variant = "default", subti
   }).format(value);
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
+    <Card className="gap-2">
+      <CardHeader className="flex flex-row items-center justify-between pb-1">
         <CardTitle className="font-medium text-muted-foreground text-sm">{title}</CardTitle>
         {Icon && <Icon className={`h-4 w-4 ${variantStyles[variant]}`} />}
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-0">
         <div className={`font-bold text-2xl ${variantStyles[variant]}`}>{formattedValue}</div>
         {subtitle && <p className="mt-1 text-muted-foreground text-xs">{subtitle}</p>}
       </CardContent>

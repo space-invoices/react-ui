@@ -8,18 +8,30 @@
  * - Less code duplication
  */
 
-import type { CreateCreditNoteRequest, CreditNote } from "@spaceinvoices/js-sdk";
+import type { CreateCreditNoteRequest, CreditNote, SDKMethodOptions, UpdateCreditNote } from "@spaceinvoices/js-sdk";
+import { creditNotes } from "@spaceinvoices/js-sdk";
 import { createResourceHooks } from "@/ui/hooks/create-resource-hooks";
 
 export const CREDIT_NOTES_CACHE_KEY = "credit-notes";
+
+const voidCreditNote = async (id: string, options?: SDKMethodOptions): Promise<void> => {
+  await creditNotes.void(id, {}, options);
+};
 
 const {
   useCreateResource: useCreateCreditNote,
   useUpdateResource: useUpdateCreditNote,
   useDeleteResource: useDeleteCreditNote,
-} = createResourceHooks<CreditNote, CreateCreditNoteRequest>("creditNotes", CREDIT_NOTES_CACHE_KEY);
+} = createResourceHooks<CreditNote, CreateCreditNoteRequest, UpdateCreditNote>(
+  {
+    create: creditNotes.create,
+    update: creditNotes.update,
+    delete: voidCreditNote,
+  },
+  CREDIT_NOTES_CACHE_KEY,
+);
 
-export { useCreateCreditNote, useUpdateCreditNote, useDeleteCreditNote };
+export { useCreateCreditNote, useDeleteCreditNote, useUpdateCreditNote };
 
 // ============================================================================
 // FURS Last-Used Combo (localStorage) for credit notes

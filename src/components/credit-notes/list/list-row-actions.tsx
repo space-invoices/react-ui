@@ -9,10 +9,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/ui/components/ui/dropdown-menu";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/ui/components/ui/tooltip";
+import { actionMenuTooltipProps, Tooltip, TooltipContent, TooltipTrigger } from "@/ui/components/ui/tooltip";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
 import { useCreditNoteDownload } from "./use-credit-note-download";
+
+const translations = {
+  sl: {
+    "This document is already voided.": "Ta dokument je že storniran.",
+  },
+} as const;
 
 // Type for credit note - using any until SDK is regenerated
 type CreditNote = any;
@@ -45,7 +51,7 @@ export default function CreditNoteListRowActions({
   isVoiding,
   ...i18nProps
 }: CreditNoteListRowActionsProps) {
-  const t = createTranslation(i18nProps);
+  const t = createTranslation({ ...i18nProps, translations });
   const { isDownloading, downloadPDF } = useCreditNoteDownload({
     onDownloadStart,
     onDownloadSuccess,
@@ -86,7 +92,7 @@ export default function CreditNoteListRowActions({
             </DropdownMenuItem>
           )}
         </DropdownMenuGroup>
-        {!creditNote.paid_in_full && (
+        {!creditNote.paid_in_full && onAddPayment && (
           <>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
@@ -113,11 +119,15 @@ export default function CreditNoteListRowActions({
           </>
         )}
         {onVoid &&
-          !creditNote.voided_at &&
           !creditNote.is_draft &&
           (() => {
             const isFiscalized = !!(creditNote.furs || creditNote.fina);
-            const voidDisabled = isVoiding || isFiscalized;
+            const disabledReason = creditNote.voided_at
+              ? t("This document is already voided.")
+              : isFiscalized
+                ? t("Cannot void a fiscalized credit note")
+                : undefined;
+            const voidDisabled = isVoiding || !!disabledReason;
             const voidItem = (
               <DropdownMenuItem
                 className={
@@ -136,12 +146,14 @@ export default function CreditNoteListRowActions({
               <>
                 <DropdownMenuSeparator />
                 <DropdownMenuGroup>
-                  {isFiscalized ? (
+                  {disabledReason ? (
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <div>{voidItem}</div>
                       </TooltipTrigger>
-                      <TooltipContent side="left">{t("Cannot void a fiscalized credit note")}</TooltipContent>
+                      <TooltipContent side="left" {...actionMenuTooltipProps}>
+                        {disabledReason}
+                      </TooltipContent>
                     </Tooltip>
                   ) : (
                     voidItem

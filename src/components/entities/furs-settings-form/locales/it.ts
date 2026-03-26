@@ -19,6 +19,9 @@ export default {
   "Register at least one business premise before fiscalizing invoices":
     "Registra almeno un locale commerciale prima di fiscalizzare le fatture",
   "Configure FURS fiscalization behavior": "Configura il comportamento della fiscalizzazione FURS",
+  "Skip Fiscalization by Default": "Salta la fiscalizzazione per impostazione predefinita",
+  "New invoices and advance invoices start with fiscalization turned off when payment type allows it. Non-bank-transfer payments still force fiscalization back on.":
+    "Le nuove fatture e fatture di acconto iniziano con la fiscalizzazione disattivata quando il tipo di pagamento lo consente. I pagamenti diversi dal bonifico bancario riattivano la fiscalizzazione.",
   "Configure how FURS fiscalization works for your entity. Enable fiscalization, choose your numbering strategy, and set operator information.":
     "Configura come funziona la fiscalizzazione FURS per la tua entità. Abilita la fiscalizzazione, scegli la strategia di numerazione e imposta le informazioni dell'operatore.",
   "Enable FURS Fiscalization": "Abilita fiscalizzazione FURS",
@@ -176,6 +179,25 @@ export default {
     "Una volta abilitata, tutte le nuove fatture saranno automaticamente inviate a FURS per la fiscalizzazione. Assicurati di aver completato tutti i passaggi di configurazione prima di abilitare.",
   "You can disable fiscalization at any time, but note that invoices issued while disabled will not be fiscalized.":
     "Puoi disabilitare la fiscalizzazione in qualsiasi momento, ma tieni presente che le fatture emesse mentre è disabilitata non saranno fiscalizzate.",
+  "Internal Act": "Atto interno",
+  "Download the internal act in printable PDF or editable DOCX form before enabling FURS fiscalization.":
+    "Scarica l'atto interno in formato PDF stampabile o DOCX modificabile prima di abilitare la fiscalizzazione FURS.",
+  "The internal act contains your current business premises, devices, and invoice numbering setup.":
+    "L'atto interno contiene le tue sedi aziendali, i dispositivi e la configurazione attuale della numerazione delle fatture.",
+  "Download PDF": "Scarica PDF",
+  "Download DOCX": "Scarica DOCX",
+  "Preparing PDF...": "Preparazione PDF...",
+  "Preparing DOCX...": "Preparazione DOCX...",
+  "Upload a valid certificate to download the internal act":
+    "Carica un certificato valido per scaricare l'atto interno",
+  "Register at least one active business premise to download the internal act":
+    "Registra almeno una sede aziendale attiva per scaricare l'atto interno",
+  "Register at least one electronic device to download the internal act":
+    "Registra almeno un dispositivo elettronico per scaricare l'atto interno",
+  "Internal act PDF downloaded": "Atto interno PDF scaricato",
+  "Internal act DOCX downloaded": "Atto interno DOCX scaricato",
+  "Failed to download internal act": "Download dell'atto interno non riuscito",
+  "Internal act download unavailable": "Download dell'atto interno non disponibile",
   "You must upload a digital certificate before you can register business premises":
     "Devi caricare un certificato digitale prima di poter registrare i locali commerciali",
   "Your Operator Settings": "Le tue impostazioni operatore",
@@ -200,22 +222,27 @@ export default {
   "Certificate uploaded successfully": "Certificato caricato con successo",
   "Loading certificate details...": "Caricamento dettagli certificato...",
   // Entity info section
-  "Entity Information": "Entity Information",
-  "Required company details for FURS fiscalization": "Required company details for FURS fiscalization",
-  "Entity Tax Number": "Entity Tax Number",
-  "Your company's tax number (must match FURS certificate)": "Your company's tax number (must match FURS certificate)",
-  Address: "Address",
-  "Post Code": "Post Code",
-  "Save Entity Info": "Save Entity Info",
-  "Tax number is required for FURS fiscalization": "Tax number is required for FURS fiscalization",
-  "Set entity tax number in General Settings first": "Set entity tax number in General Settings first",
+  "Entity Information": "Informazioni dell'entità",
+  "Required company details for FURS fiscalization": "Dati aziendali richiesti per la fiscalizzazione FURS",
+  "Entity Tax Number": "Numero fiscale dell'entità",
+  "Your company's tax number (must match FURS certificate)":
+    "Il numero fiscale della tua azienda (deve corrispondere al certificato FURS)",
+  Address: "Indirizzo",
+  "Post Code": "CAP",
+  "Save Entity Info": "Salva dati entità",
+  "Tax number is required for FURS fiscalization": "Il numero fiscale è obbligatorio per la fiscalizzazione FURS",
+  "Set entity tax number in General Settings first":
+    "Imposta prima il numero fiscale dell'entità nelle Impostazioni generali",
   "Set operator tax number and label in General Settings first":
-    "Set operator tax number and label in General Settings first",
-  "Complete General Settings first": "Complete General Settings first",
+    "Imposta prima il numero fiscale e l'etichetta dell'operatore nelle Impostazioni generali",
+  "Complete General Settings first": "Completa prima le Impostazioni generali",
   "Operator tax number and label are required for FURS fiscalization":
-    "Operator tax number and label are required for FURS fiscalization",
-  "FURS Operator Settings Required": "FURS Operator Settings Required",
+    "Il numero fiscale e l'etichetta dell'operatore sono obbligatori per la fiscalizzazione FURS",
+  "FURS Operator Settings Required": "Impostazioni operatore FURS richieste",
   "Your FURS operator information is needed to fiscalize this document. Please enter your operator details.":
-    "Your FURS operator information is needed to fiscalize this document. Please enter your operator details.",
-  "Save & Retry": "Save & Retry",
+    "Le informazioni del tuo operatore FURS sono necessarie per fiscalizzare questo documento. Inserisci i dati dell'operatore.",
+  "Save & Retry": "Salva e riprova",
+  "A premise with this name already exists": "Esiste già una sede con questo nome",
+  "Exactly 4 digits": "Esattamente 4 cifre",
+  "Your Name": "Il tuo nome",
 } as const;

@@ -34,3 +34,32 @@ export function isFinaOperatorError(error: unknown): boolean {
   }
   return false;
 }
+
+/**
+ * Detect if an error is a PT operator snapshot validation error.
+ * PT document creation requires the operator first name, last name, and tax number.
+ */
+export function isPtOperatorError(error: unknown): boolean {
+  const data = (error as any)?.data;
+  if (data?.cause?.issues) {
+    return data.cause.issues.some(
+      (issue: any) =>
+        issue.path?.[0] === "pt" &&
+        (issue.path?.[1] === "account_first_name" ||
+          issue.path?.[1] === "operator_first_name" ||
+          issue.path?.[1] === "account_last_name" ||
+          issue.path?.[1] === "operator_last_name" ||
+          issue.path?.[1] === "account_tax_number" ||
+          issue.path?.[1] === "operator_tax_number"),
+    );
+  }
+
+  const message = data?.message || (error as any)?.message || "";
+  if (typeof message !== "string") return false;
+
+  return (
+    message.includes("PT operator first name is required") ||
+    message.includes("PT operator last name is required") ||
+    message.includes("PT operator tax number is required")
+  );
+}

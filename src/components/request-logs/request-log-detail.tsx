@@ -87,8 +87,14 @@ function JsonViewer({ data, noDataLabel, t }: { data: unknown; noDataLabel: stri
 
 function JsonHighlight({ json }: { json: string }) {
   // Parse JSON into tokens for safe rendering
-  const tokens: { type: string; value: string }[] = [];
+  const tokens: { key: string; type: string; value: string }[] = [];
   const lines = json.split("\n");
+  let tokenKey = 0;
+
+  const pushToken = (type: string, value: string) => {
+    tokens.push({ key: `${type}:${tokenKey}`, type, value });
+    tokenKey += 1;
+  };
 
   for (const line of lines) {
     // Match key-value patterns
@@ -96,32 +102,32 @@ function JsonHighlight({ json }: { json: string }) {
     if (keyMatch) {
       const [, indent, key] = keyMatch;
       const rest = line.slice(keyMatch[0].length);
-      tokens.push({ type: "indent", value: indent });
-      tokens.push({ type: "key", value: `"${key}"` });
-      tokens.push({ type: "punctuation", value: ":" });
+      pushToken("indent", indent);
+      pushToken("key", `"${key}"`);
+      pushToken("punctuation", ":");
 
       // Parse value
       const valueMatch = rest.match(/^\s*(.+?)(,?)$/);
       if (valueMatch) {
         const [, value, comma] = valueMatch;
-        tokens.push({ type: "space", value: " " });
+        pushToken("space", " ");
         if (value.startsWith('"')) {
-          tokens.push({ type: "string", value: value.replace(/,$/, "") });
+          pushToken("string", value.replace(/,$/, ""));
         } else if (value === "true" || value === "false") {
-          tokens.push({ type: "boolean", value });
+          pushToken("boolean", value);
         } else if (value === "null") {
-          tokens.push({ type: "null", value });
+          pushToken("null", value);
         } else if (!Number.isNaN(Number(value.replace(/,$/, "")))) {
-          tokens.push({ type: "number", value: value.replace(/,$/, "") });
+          pushToken("number", value.replace(/,$/, ""));
         } else {
-          tokens.push({ type: "other", value: value.replace(/,$/, "") });
+          pushToken("other", value.replace(/,$/, ""));
         }
-        if (comma) tokens.push({ type: "punctuation", value: comma });
+        if (comma) pushToken("punctuation", comma);
       }
     } else {
-      tokens.push({ type: "other", value: line });
+      pushToken("other", line);
     }
-    tokens.push({ type: "newline", value: "\n" });
+    pushToken("newline", "\n");
   }
 
   const colorMap: Record<string, string> = {
@@ -134,8 +140,8 @@ function JsonHighlight({ json }: { json: string }) {
 
   return (
     <code>
-      {tokens.map((token, i) => (
-        <span key={`${i}-${token.type}`} className={colorMap[token.type] || ""}>
+      {tokens.map((token) => (
+        <span key={token.key} className={colorMap[token.type] || ""}>
           {token.value}
         </span>
       ))}
@@ -163,6 +169,8 @@ export function RequestLogDetail({ log, t = defaultT, locale }: RequestLogDetail
 
   return (
     <div className="space-y-6 p-4 pt-6">
+      <RequestIdDisplay requestId={log.request_id} t={t} />
+
       {/* Summary */}
       <div className="flex flex-wrap items-center gap-4">
         <span className={cn("rounded-md px-2.5 py-1 font-medium font-mono text-sm", statusBg, statusColor)}>
@@ -224,9 +232,6 @@ export function RequestLogDetail({ log, t = defaultT, locale }: RequestLogDetail
           <JsonViewer data={log.headers} noDataLabel="No headers data" t={t} />
         </TabsContent>
       </Tabs>
-
-      {/* Request ID */}
-      <RequestIdDisplay requestId={log.request_id} t={t} />
     </div>
   );
 }
@@ -241,17 +246,19 @@ function RequestIdDisplay({ requestId, t }: { requestId: string; t: TranslationF
   };
 
   return (
-    <div className="flex items-center gap-2 border-t pt-4 text-muted-foreground text-xs">
-      <span>{t("Request ID")}:</span>
-      <code className="font-mono">{requestId}</code>
+    <div className="flex flex-col gap-3 rounded-lg border bg-muted/20 p-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="space-y-1">
+        <div className="text-muted-foreground text-xs uppercase tracking-wide">{t("Request ID")}</div>
+        <code className="block break-all font-mono text-sm">{requestId}</code>
+      </div>
       <Button
         variant="ghost"
         size="sm"
-        className="h-6 w-6 p-0"
+        className="h-8 w-8 self-start p-0 sm:self-center"
         onClick={handleCopy}
         title={t("Copy to clipboard")}
       >
-        {copied ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
+        {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
       </Button>
     </div>
   );

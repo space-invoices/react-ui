@@ -1,24 +1,33 @@
-import type { CreateInvoice, Invoice } from "@spaceinvoices/js-sdk";
+import type { CreateInvoice, Invoice, SDKMethodOptions, UpdateInvoice } from "@spaceinvoices/js-sdk";
+import { documents, invoices } from "@spaceinvoices/js-sdk";
 import { useQuery } from "@tanstack/react-query";
-
 import { createResourceHooks } from "@/ui/hooks/create-resource-hooks";
-import { useSDK } from "@/ui/providers/sdk-provider";
 
 // Define a constant for the invoices cache key
 export const INVOICES_CACHE_KEY = "invoices";
 export const NEXT_INVOICE_NUMBER_CACHE_KEY = "next-invoice-number";
+
+const voidInvoice = async (id: string, options?: SDKMethodOptions): Promise<void> => {
+  await invoices.void(id, {}, options);
+};
 
 // Create invoice-specific hooks using the factory
 const {
   useCreateResource: useCreateInvoice,
   useUpdateResource: useUpdateInvoice,
   useDeleteResource: useDeleteInvoice,
-} = createResourceHooks<Invoice, CreateInvoice>("invoices", INVOICES_CACHE_KEY);
-
-export { useCreateInvoice, useUpdateInvoice, useDeleteInvoice };
+} = createResourceHooks<Invoice, CreateInvoice, UpdateInvoice>(
+  {
+    create: invoices.create,
+    update: invoices.update,
+    delete: voidInvoice,
+  },
+  INVOICES_CACHE_KEY,
+);
 
 // Re-export document types for backward compatibility
 export type { DocumentTypes } from "../documents/types";
+export { useCreateInvoice, useDeleteInvoice, useUpdateInvoice };
 
 // ============================================================================
 // Next Invoice Number Preview
@@ -30,6 +39,16 @@ export type NextInvoiceNumberResponse = {
   furs: {
     business_premise_name: string;
     electronic_device_name: string;
+  } | null;
+  fina?: {
+    business_premise_name: string;
+    electronic_device_name: string;
+  } | null;
+  pt?: {
+    series_id: string;
+    series_code: string;
+    validation_code: string;
+    manual?: boolean;
   } | null;
 };
 
@@ -45,8 +64,6 @@ export function useNextInvoiceNumber(
     enabled?: boolean;
   },
 ) {
-  const { sdk } = useSDK();
-
   return useQuery<NextInvoiceNumberResponse>({
     queryKey: [
       NEXT_INVOICE_NUMBER_CACHE_KEY,
@@ -55,7 +72,7 @@ export function useNextInvoiceNumber(
       options?.electronic_device_name,
     ],
     queryFn: async () => {
-      const response = await sdk.documents.getNextNumber(
+      const response = await documents.getNextNumber(
         {
           type: "invoice",
           business_premise_name: options?.business_premise_name,
@@ -65,7 +82,7 @@ export function useNextInvoiceNumber(
       );
       return response as NextInvoiceNumberResponse;
     },
-    enabled: options?.enabled !== false && !!entityId && !!sdk?.documents,
+    enabled: options?.enabled !== false && !!entityId,
     staleTime: 0, // Always refetch when form opens or params change
   });
 }

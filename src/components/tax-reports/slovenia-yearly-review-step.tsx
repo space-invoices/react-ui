@@ -1,5 +1,6 @@
 import { AlertCircle, TriangleAlert } from "lucide-react";
 import type { ChangeEvent } from "react";
+import { getDisplayDocumentNumber } from "@/ui/lib/document-display";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
@@ -196,7 +197,7 @@ export function SloveniaYearlyReviewStep({
                       >
                         <div className="flex flex-wrap items-center justify-between gap-2">
                           <div className="font-medium">
-                            {document.number} ·{" "}
+                            {getDisplayDocumentNumber(document, t)} ·{" "}
                             {document.type === "invoice"
                               ? t("slovenia-yearly.review.issues.document-type.invoice")
                               : t("slovenia-yearly.review.issues.document-type.credit-note")}

@@ -29,6 +29,7 @@ import { Input } from "@/ui/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui/components/ui/select";
 import { Spinner } from "@/ui/components/ui/spinner";
 import { type SendEmailSchema, sendEmailSchema } from "@/ui/generated/schemas";
+import { getDisplayDocumentNumber } from "@/ui/lib/document-display";
 import { getFullLocale } from "@/ui/lib/locale";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
@@ -326,7 +327,7 @@ export function SendEmailDialog({
         <DialogHeader>
           <DialogTitle>{t(documentConfig.dialogTitle)}</DialogTitle>
           <DialogDescription>
-            {t(documentConfig.description).replace("{number}", document.number || "")}
+            {t(documentConfig.description).replace("{number}", getDisplayDocumentNumber(document, t, ""))}
           </DialogDescription>
         </DialogHeader>
 

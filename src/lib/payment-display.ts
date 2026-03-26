@@ -1,3 +1,5 @@
+import { getDisplayDocumentNumber } from "@/ui/lib/document-display";
+
 type TranslateFn = (key: string) => string;
 
 const AUTO_APPLIED_CREDIT_NOTE_TEMPLATE = "Auto-applied credit note for voided invoice {number}";
@@ -62,7 +64,7 @@ export function getPaymentDocumentDisplay(payment: PaymentDocumentLike): Payment
   if (payment.Invoice) {
     return {
       id: payment.Invoice.id,
-      label: payment.Invoice.number,
+      label: getDisplayDocumentNumber(payment.Invoice, (key) => key),
       isNavigable: true,
     };
   }
@@ -70,7 +72,7 @@ export function getPaymentDocumentDisplay(payment: PaymentDocumentLike): Payment
   if (payment.CreditNote) {
     return {
       id: payment.CreditNote.id,
-      label: payment.CreditNote.number,
+      label: getDisplayDocumentNumber(payment.CreditNote, (key) => key),
       isNavigable: true,
     };
   }
@@ -78,7 +80,7 @@ export function getPaymentDocumentDisplay(payment: PaymentDocumentLike): Payment
   if (payment.AdvanceInvoice) {
     return {
       id: payment.AdvanceInvoice.id,
-      label: payment.AdvanceInvoice.number,
+      label: getDisplayDocumentNumber(payment.AdvanceInvoice, (key) => key),
       isNavigable: true,
     };
   }

@@ -18,6 +18,7 @@ import type {
 import { Badge } from "@/ui/components/ui/badge";
 import { Button } from "@/ui/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/ui/components/ui/tooltip";
+import { getDisplayDocumentNumber } from "@/ui/lib/document-display";
 import { getEslogSelectionState } from "@/ui/lib/eslog-export";
 import { getFiscalizationFailureType } from "@/ui/lib/fiscalization";
 import { createTranslation } from "@/ui/lib/translation";
@@ -240,7 +241,7 @@ export default function InvoiceListTable({
           return (
             <div className="flex items-center gap-2">
               <Button variant="link" className="cursor-pointer py-0 underline" onClick={() => onRowClick?.(invoice)}>
-                {invoice.number}
+                {getDisplayDocumentNumber(invoice as Invoice & { is_draft?: boolean }, t)}
               </Button>
               {(invoice as any).is_draft && (
                 <Badge

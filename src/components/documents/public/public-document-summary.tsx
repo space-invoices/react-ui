@@ -1,6 +1,7 @@
 import type { AdvanceInvoice, CreditNote, DeliveryNote, Estimate, Invoice } from "@spaceinvoices/js-sdk";
 import { Badge } from "@/ui/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/ui/components/ui/card";
+import { getDisplayDocumentNumber } from "@/ui/lib/document-display";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
 import { getDocumentConfig, type DocumentTypes } from "../types";
@@ -259,6 +260,7 @@ export function PublicDocumentSummary({
   const fmtDate = (date: Date | string | null | undefined) => formatDate(date, locale);
   const config = getDocumentConfig(documentType);
   const resolvedDocumentTypeLabel = documentTypeLabel ?? t(config.singularName);
+  const displayNumber = getDisplayDocumentNumber(document, t);
   const isInvoiceLike = documentType === "invoice" || documentType === "advance_invoice";
   const isEstimate = documentType === "estimate";
   const invoiceDoc = document as Invoice | AdvanceInvoice;
@@ -275,7 +277,7 @@ export function PublicDocumentSummary({
 
   const rows: Array<{ label: string; value: string }> = [
     { label: t("Type"), value: resolvedDocumentTypeLabel },
-    { label: t("Number"), value: document.number },
+    { label: t("Number"), value: displayNumber },
     { label: t("Date"), value: fmtDate(document.date) },
   ];
 
@@ -323,7 +325,7 @@ export function PublicDocumentSummary({
         <div className="flex items-start justify-between gap-3">
           <div className="space-y-1">
             <CardTitle>{resolvedDocumentTypeLabel}</CardTitle>
-            <p className="text-muted-foreground text-sm">{document.number}</p>
+            <p className="text-muted-foreground text-sm">{displayNumber}</p>
           </div>
           <Badge variant={statusBadge.variant}>{statusBadge.label}</Badge>
         </div>

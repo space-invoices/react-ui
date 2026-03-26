@@ -17,6 +17,7 @@ import type {
 import { Badge } from "@/ui/components/ui/badge";
 import { Button } from "@/ui/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/ui/components/ui/tooltip";
+import { getDisplayDocumentNumber } from "@/ui/lib/document-display";
 import { getFiscalizationFailureType } from "@/ui/lib/fiscalization";
 import { createTranslation } from "@/ui/lib/translation";
 
@@ -215,7 +216,7 @@ export default function AdvanceInvoiceListTable({
                 className="cursor-pointer py-0 underline"
                 onClick={() => onRowClick?.(advanceInvoice)}
               >
-                {advanceInvoice.number}
+                {getDisplayDocumentNumber(advanceInvoice as AdvanceInvoice & { is_draft?: boolean }, t)}
               </Button>
               {(advanceInvoice as any).is_draft && (
                 <Badge

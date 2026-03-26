@@ -2,6 +2,7 @@ import type { AdvanceInvoice, CreditNote, DeliveryNote, Estimate, Invoice } from
 import { Badge } from "@/ui/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/ui/components/ui/card";
 import { Separator } from "@/ui/components/ui/separator";
+import { getDisplayDocumentNumber } from "@/ui/lib/document-display";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
 import de from "./locales/de";
@@ -86,7 +87,7 @@ export function DocumentDetailsCard({
     <>
       <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
         <div className="text-muted-foreground">{t("Number")}</div>
-        <div className="text-right font-medium">{document.number}</div>
+        <div className="text-right font-medium">{getDisplayDocumentNumber(document, t)}</div>
 
         <div className="text-muted-foreground">{t("Date")}</div>
         <div className="text-right">{fmtDate(document.date)}</div>

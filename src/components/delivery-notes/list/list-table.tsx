@@ -15,6 +15,7 @@ import type {
 } from "@/ui/components/table/types";
 import { Badge } from "@/ui/components/ui/badge";
 import { Button } from "@/ui/components/ui/button";
+import { getDisplayDocumentNumber } from "@/ui/lib/document-display";
 import { createTranslation } from "@/ui/lib/translation";
 
 import DeliveryNoteListRowActions from "./list-row-actions";
@@ -180,7 +181,7 @@ export default function DeliveryNoteListTable({
         cell: (deliveryNote) => (
           <div className="flex items-center gap-2">
             <Button variant="link" className="cursor-pointer py-0 underline" onClick={() => onRowClick?.(deliveryNote)}>
-              {deliveryNote.number}
+              {getDisplayDocumentNumber(deliveryNote as DeliveryNote & { is_draft?: boolean }, t)}
             </Button>
             {(deliveryNote as any).is_draft && (
               <Badge

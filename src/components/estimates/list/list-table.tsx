@@ -15,6 +15,7 @@ import type {
 } from "@/ui/components/table/types";
 import { Badge } from "@/ui/components/ui/badge";
 import { Button } from "@/ui/components/ui/button";
+import { getDisplayDocumentNumber } from "@/ui/lib/document-display";
 import { getEslogSelectionState } from "@/ui/lib/eslog-export";
 import { createTranslation } from "@/ui/lib/translation";
 
@@ -210,7 +211,7 @@ export default function EstimateListTable({
         cell: (estimate) => (
           <div className="flex items-center gap-2">
             <Button variant="link" className="cursor-pointer py-0 underline" onClick={() => onRowClick?.(estimate)}>
-              {estimate.number}
+              {getDisplayDocumentNumber(estimate as Estimate & { is_draft?: boolean }, t)}
             </Button>
             {(estimate as any).is_draft && (
               <Badge

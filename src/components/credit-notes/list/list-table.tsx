@@ -17,6 +17,7 @@ import type {
 import { Badge } from "@/ui/components/ui/badge";
 import { Button } from "@/ui/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/ui/components/ui/tooltip";
+import { getDisplayDocumentNumber } from "@/ui/lib/document-display";
 import { getEslogSelectionState } from "@/ui/lib/eslog-export";
 import { getFiscalizationFailureType } from "@/ui/lib/fiscalization";
 import { createTranslation } from "@/ui/lib/translation";
@@ -222,7 +223,7 @@ export default function CreditNoteListTable({
           return (
             <div className="flex items-center gap-2">
               <Button variant="link" className="cursor-pointer py-0 underline" onClick={() => onRowClick?.(creditNote)}>
-                {creditNote.number}
+                {getDisplayDocumentNumber(creditNote as CreditNote & { is_draft?: boolean }, t)}
               </Button>
               {(creditNote as any).is_draft && (
                 <Badge

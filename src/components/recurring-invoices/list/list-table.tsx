@@ -10,28 +10,44 @@ import { Badge } from "@/ui/components/ui/badge";
 import { createTranslation } from "@/ui/lib/translation";
 
 import RecurringInvoiceListRowActions from "./list-row-actions";
+import bg from "./locales/bg";
+import cs from "./locales/cs";
 import de from "./locales/de";
 import en from "./locales/en";
 import es from "./locales/es";
+import et from "./locales/et";
+import fi from "./locales/fi";
 import fr from "./locales/fr";
 import hr from "./locales/hr";
+import is from "./locales/is";
 import it from "./locales/it";
+import nb from "./locales/nb";
 import nl from "./locales/nl";
 import pl from "./locales/pl";
 import pt from "./locales/pt";
+import sk from "./locales/sk";
 import sl from "./locales/sl";
+import sv from "./locales/sv";
 
 const translations = withTableTranslations({
   en,
   sl,
+  bg,
+  cs,
   de,
-  it,
-  fr,
   es,
-  pt,
+  et,
+  fi,
+  fr,
+  hr,
+  is,
+  it,
+  nb,
   nl,
   pl,
-  hr,
+  pt,
+  sk,
+  sv,
 } as const);
 
 function statusVariant(status: string): "default" | "secondary" | "outline" {
@@ -43,6 +59,10 @@ function statusVariant(status: string): "default" | "secondary" | "outline" {
     default:
       return "outline";
   }
+}
+
+function booleanVariant(value: boolean): "default" | "secondary" {
+  return value ? "default" : "secondary";
 }
 
 type RecurringInvoiceListTableProps = {
@@ -131,6 +151,20 @@ export default function RecurringInvoiceListTable({
           ) : (
             <span className="text-muted-foreground">-</span>
           ),
+      },
+      {
+        id: "auto_send",
+        header: t("Auto-send"),
+        cell: (ri) => <Badge variant={booleanVariant(ri.auto_send)}>{ri.auto_send ? t("Yes") : t("No")}</Badge>,
+      },
+      {
+        id: "create_as_draft",
+        header: t("Create as draft"),
+        cell: (ri) => (
+          <Badge variant={booleanVariant(ri.create_as_draft)}>
+            {ri.create_as_draft ? t("Yes") : t("No")}
+          </Badge>
+        ),
       },
       {
         id: "invoices_generated",

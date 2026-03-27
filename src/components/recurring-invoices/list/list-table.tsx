@@ -51,6 +51,8 @@ type RecurringInvoiceListTableProps = {
   locale?: string;
   translationLocale?: string;
   entityId?: string;
+  editLabel?: string;
+  onEditRecurringInvoice?: (recurringInvoice: RecurringInvoice) => void;
   onViewSourceInvoice?: (documentId: string) => void;
   onDeleteSuccess?: () => void;
   onDeleteError?: (error: string) => void;
@@ -60,6 +62,8 @@ export default function RecurringInvoiceListTable({
   queryParams,
   onChangeParams,
   entityId,
+  editLabel,
+  onEditRecurringInvoice,
   onViewSourceInvoice,
   onDeleteSuccess,
   onDeleteError,
@@ -150,6 +154,8 @@ export default function RecurringInvoiceListTable({
           <RecurringInvoiceListRowActions
             recurringInvoice={ri}
             entityId={entityId}
+            editLabel={editLabel}
+            onEdit={onEditRecurringInvoice}
             onViewSourceInvoice={onViewSourceInvoice}
             onDeleteSuccess={onDeleteSuccess}
             onDeleteError={onDeleteError}
@@ -159,7 +165,17 @@ export default function RecurringInvoiceListTable({
         ),
       },
     ],
-    [t, frequencyLabels, entityId, onViewSourceInvoice, onDeleteSuccess, onDeleteError, i18nProps.locale],
+    [
+      t,
+      frequencyLabels,
+      entityId,
+      editLabel,
+      onEditRecurringInvoice,
+      onViewSourceInvoice,
+      onDeleteSuccess,
+      onDeleteError,
+      i18nProps.locale,
+    ],
   );
 
   return (

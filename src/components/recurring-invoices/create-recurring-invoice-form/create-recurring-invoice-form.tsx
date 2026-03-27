@@ -1,6 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import type { CreateRecurringInvoiceBody, RecurringInvoice } from "@spaceinvoices/js-sdk";
+import type { CreateRecurringInvoiceBody, RecurringInvoice, UpdateRecurringInvoiceBody } from "@spaceinvoices/js-sdk";
 import { CalendarIcon } from "lucide-react";
+import { useEffect, useMemo } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { Button } from "@/ui/components/ui/button";
 import { Calendar } from "@/ui/components/ui/calendar";
@@ -23,27 +24,45 @@ import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
 import { cn } from "@/ui/lib/utils";
 
-import { useCreateRecurringInvoice } from "../recurring-invoices.hooks";
+import { useCreateRecurringInvoice, useUpdateRecurringInvoice } from "../recurring-invoices.hooks";
+import bg from "./locales/bg";
+import cs from "./locales/cs";
 import de from "./locales/de";
+import en from "./locales/en";
 import es from "./locales/es";
+import et from "./locales/et";
+import fi from "./locales/fi";
 import fr from "./locales/fr";
 import hr from "./locales/hr";
+import is from "./locales/is";
 import it from "./locales/it";
+import nb from "./locales/nb";
 import nl from "./locales/nl";
 import pl from "./locales/pl";
 import pt from "./locales/pt";
+import sk from "./locales/sk";
 import sl from "./locales/sl";
+import sv from "./locales/sv";
 
 const translations = {
+  en,
   sl,
+  bg,
+  cs,
   de,
-  it,
-  fr,
   es,
-  pt,
+  et,
+  fi,
+  fr,
+  hr,
+  is,
+  it,
+  nb,
   nl,
   pl,
-  hr,
+  pt,
+  sk,
+  sv,
 } as const;
 
 const FREQUENCY_LABELS: Record<string, string> = {
@@ -88,6 +107,7 @@ function formatDateToYMD(date: Date): string {
 type CreateRecurringInvoiceFormProps = {
   entityId: string;
   documentId: string;
+  recurringInvoice?: RecurringInvoice | null;
   onSuccess?: (recurringInvoice: RecurringInvoice) => void;
   onError?: (error: Error) => void;
   allowDrafts?: boolean;
@@ -97,6 +117,7 @@ type CreateRecurringInvoiceFormProps = {
 export default function CreateRecurringInvoiceForm({
   entityId,
   documentId,
+  recurringInvoice,
   onSuccess,
   onError,
   allowDrafts = true,
@@ -110,24 +131,33 @@ export default function CreateRecurringInvoiceForm({
   const formatDisplayDate = (value?: string) =>
     value ? new Date(`${value}T00:00:00`).toLocaleDateString(i18nProps.locale) : undefined;
 
+  const defaultValues = useMemo<CreateRecurringInvoiceSchema>(
+    () => ({
+      document_id: documentId,
+      name: recurringInvoice?.name ?? "",
+      frequency: recurringInvoice?.frequency ?? "monthly",
+      interval: recurringInvoice?.interval ?? 1,
+      day_of_week: recurringInvoice?.day_of_week ?? null,
+      day_of_month: recurringInvoice?.day_of_month ?? null,
+      month_of_year: recurringInvoice?.month_of_year ?? null,
+      start_date: recurringInvoice?.start_date ?? formatDateToYMD(new Date()),
+      end_date: recurringInvoice?.end_date ?? undefined,
+      auto_send: recurringInvoice?.auto_send ?? false,
+      create_as_draft: recurringInvoice?.create_as_draft ?? false,
+    }),
+    [documentId, recurringInvoice],
+  );
+
   const form = useForm<CreateRecurringInvoiceSchema>({
     resolver: zodResolver(createRecurringInvoiceSchema),
-    defaultValues: {
-      document_id: documentId,
-      name: "",
-      frequency: "monthly",
-      interval: 1,
-      day_of_week: null,
-      day_of_month: null,
-      month_of_year: null,
-      start_date: formatDateToYMD(new Date()),
-      end_date: undefined,
-      auto_send: false,
-      create_as_draft: false,
-    },
+    defaultValues,
   });
 
   const frequency = useWatch({ control: form.control, name: "frequency" });
+
+  useEffect(() => {
+    form.reset(defaultValues);
+  }, [defaultValues, form]);
 
   const { mutate: createRecurringInvoice, isPending } = useCreateRecurringInvoice({
     entityId,
@@ -144,8 +174,55 @@ export default function CreateRecurringInvoiceForm({
     },
   });
 
+  const { mutate: updateRecurringInvoice, isPending: isUpdating } = useUpdateRecurringInvoice({
+    entityId,
+    onSuccess: (updatedRecurringInvoice, _variables, _context) => {
+      onSuccess?.(updatedRecurringInvoice);
+    },
+    onError: (error, _variables, _context) => {
+      form.setError("root", {
+        type: "submit",
+        message: t("There was an error creating the schedule"),
+      });
+      onError?.(error);
+    },
+  });
+
+  const buildSubmitPayload = (values: CreateRecurringInvoiceSchema) => {
+    const payload: CreateRecurringInvoiceBody = {
+      document_id: documentId,
+      name: values.name,
+      frequency: values.frequency,
+      interval: values.interval,
+      start_date: values.start_date,
+      end_date: values.end_date,
+      auto_send: values.auto_send,
+      create_as_draft: values.create_as_draft,
+      day_of_week: values.frequency === "weekly" ? values.day_of_week : null,
+      day_of_month:
+        values.frequency === "monthly" || values.frequency === "yearly" ? values.day_of_month : null,
+      month_of_year: values.frequency === "yearly" ? values.month_of_year : null,
+    };
+
+    return payload;
+  };
+
   const onSubmit = async (values: CreateRecurringInvoiceSchema) => {
-    createRecurringInvoice(values as CreateRecurringInvoiceBody);
+    const payload = buildSubmitPayload(values);
+
+    if (recurringInvoice) {
+      const { document_id, ...updateData } = payload;
+      updateRecurringInvoice({
+        id: recurringInvoice.id,
+        data: {
+          ...updateData,
+          end_date: updateData.end_date ?? null,
+        } satisfies UpdateRecurringInvoiceBody,
+      });
+      return;
+    }
+
+    createRecurringInvoice(payload);
   };
 
   const handleSubmitClick = () => {
@@ -182,7 +259,7 @@ export default function CreateRecurringInvoiceForm({
                   {t("Frequency")}
                   <span className="ml-1 text-red-500">*</span>
                 </FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder={t("Select frequency")}>
@@ -415,7 +492,7 @@ export default function CreateRecurringInvoiceForm({
         ) : null}
 
         {renderSubmitButton?.({
-          isSubmitting: isPending || form.formState.isSubmitting,
+          isSubmitting: isPending || isUpdating || form.formState.isSubmitting,
           submit: handleSubmitClick,
         })}
       </form>

@@ -1,7 +1,7 @@
 import type { RecurringInvoice } from "@spaceinvoices/js-sdk";
 import { recurringInvoices } from "@spaceinvoices/js-sdk";
 import { useQueryClient } from "@tanstack/react-query";
-import { Eye, MoreHorizontal, Pause, Play, Trash2 } from "lucide-react";
+import { Eye, MoreHorizontal, Pause, Pencil, Play, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/ui/components/ui/button";
 import {
@@ -42,6 +42,8 @@ const translations = {
 type RecurringInvoiceListRowActionsProps = {
   recurringInvoice: RecurringInvoice;
   entityId?: string;
+  editLabel?: string;
+  onEdit?: (recurringInvoice: RecurringInvoice) => void;
   onViewSourceInvoice?: (documentId: string) => void;
   onDeleteSuccess?: () => void;
   onDeleteError?: (error: string) => void;
@@ -50,6 +52,8 @@ type RecurringInvoiceListRowActionsProps = {
 export default function RecurringInvoiceListRowActions({
   recurringInvoice,
   entityId,
+  editLabel,
+  onEdit,
   onViewSourceInvoice,
   onDeleteSuccess,
   onDeleteError,
@@ -106,6 +110,10 @@ export default function RecurringInvoiceListRowActions({
       <DropdownMenuContent align="end">
         <DropdownMenuLabel>{t("Actions")}</DropdownMenuLabel>
         <DropdownMenuGroup>
+          <DropdownMenuItem className="cursor-pointer" onClick={() => onEdit?.(recurringInvoice)}>
+            <Pencil className="h-4 w-4" />
+            {editLabel ?? "Edit"}
+          </DropdownMenuItem>
           {recurringInvoice.document_id && (
             <DropdownMenuItem
               className="cursor-pointer"

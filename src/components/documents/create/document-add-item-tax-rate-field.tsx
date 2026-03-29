@@ -1,7 +1,6 @@
 import type { Tax } from "@spaceinvoices/js-sdk";
 import { Plus, Trash2 } from "lucide-react";
 import { useEffect } from "react";
-import type { Control } from "react-hook-form";
 import { useFormContext, useWatch } from "react-hook-form";
 import { Button } from "@/ui/components/ui/button";
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/ui/components/ui/form";
@@ -36,7 +35,7 @@ function getCurrentRate(tax: Tax): number {
 type DocumentAddItemTaxRateFieldProps = {
   index: number;
   taxIndex: number;
-  control: Control<any>;
+  control: any;
   entityId: string;
   onRemove: () => void;
   onAddNewTax?: () => void;

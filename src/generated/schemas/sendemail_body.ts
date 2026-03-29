@@ -19,27 +19,7 @@ const sendEmailSchemaDefinition = z.object({
   sandbox_skip_delivery: z.boolean().optional().default(false),
   locale: z
     .union([
-      z.enum([
-        "en-US",
-        "de-DE",
-        "it-IT",
-        "fr-FR",
-        "es-ES",
-        "sl-SI",
-        "pt-PT",
-        "nl-NL",
-        "pl-PL",
-        "hr-HR",
-        "sv-SE",
-        "fi-FI",
-        "et-EE",
-        "bg-BG",
-        "cs-CZ",
-        "sk-SK",
-        "nb-NO",
-        "is-IS",
-        null,
-      ]),
+      z.union([z.enum(["en-US", "de-DE", "it-IT", "fr-FR", "es-ES", "sl-SI", "pt-PT", "nl-NL", "pl-PL", "hr-HR", "sv-SE", "fi-FI", "et-EE", "bg-BG", "cs-CZ", "sk-SK", "nb-NO", "is-IS"]), z.null()]),
       z.null(),
     ])
     .optional(),

@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 export type SloveniaTaxProfileFormState = {
   business_form: "sp" | "doo" | "dno" | "club" | "";
   income_tax_regime: "normirani" | "dejanski" | "";
-  vat_profile: "standard" | "special_vat_identified" | "";
+  vat_profile: "standard" | "special_vat_identified" | "non_vat_subject" | "";
   tax_residency: "resident" | "non_resident" | "";
   activity_code: string;
   registration_number: string;
@@ -140,6 +140,9 @@ export function SloveniaTaxProfileStep({
               <SelectItem value="standard">{t("slovenia-yearly.profile.vat-profile.options.standard")}</SelectItem>
               <SelectItem value="special_vat_identified">
                 {t("slovenia-yearly.profile.vat-profile.options.special_vat_identified")}
+              </SelectItem>
+              <SelectItem value="non_vat_subject">
+                {t("slovenia-yearly.profile.vat-profile.options.non_vat_subject")}
               </SelectItem>
             </SelectContent>
           </Select>

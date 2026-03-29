@@ -143,11 +143,11 @@ const LineDiscount = z.object({
 // Dependency schema for renderdeliverynotepreview_body
 const CreateDocumentItem = z
   .object({
-    type: z.union([z.enum(["separator", null]), z.null()]),
+    type: z.union([z.union([z.enum(["separator"]), z.null()]), z.null()]),
     name: z.union([z.string(), z.null()]),
     description: z.union([z.string(), z.null()]),
     classification: z.union([
-      z.enum(["product", "service", "advance", null]),
+      z.union([z.enum(["product", "service", "advance"]), z.null()]),
       z.null(),
     ]),
     price: z.union([z.number(), z.null()]),

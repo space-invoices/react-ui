@@ -1,7 +1,6 @@
 import type { Item } from "@spaceinvoices/js-sdk";
 import { ChevronDown, ChevronUp, DollarSign, Minus, Percent, Plus, PlusIcon, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
-import type { Control, UseFormReturn } from "react-hook-form";
 import { useWatch } from "react-hook-form";
 
 import { ItemCombobox } from "@/ui/components/items/item-combobox";
@@ -25,7 +24,7 @@ import DocumentAddItemTaxRateField from "./document-add-item-tax-rate-field";
 
 type DocumentAddItemFormProps = {
   index: number;
-  control: Control<any>;
+  control: any;
   documentType?: "invoice" | "estimate" | "credit_note" | "advance_invoice" | "delivery_note";
   entityId: string;
   currencyCode?: string;
@@ -36,7 +35,7 @@ type DocumentAddItemFormProps = {
   showRemove: boolean;
   showMoveUp: boolean;
   showMoveDown: boolean;
-  form: UseFormReturn<any>;
+  form: any;
   t: (key: string) => string;
   /** When true, tax controls are disabled (e.g., for VIES reverse charge) */
   taxesDisabled?: boolean;

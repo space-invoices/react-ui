@@ -59,6 +59,7 @@ export type CurrentSubscription = {
   payment_provider: "stripe" | "paypal" | "bank" | "braintree";
   bank_reference: string | null;
   billing_email: string | null;
+  coupon_code: string | null;
   trial_ends_at: string | null;
   trial_days_remaining: number | null;
   cancel_at: string | null;
@@ -119,6 +120,7 @@ type WLSubscriptionContextType = {
   activateSubscription: (
     planSlug: string,
     billingInterval: "monthly" | "yearly",
+    couponCode?: string | null,
   ) => Promise<{ invoice_id?: string | null; scheduled?: boolean }>;
   refresh: () => Promise<void>;
 };
@@ -151,6 +153,7 @@ const DEFAULT_SUBSCRIPTION: CurrentSubscription = {
   payment_provider: "stripe",
   bank_reference: null,
   billing_email: null,
+  coupon_code: null,
   trial_ends_at: null,
   trial_days_remaining: null,
   cancel_at: null,
@@ -378,6 +381,7 @@ export function WLSubscriptionProvider({ children, apiBaseUrl }: WLSubscriptionP
     async (
       planSlug: string,
       billingInterval: "monthly" | "yearly",
+      couponCode?: string | null,
     ): Promise<{ invoice_id?: string | null; scheduled?: boolean }> => {
       if (!entityId || !accessToken) {
         throw new Error("Not authenticated");
@@ -394,6 +398,7 @@ export function WLSubscriptionProvider({ children, apiBaseUrl }: WLSubscriptionP
         body: JSON.stringify({
           plan_slug: planSlug,
           billing_interval: billingInterval,
+          ...(couponCode !== undefined ? { coupon_code: couponCode } : {}),
         }),
       });
 

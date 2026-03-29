@@ -3,16 +3,7 @@
 import * as React from "react"
 import type * as LabelPrimitive from "@radix-ui/react-label"
 import { Slot } from "@radix-ui/react-slot"
-import {
-  Controller,
-  type ControllerProps,
-  type FieldErrors,
-  type FieldPath,
-  type FieldValues,
-  FormProvider,
-  type UseFormReturn,
-  useFormContext,
-} from "react-hook-form"
+import { Controller, type ControllerProps, type FieldErrors, type FieldPath, type FieldValues, FormProvider, useFormContext } from "react-hook-form"
 
 import { cn } from "@/ui/lib/utils"
 import { Label } from "@/ui/components/ui/label"
@@ -20,16 +11,17 @@ import { getValidationLocale, translateZodValidationMessage } from "@/ui/lib/zod
 
 const ValidationLocaleContext = React.createContext<string | undefined>(undefined)
 
-type FormProps = UseFormReturn<any> & {
+type FormProps = {
   children: React.ReactNode
   locale?: string
+  [key: string]: any
 }
 
 function Form({ locale, ...props }: FormProps) {
   const { watch, getFieldState, clearErrors, trigger } = props
 
   React.useEffect(() => {
-    const subscription = watch((_value, { name, type }) => {
+    const subscription = watch((_value: unknown, { name, type }: { name?: string; type?: string }) => {
       if (!name || type !== "change") return
 
       const fieldState = getFieldState(name)
@@ -49,7 +41,7 @@ function Form({ locale, ...props }: FormProps) {
 
   return (
     <ValidationLocaleContext.Provider value={locale}>
-      <FormProvider {...props} />
+      <FormProvider {...(props as any)} />
     </ValidationLocaleContext.Provider>
   )
 }

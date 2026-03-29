@@ -199,8 +199,7 @@ export default function CreateRecurringInvoiceForm({
       auto_send: values.auto_send,
       create_as_draft: values.create_as_draft,
       day_of_week: values.frequency === "weekly" ? values.day_of_week : null,
-      day_of_month:
-        values.frequency === "monthly" || values.frequency === "yearly" ? values.day_of_month : null,
+      day_of_month: values.frequency === "monthly" || values.frequency === "yearly" ? values.day_of_month : null,
       month_of_year: values.frequency === "yearly" ? values.month_of_year : null,
     };
 

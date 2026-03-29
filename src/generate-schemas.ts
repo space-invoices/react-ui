@@ -70,6 +70,21 @@ async function main() {
   // Fix Zod v3 record syntax - z.record(z.string()) -> z.record(z.string(), z.any())
   content = content.replace(/z\.record\(z\.string\(\)\)/g, "z.record(z.string(), z.any())");
 
+  // Fix nullable enums emitted as z.enum([... , null]), which newer Zod typings reject.
+  content = content.replace(/z\.enum\(\[([\s\S]*?)\]\)/g, (match, values) => {
+    if (!/\bnull\b/.test(values)) {
+      return match;
+    }
+
+    const enumValues = values
+      .split(",")
+      .map((value: string) => value.trim())
+      .filter((value: string) => value.length > 0 && value !== "null")
+      .join(", ");
+
+    return `z.union([z.enum([${enumValues}]), z.null()])`;
+  });
+
   // Remove .default({}) from metadata fields to keep them truly optional
   // When using .optional().default({}), Zod infers the type as required since it always has a value after parsing
   // We want metadata to be optional in the form type to match SDK types

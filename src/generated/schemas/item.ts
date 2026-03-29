@@ -13,7 +13,7 @@ const createItemSchemaDefinition = z.object({
   name: z.string().min(1),
   description: z.union([z.string().max(4000, "Description must not exceed 4000 characters"), z.null()]).optional(),
   classification: z
-    .union([z.enum(["product", "service", "advance", null]), z.null()])
+    .union([z.union([z.enum(["product", "service", "advance"]), z.null()]), z.null()])
     .optional(),
   price: z.number().optional(),
   gross_price: z.number().optional(),
@@ -45,7 +45,7 @@ const updateItemSchemaDefinition = z
     name: z.string().min(1),
     description: z.union([z.string().max(4000, "Description must not exceed 4000 characters"), z.null()]),
     classification: z.union([
-      z.enum(["product", "service", "advance", null]),
+      z.union([z.enum(["product", "service", "advance"]), z.null()]),
       z.null(),
     ]),
     price: z.number(),

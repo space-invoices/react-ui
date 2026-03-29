@@ -119,7 +119,6 @@ function SelectValue({
     <SelectPrimitive.Value
       data-slot="select-value"
       className={cn("flex flex-1 text-left", className)}
-      // @ts-expect-error - Base UI SelectValue accepts placeholder at runtime
       placeholder={placeholder}
       {...props}
     />

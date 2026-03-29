@@ -102,7 +102,7 @@ const PartialEstimatePreview = z.object({
   pt: PtDocumentInput.optional(),
   date_valid_till: z.union([z.string(), z.null()]).optional(),
   title_type: z
-    .union([z.enum(["estimate", "quote", null]), z.null()])
+    .union([z.union([z.enum(["estimate", "quote"]), z.null()]), z.null()])
     .optional(),
   date_due: z.union([z.string(), z.null()]).optional(),
   date_service: z.union([z.string(), z.null()]).optional(),
@@ -166,11 +166,11 @@ const LineDiscount = z.object({
 // Dependency schema for renderestimatepreview_body
 const CreateDocumentItem = z
   .object({
-    type: z.union([z.enum(["separator", null]), z.null()]),
+    type: z.union([z.union([z.enum(["separator"]), z.null()]), z.null()]),
     name: z.union([z.string(), z.null()]),
     description: z.union([z.string(), z.null()]),
     classification: z.union([
-      z.enum(["product", "service", "advance", null]),
+      z.union([z.enum(["product", "service", "advance"]), z.null()]),
       z.null(),
     ]),
     price: z.union([z.number(), z.null()]),
@@ -207,7 +207,7 @@ const CompleteEstimatePreview = z.object({
   pt: PtDocumentInput.optional(),
   date_valid_till: z.union([z.string(), z.null()]).optional(),
   title_type: z
-    .union([z.enum(["estimate", "quote", null]), z.null()])
+    .union([z.union([z.enum(["estimate", "quote"]), z.null()]), z.null()])
     .optional(),
   date_due: z.union([z.string(), z.null()]).optional(),
   date_service: z.union([z.string(), z.null()]).optional(),

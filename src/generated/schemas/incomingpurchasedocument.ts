@@ -97,7 +97,7 @@ const ExchangeRate = z.union([
 
 // Dependency schema for incomingpurchasedocument
 const IncomingPurchaseDocumentSummaryClassification = z.union([
-  z.enum(["goods", "services", null]),
+  z.union([z.enum(["goods", "services"]), z.null()]),
   z.null(),
 ]);
 
@@ -118,15 +118,7 @@ const createIncomingPurchaseDocumentSchemaDefinition = z.object({
   currency_code: z.union([z.string(), z.null()]).optional(),
   transaction_type: z
     .union([
-      z.enum([
-        "domestic",
-        "intra_eu_b2b",
-        "intra_eu_b2c",
-        "3w_b2b",
-        "3w_b2c",
-        "export",
-        null,
-      ]),
+      z.union([z.enum(["domestic", "intra_eu_b2b", "intra_eu_b2c", "3w_b2b", "3w_b2c", "export"]), z.null()]),
       z.null(),
     ])
     .optional(),
@@ -165,15 +157,7 @@ const updateIncomingPurchaseDocumentSchemaDefinition = z
     date_service_to: z.union([z.string(), z.null()]),
     currency_code: z.union([z.string(), z.null()]),
     transaction_type: z.union([
-      z.enum([
-        "domestic",
-        "intra_eu_b2b",
-        "intra_eu_b2c",
-        "3w_b2b",
-        "3w_b2c",
-        "export",
-        null,
-      ]),
+      z.union([z.enum(["domestic", "intra_eu_b2b", "intra_eu_b2c", "3w_b2b", "3w_b2c", "export"]), z.null()]),
       z.null(),
     ]),
     reference: z.union([z.string(), z.null()]),

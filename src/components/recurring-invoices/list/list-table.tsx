@@ -161,9 +161,7 @@ export default function RecurringInvoiceListTable({
         id: "create_as_draft",
         header: t("Create as draft"),
         cell: (ri) => (
-          <Badge variant={booleanVariant(ri.create_as_draft)}>
-            {ri.create_as_draft ? t("Yes") : t("No")}
-          </Badge>
+          <Badge variant={booleanVariant(ri.create_as_draft)}>{ri.create_as_draft ? t("Yes") : t("No")}</Badge>
         ),
       },
       {

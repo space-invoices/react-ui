@@ -34,15 +34,7 @@ const createEntitySchemaDefinition = z.object({
   settings: z
     .object({
       pdf_template: z.union([
-        z.enum([
-          "modern",
-          "classic",
-          "condensed",
-          "minimal",
-          "fashion",
-          "timeless_modern_full_data",
-          null,
-        ]),
+        z.union([z.enum(["modern", "classic", "condensed", "minimal", "fashion", "timeless_modern_full_data"]), z.null()]),
         z.null(),
       ]),
       number_formats: z.union([
@@ -96,19 +88,19 @@ const createEntitySchemaDefinition = z.object({
         z
           .object({
             business_form: z.union([
-              z.enum(["sp", "doo", "dno", "club", null]),
+              z.union([z.enum(["sp", "doo", "dno", "club"]), z.null()]),
               z.null(),
             ]),
             income_tax_regime: z.union([
-              z.enum(["normirani", "dejanski", null]),
+              z.union([z.enum(["normirani", "dejanski"]), z.null()]),
               z.null(),
             ]),
             vat_profile: z.union([
-              z.enum(["standard", "special_vat_identified", null]),
+              z.union([z.enum(["standard", "special_vat_identified", "non_vat_subject"]), z.null()]),
               z.null(),
             ]),
             tax_residency: z.union([
-              z.enum(["resident", "non_resident", null]),
+              z.union([z.enum(["resident", "non_resident"]), z.null()]),
               z.null(),
             ]),
             yearly_reporting: z.union([
@@ -117,11 +109,11 @@ const createEntitySchemaDefinition = z.object({
                   activity_code: z.union([z.string(), z.null()]),
                   registration_number: z.union([z.string(), z.null()]),
                   accounting_type: z.union([
-                    z.enum(["records", "single_entry", "double_entry", null]),
+                    z.union([z.enum(["records", "single_entry", "double_entry"]), z.null()]),
                     z.null(),
                   ]),
                   normiranec_insurance_basis: z.union([
-                    z.enum(["full_time_self_employed", "other", null]),
+                    z.union([z.enum(["full_time_self_employed", "other"]), z.null()]),
                     z.null(),
                   ]),
                   default_withholding_tax_amount: z.union([
@@ -141,7 +133,7 @@ const createEntitySchemaDefinition = z.object({
               z
                 .object({
                   preferred_format: z.union([
-                    z.enum(["vod_xml", "vasco_xml", "minimax_xml", null]),
+                    z.union([z.enum(["vod_xml", "vasco_xml", "minimax_xml"]), z.null()]),
                     z.null(),
                   ]),
                   konto_mappings: z.union([
@@ -375,15 +367,7 @@ const patchEntitySchemaDefinition = z
     settings: z
       .object({
         pdf_template: z.union([
-          z.enum([
-            "modern",
-            "classic",
-            "condensed",
-            "minimal",
-            "fashion",
-            "timeless_modern_full_data",
-            null,
-          ]),
+          z.union([z.enum(["modern", "classic", "condensed", "minimal", "fashion", "timeless_modern_full_data"]), z.null()]),
           z.null(),
         ]),
         number_formats: z.union([
@@ -437,19 +421,19 @@ const patchEntitySchemaDefinition = z
           z
             .object({
               business_form: z.union([
-                z.enum(["sp", "doo", "dno", "club", null]),
+                z.union([z.enum(["sp", "doo", "dno", "club"]), z.null()]),
                 z.null(),
               ]),
               income_tax_regime: z.union([
-                z.enum(["normirani", "dejanski", null]),
+                z.union([z.enum(["normirani", "dejanski"]), z.null()]),
                 z.null(),
               ]),
               vat_profile: z.union([
-                z.enum(["standard", "special_vat_identified", null]),
+                z.union([z.enum(["standard", "special_vat_identified", "non_vat_subject"]), z.null()]),
                 z.null(),
               ]),
               tax_residency: z.union([
-                z.enum(["resident", "non_resident", null]),
+                z.union([z.enum(["resident", "non_resident"]), z.null()]),
                 z.null(),
               ]),
               yearly_reporting: z.union([
@@ -458,11 +442,11 @@ const patchEntitySchemaDefinition = z
                     activity_code: z.union([z.string(), z.null()]),
                     registration_number: z.union([z.string(), z.null()]),
                     accounting_type: z.union([
-                      z.enum(["records", "single_entry", "double_entry", null]),
+                      z.union([z.enum(["records", "single_entry", "double_entry"]), z.null()]),
                       z.null(),
                     ]),
                     normiranec_insurance_basis: z.union([
-                      z.enum(["full_time_self_employed", "other", null]),
+                      z.union([z.enum(["full_time_self_employed", "other"]), z.null()]),
                       z.null(),
                     ]),
                     default_withholding_tax_amount: z.union([
@@ -482,7 +466,7 @@ const patchEntitySchemaDefinition = z
                 z
                   .object({
                     preferred_format: z.union([
-                      z.enum(["vod_xml", "vasco_xml", "minimax_xml", null]),
+                      z.union([z.enum(["vod_xml", "vasco_xml", "minimax_xml"]), z.null()]),
                       z.null(),
                     ]),
                     konto_mappings: z.union([

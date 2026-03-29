@@ -90,17 +90,7 @@ const CreateFinaInvoiceData = z.union([
       operator_oib: z.union([z.string(), z.null()]),
       operator_label: z.union([z.string(), z.null()]),
       payment_type: z.union([
-        z.enum([
-          "cash",
-          "card",
-          "online",
-          "bank_transfer",
-          "paypal",
-          "crypto",
-          "coupon",
-          "other",
-          null,
-        ]),
+        z.union([z.enum(["cash", "card", "online", "bank_transfer", "paypal", "crypto", "coupon", "other"]), z.null()]),
         z.null(),
       ]),
       subsequent_submit: z.union([z.boolean(), z.null()]),
@@ -192,11 +182,11 @@ const LineDiscount = z.object({
 // Dependency schema for renderadvanceinvoicepreview_body
 const CreateDocumentItem = z
   .object({
-    type: z.union([z.enum(["separator", null]), z.null()]),
+    type: z.union([z.union([z.enum(["separator"]), z.null()]), z.null()]),
     name: z.union([z.string(), z.null()]),
     description: z.union([z.string(), z.null()]),
     classification: z.union([
-      z.enum(["product", "service", "advance", null]),
+      z.union([z.enum(["product", "service", "advance"]), z.null()]),
       z.null(),
     ]),
     price: z.union([z.number(), z.null()]),

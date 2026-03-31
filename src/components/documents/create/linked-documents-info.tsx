@@ -1,4 +1,5 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/ui/components/ui/table";
+import { formatDateOnlyForDisplay } from "@/ui/lib/date-only";
 
 export type LinkedDocumentSummary = {
   id: string;
@@ -21,17 +22,7 @@ export function LinkedDocumentsInfo({ documents, locale, t }: LinkedDocumentsInf
 
   const currencyCode = validDocuments[0].currency_code || "EUR";
 
-  const formatDate = (dateStr: string) => {
-    try {
-      return new Date(dateStr).toLocaleDateString(locale, {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-      });
-    } catch {
-      return dateStr;
-    }
-  };
+  const formatDate = (dateStr: string) => formatDateOnlyForDisplay(dateStr, locale);
 
   const formatCurrency = (amount: number) => {
     try {

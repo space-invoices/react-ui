@@ -1,3 +1,5 @@
+import { normalizeDateOnlyInput } from "../../../lib/date-only";
+
 type CustomerData = {
   name?: string | null;
   address?: string | null;
@@ -235,4 +237,3 @@ export function prepareDocumentSubmission<T extends BaseDocumentValues>(
 
   return payload;
 }
-import { normalizeDateOnlyInput } from "@/ui/lib/date-only";

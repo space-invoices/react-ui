@@ -2,6 +2,7 @@ import type { AdvanceInvoice, CreditNote, DeliveryNote, Estimate, Invoice } from
 import { Badge } from "@/ui/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/ui/components/ui/card";
 import { Separator } from "@/ui/components/ui/separator";
+import { formatDateOnlyForDisplay } from "@/ui/lib/date-only";
 import { getDisplayDocumentNumber } from "@/ui/lib/document-display";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
@@ -32,16 +33,6 @@ function formatCurrency(amount: number, currencyCode: string, locale: string): s
     style: "currency",
     currency: currencyCode,
   }).format(amount);
-}
-
-function formatDate(date: Date | string | null | undefined, locale: string): string {
-  if (!date) return "-";
-  const d = typeof date === "string" ? new Date(date) : date;
-  return new Intl.DateTimeFormat(locale, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  }).format(d);
 }
 
 /**
@@ -75,7 +66,7 @@ export function DocumentDetailsCard({
   const currencyCode = document.currency_code;
   const sign = documentType === "credit_note" ? -1 : 1;
   const fmt = (amount: number) => formatCurrency(amount, currencyCode, locale);
-  const fmtDate = (date: Date | string | null | undefined) => formatDate(date, locale);
+  const fmtDate = (date: Date | string | null | undefined) => formatDateOnlyForDisplay(date, locale);
 
   const isInvoiceOrAdvance = documentType === "invoice" || documentType === "advance_invoice";
   const isEstimate = documentType === "estimate";

@@ -11,6 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/ui/components/ui/popo
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui/components/ui/select";
 import { Textarea } from "@/ui/components/ui/textarea";
 import { type UpdatePaymentSchema, updatePaymentSchema } from "@/ui/generated/schemas/payment";
+import { toUtcMidnightIsoString } from "@/ui/lib/date-only";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
 import { cn } from "@/ui/lib/utils";
@@ -110,7 +111,10 @@ export default function EditPaymentForm({
   const onSubmit = async (values: EditFormSchema) => {
     updatePayment({
       id: payment.id,
-      data: values,
+      data: {
+        ...values,
+        date: toUtcMidnightIsoString(values.date),
+      },
     });
   };
 

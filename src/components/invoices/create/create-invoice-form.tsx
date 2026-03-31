@@ -84,6 +84,19 @@ function calculateDueDate(dateIso: string, days: number): string {
   return date.toISOString();
 }
 
+function isSameCalendarDate(left: string | Date | undefined, right: string | Date): boolean {
+  if (!left) return false;
+
+  const leftDate = new Date(left);
+  const rightDate = new Date(right);
+
+  return (
+    leftDate.getFullYear() === rightDate.getFullYear() &&
+    leftDate.getMonth() === rightDate.getMonth() &&
+    leftDate.getDate() === rightDate.getDate()
+  );
+}
+
 const DUE_DAYS_PRESETS = [0, 7, 14, 30, 60, 90] as const;
 
 const translations = {
@@ -470,6 +483,10 @@ export default function CreateInvoiceForm({
   const useFinaNumbering =
     !!fina.isActive && (finaUnifiedNumbering || transactionType == null || transactionType === "domestic");
   const isFinaNonDomestic = !!fina.isActive && !useFinaNumbering;
+  const isFiscalizationDateLocked = !isEditMode && (isFursActive || useFinaNumbering);
+  const fiscalizationDateLockReason = useFinaNumbering
+    ? t("FINA fiscalized invoices always use the current date")
+    : t("FURS fiscalized invoices always use the current date");
 
   // ============================================================================
   // Next Invoice Number Preview
@@ -501,22 +518,42 @@ export default function CreateInvoiceForm({
     : furs.isLoading || !furs.isSelectionReady || fina.isLoading || !fina.isSelectionReady || isNextNumberLoading;
 
   // Update header action with FURS and e-SLOG toggle buttons
+  const headerActionSignatureRef = useRef<string | null>(null);
   useEffect(() => {
     if (!onHeaderActionChange) return;
 
     // Don't set header action while loading or in edit mode (FURS/FINA/e-SLOG not editable)
     if (furs.isLoading || fina.isLoading || isEditMode) {
+      if (headerActionSignatureRef.current === null) return;
+      headerActionSignatureRef.current = null;
       onHeaderActionChange(null);
       return;
     }
 
     const showFursToggle = furs.isEnabled && furs.hasPremises;
     const showEslogToggle = eslog.isAvailable;
+    const isFursChecked = !skipFiscalization;
+    const isEslogChecked = eslog.isEnabled === true;
+    const headerActionSignature =
+      showFursToggle || showEslogToggle
+        ? JSON.stringify({
+            showFursToggle,
+            showEslogToggle,
+            isFursChecked,
+            isEslogChecked,
+            eslogLabel: t("e-SLOG"),
+            eslogEnabledDescription: t("Click to skip e-SLOG validation for this invoice"),
+            eslogDisabledDescription: t("Click to enable e-SLOG validation"),
+            fiscalizationLabel: t("Fiscally verify"),
+            fiscalizationEnabledDescription: t("Click to skip fiscalization for this invoice"),
+            fiscalizationDisabledDescription: t("Click to enable fiscalization"),
+          })
+        : null;
+
+    if (headerActionSignatureRef.current === headerActionSignature) return;
+    headerActionSignatureRef.current = headerActionSignature;
 
     if (showFursToggle || showEslogToggle) {
-      const isFursChecked = !skipFiscalization;
-      const isEslogChecked = eslog.isEnabled === true;
-
       onHeaderActionChange(
         <div className="flex items-center gap-2">
           {/* e-SLOG toggle */}
@@ -614,6 +651,19 @@ export default function CreateInvoiceForm({
       form.setValue("number", nextNumberData.number);
     }
   }, [nextNumberData?.number, form]);
+
+  useEffect(() => {
+    if (!isFiscalizationDateLocked) return;
+
+    const today = new Date();
+    if (isSameCalendarDate(form.getValues("date"), today)) return;
+
+    form.setValue("date", today.toISOString(), {
+      shouldDirty: true,
+      shouldTouch: false,
+      shouldValidate: true,
+    });
+  }, [form, isFiscalizationDateLocked]);
 
   // Watch fields needed for document note/payment terms preview
   const watchedNumber = useWatch({ control: form.control, name: "number" });
@@ -908,6 +958,7 @@ export default function CreateInvoiceForm({
   // Track if initial setup has been done
   const initialSetupDoneRef = useRef(false);
   const hasInitialValues = !!initialValues;
+  const hasInitialDueDate = !!initialValues?.date_due;
   const duplicateHydrationStartedAtRef = useRef<number | null>(hasInitialValues ? performance.now() : null);
   const duplicateHydrationLoggedRef = useRef(false);
   const appliedInitialValuesSignatureRef = useRef<string | null>(null);
@@ -950,7 +1001,7 @@ export default function CreateInvoiceForm({
     }
 
     // Auto-populate due date and due days type from entity settings when entity loads async
-    if (!isEditMode && !initialValues?.date_due) {
+    if (!isEditMode && !hasInitialDueDate) {
       const dueDays = (activeEntity.settings as any)?.default_invoice_due_days ?? 30;
       const currentDate = form.getValues("date");
       if (currentDate) {
@@ -976,7 +1027,7 @@ export default function CreateInvoiceForm({
         elapsedMs: Number((performance.now() - duplicateHydrationStartedAtRef.current).toFixed(1)),
       });
     }
-  }, [activeEntity, form, hasInitialValues, isEditMode, initialValues]);
+  }, [activeEntity, form, hasInitialDueDate, hasInitialValues, isEditMode]);
 
   // Recalculate due date when document date changes (skip in edit mode and custom due days)
   const prevDateRef = useRef(form.getValues("date"));
@@ -1282,6 +1333,10 @@ export default function CreateInvoiceForm({
             dueDays={{
               dueDaysType,
               onDueDaysTypeChange: handleDueDaysTypeChange,
+            }}
+            dateLock={{
+              isLocked: isFiscalizationDateLocked,
+              reason: fiscalizationDateLockReason,
             }}
           >
             {/* Invoice-specific: Mark as paid section (UI-only state, not in form schema) */}

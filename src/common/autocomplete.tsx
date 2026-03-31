@@ -196,7 +196,13 @@ export function Autocomplete({
         aria-invalid={ariaInvalid || undefined}
       />
       <Popover.Portal>
-        <Popover.Positioner anchor={inputRef} align="start" sideOffset={4} className="isolate z-50">
+        <Popover.Positioner
+          anchor={inputRef}
+          align="start"
+          sideOffset={4}
+          positionMethod="fixed"
+          className="isolate z-50"
+        >
           <Popover.Popup
             initialFocus={false}
             finalFocus={false}

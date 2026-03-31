@@ -73,6 +73,11 @@ type DueDaysProps = {
   onDueDaysTypeChange: (type: number | "custom") => void;
 };
 
+type DateLockProps = {
+  isLocked: boolean;
+  reason: string;
+};
+
 const LABEL_WIDTH = "w-[6.5rem] shrink-0";
 
 function extractSequenceNumber(fullNumber: string, premise?: string, device?: string): string {
@@ -92,6 +97,7 @@ type DocumentDetailsSectionProps = {
   finaInline?: FinaInlineProps; // FINA premise/device inline with number
   serviceDate?: ServiceDateProps; // Service date section (invoice only)
   dueDays?: DueDaysProps; // Due days selector (invoice only)
+  dateLock?: DateLockProps;
 };
 
 export function DocumentDetailsSection({
@@ -104,6 +110,7 @@ export function DocumentDetailsSection({
   finaInline,
   serviceDate,
   dueDays,
+  dateLock,
 }: DocumentDetailsSectionProps) {
   // Determine the date field name based on document type
   // Delivery notes don't have a secondary date field
@@ -259,18 +266,18 @@ export function DocumentDetailsSection({
           <FormItem>
             <div className="flex items-center gap-3">
               <FormLabel className={LABEL_WIDTH}>{t("Date")} *</FormLabel>
-              {showFinaSelects ? (
+              {dateLock?.isLocked ? (
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <FormControl>
                       <Button variant="outline" disabled className="flex-1 pl-3 text-left font-normal">
-                        {new Date().toLocaleDateString(locale)}
+                        {new Date(field.value || new Date()).toLocaleDateString(locale)}
                         <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                       </Button>
                     </FormControl>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>{t("FINA fiscalized invoices always use the current date")}</p>
+                    <p>{dateLock.reason}</p>
                   </TooltipContent>
                 </Tooltip>
               ) : (
@@ -278,6 +285,7 @@ export function DocumentDetailsSection({
                   <PopoverTrigger asChild>
                     <FormControl>
                       <Button
+                        type="button"
                         variant="outline"
                         className={cn("flex-1 pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
                       >
@@ -337,6 +345,7 @@ export function DocumentDetailsSection({
                     <PopoverTrigger asChild>
                       <FormControl>
                         <Button
+                          type="button"
                           variant="outline"
                           className={cn("flex-1 pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
                         >
@@ -364,6 +373,7 @@ export function DocumentDetailsSection({
                       <PopoverTrigger asChild>
                         <FormControl>
                           <Button
+                            type="button"
                             variant="outline"
                             className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
                           >
@@ -389,6 +399,7 @@ export function DocumentDetailsSection({
                         <Popover>
                           <PopoverTrigger asChild>
                             <Button
+                              type="button"
                               variant="outline"
                               className={cn(
                                 "w-full pl-3 text-left font-normal",
@@ -459,6 +470,7 @@ export function DocumentDetailsSection({
                   <PopoverTrigger asChild>
                     <FormControl>
                       <Button
+                        type="button"
                         variant="outline"
                         className={cn("flex-1 pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
                       >

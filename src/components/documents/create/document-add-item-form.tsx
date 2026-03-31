@@ -215,7 +215,7 @@ export default function DocumentAddItemForm({
                 <FormItem>
                   <FormLabel className="text-muted-foreground text-xs">{t("Section header")}</FormLabel>
                   <FormControl>
-                    <Input placeholder={t("Section title...")} {...field} />
+                    <Input placeholder={t("Section title...")} {...field} value={field.value ?? ""} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -239,7 +239,7 @@ export default function DocumentAddItemForm({
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
-                    <Textarea placeholder={t("Description")} {...field} />
+                    <Textarea placeholder={t("Description")} {...field} value={field.value ?? ""} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -279,7 +279,7 @@ export default function DocumentAddItemForm({
                 <FormControl>
                   <ItemCombobox
                     entityId={entityId}
-                    value={field.value}
+                    value={field.value ?? ""}
                     onSelect={handleItemSelect}
                     onCommitInlineName={setInlineItemName}
                     onInlineInputChange={setInlineItemName}
@@ -429,7 +429,7 @@ export default function DocumentAddItemForm({
               <FormItem className="col-span-1 lg:col-span-2">
                 <FormLabel>{t("Unit")}</FormLabel>
                 <FormControl>
-                  <Input {...field} disabled={lockPortugalSavedItemFields} />
+                  <Input {...field} value={field.value ?? ""} disabled={lockPortugalSavedItemFields} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -541,7 +541,12 @@ export default function DocumentAddItemForm({
             render={({ field }) => (
               <FormItem>
                 <FormControl>
-                  <Textarea placeholder={t("Description")} {...field} disabled={lockPortugalSavedItemFields} />
+                  <Textarea
+                    placeholder={t("Description")}
+                    {...field}
+                    value={field.value ?? ""}
+                    disabled={lockPortugalSavedItemFields}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>

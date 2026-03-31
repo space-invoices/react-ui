@@ -79,6 +79,19 @@ const createCreditNoteFormSchema = withRequiredDocumentItemFields(
   }),
 );
 
+function isSameCalendarDate(left: string | Date | undefined, right: string | Date): boolean {
+  if (!left) return false;
+
+  const leftDate = new Date(left);
+  const rightDate = new Date(right);
+
+  return (
+    leftDate.getFullYear() === rightDate.getFullYear() &&
+    leftDate.getMonth() === rightDate.getMonth() &&
+    leftDate.getDate() === rightDate.getDate()
+  );
+}
+
 // Form values: extend schema with local-only fields (number is for display, not sent to API)
 type CreateCreditNoteFormValues = z.infer<typeof createCreditNoteFormSchema> & {
   number?: string;
@@ -250,6 +263,10 @@ export default function CreateCreditNoteForm({
     !!fina.isActive && (finaUnifiedNumbering || transactionType == null || transactionType === "domestic");
   const isFinaNonDomestic = !!fina.isActive && !useFinaNumbering;
   const isFursActive = furs.isActive && !skipFiscalization;
+  const isFiscalizationDateLocked = isFursActive || useFinaNumbering;
+  const fiscalizationDateLockReason = useFinaNumbering
+    ? t("FINA fiscalized invoices always use the current date")
+    : t("FURS fiscalized invoices always use the current date");
 
   useEffect(() => {
     if (skipPreferenceInitializedRef.current || furs.isLoading) return;
@@ -405,6 +422,19 @@ export default function CreateCreditNoteForm({
       form.setValue("number", nextNumberData.number);
     }
   }, [nextNumberData?.number, form]);
+
+  useEffect(() => {
+    if (!isFiscalizationDateLocked) return;
+
+    const today = new Date();
+    if (isSameCalendarDate(form.getValues("date"), today)) return;
+
+    form.setValue("date", today.toISOString(), {
+      shouldDirty: true,
+      shouldTouch: false,
+      shouldValidate: true,
+    });
+  }, [form, isFiscalizationDateLocked]);
 
   const { mutate: createCreditNote, isPending } = useCreateCreditNote({
     entityId,
@@ -710,6 +740,10 @@ export default function CreateCreditNoteForm({
                   }
                 : undefined
             }
+            dateLock={{
+              isLocked: isFiscalizationDateLocked,
+              reason: fiscalizationDateLockReason,
+            }}
           >
             {/* Credit note specific: Mark as paid section (UI-only state, not in form schema) */}
             <MarkAsPaidSection

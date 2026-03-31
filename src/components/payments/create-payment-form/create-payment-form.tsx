@@ -10,6 +10,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/ui/components/ui/popo
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui/components/ui/select";
 import { Textarea } from "@/ui/components/ui/textarea";
 import type { CreatePaymentSchema } from "@/ui/generated/schemas/payment";
+import { toUtcMidnightIsoString } from "@/ui/lib/date-only";
 import { createPaymentSchema } from "@/ui/generated/schemas/payment";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
@@ -100,8 +101,10 @@ export default function CreatePaymentForm({
   });
 
   const onSubmit = async (values: CreatePaymentSchema) => {
-    // SDK accepts both Date and string for date fields, no conversion needed
-    createPayment(values as CreatePaymentRequest);
+    createPayment({
+      ...values,
+      date: toUtcMidnightIsoString(values.date),
+    } as CreatePaymentRequest);
   };
 
   const handleSubmitClick = () => {

@@ -56,7 +56,7 @@ export function ItemCombobox({
     translations: autocompleteTranslations,
   });
   const [search, setSearch] = useState("");
-  const [displayValue, setDisplayValue] = useState(value || "");
+  const [displayValue, setDisplayValue] = useState(value ?? "");
   const debouncedSearch = useDebounce(search, 300);
   const resolvedPlaceholder = placeholder ? t(placeholder) : placeholder;
 
@@ -170,7 +170,7 @@ export function ItemCombobox({
 
   // Sync when value changes externally (e.g., duplication, form reset)
   useEffect(() => {
-    if (value) {
+    if (value != null) {
       setDisplayValue(value);
     } else {
       setSearch("");
@@ -182,7 +182,7 @@ export function ItemCombobox({
     <Autocomplete
       searchValue={search}
       onSearch={handleSearch}
-      value={value}
+      value={value ?? ""}
       onValueChange={handleValueChange}
       onCommitUnselectedInput={commitCustomName}
       commitUnselectedOnBlur={true}
@@ -195,7 +195,7 @@ export function ItemCombobox({
       displayValue={displayValue}
       inputTestId={inputTestId}
       inputDataDemo={inputDataDemo}
-      committedDisplayValue={value}
+      committedDisplayValue={value ?? ""}
       ariaInvalid={ariaInvalid}
     />
   );

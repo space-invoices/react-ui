@@ -184,14 +184,14 @@ export function prepareDocumentSubmission<T extends BaseDocumentValues>(
     // Advance invoices don't have payment terms - they are documents requesting payment
     ...(options.documentType !== "advance_invoice" && payment_terms?.trim() && { payment_terms: payment_terms.trim() }),
     ...(signature?.trim() && { signature: signature.trim() }),
-    date: nextValues.date ? new Date(nextValues.date) : undefined,
+    date: normalizeDateOnlyInput(nextValues.date),
   };
 
   // Add secondary date field based on document type
   if ((options.documentType === "invoice" || options.documentType === "advance_invoice") && options.secondaryDate) {
-    payload.date_due = new Date(options.secondaryDate);
+    payload.date_due = normalizeDateOnlyInput(options.secondaryDate);
   } else if (options.documentType === "estimate" && options.secondaryDate) {
-    payload.date_valid_till = new Date(options.secondaryDate);
+    payload.date_valid_till = normalizeDateOnlyInput(options.secondaryDate);
   }
   // Credit notes don't have a secondary date field
 
@@ -199,10 +199,10 @@ export function prepareDocumentSubmission<T extends BaseDocumentValues>(
   if (options.documentType === "invoice" || options.documentType === "credit_note") {
     const v = nextValues as any;
     if (v.date_service) {
-      payload.date_service = new Date(v.date_service);
+      payload.date_service = normalizeDateOnlyInput(v.date_service);
     }
     if (v.date_service_to) {
-      payload.date_service_to = new Date(v.date_service_to);
+      payload.date_service_to = normalizeDateOnlyInput(v.date_service_to);
     }
   }
 
@@ -235,3 +235,4 @@ export function prepareDocumentSubmission<T extends BaseDocumentValues>(
 
   return payload;
 }
+import { normalizeDateOnlyInput } from "@/ui/lib/date-only";

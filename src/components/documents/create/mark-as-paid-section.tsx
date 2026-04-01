@@ -61,6 +61,7 @@ export function MarkAsPaidSection({
 }: MarkAsPaidSectionProps) {
   const showPaymentTypes = forced || checked || alwaysShowPaymentType;
   const showPaymentAmounts = paymentRows.length > 1;
+  const showPaymentSummary = paymentRows.length > 1;
   const derivedAmounts = derivePaymentRowAmounts(paymentRows, documentTotal);
   const recordedTotal = getRecordedPaymentTotal(paymentRows, documentTotal);
   const remainingTotal = Math.max(0, Math.round((documentTotal - recordedTotal) * 100) / 100);
@@ -120,7 +121,7 @@ export function MarkAsPaidSection({
                 }}
               >
                 <SelectTrigger className="w-full md:w-fit">
-                  <SelectValue placeholder={t("Please select")}>
+                  <SelectValue placeholder={t("Select payment type")}>
                     {row.type ? t(PAYMENT_TYPE_LABELS[row.type]) : undefined}
                   </SelectValue>
                 </SelectTrigger>
@@ -176,17 +177,19 @@ export function MarkAsPaidSection({
             <Plus className="size-4" />
             {t("Add payment")}
           </Button>
-          {validationMessage && <p className="text-destructive text-sm">{validationMessage}</p>}
-          <div className="grid gap-1 text-muted-foreground text-sm">
-            <div className="flex items-center justify-between">
-              <span>{t("Recorded now")}</span>
-              <span>{recordedTotal.toFixed(2)}</span>
+          {validationMessage && <p className="text-destructive text-sm">{t(validationMessage)}</p>}
+          {showPaymentSummary && (
+            <div className="grid gap-1 text-muted-foreground text-sm">
+              <div className="flex items-center justify-between">
+                <span>{t("Recorded now")}</span>
+                <span>{recordedTotal.toFixed(2)}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>{requireFullPayment ? t("Remaining to allocate") : t("Remaining due")}</span>
+                <span>{remainingTotal.toFixed(2)}</span>
+              </div>
             </div>
-            <div className="flex items-center justify-between">
-              <span>{requireFullPayment ? t("Remaining to allocate") : t("Remaining due")}</span>
-              <span>{remainingTotal.toFixed(2)}</span>
-            </div>
-          </div>
+          )}
         </div>
       )}
     </div>

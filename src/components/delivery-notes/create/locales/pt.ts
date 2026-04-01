@@ -36,6 +36,7 @@ export default {
   Discount: "Desconto",
   Description: "Descrição",
   Save: "Guardar",
+  Update: "Atualizar",
   "Save as Draft": "Guardar como rascunho",
   "Pick a date": "Selecionar uma data",
   Currency: "Moeda",

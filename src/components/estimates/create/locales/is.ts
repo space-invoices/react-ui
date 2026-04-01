@@ -43,6 +43,7 @@ export default {
   Discount: "Discount",
   Description: "Lýsing",
   Save: "Vista",
+  Update: "Uppfæra",
   "Save as Draft": "Save as Draft",
   "Pick a date": "Pick a date",
   Currency: "Gjaldmiðill",

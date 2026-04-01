@@ -25,17 +25,16 @@ export default {
   "No taxes found": "Aucune taxe trouvée",
   "Add new tax...": "Ajouter une nouvelle taxe...",
   Description: "Description",
-  "Mark as Paid": "Marquer comme payée",
-  Paid: "Payée",
-  "Invoice will be marked as fully paid upon creation":
-    "La facture sera marquée comme entièrement payée lors de la création",
+  "Mark as Paid": "Marquer comme payé",
+  "Paid": "Payé",
+  "Invoice will be marked as fully paid upon creation": "La facture sera marquée comme entièrement payée à la création",
   "Payment Type": "Type de paiement",
   "Select payment type": "Sélectionner le type de paiement",
-  Cash: "Espèces",
+  "Cash": "Espèces",
   "Bank Transfer": "Virement bancaire",
-  Card: "Carte",
-  Check: "Chèque",
-  Other: "Autre",
+  "Card": "Carte",
+  "Check": "Chèque",
+  "Other": "Autre",
   Note: "Note",
   "Insert variable": "Insérer une variable",
   "Add payment instructions, terms, or other notes...":
@@ -142,12 +141,12 @@ export default {
   "60 days": "60 jours",
   "90 days": "90 jours",
   Custom: "Personnalisé",
+  // Separator items
+  // Service date
   "Service Date": "Date de service",
-  "Single Date": "Date unique",
-  "Date Range": "Plage de dates",
+  "Service Period": "Période de service",
   From: "Du",
   To: "Au",
-  // Separator items
   "Add separator": "Ajouter un séparateur",
   "Section header": "En-tête de section",
   "Section title...": "Titre de section...",
@@ -171,4 +170,12 @@ export default {
     "La facturation B2B domestique en Croatie n'est pas prise en charge. La Croatie exige la conformité à Fiskalizacija 2.0 pour la facturation B2B.",
   "FINA fiscalization must be enabled for domestic invoices":
     "La fiscalisation FINA doit être activée pour les factures domestiques. Activez-la dans les paramètres de l'entité.",
+  "Please select": "Veuillez sélectionner",
+  "Amount": "Montant",
+  "Add payment": "Ajouter un paiement",
+  "Recorded now": "Enregistré maintenant",
+  "Remaining due": "Reste dû",
+  "Remaining to allocate": "Reste à affecter",
+  "This document must be fully paid on creation": "Ce document doit être entièrement payé à la création",
+  "Record one or more payments on creation": "Enregistrer un ou plusieurs paiements à la création",
 } as const;

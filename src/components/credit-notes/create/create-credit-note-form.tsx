@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import type { CreateCreditNoteRequest, CreditNote } from "@spaceinvoices/js-sdk";
+import type { CreateCreditNoteRequest, CreditNote, UpdateCreditNote } from "@spaceinvoices/js-sdk";
 import { useQueryClient } from "@tanstack/react-query";
 import { Check, X } from "lucide-react";
 import type { ReactNode } from "react";
@@ -48,9 +48,19 @@ import {
   serializePaymentRows,
   validatePaymentRows,
 } from "../../documents/create/payment-rows";
+import { prepareDocumentItems } from "../../documents/create/prepare-document-submission";
 import { useDocumentCustomerForm } from "../../documents/create/use-document-customer-form";
 import type { DocumentTypes } from "../../documents/types";
-import { useCreateCreditNote } from "../credit-notes.hooks";
+import invoiceDe from "../../invoices/create/locales/de";
+import invoiceEs from "../../invoices/create/locales/es";
+import invoiceFr from "../../invoices/create/locales/fr";
+import invoiceHr from "../../invoices/create/locales/hr";
+import invoiceIt from "../../invoices/create/locales/it";
+import invoiceNl from "../../invoices/create/locales/nl";
+import invoicePl from "../../invoices/create/locales/pl";
+import invoicePt from "../../invoices/create/locales/pt";
+import invoiceSl from "../../invoices/create/locales/sl";
+import { useCreateCreditNote, useUpdateCreditNote } from "../credit-notes.hooks";
 import de from "./locales/de";
 import es from "./locales/es";
 import fr from "./locales/fr";
@@ -60,18 +70,18 @@ import nl from "./locales/nl";
 import pl from "./locales/pl";
 import pt from "./locales/pt";
 import sl from "./locales/sl";
-import { prepareCreditNoteSubmission } from "./prepare-credit-note-submission";
+import { prepareCreditNoteSubmission, prepareCreditNoteUpdateSubmission } from "./prepare-credit-note-submission";
 
 const translations = {
-  sl,
-  de,
-  it,
-  fr,
-  es,
-  pt,
-  nl,
-  pl,
-  hr,
+  sl: { ...invoiceSl, ...sl },
+  de: { ...invoiceDe, ...de },
+  it: { ...invoiceIt, ...it },
+  fr: { ...invoiceFr, ...fr },
+  es: { ...invoiceEs, ...es },
+  pt: { ...invoicePt, ...pt },
+  nl: { ...invoiceNl, ...nl },
+  pl: { ...invoicePl, ...pl },
+  hr: { ...invoiceHr, ...hr },
 } as const;
 const createCreditNoteFormSchema = withRequiredDocumentItemFields(
   createCreditNoteSchema.extend({
@@ -112,6 +122,8 @@ type CreateCreditNoteFormProps = {
   initialValues?: Partial<CreateCreditNoteRequest>;
   /** Whether draft actions should be available in the UI */
   allowDrafts?: boolean;
+  mode?: "create" | "edit";
+  documentId?: string;
   /** Optional app-level content rendered inside the details section. */
   detailsExtras?: ReactNode;
   /** Request-scoped operator override for embed fiscalization flows. */
@@ -129,6 +141,8 @@ export default function CreateCreditNoteForm({
   onHeaderActionChange,
   initialValues,
   allowDrafts = true,
+  mode = "create",
+  documentId,
   detailsExtras,
   operatorPrefill,
   translationLocale,
@@ -146,6 +160,7 @@ export default function CreateCreditNoteForm({
 
   const { activeEntity } = useEntities();
   const queryClient = useQueryClient();
+  const isEditMode = mode === "edit";
 
   // ============================================================================
   // FURS & FINA Premise Selection (shared hook)
@@ -178,27 +193,32 @@ export default function CreateCreditNoteForm({
   // Get default payment terms and footer from entity settings
   const defaultPaymentTerms = (activeEntity?.settings as any)?.default_credit_note_payment_terms || "";
   const defaultFooter = (activeEntity?.settings as any)?.document_footer || "";
+  const defaultSignature = (activeEntity?.settings as any)?.default_document_signature || "";
 
   const form = useForm<CreateCreditNoteFormValues>({
     // Cast resolver to accept extended form type (includes UI-only fields)
     resolver: zodResolver(createCreditNoteFormSchema) as Resolver<CreateCreditNoteFormValues>,
     defaultValues: {
-      number: "",
+      number: (initialValues as any)?.number ?? "",
       date: initialValues?.date || new Date().toISOString(),
       customer_id: initialValues?.customer_id ?? undefined,
       // Cast customer to form schema type (API type may have additional fields)
       customer: (initialValues?.customer as CreateCreditNoteFormValues["customer"]) ?? undefined,
       items: initialValues?.items?.length
         ? initialValues.items.map((item: any) => ({
-            type: item.type,
+            type: item.type ?? undefined,
             name: item.name || "",
             description: item.description || "",
             ...(item.type !== "separator"
               ? {
+                  item_id: item.item_id ?? undefined,
                   quantity: item.quantity ?? 1,
-                  // Use gross_price if set, otherwise use price
                   price: item.gross_price ?? item.price,
+                  gross_price: item.gross_price ?? undefined,
+                  unit: item.unit ?? undefined,
+                  classification: item.classification ?? undefined,
                   taxes: item.taxes || [],
+                  discounts: item.discounts || [],
                 }
               : {}),
           }))
@@ -212,12 +232,14 @@ export default function CreateCreditNoteForm({
             },
           ],
       date_service: (initialValues as any)?.date_service || new Date().toISOString(),
+      date_service_to: (initialValues as any)?.date_service_to ?? undefined,
       currency_code: initialValues?.currency_code || activeEntity?.currency_code || "EUR",
       reference: (initialValues as any)?.reference ?? "",
-      note: initialValues?.note ?? "",
+      note: initialValues?.note ?? (isEditMode ? "" : ""),
       tax_clause: (initialValues as any)?.tax_clause ?? "",
-      payment_terms: initialValues?.payment_terms ?? defaultPaymentTerms,
-      footer: (initialValues as any)?.footer ?? defaultFooter,
+      payment_terms: initialValues?.payment_terms ?? (isEditMode ? "" : defaultPaymentTerms),
+      footer: (initialValues as any)?.footer ?? (isEditMode ? "" : defaultFooter),
+      signature: (initialValues as any)?.signature ?? (isEditMode ? "" : defaultSignature),
       pt: ((initialValues as any)?.pt as PtDocumentInputForm | undefined) ?? undefined,
     },
   });
@@ -269,13 +291,13 @@ export default function CreateCreditNoteForm({
     : t("FURS fiscalized invoices always use the current date");
 
   useEffect(() => {
-    if (skipPreferenceInitializedRef.current || furs.isLoading) return;
+    if (skipPreferenceInitializedRef.current || furs.isLoading || isEditMode) return;
 
     skipPreferenceInitializedRef.current = true;
     if (furs.settings?.default_skip_fiscalization === true) {
       setSkipFiscalization(true);
     }
-  }, [furs.isLoading, furs.settings?.default_skip_fiscalization]);
+  }, [furs.isLoading, furs.settings?.default_skip_fiscalization, isEditMode]);
 
   useEffect(() => {
     const skipJustEnabled = skipFiscalization && !previousSkipFiscalizationRef.current;
@@ -329,15 +351,21 @@ export default function CreateCreditNoteForm({
   const { data: nextNumberData, isLoading: isNextNumberLoading } = useNextDocumentNumber(entityId, "credit_note", {
     businessPremiseName: activePremiseNameForNumber,
     electronicDeviceName: activeDeviceNameForNumber,
-    enabled: !!entityId && !furs.isLoading && furs.isSelectionReady && !fina.isLoading && fina.isSelectionReady,
+    enabled:
+      !!entityId && !furs.isLoading && furs.isSelectionReady && !fina.isLoading && fina.isSelectionReady && !isEditMode,
   });
 
   // Overall loading state
-  const isFormDataLoading =
-    furs.isLoading || !furs.isSelectionReady || fina.isLoading || !fina.isSelectionReady || isNextNumberLoading;
+  const isFormDataLoading = isEditMode
+    ? false
+    : furs.isLoading || !furs.isSelectionReady || fina.isLoading || !fina.isSelectionReady || isNextNumberLoading;
 
   useEffect(() => {
     if (!onHeaderActionChange) return;
+    if (isEditMode) {
+      onHeaderActionChange(null);
+      return;
+    }
 
     if (furs.isLoading || fina.isLoading) {
       onHeaderActionChange(null);
@@ -382,7 +410,7 @@ export default function CreateCreditNoteForm({
         </Tooltip>
       </TooltipProvider>,
     );
-  }, [fina.isLoading, furs.hasPremises, furs.isEnabled, furs.isLoading, onHeaderActionChange, skipFiscalization, t]);
+  }, [fina.isLoading, furs.hasPremises, furs.isEnabled, furs.isLoading, isEditMode, onHeaderActionChange, skipFiscalization, t]);
 
   // Auto-populate tax_clause from entity settings when transaction type changes
   const effectiveTransactionType = transactionType ?? "domestic";
@@ -390,13 +418,14 @@ export default function CreateCreditNoteForm({
   useEffect(() => {
     if (effectiveTransactionType === prevTransactionTypeRef.current) return;
     prevTransactionTypeRef.current = effectiveTransactionType;
+    if (isEditMode) return;
 
     const taxClauseDefaults = (activeEntity?.settings as any)?.tax_clause_defaults;
     if (!taxClauseDefaults) return;
 
     const clause = taxClauseDefaults[effectiveTransactionType] ?? "";
     form.setValue("tax_clause", clause);
-  }, [effectiveTransactionType, activeEntity, form]);
+  }, [effectiveTransactionType, activeEntity, form, isEditMode]);
 
   // Clear date_service_to when switching from range to single
   useEffect(() => {
@@ -418,12 +447,14 @@ export default function CreateCreditNoteForm({
 
   // Pre-fill credit note number from preview
   useEffect(() => {
+    if (isEditMode) return;
     if (nextNumberData?.number) {
       form.setValue("number", nextNumberData.number);
     }
-  }, [nextNumberData?.number, form]);
+  }, [nextNumberData?.number, form, isEditMode]);
 
   useEffect(() => {
+    if (isEditMode) return;
     if (!isFiscalizationDateLocked) return;
 
     const today = new Date();
@@ -434,7 +465,7 @@ export default function CreateCreditNoteForm({
       shouldTouch: false,
       shouldValidate: true,
     });
-  }, [form, isFiscalizationDateLocked]);
+  }, [form, isEditMode, isFiscalizationDateLocked]);
 
   const { mutate: createCreditNote, isPending } = useCreateCreditNote({
     entityId,
@@ -450,10 +481,30 @@ export default function CreateCreditNoteForm({
     },
     onError,
   });
+  const { mutate: updateCreditNote, isPending: isUpdatePending } = useUpdateCreditNote({
+    entityId,
+    onSuccess,
+    onError,
+  });
 
   // Shared submit logic for both regular save and save as draft
   const submitCreditNote = useCallback(
     (values: CreateCreditNoteFormValues, isDraft: boolean) => {
+      if (isEditMode) {
+        if (!documentId) {
+          throw new Error("Credit note edit mode requires a documentId");
+        }
+
+        const updatePayload = prepareCreditNoteUpdateSubmission(values as any, {
+          originalCustomer,
+          wasCustomerFormShown: showCustomerForm,
+          priceModes: priceModesRef.current,
+        }) as UpdateCreditNote;
+
+        updateCreditNote({ id: documentId, data: updatePayload });
+        return;
+      }
+
       // Build FURS options (skip for drafts; user can also skip fiscalization explicitly)
       const fursOptions = buildFursOptions({
         isDraft,
@@ -508,8 +559,10 @@ export default function CreateCreditNoteForm({
     },
     [
       createCreditNote,
+      documentId,
       fina,
       furs,
+      isEditMode,
       markAsPaid,
       originalCustomer,
       paymentDocumentTotal,
@@ -517,6 +570,7 @@ export default function CreateCreditNoteForm({
       showCustomerForm,
       skipFiscalization,
       operatorPrefill,
+      updateCreditNote,
       useFinaNumbering,
     ],
   );
@@ -537,10 +591,10 @@ export default function CreateCreditNoteForm({
 
   useFormFooterRegistration({
     formId: "create-credit-note-form",
-    isPending,
+    isPending: isPending || isUpdatePending,
     isDirty: form.formState.isDirty || !!initialValues,
-    label: t("Save"),
-    secondaryAction: allowDrafts
+    label: isEditMode ? t("Update") : t("Save"),
+    secondaryAction: allowDrafts && !isEditMode
       ? {
           label: t("Save as Draft"),
           onClick: handleSaveAsDraft,
@@ -551,6 +605,7 @@ export default function CreateCreditNoteForm({
 
   // Set default note and payment terms from entity settings when entity data is available
   useEffect(() => {
+    if (isEditMode) return;
     const entityDefaultNote = (activeEntity?.settings as any)?.default_credit_note_note;
     if (entityDefaultNote && !form.getValues("note")) {
       form.setValue("note", entityDefaultNote);
@@ -567,7 +622,7 @@ export default function CreateCreditNoteForm({
     if (entityDefaultSignature && !form.getValues("signature")) {
       form.setValue("signature", entityDefaultSignature);
     }
-  }, [activeEntity, form]);
+  }, [activeEntity, form, isEditMode]);
 
   // Auto-add tax field for tax subject entities
   useEffect(() => {
@@ -580,14 +635,6 @@ export default function CreateCreditNoteForm({
   }, [activeEntity?.is_tax_subject, form]);
 
   const buildPreviewPayload = useCallback((values: CreateCreditNoteFormValues): CreditNotePreviewPayload => {
-    const currentItems = values.items || [];
-
-    const transformedItems = currentItems.map((item: any, index: number) => {
-      const { price, ...rest } = item;
-      const isGross = priceModesRef.current[index] ?? false;
-      return isGross ? { ...rest, gross_price: price } : { ...rest, price };
-    });
-
     return {
       number: values.number,
       date: values.date,
@@ -595,12 +642,14 @@ export default function CreateCreditNoteForm({
       date_service_to: (values as any).date_service_to,
       customer_id: values.customer_id,
       customer: values.customer,
-      items: transformedItems,
+      items: prepareDocumentItems(values.items, priceModesRef.current),
       currency_code: values.currency_code,
       reference: values.reference,
       note: values.note,
+      tax_clause: values.tax_clause,
       payment_terms: values.payment_terms,
       signature: values.signature,
+      footer: values.footer,
       ...(normalizePtDocumentInput(values.pt) ? { pt: normalizePtDocumentInput(values.pt) } : {}),
     };
   }, []);
@@ -700,7 +749,7 @@ export default function CreateCreditNoteForm({
             t={t}
             locale={locale}
             fursInline={
-              furs.isEnabled && furs.hasPremises
+              !isEditMode && furs.isEnabled && furs.hasPremises
                 ? {
                     premises: furs.activePremises.map((p) => ({
                       id: p.id,
@@ -723,7 +772,7 @@ export default function CreateCreditNoteForm({
               onDateTypeChange: setServiceDateType,
             }}
             finaInline={
-              useFinaNumbering
+              !isEditMode && useFinaNumbering
                 ? {
                     premises: fina.activePremises.map((p: any) => ({
                       id: p.id,
@@ -741,27 +790,29 @@ export default function CreateCreditNoteForm({
                 : undefined
             }
             dateLock={{
-              isLocked: isFiscalizationDateLocked,
-              reason: fiscalizationDateLockReason,
+              isLocked: !isEditMode && isFiscalizationDateLocked,
+              reason: !isEditMode ? fiscalizationDateLockReason : "",
             }}
           >
             {/* Credit note specific: Mark as paid section (UI-only state, not in form schema) */}
-            <MarkAsPaidSection
-              checked={markAsPaid}
-              onCheckedChange={(checked) => {
-                setMarkAsPaid(checked);
-                setPaymentValidationMessage(undefined);
-              }}
-              paymentRows={paymentRows}
-              onPaymentRowsChange={(rows) => {
-                setPaymentRows(rows);
-                setPaymentValidationMessage(undefined);
-              }}
-              documentTotal={paymentDocumentTotal}
-              t={t}
-              alwaysShowPaymentType={!!fina.isActive}
-              validationMessage={paymentValidationMessage}
-            />
+            {!isEditMode && (
+              <MarkAsPaidSection
+                checked={markAsPaid}
+                onCheckedChange={(checked) => {
+                  setMarkAsPaid(checked);
+                  setPaymentValidationMessage(undefined);
+                }}
+                paymentRows={paymentRows}
+                onPaymentRowsChange={(rows) => {
+                  setPaymentRows(rows);
+                  setPaymentValidationMessage(undefined);
+                }}
+                documentTotal={paymentDocumentTotal}
+                t={t}
+                alwaysShowPaymentType={!!fina.isActive}
+                validationMessage={paymentValidationMessage}
+              />
+            )}
             {detailsExtras}
           </DocumentDetailsSection>
         </div>

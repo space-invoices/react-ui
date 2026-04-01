@@ -40,7 +40,7 @@ type CreateRequest =
 export function getDocumentTypeFromId(id: string): DocumentType | null {
   if (id.startsWith("inv_")) return "invoice";
   if (id.startsWith("est_")) return "estimate";
-  if (id.startsWith("cn_")) return "credit_note";
+  if (id.startsWith("cre_") || id.startsWith("cn_")) return "credit_note";
   if (id.startsWith("adv_")) return "advance_invoice";
   if (id.startsWith("del_")) return "delivery_note";
   return null;
@@ -71,16 +71,20 @@ export function getAllowedDuplicateTargets(sourceType: DocumentType): DocumentTy
  * Copies relevant fields and resets computed/generated ones
  */
 function transformDocumentForDuplication(source: Document, targetType: DocumentType): Partial<CreateRequest> {
-  // Transform items - copy only the fields needed for creation
-  // Use type assertion for items since all document item types share the same shape
+  // Transform items - preserve the full editable item shape so duplicate flows
+  // stay in parity with the originating document forms.
   const sourceItems = source.items as Array<{
     type?: string | null;
+    item_id?: string | null;
     name: string;
     description: string | null;
-    quantity: number;
-    price: number;
+    quantity?: number | null;
+    price?: number | null;
     gross_price?: number | null;
+    unit?: string | null;
+    classification?: string | null;
     taxes: Array<{ tax_id?: string }>;
+    discounts?: Array<{ value: number; type?: string | null }>;
   }>;
   const items = sourceItems?.map((item) => ({
     type: item.type ?? undefined,
@@ -89,13 +93,22 @@ function transformDocumentForDuplication(source: Document, targetType: DocumentT
     // Separator items skip financial fields
     ...(item.type !== "separator"
       ? {
-          quantity: item.quantity,
-          // Use gross_price if set, otherwise use price. The form uses is_gross_price as a UI toggle.
-          price: item.gross_price ?? item.price,
+          item_id: item.item_id ?? undefined,
+          quantity: item.quantity ?? 1,
+          unit: item.unit ?? undefined,
+          classification: item.classification ?? undefined,
+          // Use a single effective form price field while preserving the original
+          // gross-price mode for hydration.
+          price: item.gross_price ?? item.price ?? undefined,
           // Copy tax references (tax_id), not computed tax data
           taxes: item.taxes?.map((tax) => ({ tax_id: tax.tax_id })),
           // Derive is_gross_price from whether gross_price is set
           gross_price: item.gross_price ?? undefined,
+          discounts:
+            item.discounts?.map((discount) => ({
+              value: discount.value,
+              type: discount.type ?? undefined,
+            })) ?? [],
         }
       : {}),
   }));
@@ -132,6 +145,10 @@ function transformDocumentForDuplication(source: Document, targetType: DocumentT
     // Notes
     note: source.note,
     payment_terms: source.payment_terms,
+    reference: (source as any).reference,
+    signature: (source as any).signature,
+    tax_clause: (source as any).tax_clause,
+    footer: (source as any).footer,
     // Date - use today's date as ISO string
     date: new Date().toISOString(),
     // Number - leave empty for auto-generation
@@ -149,6 +166,20 @@ function transformDocumentForDuplication(source: Document, targetType: DocumentT
     }
     if (sourceDoc.date_service_to) {
       (baseData as any).date_service_to = sourceDoc.date_service_to;
+    }
+  }
+
+  if (sourceType === "estimate") {
+    const sourceDoc = source as Estimate & { title_type?: "estimate" | "quote" | null };
+    if (sourceDoc.title_type) {
+      (baseData as CreateEstimateRequest).title_type = sourceDoc.title_type;
+    }
+  }
+
+  if (sourceType === "delivery_note") {
+    const sourceDoc = source as DeliveryNote & { hide_prices?: boolean | null };
+    if (sourceDoc.hide_prices !== undefined && sourceDoc.hide_prices !== null) {
+      (baseData as CreateDeliveryNoteRequest).hide_prices = sourceDoc.hide_prices;
     }
   }
 

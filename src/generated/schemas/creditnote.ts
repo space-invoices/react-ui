@@ -110,6 +110,7 @@ const updateCreditNoteSchemaDefinition = z
       )
       .min(1),
     note: z.union([z.string(), z.null()]),
+    tax_clause: z.union([z.string(), z.null()]),
     footer: z.union([z.string(), z.null()]),
     signature: z.union([z.string(), z.null()]),
     reference: z.union([z.string(), z.null()]),
@@ -117,7 +118,9 @@ const updateCreditNoteSchemaDefinition = z
     currency_code: z.string(),
     metadata: z.union([z.object({}).partial().passthrough(), z.null()]),
     change_reason: z.string().max(500),
-    linked_documents: z.array(z.string().min(1)),
+    date_service: z.union([z.string(), z.null()]),
+    date_service_to: z.union([z.string(), z.null()]),
+    linked_documents: z.union([z.array(z.string().min(1)), z.null()]),
     eslog: z.union([
       z
         .object({ validation_enabled: z.union([z.boolean(), z.null()]) })
@@ -132,4 +135,3 @@ const updateCreditNoteSchemaDefinition = z
 export type UpdateCreditNoteSchema = z.infer<typeof updateCreditNoteSchemaDefinition>;
 
 export const updateCreditNoteSchema = updateCreditNoteSchemaDefinition;
-

@@ -82,16 +82,16 @@ export default {
   "Delete failed": "Brisanje ni uspelo",
 
   // Draft actions
-  Finalize: "Potrdi",
+  Finalize: "Izdaj",
   "Delete Draft": "Izbriši osnutek",
-  "Finalize document": "Potrdi dokument",
+  "Finalize document": "Izdaj dokument",
   "Finalize document confirmation":
-    "S tem boste dokumentu dodelili končno številko. Po potrditvi dokumenta ni več mogoče izbrisati. Ali želite nadaljevati?",
+    "S tem boste dokumentu dodelili končno številko. Po izdaji dokumenta ga ni več mogoče izbrisati. Ali želite nadaljevati?",
   "Delete draft document": "Izbriši osnutek dokumenta",
   "Delete draft confirmation":
     "Ali ste prepričani, da želite izbrisati ta osnutek? Tega dejanja ni mogoče razveljaviti.",
-  "Document finalized": "Dokument je bil potrjen",
-  "Finalize failed": "Potrditev ni uspela",
+  "Document finalized": "Dokument je bil izdan",
+  "Finalize failed": "Izdaja ni uspela",
   "Draft deleted": "Osnutek je bil izbrisan",
   "Delete draft failed": "Brisanje osnutka ni uspelo",
   Draft: "Osnutek",

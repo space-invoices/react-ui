@@ -45,6 +45,7 @@ export default {
   Discount: "Korting",
   Description: "Beschrijving",
   Save: "Opslaan",
+  Update: "Bijwerken",
   "Save as Draft": "Opslaan als concept",
   "Pick a date": "Kies een datum",
   Currency: "Valuta",

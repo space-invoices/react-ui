@@ -32,18 +32,27 @@ import { getDocumentCountryCapabilities } from "@/ui/lib/country-capabilities";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
 import type { Entity } from "@/ui/providers/entities-context";
+import bg from "./locales/bg";
+import cs from "./locales/cs";
 import de from "./locales/de";
+import en from "./locales/en";
 import es from "./locales/es";
+import et from "./locales/et";
+import fi from "./locales/fi";
 import fr from "./locales/fr";
 import hr from "./locales/hr";
+import is from "./locales/is";
 import it from "./locales/it";
+import nb from "./locales/nb";
 import nl from "./locales/nl";
 import pl from "./locales/pl";
 import pt from "./locales/pt";
+import sk from "./locales/sk";
 import sl from "./locales/sl";
+import sv from "./locales/sv";
 import { useDocumentDownload } from "./use-document-download";
 
-const translations = { sl, de, it, fr, es, pt, nl, pl, hr } as const;
+const translations = { en, sl, de, it, fr, es, pt, nl, pl, hr, sv, fi, et, bg, cs, sk, nb, is } as const;
 
 type Document = Invoice | Estimate | CreditNote | AdvanceInvoice | DeliveryNote;
 

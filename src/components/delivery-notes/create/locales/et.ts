@@ -34,6 +34,7 @@ export default {
   Discount: "Discount",
   Description: "Kirjeldus",
   Save: "Salvesta",
+  Update: "Uuenda",
   "Save as Draft": "Save as Draft",
   "Pick a date": "Pick a date",
   Currency: "Valuuta",

@@ -45,6 +45,7 @@ export default {
   Discount: "Remise",
   Description: "Description",
   Save: "Enregistrer",
+  Update: "Mettre à jour",
   "Save as Draft": "Enregistrer comme brouillon",
   "Pick a date": "Choisir une date",
   Currency: "Devise",

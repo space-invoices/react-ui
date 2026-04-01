@@ -1,42 +1,32 @@
-import type { AdvanceInvoice, CreateAdvanceInvoice } from "@spaceinvoices/js-sdk";
+import type {
+  AdvanceInvoice,
+  CreateAdvanceInvoiceRequest,
+  SDKMethodOptions,
+  UpdateAdvanceInvoice,
+} from "@spaceinvoices/js-sdk";
 import { advanceInvoices } from "@spaceinvoices/js-sdk";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { NEXT_DOCUMENT_NUMBER_CACHE_KEY } from "@/ui/hooks/use-next-document-number";
+import { createResourceHooks } from "@/ui/hooks/create-resource-hooks";
 
-// Define constants for cache keys
 export const ADVANCE_INVOICES_CACHE_KEY = "advance-invoices";
 
-// ============================================================================
-// Create Advance Invoice Hook
-// ============================================================================
-
-type UseCreateAdvanceInvoiceOptions = {
-  entityId: string;
-  onSuccess?: (data: AdvanceInvoice) => void;
-  onError?: (error: unknown) => void;
+const voidAdvanceInvoice = async (id: string, options?: SDKMethodOptions): Promise<void> => {
+  await advanceInvoices.void(id, {}, options);
 };
 
-export function useCreateAdvanceInvoice({ entityId, onSuccess, onError }: UseCreateAdvanceInvoiceOptions) {
-  const queryClient = useQueryClient();
+const {
+  useCreateResource: useCreateAdvanceInvoice,
+  useUpdateResource: useUpdateAdvanceInvoice,
+  useDeleteResource: useDeleteAdvanceInvoice,
+} = createResourceHooks<AdvanceInvoice, CreateAdvanceInvoiceRequest, UpdateAdvanceInvoice>(
+  {
+    create: advanceInvoices.create,
+    update: advanceInvoices.update,
+    delete: voidAdvanceInvoice,
+  },
+  ADVANCE_INVOICES_CACHE_KEY,
+);
 
-  return useMutation({
-    mutationFn: async (data: CreateAdvanceInvoice) => {
-      return advanceInvoices.create(data, { entity_id: entityId });
-    },
-    onSuccess: (data) => {
-      // Invalidate advance invoices list cache
-      queryClient.invalidateQueries({ queryKey: [ADVANCE_INVOICES_CACHE_KEY] });
-      // Invalidate next number cache (shared cache key)
-      queryClient.invalidateQueries({ queryKey: [NEXT_DOCUMENT_NUMBER_CACHE_KEY] });
-      onSuccess?.(data);
-    },
-    onError,
-  });
-}
-
-// ============================================================================
-// FURS Last-Used Combo (localStorage) - Reuse from invoices
-// ============================================================================
+export { useCreateAdvanceInvoice, useDeleteAdvanceInvoice, useUpdateAdvanceInvoice };
 
 const FURS_ADV_LAST_USED_KEY = "si:furs:adv:last-used";
 
@@ -45,10 +35,6 @@ export type FursCombo = {
   electronic_device_name: string;
 };
 
-/**
- * Get last-used FURS premise/device combo from localStorage for advance invoices
- * @param entityId - Entity ID (combos are stored per-entity)
- */
 export function getLastUsedFursCombo(entityId: string): FursCombo | null {
   if (typeof window === "undefined") return null;
   try {
@@ -59,11 +45,6 @@ export function getLastUsedFursCombo(entityId: string): FursCombo | null {
   }
 }
 
-/**
- * Save last-used FURS premise/device combo to localStorage for advance invoices
- * @param entityId - Entity ID
- * @param combo - FURS premise/device combo
- */
 export function setLastUsedFursCombo(entityId: string, combo: FursCombo): void {
   if (typeof window === "undefined") return;
   try {
@@ -72,10 +53,6 @@ export function setLastUsedFursCombo(entityId: string, combo: FursCombo): void {
     // Ignore localStorage errors (quota exceeded, etc.)
   }
 }
-
-// ============================================================================
-// FINA Last-Used Combo (localStorage) for advance invoices
-// ============================================================================
 
 const FINA_ADV_LAST_USED_KEY = "hr:fina:adv:last-used";
 

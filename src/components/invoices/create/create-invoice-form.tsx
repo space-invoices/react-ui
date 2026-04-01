@@ -55,6 +55,7 @@ import {
   serializePaymentRows,
   validatePaymentRows,
 } from "../../documents/create/payment-rows";
+import { prepareDocumentItems } from "../../documents/create/prepare-document-submission";
 import { scrollToFirstInvalidField } from "../../documents/create/scroll-to-first-invalid-field";
 import type { DocumentTypes } from "../../documents/types";
 import { useCreateInvoice, useNextInvoiceNumber, useUpdateInvoice } from "../invoices.hooks";
@@ -75,7 +76,7 @@ import nl from "./locales/nl";
 import pl from "./locales/pl";
 import pt from "./locales/pt";
 import sl from "./locales/sl";
-import { prepareInvoiceSubmission } from "./prepare-invoice-submission";
+import { prepareInvoiceSubmission, prepareInvoiceUpdateSubmission } from "./prepare-invoice-submission";
 import { useInvoiceCustomerForm } from "./use-invoice-customer-form";
 
 function calculateDueDate(dateIso: string, days: number): string {
@@ -165,14 +166,18 @@ function buildInvoiceFormValues({
   defaultInvoiceNote,
   defaultPaymentTerms,
   defaultFooter,
+  defaultSignature,
   defaultInvoiceDueDays,
+  isEditMode,
 }: {
   initialValues?: Partial<CreateInvoiceRequest> & { number?: string };
   currencyCode?: string;
   defaultInvoiceNote: string;
   defaultPaymentTerms: string;
   defaultFooter: string;
+  defaultSignature: string;
   defaultInvoiceDueDays: number;
+  isEditMode: boolean;
 }): CreateInvoiceFormValues {
   return {
     number: initialValues?.number || "",
@@ -181,14 +186,19 @@ function buildInvoiceFormValues({
     customer: (initialValues?.customer as CreateInvoiceFormValues["customer"]) ?? undefined,
     items: initialValues?.items?.length
       ? initialValues.items.map((item: any) => ({
-          type: item.type,
+          type: item.type ?? undefined,
           name: item.name || "",
           description: item.description || "",
           ...(item.type !== "separator"
             ? {
+                item_id: item.item_id,
+                classification: item.classification ?? undefined,
+                unit: item.unit ?? undefined,
                 quantity: item.quantity ?? 1,
                 price: item.gross_price ?? item.price,
+                gross_price: item.gross_price ?? undefined,
                 taxes: item.taxes || [],
+                discounts: item.discounts || [],
               }
             : {}),
         }))
@@ -203,14 +213,16 @@ function buildInvoiceFormValues({
         ],
     currency_code: initialValues?.currency_code || currencyCode || "EUR",
     reference: (initialValues as any)?.reference ?? "",
-    note: initialValues?.note ?? defaultInvoiceNote,
+    note: initialValues?.note ?? (isEditMode ? "" : defaultInvoiceNote),
     tax_clause: (initialValues as any)?.tax_clause ?? "",
-    payment_terms: initialValues?.payment_terms ?? defaultPaymentTerms,
-    footer: (initialValues as any)?.footer ?? defaultFooter,
+    payment_terms: initialValues?.payment_terms ?? (isEditMode ? "" : defaultPaymentTerms),
+    footer: (initialValues as any)?.footer ?? (isEditMode ? "" : defaultFooter),
+    signature: (initialValues as any)?.signature ?? (isEditMode ? "" : defaultSignature),
     date_due:
       initialValues?.date_due ||
-      calculateDueDate(initialValues?.date || new Date().toISOString(), defaultInvoiceDueDays),
+      (isEditMode ? undefined : calculateDueDate(initialValues?.date || new Date().toISOString(), defaultInvoiceDueDays)),
     date_service: (initialValues as any)?.date_service || new Date().toISOString(),
+    date_service_to: (initialValues as any)?.date_service_to ?? undefined,
     linked_documents: (initialValues as any)?.linked_documents,
     pt: ((initialValues as any)?.pt as PtDocumentInputForm | undefined) ?? undefined,
   };
@@ -253,6 +265,7 @@ export default function CreateInvoiceForm({
   const defaultInvoiceNote = (activeEntity?.settings as any)?.default_invoice_note || "";
   const defaultPaymentTerms = (activeEntity?.settings as any)?.default_invoice_payment_terms || "";
   const defaultFooter = (activeEntity?.settings as any)?.document_footer || "";
+  const defaultSignature = (activeEntity?.settings as any)?.default_document_signature || "";
   const defaultInvoiceDueDays = (activeEntity?.settings as any)?.default_invoice_due_days ?? 30;
 
   // ============================================================================
@@ -306,7 +319,9 @@ export default function CreateInvoiceForm({
         defaultInvoiceNote,
         defaultPaymentTerms,
         defaultFooter,
+        defaultSignature,
         defaultInvoiceDueDays,
+        isEditMode,
       }),
     [
       activeEntity?.currency_code,
@@ -314,7 +329,9 @@ export default function CreateInvoiceForm({
       defaultInvoiceDueDays,
       defaultInvoiceNote,
       defaultPaymentTerms,
+      defaultSignature,
       initialValues,
+      isEditMode,
     ],
   );
 
@@ -758,6 +775,7 @@ export default function CreateInvoiceForm({
   const effectiveTransactionType = transactionType ?? "domestic";
   const prevTransactionTypeRef = useRef<string | undefined>(undefined);
   useEffect(() => {
+    if (isEditMode) return;
     if (effectiveTransactionType === prevTransactionTypeRef.current) return;
     prevTransactionTypeRef.current = effectiveTransactionType;
 
@@ -766,7 +784,7 @@ export default function CreateInvoiceForm({
 
     const clause = taxClauseDefaults[effectiveTransactionType] ?? "";
     form.setValue("tax_clause", clause);
-  }, [effectiveTransactionType, activeEntity, form]);
+  }, [activeEntity, effectiveTransactionType, form, isEditMode]);
 
   // Extract customer management logic into a custom hook
   const {
@@ -862,29 +880,36 @@ export default function CreateInvoiceForm({
         }
       }
 
-      const payload = prepareInvoiceSubmission(values as any, {
-        originalCustomer,
-        wasCustomerFormShown: showCustomerForm,
-        markAsPaid: isDraft || isEditMode ? false : markAsPaid,
-        payments: serializePaymentRows(paymentRows, paymentDocumentTotal),
-        furs: fursOptions,
-        fina: finaOptions,
-        eslog: eslogOptions,
-        priceModes: priceModesRef.current,
-        isDraft,
-      });
-
-      // Add force_linked_documents if set (used after conflict dialog approval)
-      if (forceLinkedDocuments) {
-        (payload as any).force_linked_documents = true;
-      }
-
       if (isEditMode && documentId) {
-        // In edit mode, use updateInvoice
-        // Remove number from payload as it's not editable
-        const { number: _number, ...updatePayload } = payload as any;
+        const updatePayload = prepareInvoiceUpdateSubmission(values as any, {
+          originalCustomer,
+          wasCustomerFormShown: showCustomerForm,
+          eslog: eslogOptions,
+          priceModes: priceModesRef.current,
+        }) as any;
+
+        if (forceLinkedDocuments) {
+          updatePayload.force_linked_documents = true;
+        }
+
         updateInvoice({ id: documentId, data: updatePayload });
       } else {
+        const payload = prepareInvoiceSubmission(values as any, {
+          originalCustomer,
+          wasCustomerFormShown: showCustomerForm,
+          markAsPaid: isDraft ? false : markAsPaid,
+          payments: serializePaymentRows(paymentRows, paymentDocumentTotal),
+          furs: fursOptions,
+          fina: finaOptions,
+          eslog: eslogOptions,
+          priceModes: priceModesRef.current,
+          isDraft,
+        });
+
+        if (forceLinkedDocuments) {
+          (payload as any).force_linked_documents = true;
+        }
+
         createInvoice(payload);
       }
     },
@@ -983,6 +1008,26 @@ export default function CreateInvoiceForm({
     if (initialSetupDoneRef.current) return;
     if (!activeEntity) return;
 
+    if (isEditMode) {
+      if (activeEntity.is_tax_subject) {
+        const items = form.getValues("items") || [];
+        if (items.length > 0 && (!items[0].taxes || items[0].taxes.length === 0)) {
+          form.setValue("items.0.taxes", [{ tax_id: undefined }]);
+        }
+      }
+
+      initialSetupDoneRef.current = true;
+      if (hasInitialValues && duplicateHydrationStartedAtRef.current && !duplicateHydrationLoggedRef.current) {
+        duplicateHydrationLoggedRef.current = true;
+        emitInvoiceCreateDebug({
+          stage: "entity_defaults_applied",
+          hasInitialValues: true,
+          elapsedMs: Number((performance.now() - duplicateHydrationStartedAtRef.current).toFixed(1)),
+        });
+      }
+      return;
+    }
+
     const entityDefaultNote = (activeEntity.settings as any)?.default_invoice_note;
     if (entityDefaultNote && !form.getValues("note")) {
       form.setValue("note", entityDefaultNote);
@@ -995,9 +1040,8 @@ export default function CreateInvoiceForm({
     if (entityDefaultFooter && !form.getValues("footer")) {
       form.setValue("footer", entityDefaultFooter);
     }
-    const entityDefaultSignature = (activeEntity.settings as any)?.default_document_signature;
-    if (entityDefaultSignature && !form.getValues("signature")) {
-      form.setValue("signature", entityDefaultSignature);
+    if (defaultSignature && !form.getValues("signature")) {
+      form.setValue("signature", defaultSignature);
     }
 
     // Auto-populate due date and due days type from entity settings when entity loads async
@@ -1027,7 +1071,7 @@ export default function CreateInvoiceForm({
         elapsedMs: Number((performance.now() - duplicateHydrationStartedAtRef.current).toFixed(1)),
       });
     }
-  }, [activeEntity, form, hasInitialDueDate, hasInitialValues, isEditMode]);
+  }, [activeEntity, defaultSignature, form, hasInitialDueDate, hasInitialValues, initialValues, isEditMode]);
 
   // Recalculate due date when document date changes (skip in edit mode and custom due days)
   const prevDateRef = useRef(form.getValues("date"));
@@ -1060,20 +1104,9 @@ export default function CreateInvoiceForm({
 
   const buildPreviewPayload = useCallback(
     (formValues: any): InvoicePreviewPayload => {
-      const currentItems = formValues.items || [];
-      const transformedItems = currentItems.map((item: any, index: number) => {
-        const { id: _id, price, ...rest } = item;
-
-        if (item.type === "separator") {
-          return {
-            type: "separator" as const,
-            name: item.name || "",
-            description: item.description || undefined,
-          };
-        }
-
-        const isGross = priceModesRef.current[index] ?? false;
-        return isGross ? { ...rest, gross_price: price } : { ...rest, price };
+      const previewItems = formValues.items?.map((item: any) => {
+        const { id: _id, ...rest } = item;
+        return rest;
       });
       return {
         number: formValues.number,
@@ -1082,13 +1115,15 @@ export default function CreateInvoiceForm({
         date_service_to: formValues.date_service_to,
         customer_id: formValues.customer_id,
         customer: formValues.customer,
-        items: transformedItems,
+        items: prepareDocumentItems(previewItems, priceModesRef.current),
         currency_code: formValues.currency_code,
         linked_documents: formValues.linked_documents,
         ...(forceLinkedDocuments ? { force_linked_documents: true } : {}),
         reference: formValues.reference,
         note: formValues.note,
         payment_terms: formValues.payment_terms,
+        tax_clause: formValues.tax_clause,
+        footer: formValues.footer,
         signature: formValues.signature,
         ...(normalizePtDocumentInput(formValues.pt) ? { pt: normalizePtDocumentInput(formValues.pt) } : {}),
       };

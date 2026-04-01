@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import type { AdvanceInvoice, CreateAdvanceInvoiceRequest } from "@spaceinvoices/js-sdk";
+import type { AdvanceInvoice, CreateAdvanceInvoiceRequest, UpdateAdvanceInvoice } from "@spaceinvoices/js-sdk";
 import { AlertCircle, Check, FileCode2, X } from "lucide-react";
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -49,9 +49,10 @@ import {
   createEmptyPaymentRow,
   type DraftPaymentRow,
   getFirstValidPaymentType,
-  serializePaymentRows,
+  serializePaymentRowsForApi,
   validatePaymentRows,
 } from "../../documents/create/payment-rows";
+import { prepareDocumentItems } from "../../documents/create/prepare-document-submission";
 import { scrollToFirstInvalidField } from "../../documents/create/scroll-to-first-invalid-field";
 import { useDocumentCustomerForm } from "../../documents/create/use-document-customer-form";
 import type { DocumentTypes } from "../../documents/types";
@@ -72,7 +73,7 @@ import invoiceNl from "../../invoices/create/locales/nl";
 import invoicePl from "../../invoices/create/locales/pl";
 import invoicePt from "../../invoices/create/locales/pt";
 import invoiceSl from "../../invoices/create/locales/sl";
-import { useCreateAdvanceInvoice } from "../advance-invoices.hooks";
+import { useCreateAdvanceInvoice, useUpdateAdvanceInvoice } from "../advance-invoices.hooks";
 import de from "./locales/de";
 import es from "./locales/es";
 import fr from "./locales/fr";
@@ -82,7 +83,10 @@ import nl from "./locales/nl";
 import pl from "./locales/pl";
 import pt from "./locales/pt";
 import sl from "./locales/sl";
-import { prepareAdvanceInvoiceSubmission } from "./prepare-advance-invoice-submission";
+import {
+  prepareAdvanceInvoiceSubmission,
+  prepareAdvanceInvoiceUpdateSubmission,
+} from "./prepare-advance-invoice-submission";
 
 const translations = {
   sl: { ...invoiceSl, ...sl },
@@ -125,6 +129,8 @@ type CreateAdvanceInvoiceFormProps = {
   initialValues?: Partial<CreateAdvanceInvoiceRequest>;
   /** Whether draft actions should be available in the UI */
   allowDrafts?: boolean;
+  mode?: "create" | "edit";
+  documentId?: string;
   /** Optional app-level content rendered inside the details section. */
   detailsExtras?: ReactNode;
   /** Request-scoped operator override for embed fiscalization flows. */
@@ -142,6 +148,8 @@ export default function CreateAdvanceInvoiceForm({
   onHeaderActionChange,
   initialValues,
   allowDrafts = true,
+  mode = "create",
+  documentId,
   detailsExtras,
   operatorPrefill,
   translationLocale,
@@ -158,6 +166,7 @@ export default function CreateAdvanceInvoiceForm({
   });
 
   const { activeEntity } = useEntities();
+  const isEditMode = mode === "edit";
 
   // Advance invoices have their own default note setting.
   // Note: Advance invoices don't have payment terms - they are documents requesting payment.
@@ -200,12 +209,14 @@ export default function CreateAdvanceInvoiceForm({
   );
   const eslogResolverStateRef = useRef({
     activeEntity,
+    isEditMode,
     isEnabled: eslog.isEnabled === true,
     translate: t,
     setEntityErrors: eslog.setEntityErrors,
   });
   eslogResolverStateRef.current = {
     activeEntity,
+    isEditMode,
     isEnabled: eslog.isEnabled === true,
     translate: t,
     setEntityErrors: eslog.setEntityErrors,
@@ -214,7 +225,8 @@ export default function CreateAdvanceInvoiceForm({
     () => async (values, context, options) => {
       const result = await baseResolver(values, context, options);
       const resolverState = eslogResolverStateRef.current;
-      const shouldValidateEslog = eslogValidationModeRef.current === "submit" && resolverState.isEnabled;
+      const shouldValidateEslog =
+        eslogValidationModeRef.current === "submit" && !resolverState.isEditMode && resolverState.isEnabled;
 
       if (!shouldValidateEslog) {
         eslogEntityErrorsRef.current = [];
@@ -246,22 +258,26 @@ export default function CreateAdvanceInvoiceForm({
   const form = useForm<CreateAdvanceInvoiceFormValues>({
     resolver,
     defaultValues: {
-      number: "", // Will be set by useNextAdvanceInvoiceNumber
+      number: (initialValues as any)?.number ?? "",
       date: initialValues?.date || new Date().toISOString(),
       customer_id: initialValues?.customer_id ?? undefined,
       // Cast customer to form schema type (API type may have additional fields)
       customer: (initialValues?.customer as CreateAdvanceInvoiceFormValues["customer"]) ?? undefined,
       items: initialValues?.items?.length
         ? initialValues.items.map((item: any) => ({
-            type: item.type,
+            type: item.type ?? undefined,
             name: item.name || "",
             description: item.description || "",
             ...(item.type !== "separator"
               ? {
+                  item_id: item.item_id ?? undefined,
                   quantity: item.quantity ?? 1,
-                  // Use gross_price if set, otherwise use price
                   price: item.gross_price ?? item.price,
+                  gross_price: item.gross_price ?? undefined,
+                  unit: item.unit ?? undefined,
+                  classification: item.classification ?? undefined,
                   taxes: item.taxes || [],
+                  discounts: item.discounts || [],
                 }
               : {}),
           }))
@@ -276,9 +292,10 @@ export default function CreateAdvanceInvoiceForm({
           ],
       currency_code: initialValues?.currency_code || activeEntity?.currency_code || "EUR",
       reference: (initialValues as any)?.reference ?? "",
-      note: initialValues?.note ?? defaultNote,
-      tax_clause: "",
-      footer: (initialValues as any)?.footer ?? defaultFooter,
+      note: initialValues?.note ?? (isEditMode ? "" : defaultNote),
+      tax_clause: (initialValues as any)?.tax_clause ?? "",
+      footer: (initialValues as any)?.footer ?? (isEditMode ? "" : defaultFooter),
+      signature: (initialValues as any)?.signature ?? (isEditMode ? "" : (activeEntity?.settings as any)?.default_document_signature || ""),
       pt: ((initialValues as any)?.pt as PtDocumentInputForm | undefined) ?? undefined,
     },
   });
@@ -296,13 +313,13 @@ export default function CreateAdvanceInvoiceForm({
   const previousMarkAsPaidRef = useRef(markAsPaid);
 
   useEffect(() => {
-    if (skipPreferenceInitializedRef.current || furs.isLoading) return;
+    if (skipPreferenceInitializedRef.current || furs.isLoading || isEditMode) return;
 
     skipPreferenceInitializedRef.current = true;
     if (furs.settings?.default_skip_fiscalization === true) {
       setSkipFiscalization(true);
     }
-  }, [furs.isLoading, furs.settings?.default_skip_fiscalization]);
+  }, [furs.isLoading, furs.settings?.default_skip_fiscalization, isEditMode]);
 
   useEffect(() => {
     const skipJustEnabled = skipFiscalization && !previousSkipFiscalizationRef.current;
@@ -345,6 +362,10 @@ export default function CreateAdvanceInvoiceForm({
   // Update header action with FURS and e-SLOG toggle buttons
   useEffect(() => {
     if (!onHeaderActionChange) return;
+    if (isEditMode) {
+      onHeaderActionChange(null);
+      return;
+    }
 
     if (furs.isLoading || fina.isLoading) {
       onHeaderActionChange(null);
@@ -444,6 +465,7 @@ export default function CreateAdvanceInvoiceForm({
     eslog.isAvailable,
     eslog.isEnabled,
     eslog.setEnabled,
+    isEditMode,
     onHeaderActionChange,
     t,
   ]);
@@ -538,19 +560,22 @@ export default function CreateAdvanceInvoiceForm({
   const { data: nextNumberData, isLoading: isNextNumberLoading } = useNextDocumentNumber(entityId, "advance_invoice", {
     businessPremiseName: activePremiseNameForNumber,
     electronicDeviceName: activeDeviceNameForNumber,
-    enabled: !!entityId && !furs.isLoading && furs.isSelectionReady && !fina.isLoading && fina.isSelectionReady,
+    enabled:
+      !!entityId && !furs.isLoading && furs.isSelectionReady && !fina.isLoading && fina.isSelectionReady && !isEditMode,
   });
 
   // Overall loading state
-  const isFormDataLoading =
-    furs.isLoading || !furs.isSelectionReady || fina.isLoading || !fina.isSelectionReady || isNextNumberLoading;
+  const isFormDataLoading = isEditMode
+    ? false
+    : furs.isLoading || !furs.isSelectionReady || fina.isLoading || !fina.isSelectionReady || isNextNumberLoading;
 
   // Pre-fill advance invoice number from preview
   useEffect(() => {
+    if (isEditMode) return;
     if (nextNumberData?.number) {
       form.setValue("number", nextNumberData.number);
     }
-  }, [nextNumberData?.number, form]);
+  }, [nextNumberData?.number, form, isEditMode]);
 
   // Auto-populate tax_clause from entity settings when transaction type changes
   const effectiveTransactionType = transactionType ?? "domestic";
@@ -558,13 +583,14 @@ export default function CreateAdvanceInvoiceForm({
   useEffect(() => {
     if (effectiveTransactionType === prevTransactionTypeRef.current) return;
     prevTransactionTypeRef.current = effectiveTransactionType;
+    if (isEditMode) return;
 
     const taxClauseDefaults = (activeEntity?.settings as any)?.tax_clause_defaults;
     if (!taxClauseDefaults) return;
 
     const clause = taxClauseDefaults[effectiveTransactionType] ?? "";
     form.setValue("tax_clause", clause);
-  }, [effectiveTransactionType, activeEntity, form]);
+  }, [effectiveTransactionType, activeEntity, form, isEditMode]);
 
   // Customer form management
   const {
@@ -587,11 +613,31 @@ export default function CreateAdvanceInvoiceForm({
     },
     onError,
   });
+  const { mutate: updateAdvanceInvoice, isPending: isUpdatePending } = useUpdateAdvanceInvoice({
+    entityId,
+    onSuccess,
+    onError,
+  });
 
   // Shared submit logic for both regular save and save as draft
   const submitAdvanceInvoice = useCallback(
     (values: CreateAdvanceInvoiceFormValues, isDraft: boolean) => {
-      if (!isDraft && eslog.isEnabled && eslogEntityErrorsRef.current.length > 0) {
+      if (!isEditMode && !isDraft && eslog.isEnabled && eslogEntityErrorsRef.current.length > 0) {
+        return;
+      }
+
+      if (isEditMode) {
+        if (!documentId) {
+          throw new Error("Advance invoice edit mode requires a documentId");
+        }
+
+        const updatePayload = prepareAdvanceInvoiceUpdateSubmission(values, {
+          originalCustomer,
+          wasCustomerFormShown: showCustomerForm,
+          priceModes: priceModesRef.current,
+        }) as UpdateAdvanceInvoice;
+
+        updateAdvanceInvoice({ id: documentId, data: updatePayload });
         return;
       }
 
@@ -634,7 +680,9 @@ export default function CreateAdvanceInvoiceForm({
         originalCustomer,
         wasCustomerFormShown: showCustomerForm,
         markAsPaid: isDraft ? false : markAsPaid,
-        payments: serializePaymentRows(paymentRows, paymentDocumentTotal),
+        payments: serializePaymentRowsForApi(paymentRows, paymentDocumentTotal, {
+          preserveUntouchedAmounts: true,
+        }),
         furs: fursOptions,
         fina: finaOptions,
         eslog: eslogOptions,
@@ -646,9 +694,11 @@ export default function CreateAdvanceInvoiceForm({
     },
     [
       createAdvanceInvoice,
+      documentId,
       eslog,
       furs,
       fina,
+      isEditMode,
       useFinaNumbering,
       markAsPaid,
       originalCustomer,
@@ -657,6 +707,7 @@ export default function CreateAdvanceInvoiceForm({
       showCustomerForm,
       skipFiscalization,
       operatorPrefill,
+      updateAdvanceInvoice,
     ],
   );
 
@@ -680,10 +731,10 @@ export default function CreateAdvanceInvoiceForm({
 
   useFormFooterRegistration({
     formId: "create-advance-invoice-form",
-    isPending,
+    isPending: isPending || isUpdatePending,
     isDirty: form.formState.isDirty || !!initialValues,
-    label: t("Save"),
-    secondaryAction: allowDrafts
+    label: isEditMode ? t("Update") : t("Save"),
+    secondaryAction: allowDrafts && !isEditMode
       ? {
           label: t("Save as Draft"),
           onClick: handleSaveAsDraft,
@@ -694,6 +745,7 @@ export default function CreateAdvanceInvoiceForm({
 
   // Set default note, footer, and signature from entity settings (advance invoices don't have payment terms)
   useEffect(() => {
+    if (isEditMode) return;
     const entityDefaultNote =
       (activeEntity?.settings as any)?.default_advance_invoice_note ||
       (activeEntity?.settings as any)?.default_invoice_note;
@@ -708,7 +760,7 @@ export default function CreateAdvanceInvoiceForm({
     if (entityDefaultSignature && !form.getValues("signature")) {
       form.setValue("signature", entityDefaultSignature);
     }
-  }, [activeEntity, form]);
+  }, [activeEntity, form, isEditMode]);
 
   // Auto-add tax field for tax subject entities
   useEffect(() => {
@@ -721,24 +773,18 @@ export default function CreateAdvanceInvoiceForm({
   }, [activeEntity?.is_tax_subject, form]);
 
   const buildPreviewPayload = useCallback((values: CreateAdvanceInvoiceFormValues): AdvanceInvoicePreviewPayload => {
-    const currentItems = values.items || [];
-
-    const transformedItems = currentItems.map((item: any, index: number) => {
-      const { price, ...rest } = item;
-      const isGross = priceModesRef.current[index] ?? false;
-      return isGross ? { ...rest, gross_price: price } : { ...rest, price };
-    });
-
     return {
       number: values.number,
       date: values.date,
       customer_id: values.customer_id,
       customer: values.customer,
-      items: transformedItems,
+      items: prepareDocumentItems(values.items, priceModesRef.current),
       currency_code: values.currency_code,
       reference: values.reference,
       note: values.note,
+      tax_clause: values.tax_clause,
       signature: values.signature,
+      footer: values.footer,
       ...(normalizePtDocumentInput(values.pt) ? { pt: normalizePtDocumentInput(values.pt) } : {}),
     };
   }, []);
@@ -862,7 +908,7 @@ export default function CreateAdvanceInvoiceForm({
             t={t}
             locale={locale}
             fursInline={
-              furs.isEnabled && furs.hasPremises
+              !isEditMode && furs.isEnabled && furs.hasPremises
                 ? {
                     premises: furs.activePremises.map((p) => ({
                       id: p.id,
@@ -881,7 +927,7 @@ export default function CreateAdvanceInvoiceForm({
                 : undefined
             }
             finaInline={
-              useFinaNumbering
+              !isEditMode && useFinaNumbering
                 ? {
                     premises: fina.activePremises.map((p: any) => ({
                       id: p.id,
@@ -900,24 +946,26 @@ export default function CreateAdvanceInvoiceForm({
             }
           >
             {/* Mark as paid section (UI-only state, not in form schema) */}
-            <MarkAsPaidSection
-              checked={markAsPaid}
-              onCheckedChange={(checked) => {
-                setMarkAsPaid(checked);
-                setPaymentValidationMessage(undefined);
-              }}
-              paymentRows={paymentRows}
-              onPaymentRowsChange={(rows) => {
-                setPaymentRows(rows);
-                setPaymentValidationMessage(undefined);
-              }}
-              documentTotal={paymentDocumentTotal}
-              t={t}
-              alwaysShowPaymentType={!!fina.isActive}
-              forced
-              validationMessage={paymentValidationMessage}
-              requireFullPayment
-            />
+            {!isEditMode && (
+              <MarkAsPaidSection
+                checked={markAsPaid}
+                onCheckedChange={(checked) => {
+                  setMarkAsPaid(checked);
+                  setPaymentValidationMessage(undefined);
+                }}
+                paymentRows={paymentRows}
+                onPaymentRowsChange={(rows) => {
+                  setPaymentRows(rows);
+                  setPaymentValidationMessage(undefined);
+                }}
+                documentTotal={paymentDocumentTotal}
+                t={t}
+                alwaysShowPaymentType={!!fina.isActive}
+                forced
+                validationMessage={paymentValidationMessage}
+                requireFullPayment
+              />
+            )}
             {detailsExtras}
           </DocumentDetailsSection>
         </div>

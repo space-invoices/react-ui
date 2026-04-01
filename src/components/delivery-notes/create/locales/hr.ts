@@ -35,6 +35,7 @@ export default {
   Discount: "Popust",
   Description: "Opis",
   Save: "Spremi",
+  Update: "Ažuriraj",
   "Save as Draft": "Spremi kao skicu",
   "Pick a date": "Odaberi datum",
   Currency: "Valuta",

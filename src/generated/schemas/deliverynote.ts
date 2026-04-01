@@ -135,4 +135,66 @@ const createDeliveryNoteSchemaDefinition = z.object({
 // Type for create delivery note operation
 export type CreateDeliveryNoteSchema = z.infer<typeof createDeliveryNoteSchemaDefinition>;
 
+// Schema for update delivery note operation
+const updateDeliveryNoteSchemaDefinition = z
+  .object({
+    date: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d{3})?Z?)?$/),
+    issuer: DocumentEntity.and(z.unknown()),
+    customer_id: z.union([z.string(), z.null()]),
+    customer: DocumentEntity.and(
+      z.union([
+        z
+          .object({ save_customer: z.boolean().default(true) })
+          .partial()
+          .passthrough(),
+        z.null(),
+      ])
+    ),
+    items: z
+      .array(
+        z.object({
+          type: z.enum(["separator"]).optional(),
+          name: z.string().min(1).optional(),
+          description: z.union([z.string().max(4000, "Description must not exceed 4000 characters"), z.null()]).optional(),
+          price: z.number().optional(),
+          gross_price: z.number().optional(),
+          quantity: z.number().gte(-140737488355328).lte(140737488355327).optional(),
+          unit: z.union([z.string(), z.null()]).optional(),
+          taxes: z.array(DocumentItemTax).optional(),
+          discounts: z.array(LineDiscount).max(5).optional(),
+          metadata: z
+            .union([
+              z.string(),
+              z.number(),
+              z.boolean(),
+              z.null(),
+              z.object({}).partial().passthrough(),
+              z.array(z.unknown()),
+              z.null(),
+            ])
+            .optional(),
+          item_id: z.string().optional(),
+        })
+      )
+      .min(1),
+    note: z.union([z.string(), z.null()]),
+    payment_terms: z.union([z.string(), z.null()]),
+    tax_clause: z.union([z.string(), z.null()]),
+    footer: z.union([z.string(), z.null()]),
+    signature: z.union([z.string(), z.null()]),
+    currency_code: z.string(),
+    reference: z.union([z.string(), z.null()]),
+    metadata: z.union([z.object({}).partial().passthrough(), z.null()]),
+    change_reason: z.string().max(500),
+    hide_prices: z.boolean(),
+    linked_documents: z.union([z.array(z.string().min(1)), z.null()]),
+  })
+  .partial();
+
+// Type for update delivery note operation
+export type UpdateDeliveryNoteSchema = z.infer<typeof updateDeliveryNoteSchemaDefinition>;
+
 export const createDeliveryNoteSchema = createDeliveryNoteSchemaDefinition;
+export const updateDeliveryNoteSchema = updateDeliveryNoteSchemaDefinition;

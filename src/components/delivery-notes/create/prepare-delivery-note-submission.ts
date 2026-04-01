@@ -1,6 +1,12 @@
 import type { CreateDeliveryNoteRequest } from "@spaceinvoices/js-sdk";
 import type { CreateDeliveryNoteSchema } from "@/ui/generated/schemas";
-import { prepareDocumentSubmission } from "../../documents/create/prepare-document-submission";
+import {
+  buildDocumentBasePayload,
+  cleanupEmptyCustomerId,
+  prepareDocumentCustomerData,
+  prepareDocumentItems,
+  prepareDocumentSubmission,
+} from "../../documents/create/prepare-document-submission";
 import type { CustomerData } from "../../documents/create/use-document-customer-form";
 
 /** Map of item index to gross price mode */
@@ -34,5 +40,32 @@ export function prepareDeliveryNoteSubmission(
   return {
     ...baseSubmission,
     ...(options.hidePrices !== undefined && { hide_prices: options.hidePrices }),
+  };
+}
+
+export function prepareDeliveryNoteUpdateSubmission(
+  values: CreateDeliveryNoteSchema,
+  options: Pick<PrepareOptions, "originalCustomer" | "priceModes" | "hidePrices">,
+): Record<string, unknown> {
+  const nextValues: any = {
+    ...values,
+    customer: values.customer ? { ...values.customer } : values.customer,
+    items: values.items
+      ? values.items.map((item: any) => ({ ...item, taxes: item?.taxes ? [...item.taxes] : item?.taxes }))
+      : values.items,
+  };
+
+  prepareDocumentCustomerData(nextValues, {
+    originalCustomer: options.originalCustomer,
+    wasCustomerFormShown: true,
+  });
+  cleanupEmptyCustomerId(nextValues);
+  nextValues.items = prepareDocumentItems(nextValues.items, options.priceModes ?? {});
+
+  return {
+    ...buildDocumentBasePayload(nextValues, {
+      documentType: "delivery_note",
+    }),
+    ...(options.hidePrices !== undefined ? { hide_prices: options.hidePrices } : {}),
   };
 }

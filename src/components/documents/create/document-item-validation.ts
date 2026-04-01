@@ -13,10 +13,14 @@ export function withRequiredDocumentItemFields<T extends z.ZodTypeAny>(schema: T
       if (item?.type === "separator") return;
 
       const name = typeof item?.name === "string" ? item.name.trim() : "";
+      const itemId = typeof item?.item_id === "string" ? item.item_id.trim() : "";
       const quantity = item?.quantity;
       const price = item?.price;
+      const grossPrice = item?.gross_price;
+      const hasPrice = !(price == null || Number.isNaN(price as number));
+      const hasGrossPrice = !(grossPrice == null || Number.isNaN(grossPrice as number));
 
-      if (!name) {
+      if (!name && !itemId) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ["items", index, "name"],
@@ -32,7 +36,7 @@ export function withRequiredDocumentItemFields<T extends z.ZodTypeAny>(schema: T
         });
       }
 
-      if (price == null || Number.isNaN(price)) {
+      if (!hasPrice && !hasGrossPrice) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ["items", index, "price"],

@@ -47,6 +47,7 @@ export default {
   Discount: "Popust",
   Description: "Opis",
   Save: "Shrani",
+  Update: "Posodobi",
   "Save as Draft": "Shrani kot osnutek",
   "Pick a date": "Izberi datum",
   // Currency

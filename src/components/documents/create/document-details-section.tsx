@@ -18,7 +18,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/ui/components/ui/tool
 import { CURRENCY_CODES } from "@/ui/lib/constants";
 import { replaceTemplateVariablesForPreview } from "@/ui/lib/template-variables";
 import { cn } from "@/ui/lib/utils";
-import type { DocumentTypes } from "../types";
+import { getDocumentConfig, type DocumentTypes } from "../types";
 import type { AnyControl } from "./form-types";
 import { SmartCodeInsertButton } from "./smart-code-insert-button";
 
@@ -112,11 +112,10 @@ export function DocumentDetailsSection({
   dueDays,
   dateLock,
 }: DocumentDetailsSectionProps) {
-  // Determine the date field name based on document type
-  // Delivery notes don't have a secondary date field
-  const hasSecondaryDate = documentType !== "delivery_note" && documentType !== "advance_invoice";
-  const dateFieldName = documentType === "invoice" ? "date_due" : "date_valid_till";
-  const dateFieldLabel = documentType === "invoice" ? t("Due Date") : t("Valid Until");
+  const documentConfig = getDocumentConfig(documentType);
+  const hasSecondaryDate = documentConfig.dateFieldName !== null;
+  const dateFieldName = documentConfig.dateFieldName;
+  const dateFieldLabel = documentConfig.dateFieldLabel ? t(documentConfig.dateFieldLabel) : "";
 
   // Check if FURS/FINA inline should show premise/device selects
   const showFursSelects = fursInline && !fursInline.isSkipped;
@@ -333,11 +332,11 @@ export function DocumentDetailsSection({
                       "h-auto border-none p-0 font-medium text-sm shadow-none [&>svg]:ml-1 [&>svg]:size-3.5",
                     )}
                   >
-                    <SelectValue>{serviceDate.dateType === "single" ? t("Single Date") : t("Date Range")}</SelectValue>
+                    <SelectValue>{serviceDate.dateType === "single" ? t("Service Date") : t("Service Period")}</SelectValue>
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="single">{t("Single Date")}</SelectItem>
-                    <SelectItem value="range">{t("Date Range")}</SelectItem>
+                    <SelectItem value="single">{t("Service Date")}</SelectItem>
+                    <SelectItem value="range">{t("Service Period")}</SelectItem>
                   </SelectContent>
                 </Select>
                 {serviceDate.dateType === "single" ? (
@@ -437,7 +436,7 @@ export function DocumentDetailsSection({
       {hasSecondaryDate && (
         <FormField
           control={control}
-          name={dateFieldName}
+          name={dateFieldName!}
           render={({ field }) => (
             <FormItem>
               <div className="flex items-center gap-3">

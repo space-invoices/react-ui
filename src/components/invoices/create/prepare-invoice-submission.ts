@@ -1,7 +1,14 @@
 import type { CreateInvoiceRequest } from "@spaceinvoices/js-sdk";
 import type { CreateInvoiceSchema } from "@/ui/generated/schemas";
 import { normalizePtDocumentInput, type PtDocumentInputForm } from "@/ui/lib/pt-document-input";
-import { prepareDocumentSubmission } from "../../documents/create/prepare-document-submission";
+import {
+  buildDocumentBasePayload,
+  cleanupEmptyCustomerId,
+  normalizeClearableFormTextField,
+  prepareDocumentCustomerData,
+  prepareDocumentItems,
+  prepareDocumentSubmission,
+} from "../../documents/create/prepare-document-submission";
 
 type FursData = {
   business_premise_name?: string;
@@ -101,5 +108,52 @@ export function prepareInvoiceSubmission(
   if (pt) {
     (payload as any).pt = pt;
   }
+  return payload;
+}
+
+export function prepareInvoiceUpdateSubmission(
+  values: CreateInvoiceSchema & { pt?: PtDocumentInputForm | null },
+  options: Pick<PrepareOptions, "originalCustomer" | "wasCustomerFormShown" | "priceModes" | "eslog">,
+): Record<string, unknown> {
+  const nextValues: any = {
+    ...values,
+    customer: values.customer ? { ...values.customer } : values.customer,
+    items: values.items
+      ? values.items.map((item: any) => ({ ...item, taxes: item?.taxes ? [...item.taxes] : item?.taxes }))
+      : values.items,
+  };
+
+  prepareDocumentCustomerData(nextValues, options);
+  cleanupEmptyCustomerId(nextValues);
+  nextValues.items = prepareDocumentItems(nextValues.items, options.priceModes ?? {});
+
+  const payload = buildDocumentBasePayload(nextValues, {
+    documentType: "invoice",
+    secondaryDate: values.date_due ?? undefined,
+  });
+
+  if (Array.isArray(nextValues.linked_documents)) {
+    payload.linked_documents = nextValues.linked_documents;
+  } else if (nextValues.linked_documents === null) {
+    payload.linked_documents = [];
+  }
+
+  if (nextValues.force_linked_documents !== undefined) {
+    payload.force_linked_documents = nextValues.force_linked_documents;
+  }
+
+  if (options.eslog !== undefined) {
+    payload.eslog = {
+      validation_enabled: options.eslog.validation_enabled,
+    };
+  }
+
+  for (const key of ["note", "payment_terms", "reference", "signature", "tax_clause", "footer"] as const) {
+    const normalized = normalizeClearableFormTextField((values as any)[key]);
+    if (normalized !== undefined) {
+      payload[key] = normalized;
+    }
+  }
+
   return payload;
 }

@@ -34,6 +34,7 @@ export default {
   Discount: "Discount",
   Description: "Beskrivning",
   Save: "Spara",
+  Update: "Uppdatera",
   "Save as Draft": "Save as Draft",
   "Pick a date": "Pick a date",
   Currency: "Valuta",

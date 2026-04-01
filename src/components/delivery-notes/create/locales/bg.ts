@@ -34,6 +34,7 @@ export default {
   Discount: "Discount",
   Description: "Описание",
   Save: "Запази",
+  Update: "Актуализирай",
   "Save as Draft": "Save as Draft",
   "Pick a date": "Pick a date",
   Currency: "Валута",

@@ -240,15 +240,19 @@ const updateInvoiceSchemaDefinition = z
       )
       .min(1),
     note: z.union([z.string(), z.null()]),
+    tax_clause: z.union([z.string(), z.null()]),
     footer: z.union([z.string(), z.null()]),
     payment_terms: z.union([z.string(), z.null()]),
+    signature: z.union([z.string(), z.null()]),
     currency_code: z.string(),
+    reference: z.union([z.string(), z.null()]),
     metadata: z.union([z.object({}).partial().passthrough(), z.null()]),
     change_reason: z.string().max(500),
     date_due: z.union([z.string(), z.null()]),
     date_service: z.union([z.string(), z.null()]),
     date_service_to: z.union([z.string(), z.null()]),
-    linked_documents: z.array(z.string().min(1)),
+    linked_documents: z.union([z.array(z.string().min(1)), z.null()]),
+    force_linked_documents: z.boolean(),
     eslog: z.union([
       z
         .object({ validation_enabled: z.union([z.boolean(), z.null()]) })

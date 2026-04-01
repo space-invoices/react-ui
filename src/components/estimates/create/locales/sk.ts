@@ -43,6 +43,7 @@ export default {
   Discount: "Discount",
   Description: "Popis",
   Save: "Uložiť",
+  Update: "Aktualizovať",
   "Save as Draft": "Save as Draft",
   "Pick a date": "Pick a date",
   Currency: "Mena",

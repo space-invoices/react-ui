@@ -82,15 +82,15 @@ export default {
   "Delete failed": "Brisanje nije uspjelo",
 
   // Draft actions
-  Finalize: "Potvrdi",
+  Finalize: "Izdaj",
   "Delete Draft": "Obriši nacrt",
-  "Finalize document": "Potvrdi dokument",
+  "Finalize document": "Izdaj dokument",
   "Finalize document confirmation":
-    "Ovo će dokumentu dodijeliti konačan broj. Nakon potvrde dokument se ne može obrisati. Želite li nastaviti?",
+    "Ovo će dokumentu dodijeliti konačni broj. Nakon izdavanja dokument se ne može obrisati. Želite li nastaviti?",
   "Delete draft document": "Obriši nacrt dokumenta",
   "Delete draft confirmation": "Jeste li sigurni da želite obrisati ovaj nacrt? Ova radnja se ne može poništiti.",
-  "Document finalized": "Dokument potvrđen",
-  "Finalize failed": "Potvrda nije uspjela",
+  "Document finalized": "Dokument izdan",
+  "Finalize failed": "Izdavanje nije uspjelo",
   "Draft deleted": "Nacrt obrisan",
   "Delete draft failed": "Brisanje nacrta nije uspjelo",
   Draft: "Nacrt",

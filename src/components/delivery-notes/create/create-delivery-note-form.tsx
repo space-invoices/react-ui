@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import type { CreateDeliveryNoteRequest, DeliveryNote } from "@spaceinvoices/js-sdk";
+import type { CreateDeliveryNoteRequest, DeliveryNote, UpdateDeliveryNote } from "@spaceinvoices/js-sdk";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Resolver } from "react-hook-form";
@@ -25,9 +25,10 @@ import {
 } from "../../documents/create/document-details-section";
 import { withRequiredDocumentItemFields } from "../../documents/create/document-item-validation";
 import { DocumentItemsSection, type PriceModesMap } from "../../documents/create/document-items-section";
+import { prepareDocumentItems } from "../../documents/create/prepare-document-submission";
 import { DocumentRecipientSection } from "../../documents/create/document-recipient-section";
 import type { DocumentTypes } from "../../documents/types";
-import { useCreateDeliveryNote } from "../delivery-notes.hooks";
+import { useCreateDeliveryNote, useUpdateDeliveryNote } from "../delivery-notes.hooks";
 import de from "./locales/de";
 import es from "./locales/es";
 import fr from "./locales/fr";
@@ -37,7 +38,7 @@ import nl from "./locales/nl";
 import pl from "./locales/pl";
 import pt from "./locales/pt";
 import sl from "./locales/sl";
-import { prepareDeliveryNoteSubmission } from "./prepare-delivery-note-submission";
+import { prepareDeliveryNoteSubmission, prepareDeliveryNoteUpdateSubmission } from "./prepare-delivery-note-submission";
 import { useDeliveryNoteCustomerForm } from "./use-delivery-note-customer-form";
 
 const translations = {
@@ -71,6 +72,8 @@ type CreateDeliveryNoteFormProps = {
   initialValues?: Partial<CreateDeliveryNoteRequest>;
   /** Whether draft actions should be available in the UI */
   allowDrafts?: boolean;
+  mode?: "create" | "edit";
+  documentId?: string;
   translationLocale?: string;
 } & ComponentTranslationProps;
 
@@ -83,6 +86,8 @@ export default function CreateDeliveryNoteForm({
   onAddNewTax,
   initialValues,
   allowDrafts = true,
+  mode = "create",
+  documentId,
   translationLocale,
   t: translateProp,
   namespace,
@@ -98,6 +103,7 @@ export default function CreateDeliveryNoteForm({
 
   const { activeEntity } = useEntities();
   const queryClient = useQueryClient();
+  const isEditMode = mode === "edit";
 
   // Draft submission state
   const [isDraftPending, setIsDraftPending] = useState(false);
@@ -110,7 +116,7 @@ export default function CreateDeliveryNoteForm({
 
   // Fetch next delivery note number
   const { data: nextNumberData } = useNextDocumentNumber(entityId, "delivery_note", {
-    enabled: !!entityId,
+    enabled: !!entityId && !isEditMode,
   });
 
   const form = useForm<CreateDeliveryNoteFormValues>({
@@ -118,22 +124,26 @@ export default function CreateDeliveryNoteForm({
       withRequiredDocumentItemFields(createDeliveryNoteSchema),
     ) as Resolver<CreateDeliveryNoteFormValues>,
     defaultValues: {
-      number: "",
+      number: (initialValues as any)?.number ?? "",
       date: initialValues?.date || new Date().toISOString(),
       customer_id: initialValues?.customer_id ?? undefined,
       // Cast customer to form schema type (API type may have additional fields)
       customer: (initialValues?.customer as CreateDeliveryNoteFormValues["customer"]) ?? undefined,
       items: initialValues?.items?.length
         ? initialValues.items.map((item: any) => ({
-            type: item.type,
+            type: item.type ?? undefined,
             name: item.name || "",
             description: item.description || "",
             ...(item.type !== "separator"
               ? {
+                  item_id: item.item_id ?? undefined,
                   quantity: item.quantity ?? 1,
-                  // Use gross_price if set, otherwise use price
                   price: item.gross_price ?? item.price,
+                  gross_price: item.gross_price ?? undefined,
+                  unit: item.unit ?? undefined,
+                  classification: item.classification ?? undefined,
                   taxes: item.taxes || [],
+                  discounts: item.discounts || [],
                 }
               : {}),
           }))
@@ -148,9 +158,10 @@ export default function CreateDeliveryNoteForm({
           ],
       currency_code: initialValues?.currency_code || activeEntity?.currency_code || "EUR",
       reference: (initialValues as any)?.reference ?? "",
-      note: initialValues?.note ?? defaultNote,
+      note: initialValues?.note ?? (isEditMode ? "" : defaultNote),
       tax_clause: (initialValues as any)?.tax_clause ?? "",
-      footer: (initialValues as any)?.footer ?? defaultFooter,
+      footer: (initialValues as any)?.footer ?? (isEditMode ? "" : defaultFooter),
+      signature: (initialValues as any)?.signature ?? (isEditMode ? "" : (activeEntity?.settings as any)?.default_document_signature || ""),
     },
   });
 
@@ -169,26 +180,29 @@ export default function CreateDeliveryNoteForm({
 
   // Update number when fetched
   useEffect(() => {
+    if (isEditMode) return;
     if (nextNumberData?.number) {
       form.setValue("number", nextNumberData.number);
     }
-  }, [nextNumberData?.number, form]);
+  }, [nextNumberData?.number, form, isEditMode]);
 
   // Set default footer from entity settings when entity data is available
   useEffect(() => {
+    if (isEditMode) return;
     const entityDefaultFooter = (activeEntity?.settings as any)?.document_footer;
     if (entityDefaultFooter && !form.getValues("footer")) {
       form.setValue("footer", entityDefaultFooter);
     }
-  }, [activeEntity, form]);
+  }, [activeEntity, form, isEditMode]);
 
   // Set default note from entity settings when entity data is available
   useEffect(() => {
+    if (isEditMode) return;
     const entityDefaultNote = (activeEntity?.settings as any)?.default_delivery_note_note;
     if (entityDefaultNote && !form.getValues("note")) {
       form.setValue("note", entityDefaultNote);
     }
-  }, [activeEntity, form]);
+  }, [activeEntity, form, isEditMode]);
 
   // Auto-add tax field for tax subject entities
   useEffect(() => {
@@ -202,11 +216,12 @@ export default function CreateDeliveryNoteForm({
 
   // Set default signature from entity settings
   useEffect(() => {
+    if (isEditMode) return;
     const entityDefaultSignature = (activeEntity?.settings as any)?.default_document_signature;
     if (entityDefaultSignature && !form.getValues("signature")) {
       form.setValue("signature", entityDefaultSignature);
     }
-  }, [activeEntity, form]);
+  }, [activeEntity, form, isEditMode]);
 
   const formValues = useWatch({
     control: form.control,
@@ -237,13 +252,14 @@ export default function CreateDeliveryNoteForm({
   useEffect(() => {
     if (effectiveTransactionType === prevTransactionTypeRef.current) return;
     prevTransactionTypeRef.current = effectiveTransactionType;
+    if (isEditMode) return;
 
     const taxClauseDefaults = (activeEntity?.settings as any)?.tax_clause_defaults;
     if (!taxClauseDefaults) return;
 
     const clause = taxClauseDefaults[effectiveTransactionType] ?? "";
     form.setValue("tax_clause", clause);
-  }, [effectiveTransactionType, activeEntity, form]);
+  }, [effectiveTransactionType, activeEntity, form, isEditMode]);
 
   // Extract customer management logic into a custom hook
   const {
@@ -267,11 +283,30 @@ export default function CreateDeliveryNoteForm({
     },
     onError,
   });
+  const { mutate: updateDeliveryNote, isPending: isUpdatePending } = useUpdateDeliveryNote({
+    entityId,
+    onSuccess,
+    onError,
+  });
 
   // Shared submit logic for both regular save and save as draft
   const submitDeliveryNote = useCallback(
     (values: CreateDeliveryNoteFormValues, isDraft: boolean) => {
       try {
+        if (isEditMode) {
+          if (!documentId) {
+            throw new Error("Delivery note edit mode requires a documentId");
+          }
+
+          const updatePayload = prepareDeliveryNoteUpdateSubmission(values, {
+            originalCustomer,
+            priceModes: priceModesRef.current,
+            hidePrices,
+          }) as UpdateDeliveryNote;
+          updateDeliveryNote({ id: documentId, data: updatePayload });
+          return;
+        }
+
         const submission = prepareDeliveryNoteSubmission(values, {
           originalCustomer,
           priceModes: priceModesRef.current,
@@ -286,7 +321,7 @@ export default function CreateDeliveryNoteForm({
         }
       }
     },
-    [createDeliveryNote, onError, originalCustomer, hidePrices],
+    [createDeliveryNote, documentId, hidePrices, isEditMode, onError, originalCustomer, updateDeliveryNote],
   );
 
   // Handle save as draft
@@ -305,44 +340,38 @@ export default function CreateDeliveryNoteForm({
 
   const secondaryAction = useMemo(
     () =>
-      allowDrafts
+      allowDrafts && !isEditMode
         ? {
             label: t("Save as Draft"),
             onClick: handleSaveAsDraft,
             isPending: isDraftPending,
           }
         : undefined,
-    [allowDrafts, t, handleSaveAsDraft, isDraftPending],
+    [allowDrafts, isEditMode, t, handleSaveAsDraft, isDraftPending],
   );
 
   useFormFooterRegistration({
     formId: "create-delivery-note-form",
-    isPending,
+    isPending: isPending || isUpdatePending,
     isDirty: form.formState.isDirty || !!initialValues,
-    label: t("Create Delivery Note"),
+    label: isEditMode ? t("Update") : t("Create Delivery Note"),
     secondaryAction,
   });
 
   const buildPreviewPayload = useCallback(
     (values: CreateDeliveryNoteFormValues): DeliveryNotePreviewPayload => {
-      const currentItems = values.items || [];
-
-      const transformedItems = currentItems.map((item: any, index: number) => {
-        const { price, ...rest } = item;
-        const isGross = priceModesRef.current[index] ?? false;
-        return isGross ? { ...rest, gross_price: price } : { ...rest, price };
-      });
-
       return {
         number: values.number,
         date: values.date,
         customer_id: values.customer_id,
         customer: values.customer,
-        items: transformedItems,
+        items: prepareDocumentItems(values.items, priceModesRef.current),
         currency_code: values.currency_code,
         reference: values.reference,
         note: values.note,
+        tax_clause: values.tax_clause,
         signature: values.signature,
+        footer: values.footer,
         hide_prices: hidePrices,
       };
     },

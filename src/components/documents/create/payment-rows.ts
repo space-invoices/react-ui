@@ -16,6 +16,11 @@ export type SerializedPaymentRow = {
   amount: number;
 };
 
+export type ApiSerializedPaymentRow = {
+  type: RegularPaymentType;
+  amount?: number;
+};
+
 export type PaymentRowsEvaluation = {
   payments: SerializedPaymentRow[];
   totalAmount: number;
@@ -288,4 +293,29 @@ export function validatePaymentRows(
 
 export function serializePaymentRows(paymentRows: DraftPaymentRow[], documentTotal: number): SerializedPaymentRow[] {
   return evaluatePaymentRows(paymentRows, documentTotal).payments;
+}
+
+export function serializePaymentRowsForApi(
+  paymentRows: DraftPaymentRow[],
+  documentTotal: number,
+  options?: { preserveUntouchedAmounts?: boolean },
+): ApiSerializedPaymentRow[] {
+  const resolvedPayments = evaluatePaymentRows(paymentRows, documentTotal).payments;
+
+  if (!options?.preserveUntouchedAmounts) {
+    return resolvedPayments;
+  }
+
+  return paymentRows.flatMap((row, index) => {
+    if (!isValidPaymentTypeSelection(row.type)) {
+      return [];
+    }
+
+    const resolvedPayment = resolvedPayments[index];
+    if (!resolvedPayment) {
+      return [];
+    }
+
+    return row.amountTouched ? [resolvedPayment] : [{ type: resolvedPayment.type }];
+  });
 }

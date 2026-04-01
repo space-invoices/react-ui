@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import type { CreateEstimateRequest, Estimate } from "@spaceinvoices/js-sdk";
+import type { CreateEstimateRequest, Estimate, UpdateEstimate } from "@spaceinvoices/js-sdk";
 import { useQueryClient } from "@tanstack/react-query";
-import { RefreshCw } from "lucide-react";
+import { ArrowUpDown } from "lucide-react";
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Resolver } from "react-hook-form";
@@ -32,9 +32,10 @@ import {
 } from "../../documents/create/document-details-section";
 import { withRequiredDocumentItemFields } from "../../documents/create/document-item-validation";
 import { DocumentItemsSection, type PriceModesMap } from "../../documents/create/document-items-section";
+import { prepareDocumentItems } from "../../documents/create/prepare-document-submission";
 import { DocumentRecipientSection } from "../../documents/create/document-recipient-section";
 import type { DocumentTypes } from "../../documents/types";
-import { useCreateEstimate } from "../estimates.hooks";
+import { useCreateEstimate, useUpdateEstimate } from "../estimates.hooks";
 import de from "./locales/de";
 import es from "./locales/es";
 import fr from "./locales/fr";
@@ -44,7 +45,7 @@ import nl from "./locales/nl";
 import pl from "./locales/pl";
 import pt from "./locales/pt";
 import sl from "./locales/sl";
-import { prepareEstimateSubmission } from "./prepare-estimate-submission";
+import { prepareEstimateSubmission, prepareEstimateUpdateSubmission } from "./prepare-estimate-submission";
 import { useEstimateCustomerForm } from "./use-estimate-customer-form";
 
 function calculateDueDate(dateIso: string, days: number): string {
@@ -88,7 +89,12 @@ type CreateEstimateFormProps = {
   /** Callback to update header action (title toggle) */
   onHeaderActionChange?: (action: ReactNode) => void;
   /** Initial values for form fields (used for document duplication) */
-  initialValues?: Partial<CreateEstimateRequest>;
+  initialValues?: Partial<CreateEstimateRequest> & {
+    number?: string;
+    title_type?: "estimate" | "quote" | null;
+  };
+  mode?: "create" | "edit";
+  documentId?: string;
   /** Whether draft actions should be available in the UI */
   allowDrafts?: boolean;
   /** Optional app-level content rendered inside the details section. */
@@ -105,6 +111,8 @@ export default function CreateEstimateForm({
   onAddNewTax,
   onHeaderActionChange,
   initialValues,
+  mode = "create",
+  documentId,
   allowDrafts = true,
   detailsExtras,
   translationLocale,
@@ -122,6 +130,7 @@ export default function CreateEstimateForm({
 
   const { activeEntity } = useEntities();
   const queryClient = useQueryClient();
+  const isEditMode = mode === "edit";
 
   // Title type state: "estimate" (default) or "quote"
   const [titleType, setTitleType] = useState<"estimate" | "quote">((initialValues as any)?.title_type || "estimate");
@@ -135,7 +144,7 @@ export default function CreateEstimateForm({
 
   // Fetch next estimate number
   const { data: nextNumberData } = useNextDocumentNumber(entityId, "estimate", {
-    enabled: !!entityId,
+    enabled: !!entityId && !isEditMode,
   });
 
   // Get default payment terms and footer from entity settings
@@ -145,22 +154,27 @@ export default function CreateEstimateForm({
   const form = useForm<CreateEstimateFormValues>({
     resolver: zodResolver(createEstimateFormSchema) as Resolver<CreateEstimateFormValues>,
     defaultValues: {
-      number: "",
+      number: initialValues?.number ?? "",
       date: initialValues?.date || new Date().toISOString(),
       customer_id: initialValues?.customer_id ?? undefined,
       // Cast customer to form schema type (API type may have additional fields)
       customer: (initialValues?.customer as CreateEstimateFormValues["customer"]) ?? undefined,
       items: initialValues?.items?.length
         ? initialValues.items.map((item: any) => ({
-            type: item.type,
+            type: item.type ?? undefined,
             name: item.name || "",
             description: item.description || "",
             ...(item.type !== "separator"
               ? {
+                  item_id: item.item_id ?? undefined,
+                  classification: item.classification ?? undefined,
+                  unit: item.unit ?? undefined,
                   quantity: item.quantity ?? 1,
                   // Use gross_price if set, otherwise use price
                   price: item.gross_price ?? item.price,
+                  gross_price: item.gross_price ?? undefined,
                   taxes: item.taxes || [],
+                  discounts: item.discounts || [],
                 }
               : {}),
           }))
@@ -175,13 +189,14 @@ export default function CreateEstimateForm({
           ],
       currency_code: initialValues?.currency_code || activeEntity?.currency_code || "EUR",
       reference: (initialValues as any)?.reference ?? "",
-      note: initialValues?.note ?? defaultEstimateNote,
+      note: initialValues?.note ?? (isEditMode ? "" : defaultEstimateNote),
       tax_clause: (initialValues as any)?.tax_clause ?? "",
-      payment_terms: initialValues?.payment_terms ?? defaultPaymentTerms,
-      footer: (initialValues as any)?.footer ?? defaultFooter,
+      payment_terms: initialValues?.payment_terms ?? (isEditMode ? "" : defaultPaymentTerms),
+      signature: (initialValues as any)?.signature ?? "",
+      footer: (initialValues as any)?.footer ?? (isEditMode ? "" : defaultFooter),
       date_valid_till:
         initialValues?.date_valid_till ||
-        calculateDueDate(initialValues?.date || new Date().toISOString(), defaultEstimateValidDays),
+        (isEditMode ? undefined : calculateDueDate(initialValues?.date || new Date().toISOString(), defaultEstimateValidDays)),
       pt: ((initialValues as any)?.pt as PtDocumentInputForm | undefined) ?? undefined,
     },
   });
@@ -189,6 +204,7 @@ export default function CreateEstimateForm({
   // Price modes per item (gross vs net) - collected from component state at submit
   const onHeaderActionChangeRef = useRef(onHeaderActionChange);
   onHeaderActionChangeRef.current = onHeaderActionChange;
+  const headerActionSignatureRef = useRef<string | null>(null);
 
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
@@ -204,13 +220,15 @@ export default function CreateEstimateForm({
 
   // Update number when fetched
   useEffect(() => {
+    if (isEditMode) return;
     if (nextNumberData?.number) {
       form.setValue("number", nextNumberData.number);
     }
-  }, [nextNumberData?.number, form]);
+  }, [form, isEditMode, nextNumberData?.number]);
 
   // Update default note and valid-till date when entity loads
   useEffect(() => {
+    if (isEditMode) return;
     const entityDefaultNote = (activeEntity?.settings as any)?.default_estimate_note;
     if (entityDefaultNote && !form.getValues("note")) {
       form.setValue("note", entityDefaultNote);
@@ -226,7 +244,7 @@ export default function CreateEstimateForm({
         form.setValue("date_valid_till", calculateDueDate(currentDate, validDays));
       }
     }
-  }, [activeEntity, form, initialValues?.date_valid_till]);
+  }, [activeEntity, form, initialValues?.date_valid_till, isEditMode]);
 
   // Auto-add tax field for tax subject entities
   useEffect(() => {
@@ -241,11 +259,38 @@ export default function CreateEstimateForm({
   // Update header with clickable title toggle
   useEffect(() => {
     const callback = onHeaderActionChangeRef.current;
-    if (!callback) return;
+    if (!callback) {
+      headerActionSignatureRef.current = null;
+      return;
+    }
 
     const toggleTitle = () => {
       setTitleType((prev) => (prev === "estimate" ? "quote" : "estimate"));
     };
+
+    const titleLabel = isEditMode
+      ? titleType === "estimate"
+        ? t("Estimate")
+        : t("Quote")
+      : titleType === "estimate"
+        ? t("Create Estimate")
+        : t("Create Quote");
+    const tooltipLabel = isEditMode
+      ? titleType === "estimate"
+        ? t("Click to switch to Quote")
+        : t("Click to switch to Estimate")
+      : titleType === "estimate"
+        ? t("Click to switch to Quote")
+        : t("Click to switch to Estimate");
+    const headerActionSignature = JSON.stringify({
+      titleLabel,
+      tooltipLabel,
+      isEditMode,
+      titleType,
+    });
+
+    if (headerActionSignatureRef.current === headerActionSignature) return;
+    headerActionSignatureRef.current = headerActionSignature;
 
     callback(
       <TooltipProvider>
@@ -256,17 +301,24 @@ export default function CreateEstimateForm({
               onClick={toggleTitle}
               className="flex cursor-pointer items-center gap-2 font-bold text-2xl hover:text-primary"
             >
-              {titleType === "estimate" ? t("Create Estimate") : t("Create Quote")}
-              <RefreshCw className="size-4 text-muted-foreground" />
+              {titleLabel}
+              <ArrowUpDown className="size-4 text-muted-foreground" />
             </button>
           </TooltipTrigger>
-          <TooltipContent side="bottom">
-            {titleType === "estimate" ? t("Click to switch to Quote") : t("Click to switch to Estimate")}
-          </TooltipContent>
+          <TooltipContent side="bottom">{tooltipLabel}</TooltipContent>
         </Tooltip>
       </TooltipProvider>,
     );
-  }, [titleType, t]);
+  }, [isEditMode, t, titleType]);
+
+  useEffect(() => {
+    const callback = onHeaderActionChangeRef.current;
+    return () => {
+      if (!callback || headerActionSignatureRef.current === null) return;
+      headerActionSignatureRef.current = null;
+      callback(null);
+    };
+  }, []);
 
   const formValues = useWatch({
     control: form.control,
@@ -297,13 +349,14 @@ export default function CreateEstimateForm({
   useEffect(() => {
     if (effectiveTransactionType === prevTransactionTypeRef.current) return;
     prevTransactionTypeRef.current = effectiveTransactionType;
+    if (isEditMode) return;
 
     const taxClauseDefaults = (activeEntity?.settings as any)?.tax_clause_defaults;
     if (!taxClauseDefaults) return;
 
     const clause = taxClauseDefaults[effectiveTransactionType] ?? "";
     form.setValue("tax_clause", clause);
-  }, [effectiveTransactionType, activeEntity, form]);
+  }, [effectiveTransactionType, activeEntity, form, isEditMode]);
 
   // Extract customer management logic into a custom hook
   const {
@@ -327,11 +380,31 @@ export default function CreateEstimateForm({
     },
     onError,
   });
+  const { mutate: updateEstimate, isPending: isUpdatePending } = useUpdateEstimate({
+    entityId,
+    onSuccess,
+    onError,
+  });
 
   // Shared submit logic for both regular save and save as draft
   const submitEstimate = useCallback(
     (values: CreateEstimateFormValues, isDraft: boolean) => {
       try {
+        if (isEditMode) {
+          if (!documentId) {
+            throw new Error("Estimate edit mode requires a documentId");
+          }
+
+          const submission = prepareEstimateUpdateSubmission(values as any, {
+            originalCustomer,
+            priceModes: priceModesRef.current,
+            titleType,
+          }) as UpdateEstimate;
+
+          updateEstimate({ id: documentId, data: submission });
+          return;
+        }
+
         const submission = prepareEstimateSubmission(values, {
           originalCustomer,
           priceModes: priceModesRef.current,
@@ -346,7 +419,7 @@ export default function CreateEstimateForm({
         }
       }
     },
-    [createEstimate, onError, originalCustomer, titleType],
+    [createEstimate, documentId, isEditMode, onError, originalCustomer, titleType, updateEstimate],
   );
 
   // Handle save as draft
@@ -365,26 +438,27 @@ export default function CreateEstimateForm({
 
   const secondaryAction = useMemo(
     () =>
-      allowDrafts
+      allowDrafts && !isEditMode
         ? {
             label: t("Save as Draft"),
             onClick: handleSaveAsDraft,
             isPending: isDraftPending,
           }
         : undefined,
-    [allowDrafts, t, handleSaveAsDraft, isDraftPending],
+    [allowDrafts, t, handleSaveAsDraft, isDraftPending, isEditMode],
   );
 
   useFormFooterRegistration({
     formId: "create-estimate-form",
-    isPending,
+    isPending: isPending || isUpdatePending,
     isDirty: form.formState.isDirty || !!initialValues,
-    label: titleType === "estimate" ? t("Create Estimate") : t("Create Quote"),
+    label: isEditMode ? t("Update") : titleType === "estimate" ? t("Create Estimate") : t("Create Quote"),
     secondaryAction,
   });
 
   // Set default payment terms and footer from entity settings when entity data is available
   useEffect(() => {
+    if (isEditMode) return;
     const entityDefaultPaymentTerms = (activeEntity?.settings as any)?.default_estimate_payment_terms;
     if (entityDefaultPaymentTerms && !form.getValues("payment_terms")) {
       form.setValue("payment_terms", entityDefaultPaymentTerms);
@@ -393,39 +467,35 @@ export default function CreateEstimateForm({
     if (entityDefaultFooter && !form.getValues("footer")) {
       form.setValue("footer", entityDefaultFooter);
     }
-  }, [activeEntity, form]);
+  }, [activeEntity, form, isEditMode]);
 
   // Recalculate valid-till date when document date changes
   const prevDateRef = useRef(form.getValues("date"));
   useEffect(() => {
+    if (isEditMode) return;
     const currentDate = formValues.date;
     if (!currentDate || currentDate === prevDateRef.current) return;
     prevDateRef.current = currentDate;
     const validDays = (activeEntity?.settings as any)?.default_estimate_valid_days ?? 30;
     form.setValue("date_valid_till", calculateDueDate(currentDate, validDays));
-  }, [formValues.date, activeEntity, form]);
+  }, [formValues.date, activeEntity, form, isEditMode]);
 
   const buildPreviewPayload = useCallback(
     (values: CreateEstimateFormValues): EstimatePreviewPayload => {
-      const currentItems = values.items || [];
-
-      const transformedItems = currentItems.map((item: any, index: number) => {
-        const { price, ...rest } = item;
-        const isGross = priceModesRef.current[index] ?? false;
-        return isGross ? { ...rest, gross_price: price } : { ...rest, price };
-      });
-
       return {
         number: values.number,
         date: values.date,
         customer_id: values.customer_id,
         customer: values.customer,
-        items: transformedItems,
+        items: prepareDocumentItems(values.items, priceModesRef.current),
         currency_code: values.currency_code,
         reference: values.reference,
         note: values.note,
+        tax_clause: values.tax_clause,
         payment_terms: values.payment_terms,
         signature: values.signature,
+        footer: values.footer,
+        date_valid_till: values.date_valid_till,
         title_type: titleType,
         ...(normalizePtDocumentInput(values.pt) ? { pt: normalizePtDocumentInput(values.pt) } : {}),
       };

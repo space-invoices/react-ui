@@ -47,6 +47,157 @@ type PrepareDocumentOptions = {
   isDraft?: boolean;
 };
 
+const CLEARABLE_TEXT_FIELDS = ["note", "payment_terms", "reference", "signature", "tax_clause", "footer"] as const;
+
+export function normalizeClearableFormTextField(value: unknown): string | null | undefined {
+  if (value === undefined) return undefined;
+  if (value === null) return null;
+  if (typeof value !== "string") return undefined;
+
+  const trimmed = value.trim();
+  return trimmed === "" ? null : trimmed;
+}
+
+export function prepareDocumentCustomerData<T extends BaseDocumentValues>(
+  nextValues: T & { customer?: CustomerData | null; customer_id?: string | null },
+  options: Pick<PrepareDocumentOptions, "originalCustomer" | "wasCustomerFormShown">,
+): void {
+  if (nextValues.customer_id && nextValues.customer) {
+    if (options.wasCustomerFormShown === false) {
+      delete nextValues.customer;
+    } else {
+      const customerChanged =
+        options.originalCustomer && JSON.stringify(nextValues.customer) !== JSON.stringify(options.originalCustomer);
+
+      if (!customerChanged) {
+        delete nextValues.customer;
+      } else {
+        const cleanedCustomer: any = { save_customer: true };
+        for (const [key, value] of Object.entries(nextValues.customer)) {
+          if (key !== "save_customer" && value !== "" && value !== null && value !== undefined) {
+            cleanedCustomer[key] = value;
+          }
+        }
+        nextValues.customer = cleanedCustomer;
+      }
+    }
+  } else if (nextValues.customer) {
+    const cleanedCustomer: any = { save_customer: true };
+    let hasAnyValue = false;
+
+    for (const [key, value] of Object.entries(nextValues.customer)) {
+      if (key !== "save_customer" && value !== "" && value !== null && value !== undefined) {
+        cleanedCustomer[key] = value;
+        hasAnyValue = true;
+      }
+    }
+
+    if (!hasAnyValue) {
+      delete nextValues.customer;
+    } else {
+      nextValues.customer = cleanedCustomer;
+    }
+  }
+}
+
+export function cleanupEmptyCustomerId<T extends BaseDocumentValues>(nextValues: T & { customer_id?: string | null }): void {
+  if (!nextValues.customer_id) {
+    delete nextValues.customer_id;
+  }
+}
+
+export function prepareDocumentItems(items: any[] | undefined, priceModes: PriceModesMap = {}): any[] | undefined {
+  if (!items) {
+    return items;
+  }
+
+  return items.map((item: any, index: number) => {
+    if (item.type === "separator") {
+      return {
+        type: "separator",
+        name: item.name,
+        description: item.description || undefined,
+      };
+    }
+
+    const { price, gross_price, ...rest } = item;
+    const isGrossPrice = priceModes[index] ?? false;
+    const effectivePrice = price ?? gross_price;
+    const priceFields =
+      effectivePrice === undefined ? {} : isGrossPrice ? { gross_price: effectivePrice } : { price: effectivePrice };
+
+    return {
+      ...rest,
+      ...priceFields,
+      taxes: item.taxes
+        ?.map((tax: any) => {
+          if (tax.tax_id) {
+            return {
+              tax_id: tax.tax_id,
+              ...(tax.pt_exemption_code ? { pt_exemption_code: tax.pt_exemption_code } : {}),
+              ...(tax.pt_exemption_reason ? { pt_exemption_reason: tax.pt_exemption_reason } : {}),
+            };
+          }
+          return tax;
+        })
+        .filter((tax: any) => tax.tax_id || tax.rate !== undefined || tax.classification),
+    };
+  });
+}
+
+export function buildDocumentBasePayload(
+  nextValues: Record<string, any>,
+  options: Pick<PrepareDocumentOptions, "documentType" | "secondaryDate">,
+): Record<string, any> {
+  const {
+    number: _number,
+    note,
+    payment_terms,
+    reference,
+    signature,
+    tax_clause,
+    footer,
+    pt: _pt,
+    ...restValues
+  } = nextValues;
+
+  const payload: Record<string, any> = {
+    ...restValues,
+    date: normalizeDateOnlyInput(nextValues.date),
+  };
+
+  for (const [key, value] of Object.entries({
+    note,
+    payment_terms: options.documentType !== "advance_invoice" ? payment_terms : undefined,
+    reference,
+    signature,
+    tax_clause,
+    footer,
+  })) {
+    const normalized = normalizeClearableFormTextField(value);
+    if (normalized !== undefined) {
+      payload[key] = normalized;
+    }
+  }
+
+  if ((options.documentType === "invoice" || options.documentType === "advance_invoice") && options.secondaryDate) {
+    payload.date_due = normalizeDateOnlyInput(options.secondaryDate);
+  } else if (options.documentType === "estimate" && options.secondaryDate) {
+    payload.date_valid_till = normalizeDateOnlyInput(options.secondaryDate);
+  }
+
+  if (options.documentType === "invoice" || options.documentType === "credit_note") {
+    if (nextValues.date_service) {
+      payload.date_service = normalizeDateOnlyInput(nextValues.date_service);
+    }
+    if (nextValues.date_service_to) {
+      payload.date_service_to = normalizeDateOnlyInput(nextValues.date_service_to);
+    }
+  }
+
+  return payload;
+}
+
 /**
  * Prepares document form data for API submission.
  * Handles customer data transformation and payment data for all document types.
@@ -84,129 +235,10 @@ export function prepareDocumentSubmission<T extends BaseDocumentValues>(
       ? values.items.map((item: any) => ({ ...item, taxes: item?.taxes ? [...item.taxes] : item?.taxes }))
       : values.items,
   };
-
-  // Document numbers are always auto-generated by the server
-  // Remove number from payload (even if form provides a preview value)
-
-  // Handle customer logic
-  if (nextValues.customer_id && nextValues.customer) {
-    // If customer form was not shown, remove customer data (keep only customer_id)
-    if (options.wasCustomerFormShown === false) {
-      delete nextValues.customer;
-    } else {
-      // Existing customer loaded - check if data was actually modified
-      const customerChanged =
-        options.originalCustomer && JSON.stringify(nextValues.customer) !== JSON.stringify(options.originalCustomer);
-
-      if (!customerChanged) {
-        // No changes - send only customer_id
-        delete nextValues.customer;
-      } else {
-        // Changes detected - clean null/empty values and send with save_customer flag
-        const cleanedCustomer: any = { save_customer: true };
-        for (const [key, value] of Object.entries(nextValues.customer)) {
-          if (key !== "save_customer" && value !== "" && value !== null && value !== undefined) {
-            cleanedCustomer[key] = value;
-          }
-        }
-        nextValues.customer = cleanedCustomer;
-      }
-    }
-  } else if (nextValues.customer) {
-    // New inline customer - clean null/empty values and add save flag
-    const cleanedCustomer: any = { save_customer: true };
-    let hasAnyValue = false;
-
-    for (const [key, value] of Object.entries(nextValues.customer)) {
-      if (key !== "save_customer" && value !== "" && value !== null && value !== undefined) {
-        cleanedCustomer[key] = value;
-        hasAnyValue = true;
-      }
-    }
-
-    if (!hasAnyValue) {
-      delete nextValues.customer;
-    } else {
-      nextValues.customer = cleanedCustomer;
-    }
-  }
-
-  // Clean up customer_id if empty
-  if (!nextValues.customer_id) {
-    delete nextValues.customer_id;
-  }
-
-  // Clean up taxes and handle gross price transformation
-  if (nextValues.items) {
-    const priceModes = options.priceModes ?? {};
-    nextValues.items = nextValues.items.map((item: any, index: number) => {
-      // Separator items — pass through with only type, name, description
-      if (item.type === "separator") {
-        return {
-          type: "separator",
-          name: item.name,
-          description: item.description || undefined,
-        };
-      }
-
-      const { price, ...rest } = item;
-
-      // Transform price based on price mode (from component state, not form)
-      const isGrossPrice = priceModes[index] ?? false;
-      const priceFields = isGrossPrice ? { gross_price: price } : { price };
-
-      return {
-        ...rest,
-        ...priceFields,
-        taxes: item.taxes
-          ?.map((tax: any) => {
-            if (tax.tax_id) {
-              // Preserve PT exemption metadata while still allowing the API to resolve the tax rate by tax_id.
-              return {
-                tax_id: tax.tax_id,
-                ...(tax.pt_exemption_code ? { pt_exemption_code: tax.pt_exemption_code } : {}),
-                ...(tax.pt_exemption_reason ? { pt_exemption_reason: tax.pt_exemption_reason } : {}),
-              };
-            }
-            return tax;
-          })
-          // Filter out empty placeholder taxes (UI adds { tax_id: undefined } for the dropdown)
-          .filter((tax: any) => tax.tax_id || tax.rate !== undefined || tax.classification),
-      };
-    });
-  }
-
-  // Build payload with date conversions
-  // Destructure to exclude fields we handle explicitly (number is always server-generated)
-  const { number: _number, note, payment_terms, reference, signature, pt: _pt, ...restValues } = nextValues as any;
-  const payload: any = {
-    ...restValues,
-    ...(note?.trim() && { note: note.trim() }),
-    ...(reference?.trim() && { reference: reference.trim() }),
-    // Advance invoices don't have payment terms - they are documents requesting payment
-    ...(options.documentType !== "advance_invoice" && payment_terms?.trim() && { payment_terms: payment_terms.trim() }),
-    ...(signature?.trim() && { signature: signature.trim() }),
-    date: normalizeDateOnlyInput(nextValues.date),
-  };
-
-  // Add secondary date field based on document type
-  if ((options.documentType === "invoice" || options.documentType === "advance_invoice") && options.secondaryDate) {
-    payload.date_due = normalizeDateOnlyInput(options.secondaryDate);
-  } else if (options.documentType === "estimate" && options.secondaryDate) {
-    payload.date_valid_till = normalizeDateOnlyInput(options.secondaryDate);
-  }
-  // Credit notes don't have a secondary date field
-
-  // Add service date fields for invoices and credit notes
-  if (options.documentType === "invoice" || options.documentType === "credit_note") {
-    const v = nextValues as any;
-    if (v.date_service) {
-      payload.date_service = normalizeDateOnlyInput(v.date_service);
-    }
-    if (v.date_service_to) {
-      payload.date_service_to = normalizeDateOnlyInput(v.date_service_to);
-    }
-  }
+  prepareDocumentCustomerData(nextValues, options);
+  cleanupEmptyCustomerId(nextValues);
+  nextValues.items = prepareDocumentItems(nextValues.items, options.priceModes ?? {});
+  const payload: any = buildDocumentBasePayload(nextValues, options);
 
   // Handle markAsPaid for invoices and credit notes
   if (options.documentType !== "estimate" && options.markAsPaid) {
@@ -233,6 +265,12 @@ export function prepareDocumentSubmission<T extends BaseDocumentValues>(
   // Add draft flag if requested
   if (options.isDraft) {
     payload.is_draft = true;
+  }
+
+  for (const field of CLEARABLE_TEXT_FIELDS) {
+    if (payload[field] === undefined || payload[field] === null) {
+      delete payload[field];
+    }
   }
 
   return payload;

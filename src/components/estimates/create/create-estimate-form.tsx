@@ -17,6 +17,7 @@ import {
   type PtDocumentInputForm,
   ptDocumentInputFormSchema,
 } from "@/ui/lib/pt-document-input";
+import { normalizeLineItemDiscountsForForm } from "@/ui/lib/schemas/shared";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
 import { useEntities } from "@/ui/providers/entities-context";
@@ -174,7 +175,7 @@ export default function CreateEstimateForm({
                   price: item.gross_price ?? item.price,
                   gross_price: item.gross_price ?? undefined,
                   taxes: item.taxes || [],
-                  discounts: item.discounts || [],
+                  discounts: normalizeLineItemDiscountsForForm(item.discounts),
                 }
               : {}),
           }))

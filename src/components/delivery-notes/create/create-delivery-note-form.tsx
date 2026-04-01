@@ -11,6 +11,7 @@ import { Label } from "@/ui/components/ui/label";
 import { createDeliveryNoteSchema } from "@/ui/generated/schemas";
 import { useNextDocumentNumber } from "@/ui/hooks/use-next-document-number";
 import { useTransactionTypeCheck } from "@/ui/hooks/use-transaction-type-check";
+import { normalizeLineItemDiscountsForForm } from "@/ui/lib/schemas/shared";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
 import { useEntities } from "@/ui/providers/entities-context";
@@ -143,7 +144,7 @@ export default function CreateDeliveryNoteForm({
                   unit: item.unit ?? undefined,
                   classification: item.classification ?? undefined,
                   taxes: item.taxes || [],
-                  discounts: item.discounts || [],
+                  discounts: normalizeLineItemDiscountsForForm(item.discounts),
                 }
               : {}),
           }))

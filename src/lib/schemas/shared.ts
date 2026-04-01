@@ -44,6 +44,17 @@ export const discountSchema = z.object({
 
 export type DiscountFormData = z.infer<typeof discountSchema>;
 
+export function normalizeLineItemDiscountsForForm(
+  discounts?: Array<{ value: number; type?: "percent" | "amount" | null }> | null,
+): DiscountFormData[] {
+  return (
+    discounts?.map((discount) => ({
+      value: discount.value,
+      type: discount.type ?? undefined,
+    })) ?? []
+  );
+}
+
 /**
  * Line item schema with UI-only is_gross_price flag.
  *

@@ -36,6 +36,7 @@ import {
   DocumentSignatureField,
   DocumentTaxClauseField,
 } from "../../documents/create/document-details-section";
+import { withCreditNoteIssueDateValidation } from "../../documents/create/document-date-validation";
 import { withRequiredDocumentItemFields } from "../../documents/create/document-item-validation";
 import { DocumentItemsSection, type PriceModesMap } from "../../documents/create/document-items-section";
 import { DocumentRecipientSection } from "../../documents/create/document-recipient-section";
@@ -84,10 +85,12 @@ const translations = {
   pl: { ...invoicePl, ...pl },
   hr: { ...invoiceHr, ...hr },
 } as const;
-const createCreditNoteFormSchema = withRequiredDocumentItemFields(
-  createCreditNoteSchema.extend({
-    pt: ptDocumentInputFormSchema.optional(),
-  }),
+const createCreditNoteFormSchema = withCreditNoteIssueDateValidation(
+  withRequiredDocumentItemFields(
+    createCreditNoteSchema.extend({
+      pt: ptDocumentInputFormSchema.optional(),
+    }),
+  ),
 );
 
 function isSameCalendarDate(left: string | Date | undefined, right: string | Date): boolean {
@@ -201,6 +204,7 @@ export default function CreateCreditNoteForm({
     resolver: zodResolver(createCreditNoteFormSchema) as Resolver<CreateCreditNoteFormValues>,
     defaultValues: {
       number: (initialValues as any)?.number ?? "",
+      calculation_mode: (initialValues as any)?.calculation_mode ?? undefined,
       date: initialValues?.date || new Date().toISOString(),
       customer_id: initialValues?.customer_id ?? undefined,
       // Cast customer to form schema type (API type may have additional fields)
@@ -232,7 +236,9 @@ export default function CreateCreditNoteForm({
               taxes: [],
             },
           ],
-      date_service: (initialValues as any)?.date_service || new Date().toISOString(),
+      date_service:
+        (initialValues as any)?.date_service ??
+        (isEditMode ? undefined : (initialValues?.date ?? new Date().toISOString())),
       date_service_to: (initialValues as any)?.date_service_to ?? undefined,
       currency_code: initialValues?.currency_code || activeEntity?.currency_code || "EUR",
       reference: (initialValues as any)?.reference ?? "",

@@ -260,6 +260,7 @@ export default function CreateAdvanceInvoiceForm({
     resolver,
     defaultValues: {
       number: (initialValues as any)?.number ?? "",
+      calculation_mode: (initialValues as any)?.calculation_mode ?? undefined,
       date: initialValues?.date || new Date().toISOString(),
       customer_id: initialValues?.customer_id ?? undefined,
       // Cast customer to form schema type (API type may have additional fields)

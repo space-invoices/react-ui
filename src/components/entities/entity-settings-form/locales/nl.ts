@@ -189,6 +189,13 @@ export default {
   "tax-rules.require_gross_prices.label": "Brutoprijzen vereisen",
   "tax-rules.require_gross_prices.description":
     "Brutoprijzen vereisen wanneer verlegging wordt toegepast. Voorkomt onverwachte wijzigingen in factuurtotalen.",
+  "tax-rules.calculation_mode.label": "Calculation mode",
+  "tax-rules.calculation_mode.description": "Choose how discounts and VAT are ordered when document totals are calculated.",
+  "tax-rules.calculation_mode.b2b_standard.label": "B2B standard",
+  "tax-rules.calculation_mode.b2b_standard.description": "Discounts reduce the net line amount first, then VAT is calculated.",
+  "tax-rules.calculation_mode.b2c_gross_discount.label": "B2C gross discount",
+  "tax-rules.calculation_mode.b2c_gross_discount.description":
+    "Discounts reduce the final gross payable amount, then net and VAT are derived from that result.",
   // Tax clauses settings
   "Default Tax Clauses": "Standaard belastingclausules",
   "Set default tax clauses that are automatically added to documents based on transaction type":

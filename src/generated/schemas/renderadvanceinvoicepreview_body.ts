@@ -114,6 +114,9 @@ const PartialAdvanceInvoicePreview = z.object({
   tax_clause: z.union([z.string(), z.null()]).optional(),
   footer: z.union([z.string(), z.null()]).optional(),
   signature: z.union([z.string(), z.null()]).optional(),
+  calculation_mode: z
+    .union([z.union([z.enum(["b2b_standard", "b2c_gross_discount"]), z.null()]), z.null()])
+    .optional(),
   currency_code: z.string().max(3).optional(),
   metadata: z.union([z.record(z.string(), z.any()), z.null()]).optional(),
   reference: z.union([z.string(), z.null()]).optional(),
@@ -216,6 +219,9 @@ const CompleteAdvanceInvoicePreview = z.object({
   tax_clause: z.union([z.string(), z.null()]).optional(),
   footer: z.union([z.string(), z.null()]).optional(),
   signature: z.union([z.string(), z.null()]).optional(),
+  calculation_mode: z
+    .union([z.union([z.enum(["b2b_standard", "b2c_gross_discount"]), z.null()]), z.null()])
+    .optional(),
   currency_code: z.string().max(3).optional(),
   metadata: z.union([z.record(z.string(), z.any()), z.null()]).optional(),
   reference: z.union([z.string(), z.null()]).optional(),

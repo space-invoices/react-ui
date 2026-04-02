@@ -68,6 +68,7 @@ const DocumentEntity = z
 // Schema for create estimate operation
 const createEstimateSchemaDefinition = z.object({
   is_draft: z.boolean().optional(),
+  calculation_mode: z.enum(["b2b_standard", "b2c_gross_discount"]).optional(),
   date: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d{3})?Z?)?$/)

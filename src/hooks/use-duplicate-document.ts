@@ -142,6 +142,7 @@ function transformDocumentForDuplication(source: Document, targetType: DocumentT
     items: items as any,
     // Currency
     currency_code: source.currency_code,
+    calculation_mode: (source as any).calculation_mode ?? undefined,
     // Notes
     note: source.note,
     payment_terms: source.payment_terms,

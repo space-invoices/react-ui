@@ -186,6 +186,14 @@ export default {
   "tax-rules.require_gross_prices.label": "Zahtevaj bruto cene",
   "tax-rules.require_gross_prices.description":
     "Zahtevaj bruto cene, ko se uporabi obrnjena davčna obveznost. Prepreči nepričakovane spremembe skupnih zneskov računov.",
+  "tax-rules.calculation_mode.label": "Način izračuna",
+  "tax-rules.calculation_mode.description": "Izberite vrstni red popustov in DDV pri izračunu zneskov dokumenta.",
+  "tax-rules.calculation_mode.b2b_standard.label": "Standard B2B",
+  "tax-rules.calculation_mode.b2b_standard.description":
+    "Popusti najprej zmanjšajo neto znesek postavke, nato se obračuna DDV.",
+  "tax-rules.calculation_mode.b2c_gross_discount.label": "B2C bruto popust",
+  "tax-rules.calculation_mode.b2c_gross_discount.description":
+    "Popusti zmanjšajo končni bruto znesek za plačilo, neto osnova in DDV pa se izračunata iz tega rezultata.",
   // Tax clauses settings
   "Default Tax Clauses": "Privzete davčne klavzule",
   "Set default tax clauses that are automatically added to documents based on transaction type":

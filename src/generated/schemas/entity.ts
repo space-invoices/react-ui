@@ -84,6 +84,18 @@ const createEntitySchemaDefinition = z.object({
       default_delivery_note_note: z.union([z.string(), z.null()]),
       document_footer: z.union([z.string(), z.null()]),
       default_document_signature: z.union([z.string(), z.null()]),
+      calculation: z.union([
+        z
+          .object({
+            default_mode: z.union([
+              z.union([z.enum(["b2b_standard", "b2c_gross_discount"]), z.null()]),
+              z.null(),
+            ]),
+          })
+          .partial()
+          .passthrough(),
+        z.null(),
+      ]),
       slovenia: z.union([
         z
           .object({
@@ -417,6 +429,18 @@ const patchEntitySchemaDefinition = z
         default_delivery_note_note: z.union([z.string(), z.null()]),
         document_footer: z.union([z.string(), z.null()]),
         default_document_signature: z.union([z.string(), z.null()]),
+        calculation: z.union([
+          z
+            .object({
+              default_mode: z.union([
+                z.union([z.enum(["b2b_standard", "b2c_gross_discount"]), z.null()]),
+                z.null(),
+              ]),
+            })
+            .partial()
+            .passthrough(),
+          z.null(),
+        ]),
         slovenia: z.union([
           z
             .object({

@@ -17,6 +17,7 @@ import {
 } from "@/ui/components/ui/form";
 import { Switch } from "@/ui/components/ui/switch";
 import { Textarea } from "@/ui/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui/components/ui/select";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
 import { cn } from "@/ui/lib/utils";
@@ -28,6 +29,7 @@ import sl from "../entity-settings-form/locales/sl";
 const translations = { sl, de } as const;
 
 const taxRulesSettingsSchema = z.object({
+  calculation_mode: z.enum(["b2b_standard", "b2c_gross_discount"]),
   vies_validate_vat: z.boolean(),
   auto_reverse_charge: z.boolean(),
   auto_remove_tax_export: z.boolean(),
@@ -83,6 +85,7 @@ export function TaxRulesSettingsForm({
 
   const defaultValues = useMemo(
     (): TaxRulesSettingsSchema => ({
+      calculation_mode: currentSettings.calculation?.default_mode ?? "b2b_standard",
       vies_validate_vat: currentTaxRules.vies_validate_vat ?? true,
       auto_reverse_charge: currentTaxRules.auto_reverse_charge ?? false,
       auto_remove_tax_export: currentTaxRules.auto_remove_tax_export ?? false,
@@ -129,6 +132,10 @@ export function TaxRulesSettingsForm({
   const onSubmit = (values: TaxRulesSettingsSchema) => {
     const updatedSettings: EntitySettings = {
       ...currentSettings,
+      calculation: {
+        ...currentSettings.calculation,
+        default_mode: values.calculation_mode,
+      },
       tax_rules: {
         eu: {
           vies_validate_vat: values.vies_validate_vat,
@@ -165,6 +172,35 @@ export function TaxRulesSettingsForm({
   // Tax rules section content (switches)
   const taxRulesContent = (
     <div className="space-y-4">
+      <FormField
+        control={form.control}
+        name="calculation_mode"
+        render={({ field }) => (
+          <FormItem className="rounded-lg border p-4">
+            <FormLabel className="text-base">{t("tax-rules.calculation_mode.label")}</FormLabel>
+            <FormDescription>{t("tax-rules.calculation_mode.description")}</FormDescription>
+            <FormControl>
+              <Select value={field.value} onValueChange={field.onChange}>
+                <SelectTrigger className="mt-3">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="b2b_standard">{t("tax-rules.calculation_mode.b2b_standard.label")}</SelectItem>
+                  <SelectItem value="b2c_gross_discount">
+                    {t("tax-rules.calculation_mode.b2c_gross_discount.label")}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </FormControl>
+            <div className="mt-3 space-y-1 text-muted-foreground text-sm">
+              <p>{t("tax-rules.calculation_mode.b2b_standard.description")}</p>
+              <p>{t("tax-rules.calculation_mode.b2c_gross_discount.description")}</p>
+            </div>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
       <FormField
         control={form.control}
         name="vies_validate_vat"

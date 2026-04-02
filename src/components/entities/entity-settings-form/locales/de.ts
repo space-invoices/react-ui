@@ -189,6 +189,15 @@ export default {
   "tax-rules.require_gross_prices.label": "Bruttopreise erforderlich",
   "tax-rules.require_gross_prices.description":
     "Bruttopreise bei Reverse-Charge erforderlich. Verhindert unerwartete Änderungen der Rechnungssummen.",
+  "tax-rules.calculation_mode.label": "Berechnungsmodus",
+  "tax-rules.calculation_mode.description":
+    "Wählen Sie, in welcher Reihenfolge Rabatte und Umsatzsteuer bei der Dokumentberechnung angewendet werden.",
+  "tax-rules.calculation_mode.b2b_standard.label": "B2B-Standard",
+  "tax-rules.calculation_mode.b2b_standard.description":
+    "Rabatte reduzieren zuerst den Nettozeilenbetrag, danach wird die Umsatzsteuer berechnet.",
+  "tax-rules.calculation_mode.b2c_gross_discount.label": "B2C-Bruttorabatt",
+  "tax-rules.calculation_mode.b2c_gross_discount.description":
+    "Rabatte reduzieren den endgültigen Bruttobetrag, danach werden Netto und Umsatzsteuer daraus abgeleitet.",
   // Tax clauses settings
   "Default Tax Clauses": "Standard-Steuerklauseln",
   "Set default tax clauses that are automatically added to documents based on transaction type":

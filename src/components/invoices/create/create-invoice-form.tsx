@@ -42,6 +42,7 @@ import {
   DocumentSignatureField,
   DocumentTaxClauseField,
 } from "../../documents/create/document-details-section";
+import { withInvoiceIssueDateValidation } from "../../documents/create/document-date-validation";
 import { withRequiredDocumentItemFields } from "../../documents/create/document-item-validation";
 import { DocumentItemsSection, type PriceModesMap } from "../../documents/create/document-items-section";
 import { DocumentRecipientSection } from "../../documents/create/document-recipient-section";
@@ -116,10 +117,12 @@ const translations = {
 const DUPLICATE_PREVIEW_SETTLE_MS = 120;
 const DUPLICATE_PREVIEW_MIN_DELAY_MS = 260;
 const FORM_ID = "create-invoice-form";
-const createInvoiceFormSchema = withRequiredDocumentItemFields(
-  createInvoiceSchema.extend({
-    pt: ptDocumentInputFormSchema.optional(),
-  }),
+const createInvoiceFormSchema = withInvoiceIssueDateValidation(
+  withRequiredDocumentItemFields(
+    createInvoiceSchema.extend({
+      pt: ptDocumentInputFormSchema.optional(),
+    }),
+  ),
 );
 
 function emitInvoiceCreateDebug(_detail: Record<string, unknown>) {
@@ -182,6 +185,7 @@ function buildInvoiceFormValues({
 }): CreateInvoiceFormValues {
   return {
     number: initialValues?.number || "",
+    calculation_mode: (initialValues as any)?.calculation_mode ?? undefined,
     date: initialValues?.date || new Date().toISOString(),
     customer_id: initialValues?.customer_id ?? undefined,
     customer: (initialValues?.customer as CreateInvoiceFormValues["customer"]) ?? undefined,
@@ -222,7 +226,9 @@ function buildInvoiceFormValues({
     date_due:
       initialValues?.date_due ||
       (isEditMode ? undefined : calculateDueDate(initialValues?.date || new Date().toISOString(), defaultInvoiceDueDays)),
-    date_service: (initialValues as any)?.date_service || new Date().toISOString(),
+    date_service:
+      (initialValues as any)?.date_service ??
+      (isEditMode ? undefined : (initialValues?.date ?? new Date().toISOString())),
     date_service_to: (initialValues as any)?.date_service_to ?? undefined,
     linked_documents: (initialValues as any)?.linked_documents,
     pt: ((initialValues as any)?.pt as PtDocumentInputForm | undefined) ?? undefined,
@@ -775,17 +781,23 @@ export default function CreateInvoiceForm({
   // Auto-populate tax_clause from entity settings when transaction type changes
   const effectiveTransactionType = transactionType ?? "domestic";
   const prevTransactionTypeRef = useRef<string | undefined>(undefined);
+  const prevTaxClauseHydrationVersionRef = useRef<number | undefined>(undefined);
+  const [taxClauseHydrationVersion, setTaxClauseHydrationVersion] = useState(0);
   useEffect(() => {
     if (isEditMode) return;
-    if (effectiveTransactionType === prevTransactionTypeRef.current) return;
+    const transactionTypeChanged = effectiveTransactionType !== prevTransactionTypeRef.current;
+    const hydrationVersionChanged = taxClauseHydrationVersion !== prevTaxClauseHydrationVersionRef.current;
+    if (!transactionTypeChanged && !hydrationVersionChanged) return;
+
     prevTransactionTypeRef.current = effectiveTransactionType;
+    prevTaxClauseHydrationVersionRef.current = taxClauseHydrationVersion;
 
     const taxClauseDefaults = (activeEntity?.settings as any)?.tax_clause_defaults;
     if (!taxClauseDefaults) return;
 
     const clause = taxClauseDefaults[effectiveTransactionType] ?? "";
     form.setValue("tax_clause", clause);
-  }, [activeEntity, effectiveTransactionType, form, isEditMode]);
+  }, [activeEntity, effectiveTransactionType, form, isEditMode, taxClauseHydrationVersion]);
 
   // Extract customer management logic into a custom hook
   const {
@@ -1000,6 +1012,7 @@ export default function CreateInvoiceForm({
     duplicateHydrationStartedAtRef.current = performance.now();
     duplicateHydrationLoggedRef.current = false;
     form.reset(formDefaultValues);
+    setTaxClauseHydrationVersion((currentVersion) => currentVersion + 1);
     priceModesRef.current = initialPriceModes;
   }, [form, formDefaultValues, hasInitialValues, initialPriceModes]);
 

@@ -5,6 +5,7 @@
 import type { Entity, Estimate, Invoice, TransactionTypeCheckResponse } from "@spaceinvoices/js-sdk";
 import { CalendarIcon, ChevronDown, Globe, Info, Loader2 } from "lucide-react";
 import { useRef, useState } from "react";
+import { useWatch } from "react-hook-form";
 import { Badge } from "@/ui/components/ui/badge";
 import { Button } from "@/ui/components/ui/button";
 import { Calendar } from "@/ui/components/ui/calendar";
@@ -15,6 +16,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/ui/components/ui/popo
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui/components/ui/select";
 import { Textarea } from "@/ui/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/ui/components/ui/tooltip";
+import { normalizeDateOnlyInput, toLocalDateOnlyString } from "@/ui/lib/date-only";
 import { CURRENCY_CODES } from "@/ui/lib/constants";
 import { replaceTemplateVariablesForPreview } from "@/ui/lib/template-variables";
 import { cn } from "@/ui/lib/utils";
@@ -79,6 +81,15 @@ type DateLockProps = {
 };
 
 const LABEL_WIDTH = "w-[6.5rem] shrink-0";
+const MIN_DOCUMENT_DATE = new Date("1900-01-01");
+
+function isAfterDateOnly(date: Date, maxDateOnly: string | undefined): boolean {
+  return !!maxDateOnly && toLocalDateOnlyString(date) > maxDateOnly;
+}
+
+function isBeforeDateOnly(date: Date, minDateOnly: string | undefined): boolean {
+  return !!minDateOnly && toLocalDateOnlyString(date) < minDateOnly;
+}
 
 function extractSequenceNumber(fullNumber: string, premise?: string, device?: string): string {
   if (!fullNumber || (!premise && !device)) return fullNumber;
@@ -116,6 +127,12 @@ export function DocumentDetailsSection({
   const hasSecondaryDate = documentConfig.dateFieldName !== null;
   const dateFieldName = documentConfig.dateFieldName;
   const dateFieldLabel = documentConfig.dateFieldLabel ? t(documentConfig.dateFieldLabel) : "";
+  const watchedIssueDate = useWatch({ control, name: "date" });
+  const watchedServiceStartDate = useWatch({ control, name: "date_service" });
+  const issueDateOnly = normalizeDateOnlyInput(typeof watchedIssueDate === "string" ? watchedIssueDate : undefined);
+  const serviceStartDateOnly = normalizeDateOnlyInput(
+    typeof watchedServiceStartDate === "string" ? watchedServiceStartDate : undefined,
+  );
 
   // Check if FURS/FINA inline should show premise/device selects
   const showFursSelects = fursInline && !fursInline.isSkipped;
@@ -298,14 +315,14 @@ export function DocumentDetailsSection({
                     </FormControl>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={field.value ? new Date(field.value) : undefined}
-                      onSelect={(date) => field.onChange(date?.toISOString())}
-                      disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
-                      initialFocus
-                    />
-                  </PopoverContent>
+                      <Calendar
+                        mode="single"
+                        selected={field.value ? new Date(field.value) : undefined}
+                        onSelect={(date) => field.onChange(date?.toISOString())}
+                        disabled={(date) => date > new Date() || date < MIN_DOCUMENT_DATE}
+                        initialFocus
+                      />
+                    </PopoverContent>
                 </Popover>
               )}
             </div>
@@ -362,6 +379,9 @@ export function DocumentDetailsSection({
                         mode="single"
                         selected={field.value ? new Date(field.value) : undefined}
                         onSelect={(date) => field.onChange(date?.toISOString())}
+                        disabled={(date) =>
+                          date > new Date() || date < MIN_DOCUMENT_DATE || isAfterDateOnly(date, issueDateOnly)
+                        }
                         initialFocus
                       />
                     </PopoverContent>
@@ -386,6 +406,9 @@ export function DocumentDetailsSection({
                           mode="single"
                           selected={field.value ? new Date(field.value) : undefined}
                           onSelect={(date) => field.onChange(date?.toISOString())}
+                          disabled={(date) =>
+                            date > new Date() || date < MIN_DOCUMENT_DATE || isAfterDateOnly(date, issueDateOnly)
+                          }
                           initialFocus
                         />
                       </PopoverContent>
@@ -395,33 +418,44 @@ export function DocumentDetailsSection({
                       control={control}
                       name="date_service_to"
                       render={({ field: toField }) => (
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <Button
-                              type="button"
-                              variant="outline"
-                              className={cn(
-                                "w-full pl-3 text-left font-normal",
-                                !toField.value && "text-muted-foreground",
-                              )}
-                            >
-                              {toField.value ? (
-                                new Date(toField.value).toLocaleDateString(locale)
-                              ) : (
-                                <span>{t("To")}</span>
-                              )}
-                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                              mode="single"
-                              selected={toField.value ? new Date(toField.value) : undefined}
-                              onSelect={(date) => toField.onChange(date?.toISOString())}
-                              initialFocus
-                            />
-                          </PopoverContent>
-                        </Popover>
+                        <FormItem>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  className={cn(
+                                    "w-full pl-3 text-left font-normal",
+                                    !toField.value && "text-muted-foreground",
+                                  )}
+                                >
+                                  {toField.value ? (
+                                    new Date(toField.value).toLocaleDateString(locale)
+                                  ) : (
+                                    <span>{t("To")}</span>
+                                  )}
+                                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                              </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                              <Calendar
+                                mode="single"
+                                selected={toField.value ? new Date(toField.value) : undefined}
+                                onSelect={(date) => toField.onChange(date?.toISOString())}
+                                disabled={(date) =>
+                                  date > new Date() ||
+                                  date < MIN_DOCUMENT_DATE ||
+                                  isAfterDateOnly(date, issueDateOnly) ||
+                                  isBeforeDateOnly(date, serviceStartDateOnly)
+                                }
+                                initialFocus
+                              />
+                            </PopoverContent>
+                          </Popover>
+                          <FormMessage />
+                        </FormItem>
                       )}
                     />
                   </div>
@@ -492,7 +526,7 @@ export function DocumentDetailsSection({
                           dueDays.onDueDaysTypeChange("custom");
                         }
                       }}
-                      disabled={(date) => date < new Date("1900-01-01")}
+                      disabled={(date) => date < MIN_DOCUMENT_DATE || isBeforeDateOnly(date, issueDateOnly)}
                       initialFocus
                     />
                   </PopoverContent>

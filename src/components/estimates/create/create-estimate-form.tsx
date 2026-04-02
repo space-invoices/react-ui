@@ -31,6 +31,7 @@ import {
   DocumentSignatureField,
   DocumentTaxClauseField,
 } from "../../documents/create/document-details-section";
+import { withEstimateIssueDateValidation } from "../../documents/create/document-date-validation";
 import { withRequiredDocumentItemFields } from "../../documents/create/document-item-validation";
 import { DocumentItemsSection, type PriceModesMap } from "../../documents/create/document-items-section";
 import { prepareDocumentItems } from "../../documents/create/prepare-document-submission";
@@ -66,10 +67,12 @@ const translations = {
   pl,
   hr,
 } as const;
-const createEstimateFormSchema = withRequiredDocumentItemFields(
-  createEstimateSchema.extend({
-    pt: ptDocumentInputFormSchema.optional(),
-  }),
+const createEstimateFormSchema = withEstimateIssueDateValidation(
+  withRequiredDocumentItemFields(
+    createEstimateSchema.extend({
+      pt: ptDocumentInputFormSchema.optional(),
+    }),
+  ),
 );
 
 // Form values: extend schema with local-only fields (number is for display, not sent to API)
@@ -156,6 +159,7 @@ export default function CreateEstimateForm({
     resolver: zodResolver(createEstimateFormSchema) as Resolver<CreateEstimateFormValues>,
     defaultValues: {
       number: initialValues?.number ?? "",
+      calculation_mode: (initialValues as any)?.calculation_mode ?? undefined,
       date: initialValues?.date || new Date().toISOString(),
       customer_id: initialValues?.customer_id ?? undefined,
       // Cast customer to form schema type (API type may have additional fields)

@@ -54,6 +54,8 @@ import {
   validatePaymentRows,
 } from "../../documents/create/payment-rows";
 import { prepareDocumentItems } from "../../documents/create/prepare-document-submission";
+import { applyCustomCreateTemplate } from "../../documents/create/custom-create-template";
+import { financialInputsMatchInitial, resolvePreservedExpectedTotal } from "../../documents/create/preserved-expected-total";
 import { scrollToFirstInvalidField } from "../../documents/create/scroll-to-first-invalid-field";
 import { useDocumentCustomerForm } from "../../documents/create/use-document-customer-form";
 import type { DocumentTypes } from "../../documents/types";
@@ -74,7 +76,7 @@ import invoiceNl from "../../invoices/create/locales/nl";
 import invoicePl from "../../invoices/create/locales/pl";
 import invoicePt from "../../invoices/create/locales/pt";
 import invoiceSl from "../../invoices/create/locales/sl";
-import { useCreateAdvanceInvoice, useUpdateAdvanceInvoice } from "../advance-invoices.hooks";
+import { useCreateAdvanceInvoice, useCreateCustomAdvanceInvoice, useUpdateAdvanceInvoice } from "../advance-invoices.hooks";
 import de from "./locales/de";
 import es from "./locales/es";
 import fr from "./locales/fr";
@@ -203,6 +205,36 @@ export default function CreateAdvanceInvoiceForm({
     }, {} as PriceModesMap);
   }, [initialValues?.items]);
   const priceModesRef = useRef<PriceModesMap>(initialPriceModes);
+  const customCreateTemplate = (initialValues as any)?._custom_create_template;
+  const financialInputsMatchSource = useCallback(
+    (values: { items?: any[]; currency_code?: string; calculation_mode?: string | null }) =>
+      financialInputsMatchInitial({
+        initialItems: initialValues?.items,
+        currentItems: values.items,
+        initialCurrencyCode: initialValues?.currency_code,
+        currentCurrencyCode: values.currency_code,
+        initialCalculationMode: (initialValues as any)?.calculation_mode ?? null,
+        currentCalculationMode: values.calculation_mode ?? null,
+        initialPriceModes,
+        currentPriceModes: priceModesRef.current,
+      }),
+    [initialPriceModes, initialValues],
+  );
+  const getPreservedExpectedTotalWithTax = useCallback(
+    (values: { items?: any[]; currency_code?: string; calculation_mode?: string | null }) =>
+      resolvePreservedExpectedTotal({
+        initialExpectedTotalWithTax: (initialValues as any)?._preserved_expected_total_with_tax,
+        initialItems: initialValues?.items,
+        currentItems: values.items,
+        initialCurrencyCode: initialValues?.currency_code,
+        currentCurrencyCode: values.currency_code,
+        initialCalculationMode: (initialValues as any)?.calculation_mode ?? null,
+        currentCalculationMode: values.calculation_mode ?? null,
+        initialPriceModes,
+        currentPriceModes: priceModesRef.current,
+      }),
+    [initialPriceModes, initialValues],
+  );
 
   const baseResolver = useMemo(
     () => zodResolver(createAdvanceInvoiceFormSchema) as Resolver<CreateAdvanceInvoiceFormValues>,
@@ -297,7 +329,9 @@ export default function CreateAdvanceInvoiceForm({
       note: initialValues?.note ?? (isEditMode ? "" : defaultNote),
       tax_clause: (initialValues as any)?.tax_clause ?? "",
       footer: (initialValues as any)?.footer ?? (isEditMode ? "" : defaultFooter),
-      signature: (initialValues as any)?.signature ?? (isEditMode ? "" : (activeEntity?.settings as any)?.default_document_signature || ""),
+      signature:
+        (initialValues as any)?.signature ??
+        (isEditMode ? "" : (activeEntity?.settings as any)?.default_document_signature || ""),
       pt: ((initialValues as any)?.pt as PtDocumentInputForm | undefined) ?? undefined,
     },
   });
@@ -615,6 +649,15 @@ export default function CreateAdvanceInvoiceForm({
     },
     onError,
   });
+  const { mutate: createCustomAdvanceInvoice, isPending: isCreateCustomPending } = useCreateCustomAdvanceInvoice({
+    entityId,
+    onSuccess: (data) => {
+      furs.saveCombo();
+      fina.saveCombo();
+      onSuccess?.(data);
+    },
+    onError,
+  });
   const { mutate: updateAdvanceInvoice, isPending: isUpdatePending } = useUpdateAdvanceInvoice({
     entityId,
     onSuccess,
@@ -691,15 +734,30 @@ export default function CreateAdvanceInvoiceForm({
         priceModes: priceModesRef.current,
         isDraft,
       });
+      const preservedExpectedTotalWithTax = getPreservedExpectedTotalWithTax(values);
+      if (preservedExpectedTotalWithTax !== undefined) {
+        (payload as any).expected_total_with_tax = preservedExpectedTotalWithTax;
+      } else {
+        delete (payload as any).expected_total_with_tax;
+      }
 
-      createAdvanceInvoice(payload);
+      if (customCreateTemplate && financialInputsMatchSource(values)) {
+        delete (payload as any).expected_total_with_tax;
+        createCustomAdvanceInvoice(applyCustomCreateTemplate(payload as any, customCreateTemplate));
+      } else {
+        createAdvanceInvoice(payload);
+      }
     },
     [
       createAdvanceInvoice,
+      createCustomAdvanceInvoice,
+      customCreateTemplate,
       documentId,
       eslog,
       furs,
       fina,
+      financialInputsMatchSource,
+      getPreservedExpectedTotalWithTax,
       isEditMode,
       useFinaNumbering,
       markAsPaid,
@@ -733,16 +791,17 @@ export default function CreateAdvanceInvoiceForm({
 
   useFormFooterRegistration({
     formId: "create-advance-invoice-form",
-    isPending: isPending || isUpdatePending,
+    isPending: isPending || isCreateCustomPending || isUpdatePending,
     isDirty: form.formState.isDirty || !!initialValues,
     label: isEditMode ? t("Update") : t("Save"),
-    secondaryAction: allowDrafts && !isEditMode
-      ? {
-          label: t("Save as Draft"),
-          onClick: handleSaveAsDraft,
-          isPending: isDraftPending,
-        }
-      : undefined,
+    secondaryAction:
+      allowDrafts && !isEditMode
+        ? {
+            label: t("Save as Draft"),
+            onClick: handleSaveAsDraft,
+            isPending: isDraftPending,
+          }
+        : undefined,
   });
 
   // Set default note, footer, and signature from entity settings (advance invoices don't have payment terms)
@@ -774,22 +833,29 @@ export default function CreateAdvanceInvoiceForm({
     }
   }, [activeEntity?.is_tax_subject, form]);
 
-  const buildPreviewPayload = useCallback((values: CreateAdvanceInvoiceFormValues): AdvanceInvoicePreviewPayload => {
-    return {
-      number: values.number,
-      date: values.date,
-      customer_id: values.customer_id,
-      customer: values.customer,
-      items: prepareDocumentItems(values.items, priceModesRef.current),
-      currency_code: values.currency_code,
-      reference: values.reference,
-      note: values.note,
-      tax_clause: values.tax_clause,
-      signature: values.signature,
-      footer: values.footer,
-      ...(normalizePtDocumentInput(values.pt) ? { pt: normalizePtDocumentInput(values.pt) } : {}),
-    };
-  }, []);
+  const buildPreviewPayload = useCallback(
+    (values: CreateAdvanceInvoiceFormValues): AdvanceInvoicePreviewPayload => {
+      const preservedExpectedTotalWithTax = getPreservedExpectedTotalWithTax(values);
+      return {
+        number: values.number,
+        date: values.date,
+        customer_id: values.customer_id,
+        customer: values.customer,
+        items: prepareDocumentItems(values.items, priceModesRef.current),
+        currency_code: values.currency_code,
+        reference: values.reference,
+        note: values.note,
+        tax_clause: values.tax_clause,
+        signature: values.signature,
+        footer: values.footer,
+        ...(preservedExpectedTotalWithTax !== undefined
+          ? { expected_total_with_tax: preservedExpectedTotalWithTax }
+          : {}),
+        ...(normalizePtDocumentInput(values.pt) ? { pt: normalizePtDocumentInput(values.pt) } : {}),
+      };
+    },
+    [getPreservedExpectedTotalWithTax],
+  );
 
   const emitPreviewPayload = useCallback((payload: AdvanceInvoicePreviewPayload) => {
     const callback = onChangeRef.current;

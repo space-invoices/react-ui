@@ -1,4 +1,4 @@
-import type { CreateInvoice, Invoice, SDKMethodOptions, UpdateInvoice } from "@spaceinvoices/js-sdk";
+import type { CreateInvoice, CustomCreateInvoice, Invoice, SDKMethodOptions, UpdateInvoice } from "@spaceinvoices/js-sdk";
 import { documents, invoices } from "@spaceinvoices/js-sdk";
 import { useQuery } from "@tanstack/react-query";
 import { createResourceHooks } from "@/ui/hooks/create-resource-hooks";
@@ -25,9 +25,18 @@ const {
   INVOICES_CACHE_KEY,
 );
 
+const { useCreateResource: useCreateCustomInvoice } = createResourceHooks<Invoice, CustomCreateInvoice, UpdateInvoice>(
+  {
+    create: invoices.createCustom,
+    update: invoices.update,
+    delete: voidInvoice,
+  },
+  INVOICES_CACHE_KEY,
+);
+
 // Re-export document types for backward compatibility
 export type { DocumentTypes } from "../documents/types";
-export { useCreateInvoice, useDeleteInvoice, useUpdateInvoice };
+export { useCreateCustomInvoice, useCreateInvoice, useDeleteInvoice, useUpdateInvoice };
 
 // ============================================================================
 // Next Invoice Number Preview

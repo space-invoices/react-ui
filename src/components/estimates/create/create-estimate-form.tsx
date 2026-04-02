@@ -23,6 +23,7 @@ import { createTranslation } from "@/ui/lib/translation";
 import { useEntities } from "@/ui/providers/entities-context";
 import { useFormFooterRegistration } from "@/ui/providers/form-footer-context";
 import { CUSTOMERS_CACHE_KEY } from "../../customers/customers.hooks";
+import { withEstimateIssueDateValidation } from "../../documents/create/document-date-validation";
 import {
   DocumentDetailsSection,
   DocumentFooterField,
@@ -31,13 +32,14 @@ import {
   DocumentSignatureField,
   DocumentTaxClauseField,
 } from "../../documents/create/document-details-section";
-import { withEstimateIssueDateValidation } from "../../documents/create/document-date-validation";
 import { withRequiredDocumentItemFields } from "../../documents/create/document-item-validation";
 import { DocumentItemsSection, type PriceModesMap } from "../../documents/create/document-items-section";
-import { prepareDocumentItems } from "../../documents/create/prepare-document-submission";
 import { DocumentRecipientSection } from "../../documents/create/document-recipient-section";
+import { prepareDocumentItems } from "../../documents/create/prepare-document-submission";
+import { applyCustomCreateTemplate } from "../../documents/create/custom-create-template";
+import { financialInputsMatchInitial, resolvePreservedExpectedTotal } from "../../documents/create/preserved-expected-total";
 import type { DocumentTypes } from "../../documents/types";
-import { useCreateEstimate, useUpdateEstimate } from "../estimates.hooks";
+import { useCreateCustomEstimate, useCreateEstimate, useUpdateEstimate } from "../estimates.hooks";
 import de from "./locales/de";
 import es from "./locales/es";
 import fr from "./locales/fr";
@@ -201,7 +203,9 @@ export default function CreateEstimateForm({
       footer: (initialValues as any)?.footer ?? (isEditMode ? "" : defaultFooter),
       date_valid_till:
         initialValues?.date_valid_till ||
-        (isEditMode ? undefined : calculateDueDate(initialValues?.date || new Date().toISOString(), defaultEstimateValidDays)),
+        (isEditMode
+          ? undefined
+          : calculateDueDate(initialValues?.date || new Date().toISOString(), defaultEstimateValidDays)),
       pt: ((initialValues as any)?.pt as PtDocumentInputForm | undefined) ?? undefined,
     },
   });
@@ -222,6 +226,36 @@ export default function CreateEstimateForm({
     }, {} as PriceModesMap);
   }, [initialValues?.items]);
   const priceModesRef = useRef<PriceModesMap>(initialPriceModes);
+  const customCreateTemplate = (initialValues as any)?._custom_create_template;
+  const financialInputsMatchSource = useCallback(
+    (values: { items?: any[]; currency_code?: string; calculation_mode?: string | null }) =>
+      financialInputsMatchInitial({
+        initialItems: initialValues?.items,
+        currentItems: values.items,
+        initialCurrencyCode: initialValues?.currency_code,
+        currentCurrencyCode: values.currency_code,
+        initialCalculationMode: (initialValues as any)?.calculation_mode ?? null,
+        currentCalculationMode: values.calculation_mode ?? null,
+        initialPriceModes,
+        currentPriceModes: priceModesRef.current,
+      }),
+    [initialPriceModes, initialValues],
+  );
+  const getPreservedExpectedTotalWithTax = useCallback(
+    (values: { items?: any[]; currency_code?: string; calculation_mode?: string | null }) =>
+      resolvePreservedExpectedTotal({
+        initialExpectedTotalWithTax: (initialValues as any)?._preserved_expected_total_with_tax,
+        initialItems: initialValues?.items,
+        currentItems: values.items,
+        initialCurrencyCode: initialValues?.currency_code,
+        currentCurrencyCode: values.currency_code,
+        initialCalculationMode: (initialValues as any)?.calculation_mode ?? null,
+        currentCalculationMode: values.calculation_mode ?? null,
+        initialPriceModes,
+        currentPriceModes: priceModesRef.current,
+      }),
+    [initialPriceModes, initialValues],
+  );
 
   // Update number when fetched
   useEffect(() => {
@@ -385,6 +419,16 @@ export default function CreateEstimateForm({
     },
     onError,
   });
+  const { mutate: createCustomEstimate, isPending: isCreateCustomPending } = useCreateCustomEstimate({
+    entityId,
+    onSuccess: (data) => {
+      if (data.customer_id) {
+        queryClient.invalidateQueries({ queryKey: [CUSTOMERS_CACHE_KEY] });
+      }
+      onSuccess?.(data);
+    },
+    onError,
+  });
   const { mutate: updateEstimate, isPending: isUpdatePending } = useUpdateEstimate({
     entityId,
     onSuccess,
@@ -416,7 +460,18 @@ export default function CreateEstimateForm({
           titleType,
           isDraft,
         });
-        createEstimate(submission);
+        const preservedExpectedTotalWithTax = getPreservedExpectedTotalWithTax(values);
+        if (preservedExpectedTotalWithTax !== undefined) {
+          (submission as any).expected_total_with_tax = preservedExpectedTotalWithTax;
+        } else {
+          delete (submission as any).expected_total_with_tax;
+        }
+        if (customCreateTemplate && financialInputsMatchSource(values)) {
+          delete (submission as any).expected_total_with_tax;
+          createCustomEstimate(applyCustomCreateTemplate(submission as any, customCreateTemplate));
+        } else {
+          createEstimate(submission);
+        }
       } catch (error) {
         console.error("Estimate submission error:", error);
         if (onError) {
@@ -424,7 +479,19 @@ export default function CreateEstimateForm({
         }
       }
     },
-    [createEstimate, documentId, isEditMode, onError, originalCustomer, titleType, updateEstimate],
+    [
+      createEstimate,
+      createCustomEstimate,
+      customCreateTemplate,
+      documentId,
+      financialInputsMatchSource,
+      getPreservedExpectedTotalWithTax,
+      isEditMode,
+      onError,
+      originalCustomer,
+      titleType,
+      updateEstimate,
+    ],
   );
 
   // Handle save as draft
@@ -455,7 +522,7 @@ export default function CreateEstimateForm({
 
   useFormFooterRegistration({
     formId: "create-estimate-form",
-    isPending: isPending || isUpdatePending,
+    isPending: isPending || isCreateCustomPending || isUpdatePending,
     isDirty: form.formState.isDirty || !!initialValues,
     label: isEditMode ? t("Update") : titleType === "estimate" ? t("Create Estimate") : t("Create Quote"),
     secondaryAction,
@@ -487,6 +554,7 @@ export default function CreateEstimateForm({
 
   const buildPreviewPayload = useCallback(
     (values: CreateEstimateFormValues): EstimatePreviewPayload => {
+      const preservedExpectedTotalWithTax = getPreservedExpectedTotalWithTax(values);
       return {
         number: values.number,
         date: values.date,
@@ -502,10 +570,13 @@ export default function CreateEstimateForm({
         footer: values.footer,
         date_valid_till: values.date_valid_till,
         title_type: titleType,
+        ...(preservedExpectedTotalWithTax !== undefined
+          ? { expected_total_with_tax: preservedExpectedTotalWithTax }
+          : {}),
         ...(normalizePtDocumentInput(values.pt) ? { pt: normalizePtDocumentInput(values.pt) } : {}),
       };
     },
-    [titleType],
+    [getPreservedExpectedTotalWithTax, titleType],
   );
 
   const emitPreviewPayload = useCallback((payload: EstimatePreviewPayload) => {

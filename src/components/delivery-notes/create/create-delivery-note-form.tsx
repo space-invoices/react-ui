@@ -26,10 +26,12 @@ import {
 } from "../../documents/create/document-details-section";
 import { withRequiredDocumentItemFields } from "../../documents/create/document-item-validation";
 import { DocumentItemsSection, type PriceModesMap } from "../../documents/create/document-items-section";
-import { prepareDocumentItems } from "../../documents/create/prepare-document-submission";
 import { DocumentRecipientSection } from "../../documents/create/document-recipient-section";
+import { prepareDocumentItems } from "../../documents/create/prepare-document-submission";
+import { applyCustomCreateTemplate } from "../../documents/create/custom-create-template";
+import { financialInputsMatchInitial, resolvePreservedExpectedTotal } from "../../documents/create/preserved-expected-total";
 import type { DocumentTypes } from "../../documents/types";
-import { useCreateDeliveryNote, useUpdateDeliveryNote } from "../delivery-notes.hooks";
+import { useCreateCustomDeliveryNote, useCreateDeliveryNote, useUpdateDeliveryNote } from "../delivery-notes.hooks";
 import de from "./locales/de";
 import es from "./locales/es";
 import fr from "./locales/fr";
@@ -163,7 +165,9 @@ export default function CreateDeliveryNoteForm({
       note: initialValues?.note ?? (isEditMode ? "" : defaultNote),
       tax_clause: (initialValues as any)?.tax_clause ?? "",
       footer: (initialValues as any)?.footer ?? (isEditMode ? "" : defaultFooter),
-      signature: (initialValues as any)?.signature ?? (isEditMode ? "" : (activeEntity?.settings as any)?.default_document_signature || ""),
+      signature:
+        (initialValues as any)?.signature ??
+        (isEditMode ? "" : (activeEntity?.settings as any)?.default_document_signature || ""),
     },
   });
 
@@ -179,6 +183,36 @@ export default function CreateDeliveryNoteForm({
     }, {} as PriceModesMap);
   }, [initialValues?.items]);
   const priceModesRef = useRef<PriceModesMap>(initialPriceModes);
+  const customCreateTemplate = (initialValues as any)?._custom_create_template;
+  const financialInputsMatchSource = useCallback(
+    (values: { items?: any[]; currency_code?: string; calculation_mode?: string | null }) =>
+      financialInputsMatchInitial({
+        initialItems: initialValues?.items,
+        currentItems: values.items,
+        initialCurrencyCode: initialValues?.currency_code,
+        currentCurrencyCode: values.currency_code,
+        initialCalculationMode: (initialValues as any)?.calculation_mode ?? null,
+        currentCalculationMode: values.calculation_mode ?? null,
+        initialPriceModes,
+        currentPriceModes: priceModesRef.current,
+      }),
+    [initialPriceModes, initialValues],
+  );
+  const getPreservedExpectedTotalWithTax = useCallback(
+    (values: { items?: any[]; currency_code?: string; calculation_mode?: string | null }) =>
+      resolvePreservedExpectedTotal({
+        initialExpectedTotalWithTax: (initialValues as any)?._preserved_expected_total_with_tax,
+        initialItems: initialValues?.items,
+        currentItems: values.items,
+        initialCurrencyCode: initialValues?.currency_code,
+        currentCurrencyCode: values.currency_code,
+        initialCalculationMode: (initialValues as any)?.calculation_mode ?? null,
+        currentCalculationMode: values.calculation_mode ?? null,
+        initialPriceModes,
+        currentPriceModes: priceModesRef.current,
+      }),
+    [initialPriceModes, initialValues],
+  );
 
   // Update number when fetched
   useEffect(() => {
@@ -285,6 +319,16 @@ export default function CreateDeliveryNoteForm({
     },
     onError,
   });
+  const { mutate: createCustomDeliveryNote, isPending: isCreateCustomPending } = useCreateCustomDeliveryNote({
+    entityId,
+    onSuccess: (data) => {
+      if (data.customer_id) {
+        queryClient.invalidateQueries({ queryKey: [CUSTOMERS_CACHE_KEY] });
+      }
+      onSuccess?.(data);
+    },
+    onError,
+  });
   const { mutate: updateDeliveryNote, isPending: isUpdatePending } = useUpdateDeliveryNote({
     entityId,
     onSuccess,
@@ -315,7 +359,18 @@ export default function CreateDeliveryNoteForm({
           isDraft,
           hidePrices,
         });
-        createDeliveryNote(submission);
+        const preservedExpectedTotalWithTax = getPreservedExpectedTotalWithTax(values);
+        if (preservedExpectedTotalWithTax !== undefined) {
+          (submission as any).expected_total_with_tax = preservedExpectedTotalWithTax;
+        } else {
+          delete (submission as any).expected_total_with_tax;
+        }
+        if (customCreateTemplate && financialInputsMatchSource(values)) {
+          delete (submission as any).expected_total_with_tax;
+          createCustomDeliveryNote(applyCustomCreateTemplate(submission as any, customCreateTemplate));
+        } else {
+          createDeliveryNote(submission);
+        }
       } catch (error) {
         console.error("Delivery note submission error:", error);
         if (onError) {
@@ -323,7 +378,19 @@ export default function CreateDeliveryNoteForm({
         }
       }
     },
-    [createDeliveryNote, documentId, hidePrices, isEditMode, onError, originalCustomer, updateDeliveryNote],
+    [
+      createDeliveryNote,
+      createCustomDeliveryNote,
+      customCreateTemplate,
+      documentId,
+      financialInputsMatchSource,
+      getPreservedExpectedTotalWithTax,
+      hidePrices,
+      isEditMode,
+      onError,
+      originalCustomer,
+      updateDeliveryNote,
+    ],
   );
 
   // Handle save as draft
@@ -354,7 +421,7 @@ export default function CreateDeliveryNoteForm({
 
   useFormFooterRegistration({
     formId: "create-delivery-note-form",
-    isPending: isPending || isUpdatePending,
+    isPending: isPending || isCreateCustomPending || isUpdatePending,
     isDirty: form.formState.isDirty || !!initialValues,
     label: isEditMode ? t("Update") : t("Create Delivery Note"),
     secondaryAction,
@@ -362,6 +429,7 @@ export default function CreateDeliveryNoteForm({
 
   const buildPreviewPayload = useCallback(
     (values: CreateDeliveryNoteFormValues): DeliveryNotePreviewPayload => {
+      const preservedExpectedTotalWithTax = getPreservedExpectedTotalWithTax(values);
       return {
         number: values.number,
         date: values.date,
@@ -375,9 +443,12 @@ export default function CreateDeliveryNoteForm({
         signature: values.signature,
         footer: values.footer,
         hide_prices: hidePrices,
+        ...(preservedExpectedTotalWithTax !== undefined
+          ? { expected_total_with_tax: preservedExpectedTotalWithTax }
+          : {}),
       };
     },
-    [hidePrices],
+    [getPreservedExpectedTotalWithTax, hidePrices],
   );
 
   const emitPreviewPayload = useCallback((payload: DeliveryNotePreviewPayload) => {

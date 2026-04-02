@@ -1,5 +1,6 @@
 import type {
   CreateDeliveryNoteRequest,
+  CustomCreateDeliveryNote,
   DeliveryNote,
   SDKMethodOptions,
   UpdateDeliveryNote,
@@ -29,4 +30,17 @@ const {
   DELIVERY_NOTES_CACHE_KEY,
 );
 
-export { useCreateDeliveryNote, useDeleteDeliveryNote, useUpdateDeliveryNote };
+const { useCreateResource: useCreateCustomDeliveryNote } = createResourceHooks<
+  DeliveryNote,
+  CustomCreateDeliveryNote,
+  UpdateDeliveryNote
+>(
+  {
+    create: deliveryNotes.createCustom,
+    update: deliveryNotes.update,
+    delete: voidDeliveryNote,
+  },
+  DELIVERY_NOTES_CACHE_KEY,
+);
+
+export { useCreateCustomDeliveryNote, useCreateDeliveryNote, useDeleteDeliveryNote, useUpdateDeliveryNote };

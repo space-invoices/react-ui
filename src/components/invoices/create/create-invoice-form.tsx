@@ -34,6 +34,7 @@ import { cn } from "@/ui/lib/utils";
 import { useEntities } from "@/ui/providers/entities-context";
 import { useFormFooterRegistration } from "@/ui/providers/form-footer-context";
 import { CUSTOMERS_CACHE_KEY } from "../../customers/customers.hooks";
+import { withInvoiceIssueDateValidation } from "../../documents/create/document-date-validation";
 import {
   DocumentDetailsSection,
   DocumentFooterField,
@@ -42,7 +43,6 @@ import {
   DocumentSignatureField,
   DocumentTaxClauseField,
 } from "../../documents/create/document-details-section";
-import { withInvoiceIssueDateValidation } from "../../documents/create/document-date-validation";
 import { withRequiredDocumentItemFields } from "../../documents/create/document-item-validation";
 import { DocumentItemsSection, type PriceModesMap } from "../../documents/create/document-items-section";
 import { DocumentRecipientSection } from "../../documents/create/document-recipient-section";
@@ -58,9 +58,11 @@ import {
   validatePaymentRows,
 } from "../../documents/create/payment-rows";
 import { prepareDocumentItems } from "../../documents/create/prepare-document-submission";
+import { applyCustomCreateTemplate } from "../../documents/create/custom-create-template";
+import { financialInputsMatchInitial, resolvePreservedExpectedTotal } from "../../documents/create/preserved-expected-total";
 import { scrollToFirstInvalidField } from "../../documents/create/scroll-to-first-invalid-field";
 import type { DocumentTypes } from "../../documents/types";
-import { useCreateInvoice, useNextInvoiceNumber, useUpdateInvoice } from "../invoices.hooks";
+import { useCreateCustomInvoice, useCreateInvoice, useNextInvoiceNumber, useUpdateInvoice } from "../invoices.hooks";
 import {
   buildEslogFieldErrors,
   getEntityErrors,
@@ -225,7 +227,9 @@ function buildInvoiceFormValues({
     signature: (initialValues as any)?.signature ?? (isEditMode ? "" : defaultSignature),
     date_due:
       initialValues?.date_due ||
-      (isEditMode ? undefined : calculateDueDate(initialValues?.date || new Date().toISOString(), defaultInvoiceDueDays)),
+      (isEditMode
+        ? undefined
+        : calculateDueDate(initialValues?.date || new Date().toISOString(), defaultInvoiceDueDays)),
     date_service:
       (initialValues as any)?.date_service ??
       (isEditMode ? undefined : (initialValues?.date ?? new Date().toISOString())),
@@ -317,6 +321,36 @@ export default function CreateInvoiceForm({
     }, {} as PriceModesMap);
   }, [initialValues?.items]);
   const priceModesRef = useRef<PriceModesMap>(initialPriceModes);
+  const customCreateTemplate = (initialValues as any)?._custom_create_template;
+  const financialInputsMatchSource = useCallback(
+    (values: { items?: any[]; currency_code?: string; calculation_mode?: string | null }) =>
+      financialInputsMatchInitial({
+        initialItems: initialValues?.items,
+        currentItems: values.items,
+        initialCurrencyCode: initialValues?.currency_code,
+        currentCurrencyCode: values.currency_code,
+        initialCalculationMode: (initialValues as any)?.calculation_mode ?? null,
+        currentCalculationMode: values.calculation_mode ?? null,
+        initialPriceModes,
+        currentPriceModes: priceModesRef.current,
+      }),
+    [initialPriceModes, initialValues],
+  );
+  const getPreservedExpectedTotalWithTax = useCallback(
+    (values: { items?: any[]; currency_code?: string; calculation_mode?: string | null }) =>
+      resolvePreservedExpectedTotal({
+        initialExpectedTotalWithTax: (initialValues as any)?._preserved_expected_total_with_tax,
+        initialItems: initialValues?.items,
+        currentItems: values.items,
+        initialCurrencyCode: initialValues?.currency_code,
+        currentCurrencyCode: values.currency_code,
+        initialCalculationMode: (initialValues as any)?.calculation_mode ?? null,
+        currentCalculationMode: values.calculation_mode ?? null,
+        initialPriceModes,
+        currentPriceModes: priceModesRef.current,
+      }),
+    [initialPriceModes, initialValues],
+  );
 
   const formDefaultValues = useMemo(
     () =>
@@ -826,6 +860,19 @@ export default function CreateInvoiceForm({
     onError,
   });
 
+  const { mutate: createCustomInvoice, isPending: isCreateCustomPending } = useCreateCustomInvoice({
+    entityId,
+    onSuccess: (data) => {
+      furs.saveCombo();
+      fina.saveCombo();
+      if (data.customer_id) {
+        queryClient.invalidateQueries({ queryKey: [CUSTOMERS_CACHE_KEY] });
+      }
+      onSuccess?.(data);
+    },
+    onError,
+  });
+
   const { mutate: updateInvoice, isPending: isUpdatePending } = useUpdateInvoice({
     entityId,
     onSuccess: (data) => {
@@ -840,7 +887,7 @@ export default function CreateInvoiceForm({
     onError,
   });
 
-  const isPending = isCreatePending || isUpdatePending;
+  const isPending = isCreatePending || isCreateCustomPending || isUpdatePending;
 
   // Shared submit logic for both regular save and save as draft
   const submitInvoice = useCallback(
@@ -918,17 +965,30 @@ export default function CreateInvoiceForm({
           priceModes: priceModesRef.current,
           isDraft,
         });
+        const preservedExpectedTotalWithTax = getPreservedExpectedTotalWithTax(values);
+        if (preservedExpectedTotalWithTax !== undefined) {
+          (payload as any).expected_total_with_tax = preservedExpectedTotalWithTax;
+        } else {
+          delete (payload as any).expected_total_with_tax;
+        }
 
         if (forceLinkedDocuments) {
           (payload as any).force_linked_documents = true;
         }
 
-        createInvoice(payload);
+        if (customCreateTemplate && financialInputsMatchSource(values)) {
+          delete (payload as any).expected_total_with_tax;
+          createCustomInvoice(applyCustomCreateTemplate(payload as any, customCreateTemplate));
+        } else {
+          createInvoice(payload);
+        }
       }
     },
     [
       createInvoice,
+      createCustomInvoice,
       updateInvoice,
+      customCreateTemplate,
       documentId,
       eslog,
       finaValidationError,
@@ -944,6 +1004,8 @@ export default function CreateInvoiceForm({
       showCustomerForm,
       skipFiscalization,
       operatorPrefill,
+      financialInputsMatchSource,
+      getPreservedExpectedTotalWithTax,
     ],
   );
 
@@ -1118,6 +1180,7 @@ export default function CreateInvoiceForm({
 
   const buildPreviewPayload = useCallback(
     (formValues: any): InvoicePreviewPayload => {
+      const preservedExpectedTotalWithTax = getPreservedExpectedTotalWithTax(formValues);
       const previewItems = formValues.items?.map((item: any) => {
         const { id: _id, ...rest } = item;
         return rest;
@@ -1139,10 +1202,13 @@ export default function CreateInvoiceForm({
         tax_clause: formValues.tax_clause,
         footer: formValues.footer,
         signature: formValues.signature,
+        ...(preservedExpectedTotalWithTax !== undefined
+          ? { expected_total_with_tax: preservedExpectedTotalWithTax }
+          : {}),
         ...(normalizePtDocumentInput(formValues.pt) ? { pt: normalizePtDocumentInput(formValues.pt) } : {}),
       };
     },
-    [forceLinkedDocuments],
+    [forceLinkedDocuments, getPreservedExpectedTotalWithTax],
   );
 
   const emitCurrentPreviewPayload = useCallback(() => {

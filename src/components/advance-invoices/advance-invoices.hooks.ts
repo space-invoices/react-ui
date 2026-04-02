@@ -1,6 +1,7 @@
 import type {
   AdvanceInvoice,
   CreateAdvanceInvoiceRequest,
+  CustomCreateAdvanceInvoice,
   SDKMethodOptions,
   UpdateAdvanceInvoice,
 } from "@spaceinvoices/js-sdk";
@@ -26,7 +27,20 @@ const {
   ADVANCE_INVOICES_CACHE_KEY,
 );
 
-export { useCreateAdvanceInvoice, useDeleteAdvanceInvoice, useUpdateAdvanceInvoice };
+const { useCreateResource: useCreateCustomAdvanceInvoice } = createResourceHooks<
+  AdvanceInvoice,
+  CustomCreateAdvanceInvoice,
+  UpdateAdvanceInvoice
+>(
+  {
+    create: advanceInvoices.createCustom,
+    update: advanceInvoices.update,
+    delete: voidAdvanceInvoice,
+  },
+  ADVANCE_INVOICES_CACHE_KEY,
+);
+
+export { useCreateAdvanceInvoice, useCreateCustomAdvanceInvoice, useDeleteAdvanceInvoice, useUpdateAdvanceInvoice };
 
 const FURS_ADV_LAST_USED_KEY = "si:furs:adv:last-used";
 

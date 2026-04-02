@@ -28,6 +28,7 @@ import { cn } from "@/ui/lib/utils";
 import { useEntities } from "@/ui/providers/entities-context";
 import { useFormFooterRegistration } from "@/ui/providers/form-footer-context";
 import { CUSTOMERS_CACHE_KEY } from "../../customers/customers.hooks";
+import { withCreditNoteIssueDateValidation } from "../../documents/create/document-date-validation";
 import {
   DocumentDetailsSection,
   DocumentFooterField,
@@ -36,7 +37,6 @@ import {
   DocumentSignatureField,
   DocumentTaxClauseField,
 } from "../../documents/create/document-details-section";
-import { withCreditNoteIssueDateValidation } from "../../documents/create/document-date-validation";
 import { withRequiredDocumentItemFields } from "../../documents/create/document-item-validation";
 import { DocumentItemsSection, type PriceModesMap } from "../../documents/create/document-items-section";
 import { DocumentRecipientSection } from "../../documents/create/document-recipient-section";
@@ -51,6 +51,8 @@ import {
   validatePaymentRows,
 } from "../../documents/create/payment-rows";
 import { prepareDocumentItems } from "../../documents/create/prepare-document-submission";
+import { applyCustomCreateTemplate } from "../../documents/create/custom-create-template";
+import { financialInputsMatchInitial, resolvePreservedExpectedTotal } from "../../documents/create/preserved-expected-total";
 import { useDocumentCustomerForm } from "../../documents/create/use-document-customer-form";
 import type { DocumentTypes } from "../../documents/types";
 import invoiceDe from "../../invoices/create/locales/de";
@@ -62,7 +64,7 @@ import invoiceNl from "../../invoices/create/locales/nl";
 import invoicePl from "../../invoices/create/locales/pl";
 import invoicePt from "../../invoices/create/locales/pt";
 import invoiceSl from "../../invoices/create/locales/sl";
-import { useCreateCreditNote, useUpdateCreditNote } from "../credit-notes.hooks";
+import { useCreateCreditNote, useCreateCustomCreditNote, useUpdateCreditNote } from "../credit-notes.hooks";
 import de from "./locales/de";
 import es from "./locales/es";
 import fr from "./locales/fr";
@@ -193,6 +195,36 @@ export default function CreateCreditNoteForm({
     }, {} as PriceModesMap);
   }, [initialValues?.items]);
   const priceModesRef = useRef<PriceModesMap>(initialPriceModes);
+  const customCreateTemplate = (initialValues as any)?._custom_create_template;
+  const financialInputsMatchSource = useCallback(
+    (values: { items?: any[]; currency_code?: string; calculation_mode?: string | null }) =>
+      financialInputsMatchInitial({
+        initialItems: initialValues?.items,
+        currentItems: values.items,
+        initialCurrencyCode: initialValues?.currency_code,
+        currentCurrencyCode: values.currency_code,
+        initialCalculationMode: (initialValues as any)?.calculation_mode ?? null,
+        currentCalculationMode: values.calculation_mode ?? null,
+        initialPriceModes,
+        currentPriceModes: priceModesRef.current,
+      }),
+    [initialPriceModes, initialValues],
+  );
+  const getPreservedExpectedTotalWithTax = useCallback(
+    (values: { items?: any[]; currency_code?: string; calculation_mode?: string | null }) =>
+      resolvePreservedExpectedTotal({
+        initialExpectedTotalWithTax: (initialValues as any)?._preserved_expected_total_with_tax,
+        initialItems: initialValues?.items,
+        currentItems: values.items,
+        initialCurrencyCode: initialValues?.currency_code,
+        currentCurrencyCode: values.currency_code,
+        initialCalculationMode: (initialValues as any)?.calculation_mode ?? null,
+        currentCalculationMode: values.calculation_mode ?? null,
+        initialPriceModes,
+        currentPriceModes: priceModesRef.current,
+      }),
+    [initialPriceModes, initialValues],
+  );
 
   // Get default payment terms and footer from entity settings
   const defaultPaymentTerms = (activeEntity?.settings as any)?.default_credit_note_payment_terms || "";
@@ -417,7 +449,16 @@ export default function CreateCreditNoteForm({
         </Tooltip>
       </TooltipProvider>,
     );
-  }, [fina.isLoading, furs.hasPremises, furs.isEnabled, furs.isLoading, isEditMode, onHeaderActionChange, skipFiscalization, t]);
+  }, [
+    fina.isLoading,
+    furs.hasPremises,
+    furs.isEnabled,
+    furs.isLoading,
+    isEditMode,
+    onHeaderActionChange,
+    skipFiscalization,
+    t,
+  ]);
 
   // Auto-populate tax_clause from entity settings when transaction type changes
   const effectiveTransactionType = transactionType ?? "domestic";
@@ -488,6 +529,18 @@ export default function CreateCreditNoteForm({
     },
     onError,
   });
+  const { mutate: createCustomCreditNote, isPending: isCreateCustomPending } = useCreateCustomCreditNote({
+    entityId,
+    onSuccess: (data) => {
+      furs.saveCombo();
+      fina.saveCombo();
+      if (data.customer_id) {
+        queryClient.invalidateQueries({ queryKey: [CUSTOMERS_CACHE_KEY] });
+      }
+      onSuccess?.(data);
+    },
+    onError,
+  });
   const { mutate: updateCreditNote, isPending: isUpdatePending } = useUpdateCreditNote({
     entityId,
     onSuccess,
@@ -551,6 +604,12 @@ export default function CreateCreditNoteForm({
         priceModes: priceModesRef.current,
         isDraft,
       });
+      const preservedExpectedTotalWithTax = getPreservedExpectedTotalWithTax(values);
+      if (preservedExpectedTotalWithTax !== undefined) {
+        (payload as any).expected_total_with_tax = preservedExpectedTotalWithTax;
+      } else {
+        delete (payload as any).expected_total_with_tax;
+      }
 
       // Add FURS data to payload
       if (fursOptions) {
@@ -562,10 +621,16 @@ export default function CreateCreditNoteForm({
         (payload as any).fina = finaOptions;
       }
 
-      createCreditNote(payload as CreateCreditNoteRequest);
+      if (customCreateTemplate && financialInputsMatchSource(values)) {
+        delete (payload as any).expected_total_with_tax;
+        createCustomCreditNote(applyCustomCreateTemplate(payload as any, customCreateTemplate));
+      } else {
+        createCreditNote(payload as CreateCreditNoteRequest);
+      }
     },
     [
       createCreditNote,
+      createCustomCreditNote,
       documentId,
       fina,
       furs,
@@ -577,6 +642,9 @@ export default function CreateCreditNoteForm({
       showCustomerForm,
       skipFiscalization,
       operatorPrefill,
+      customCreateTemplate,
+      financialInputsMatchSource,
+      getPreservedExpectedTotalWithTax,
       updateCreditNote,
       useFinaNumbering,
     ],
@@ -598,16 +666,17 @@ export default function CreateCreditNoteForm({
 
   useFormFooterRegistration({
     formId: "create-credit-note-form",
-    isPending: isPending || isUpdatePending,
+    isPending: isPending || isCreateCustomPending || isUpdatePending,
     isDirty: form.formState.isDirty || !!initialValues,
     label: isEditMode ? t("Update") : t("Save"),
-    secondaryAction: allowDrafts && !isEditMode
-      ? {
-          label: t("Save as Draft"),
-          onClick: handleSaveAsDraft,
-          isPending: isDraftPending,
-        }
-      : undefined,
+    secondaryAction:
+      allowDrafts && !isEditMode
+        ? {
+            label: t("Save as Draft"),
+            onClick: handleSaveAsDraft,
+            isPending: isDraftPending,
+          }
+        : undefined,
   });
 
   // Set default note and payment terms from entity settings when entity data is available
@@ -641,25 +710,32 @@ export default function CreateCreditNoteForm({
     }
   }, [activeEntity?.is_tax_subject, form]);
 
-  const buildPreviewPayload = useCallback((values: CreateCreditNoteFormValues): CreditNotePreviewPayload => {
-    return {
-      number: values.number,
-      date: values.date,
-      date_service: (values as any).date_service,
-      date_service_to: (values as any).date_service_to,
-      customer_id: values.customer_id,
-      customer: values.customer,
-      items: prepareDocumentItems(values.items, priceModesRef.current),
-      currency_code: values.currency_code,
-      reference: values.reference,
-      note: values.note,
-      tax_clause: values.tax_clause,
-      payment_terms: values.payment_terms,
-      signature: values.signature,
-      footer: values.footer,
-      ...(normalizePtDocumentInput(values.pt) ? { pt: normalizePtDocumentInput(values.pt) } : {}),
-    };
-  }, []);
+  const buildPreviewPayload = useCallback(
+    (values: CreateCreditNoteFormValues): CreditNotePreviewPayload => {
+      const preservedExpectedTotalWithTax = getPreservedExpectedTotalWithTax(values);
+      return {
+        number: values.number,
+        date: values.date,
+        date_service: (values as any).date_service,
+        date_service_to: (values as any).date_service_to,
+        customer_id: values.customer_id,
+        customer: values.customer,
+        items: prepareDocumentItems(values.items, priceModesRef.current),
+        currency_code: values.currency_code,
+        reference: values.reference,
+        note: values.note,
+        tax_clause: values.tax_clause,
+        payment_terms: values.payment_terms,
+        signature: values.signature,
+        footer: values.footer,
+        ...(preservedExpectedTotalWithTax !== undefined
+          ? { expected_total_with_tax: preservedExpectedTotalWithTax }
+          : {}),
+        ...(normalizePtDocumentInput(values.pt) ? { pt: normalizePtDocumentInput(values.pt) } : {}),
+      };
+    },
+    [getPreservedExpectedTotalWithTax],
+  );
 
   const emitPreviewPayload = useCallback((payload: CreditNotePreviewPayload) => {
     const callback = onChangeRef.current;

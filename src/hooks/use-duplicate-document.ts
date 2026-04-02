@@ -11,10 +11,13 @@ import type {
   Invoice,
 } from "@spaceinvoices/js-sdk";
 import { useQuery } from "@tanstack/react-query";
+import { buildCustomCreateTemplateFromDocument } from "@/ui/components/documents/create/custom-create-template";
+import { totalsDifferByCents } from "@/ui/components/documents/create/preserved-expected-total";
 import { useEntities } from "@/ui/providers/entities-context";
 import { advanceInvoices } from "../../../js-sdk/src/sdk/advance-invoices";
 import { creditNotes } from "../../../js-sdk/src/sdk/credit-notes";
 import { deliveryNotes } from "../../../js-sdk/src/sdk/delivery-notes";
+import { documents } from "../../../js-sdk/src/sdk/documents";
 import { estimates } from "../../../js-sdk/src/sdk/estimates";
 import { invoices } from "../../../js-sdk/src/sdk/invoices";
 
@@ -33,6 +36,21 @@ type CreateRequest =
   | CreateCreditNoteRequest
   | CreateAdvanceInvoiceRequest
   | CreateDeliveryNoteRequest;
+
+function shouldCheckForPreservedTotal(document: any): boolean {
+  return document?.creation_source === "custom" || Math.abs(document?.rounding_correction ?? 0) > 0;
+}
+
+function buildCalculatePayload(values: Partial<CreateRequest>) {
+  return {
+    items: values.items,
+    customer_id: (values as any).customer_id,
+    customer: (values as any).customer,
+    currency_code: (values as any).currency_code,
+    date: (values as any).date,
+    calculation_mode: (values as any).calculation_mode,
+  };
+}
 
 /**
  * Get document type from ID prefix
@@ -158,7 +176,6 @@ function transformDocumentForDuplication(source: Document, targetType: DocumentT
     // Skip linking if source is a draft (drafts have no number/fiscalization)
     ...(isConversion && !(source as any).is_draft ? { linked_documents: [source.id] } : {}),
   };
-
   // Copy service dates when source is an invoice (available on invoices and credit notes)
   if (sourceType === "invoice" || sourceType === "credit_note") {
     const sourceDoc = source as any;
@@ -272,6 +289,19 @@ export function useDuplicateDocument({
       }
 
       const initialValues = transformDocumentForDuplication(source, targetType);
+      if ((source as any).creation_source === "custom") {
+        (initialValues as any)._custom_create_template = buildCustomCreateTemplateFromDocument(source);
+      }
+      if (shouldCheckForPreservedTotal(source)) {
+        const calculated = await documents.calculateDocumentPreview(
+          buildCalculatePayload(initialValues),
+          { type: targetType },
+          { entity_id: activeEntity.id },
+        );
+        if (totalsDifferByCents(calculated.total_with_tax, (source as any).total_with_tax)) {
+          (initialValues as any)._preserved_expected_total_with_tax = (source as any).total_with_tax;
+        }
+      }
 
       // Build source document summaries for conversions (different source → target type)
       const isConversion = sourceType !== targetType;

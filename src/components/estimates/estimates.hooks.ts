@@ -1,4 +1,4 @@
-import type { CreateEstimateRequest, Estimate, UpdateEstimate } from "@spaceinvoices/js-sdk";
+import type { CreateEstimateRequest, CustomCreateEstimate, Estimate, UpdateEstimate } from "@spaceinvoices/js-sdk";
 import { estimates } from "@spaceinvoices/js-sdk";
 
 import { createResourceHooks } from "@/ui/hooks/create-resource-hooks";
@@ -24,4 +24,13 @@ const {
   ESTIMATES_CACHE_KEY,
 );
 
-export { useCreateEstimate, useDeleteEstimate, useUpdateEstimate };
+const { useCreateResource: useCreateCustomEstimate } = createResourceHooks<Estimate, CustomCreateEstimate, UpdateEstimate>(
+  {
+    create: estimates.createCustom,
+    update: estimates.update,
+    delete: deleteEstimate,
+  },
+  ESTIMATES_CACHE_KEY,
+);
+
+export { useCreateCustomEstimate, useCreateEstimate, useDeleteEstimate, useUpdateEstimate };

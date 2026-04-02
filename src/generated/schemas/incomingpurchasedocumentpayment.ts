@@ -8,7 +8,7 @@ import { z } from 'zod';
 
 // Schemas for incomingpurchasedocumentpayment endpoints
 
-// Schema for create incomingpurchasedocumentpayment operation
+// Schema for createIncomingPurchaseDocumentPayment operation
 const createIncomingPurchaseDocumentPaymentSchemaDefinition = z.object({
   applied_to_incoming_purchase_document_id: z
     .union([z.string(), z.null()])
@@ -32,7 +32,5 @@ const createIncomingPurchaseDocumentPaymentSchemaDefinition = z.object({
   metadata: z.union([z.record(z.string(), z.any()), z.null()]).optional(),
 });
 
-// Type for create incomingpurchasedocumentpayment operation
 export type CreateIncomingPurchaseDocumentPaymentSchema = z.infer<typeof createIncomingPurchaseDocumentPaymentSchemaDefinition>;
-
 export const createIncomingPurchaseDocumentPaymentSchema = createIncomingPurchaseDocumentPaymentSchemaDefinition;

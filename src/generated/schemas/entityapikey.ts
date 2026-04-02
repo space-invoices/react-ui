@@ -8,12 +8,10 @@ import { z } from 'zod';
 
 // Schemas for entityapikey endpoints
 
-// Schema for create entityapikey operation
+// Schema for createEntityApiKey operation
 const createEntityApiKeySchemaDefinition = z
   .object({ name: z.string().max(255), ttl: z.number().int().gte(60) })
   .partial();
 
-// Type for create entityapikey operation
 export type CreateEntityApiKeySchema = z.infer<typeof createEntityApiKeySchemaDefinition>;
-
 export const createEntityApiKeySchema = createEntityApiKeySchemaDefinition;

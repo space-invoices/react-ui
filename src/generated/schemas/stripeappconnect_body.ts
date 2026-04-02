@@ -8,11 +8,12 @@ import { z } from 'zod';
 
 // Schemas for stripeappconnect_body endpoints
 
-// Dependency schema for stripeappconnect_body
-const stripeAppConnect_Body = z.object({
+// Schema for stripeAppConnect operation
+const stripeAppConnectSchemaDefinition = z.object({
   state: z.string().min(1),
   entity_id: z.string().min(1),
   force: z.boolean().optional(),
 });
 
-
+export type StripeAppConnectSchema = z.infer<typeof stripeAppConnectSchemaDefinition>;
+export const stripeAppConnectSchema = stripeAppConnectSchemaDefinition;

@@ -130,6 +130,7 @@ export default {
   "Delivery note": "Bolla di consegna",
   Invoice: "Fattura",
   Estimate: "Preventivo",
+  "Proforma invoice": "Fattura proforma",
   "Credit note": "Nota di credito",
   "Advance invoice": "Fattura di acconto",
   "FINA fiscalized invoices always use the current date":

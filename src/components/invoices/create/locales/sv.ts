@@ -128,6 +128,7 @@ export default {
   "Delivery note": "Följesedel",
   Invoice: "Faktura",
   Estimate: "Offert",
+  "Proforma invoice": "Proformafaktura",
   "Credit note": "Kreditnota",
   "Advance invoice": "Förskottsfaktura",
   "FINA fiscalized invoices always use the current date": "FINA-fiskaliserade fakturor använder alltid dagens datum",

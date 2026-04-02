@@ -8,7 +8,7 @@ import { z } from 'zod';
 
 // Schemas for payment endpoints
 
-// Schema for create payment operation
+// Schema for createPayment operation
 const createPaymentSchemaDefinition = z.object({
   invoice_id: z.union([z.string(), z.null()]).optional(),
   credit_note_id: z.union([z.string(), z.null()]).optional(),
@@ -37,11 +37,8 @@ const createPaymentSchemaDefinition = z.object({
   document_id: z.union([z.string(), z.null()]).optional(),
 });
 
-// Type for create payment operation
-export type CreatePaymentSchema = z.infer<typeof createPaymentSchemaDefinition>;
 
-
-// Schema for update payment operation
+// Schema for updatePayment operation
 const updatePaymentSchemaDefinition = z
   .object({
     amount: z.number().gt(0),
@@ -64,8 +61,7 @@ const updatePaymentSchemaDefinition = z
   })
   .partial();
 
-// Type for update payment operation
-export type UpdatePaymentSchema = z.infer<typeof updatePaymentSchemaDefinition>;
-
+export type CreatePaymentSchema = z.infer<typeof createPaymentSchemaDefinition>;
 export const createPaymentSchema = createPaymentSchemaDefinition;
+export type UpdatePaymentSchema = z.infer<typeof updatePaymentSchemaDefinition>;
 export const updatePaymentSchema = updatePaymentSchemaDefinition;

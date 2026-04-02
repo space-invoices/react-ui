@@ -51,7 +51,7 @@ export default {
   Voided: "Annullato",
   Overdue: "Scaduto",
   Shareable: "Condivisibile",
-  Quote: "Offerta",
+  "Proforma invoice": "Fattura proforma",
   "Packing list": "Lista di imballaggio",
   "FURS fiscalization failed": "Fiscalizzazione FURS non riuscita",
   "FINA fiscalization failed": "Fiscalizzazione FINA non riuscita",

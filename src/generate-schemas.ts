@@ -5,21 +5,51 @@ import path from "node:path";
 const SCHEMAS_DIR = "./src/generated/schemas";
 const GENERATED_DIR = "./generated";
 
-type SchemaGroups = {
-  [key: string]: string[];
+type OperationSchemaEntry = {
+  alias: string;
+  schemaName: string;
+  groupName: string;
 };
 
-// Helper to get group name from schema name
-const getGroupName = (schemaName: string): string => {
+// Helper to get group name from schema name / alias
+const getGroupName = (schemaName: string, alias?: string): string => {
   // Remove _Body and extract the resource name (e.g., Customer from createCustomer)
-  return schemaName.replace(/(create|patch|update|delete)([A-Z][a-zA-Z]+)_Body/, "$2").toLowerCase();
+  if (schemaName.endsWith("_Body")) {
+    return schemaName.replace(/(create|patch|update|delete)([A-Z][a-zA-Z]+)_Body/, "$2").toLowerCase();
+  }
+
+  if (alias) {
+    return alias
+      .replace(/^(create|patch|update|delete|register|upload|send|preview|render|accept|add|start|authorize|sync|void)/, "")
+      .toLowerCase();
+  }
+
+  return schemaName.toLowerCase();
 };
 
-// Helper to format operation name
-const formatOperationName = (operationType: string, resourceName: string): string => {
-  // Convert to proper case format (e.g., createCustomer)
-  return `${operationType}${resourceName}`;
-};
+function extractOperationSchemaEntries(fullContent: string): OperationSchemaEntry[] {
+  const endpointBlockRegex = /  \{[\s\S]*?\n  \},?/g;
+  const dedupedEntries = new Map<string, OperationSchemaEntry>();
+
+  for (const block of fullContent.match(endpointBlockRegex) ?? []) {
+    const aliasMatch = block.match(/alias:\s*"([^"]+)"/);
+    const bodySchemaMatch = block.match(/type:\s*"Body",[\s\S]*?schema:\s*((?:[A-Z][A-Za-z0-9_]*|[a-z][A-Za-z0-9]*_Body))/);
+
+    if (!aliasMatch || !bodySchemaMatch) {
+      continue;
+    }
+
+    const alias = aliasMatch[1];
+    const schemaName = bodySchemaMatch[1];
+    dedupedEntries.set(alias, {
+      alias,
+      schemaName,
+      groupName: getGroupName(schemaName, alias),
+    });
+  }
+
+  return [...dedupedEntries.values()];
+}
 
 async function main() {
   // Ensure directories exist
@@ -100,13 +130,6 @@ async function main() {
   content = content.replace(/: EuTaxRules,/g, ": z.any().optional(),");
   content = content.replace(/z\.array\(EntityBankAccount\)/g, "z.array(z.any())");
 
-  // Extract just the schema definitions
-  const schemaMatch = content.match(/export const schemas = {([^}]+)}/s);
-  if (!schemaMatch) {
-    throw new Error("Could not find schema definitions in generated file");
-  }
-  const schemaSection = schemaMatch[1];
-
   // Helper function to find schema dependencies (schemas referenced by other schemas)
   function findSchemaDependencies(schemaName: string, fullContent: string): string[] {
     const dependencies: string[] = [];
@@ -132,30 +155,50 @@ async function main() {
     return dependencies;
   }
 
-  // Parse schema names and group them
-  const schemasByGroup = schemaSection
-    .split(",\n")
-    .map((line) => line.trim())
-    .filter((line) => line.includes("_Body"))
-    .map((line) => line.split(":")[0].trim())
-    .reduce<SchemaGroups>((groups, schemaName) => {
-      const groupName = getGroupName(schemaName);
-      if (!groups[groupName]) {
-        groups[groupName] = [];
+  const operationEntries = extractOperationSchemaEntries(content);
+  if (operationEntries.length === 0) {
+    throw new Error("Could not find endpoint body schemas in generated file");
+  }
+
+  const schemasByGroup = operationEntries.reduce<Record<string, OperationSchemaEntry[]>>((groups, entry) => {
+    if (!groups[entry.groupName]) {
+      groups[entry.groupName] = [];
+    }
+
+    groups[entry.groupName].push(entry);
+    return groups;
+  }, {});
+
+  // Remove previously generated schema files so stale outputs don't survive generator changes.
+  for (const file of await fs.readdir(SCHEMAS_DIR)) {
+    if (file.endsWith(".ts")) {
+      await fs.unlink(path.join(SCHEMAS_DIR, file));
+    }
+  }
+
+  // Create files for each group
+  for (const [groupName, groupEntries] of Object.entries(schemasByGroup)) {
+    const primaryEntryBySchemaName = new Map<string, OperationSchemaEntry>();
+    for (const entry of groupEntries) {
+      if (!primaryEntryBySchemaName.has(entry.schemaName)) {
+        primaryEntryBySchemaName.set(entry.schemaName, entry);
+      }
+    }
+
+    const schemaNames = groupEntries.reduce<string[]>((acc, entry) => {
+      if (!acc.includes(entry.schemaName)) {
+        acc.push(entry.schemaName);
       }
 
-      // Add the main schema
-      groups[groupName].push(schemaName);
-
       // Find and add dependencies
-      const deps = findSchemaDependencies(schemaName, content);
+      const deps = findSchemaDependencies(entry.schemaName, content);
       const queue = [...deps];
       const processed = new Set(deps);
 
       while (queue.length > 0) {
         const currentDep = queue.shift()!;
-        if (!groups[groupName].includes(currentDep)) {
-          groups[groupName].push(currentDep);
+        if (!acc.includes(currentDep)) {
+          acc.push(currentDep);
         }
 
         const nestedDeps = findSchemaDependencies(currentDep, content);
@@ -167,9 +210,98 @@ async function main() {
         }
       }
 
-      return groups;
-    }, {});
+      return acc;
+    }, []);
 
+    // Separate dependencies from operation schemas
+    const dependencies = schemaNames.filter((name) => !groupEntries.some((entry) => entry.schemaName === name));
+    const operations = [...new Set(groupEntries.map((entry) => entry.schemaName))];
+
+    // Topologically sort dependencies so each schema is defined after its own dependencies
+    const sortedDependencies = topologicalSort(dependencies, content);
+
+    // Process dependencies first, then operations
+    const orderedNames = [...sortedDependencies, ...operations];
+
+    const schemas = orderedNames
+      .map((schemaName) => {
+        const operationEntry = primaryEntryBySchemaName.get(schemaName);
+
+        if (!operationEntry) {
+          // This is a dependency schema, just extract its definition
+          const schemaDefinitionMatch = content.match(new RegExp(`const ${schemaName} = ([^;]+);`, "s"));
+          if (!schemaDefinitionMatch) {
+            console.warn(`Warning: Could not find dependency schema definition for ${schemaName}`);
+            return null;
+          }
+
+          return `
+// Dependency schema for ${groupName}
+const ${schemaName} = ${schemaDefinitionMatch[1]};
+`;
+        }
+
+        const schemaDefinitionMatch = content.match(new RegExp(`const ${operationEntry.schemaName} = ([^;]+);`, "s"));
+        if (!schemaDefinitionMatch) {
+          console.warn(`Warning: Could not find schema definition for ${operationEntry.schemaName}`);
+          return null;
+        }
+
+        let schemaDefinition = schemaDefinitionMatch[1];
+
+        // Post-process: Add character limits to name and description fields
+        // Add max length validation from API schema (only if not already present)
+        schemaDefinition = schemaDefinition.replace(
+          /name: z\.string\(\)\.min\(1\)\.max\(100\)(?!\.max)/g,
+          'name: z.string().min(1).max(100, "Name must not exceed 100 characters")',
+        );
+        // Add description character limit - handles both union and nullable variants
+        schemaDefinition = schemaDefinition.replace(
+          /description: z\.union\(\[z\.string\(\)(?!\.max)/g,
+          'description: z.union([z.string().max(4000, "Description must not exceed 4000 characters")',
+        );
+
+        // Add min length to country
+        schemaDefinition = schemaDefinition.replace(/country: z\.string\(\)(?!\.min)/g, "country: z.string().min(1)");
+
+        const operationName = operationEntry.alias;
+
+        return `
+// Schema for ${operationName} operation
+const ${operationName}SchemaDefinition = ${schemaDefinition};
+`;
+      })
+      .filter((schema) => schema !== null) // Remove null entries
+      .join("\n");
+
+    const exports = groupEntries
+      .map(({ alias, schemaName }) => {
+        const definitionEntry = primaryEntryBySchemaName.get(schemaName);
+        if (!definitionEntry) {
+          throw new Error(`Missing primary operation entry for ${schemaName}`);
+        }
+
+        const typeName = alias.slice(0, 1).toUpperCase() + alias.slice(1);
+        return `export type ${typeName}Schema = z.infer<typeof ${definitionEntry.alias}SchemaDefinition>;
+export const ${alias}Schema = ${definitionEntry.alias}SchemaDefinition;`;
+      })
+      .join("\n");
+
+    const schemaContent = `/**
+ * This file was automatically generated using 'bun generate-schemas'.
+ * Do not edit this file manually. To update, run the generator again.
+ * @generated
+ */
+
+import { z } from 'zod';
+
+// Schemas for ${groupName} endpoints
+${schemas}
+${exports}
+`;
+
+    await fs.writeFile(path.join(SCHEMAS_DIR, `${groupName}.ts`), schemaContent);
+  }
   // Topological sort: ensures each schema is defined after all schemas it depends on
   function topologicalSort(names: string[], fullContent: string): string[] {
     const visited = new Set<string>();
@@ -192,120 +324,6 @@ async function main() {
       visit(name);
     }
     return result;
-  }
-
-  // Create files for each group
-  for (const [groupName, schemaNames] of Object.entries(schemasByGroup)) {
-    // Separate dependencies from operation schemas
-    const dependencies = schemaNames.filter((name) => !name.includes("_Body"));
-    const operations = schemaNames.filter((name) => name.includes("_Body"));
-
-    // Topologically sort dependencies so each schema is defined after its own dependencies
-    const sortedDependencies = topologicalSort(dependencies, content);
-
-    // Process dependencies first, then operations
-    const orderedNames = [...sortedDependencies, ...operations];
-
-    const schemas = orderedNames
-      .map((schemaName) => {
-        // Check if this is an operation schema or a dependency
-        const operationMatch = schemaName.match(/(create|patch|update|delete|register|upload|send|preview|render)/i);
-        const isOperationSchema = operationMatch && schemaName.includes("_Body");
-
-        if (!isOperationSchema) {
-          // This is a dependency schema, just extract its definition
-          const schemaDefinitionMatch = content.match(new RegExp(`const ${schemaName} = ([^;]+);`, "s"));
-          if (!schemaDefinitionMatch) {
-            console.warn(`Warning: Could not find dependency schema definition for ${schemaName}`);
-            return null;
-          }
-
-          return `
-// Dependency schema for ${groupName}
-const ${schemaName} = ${schemaDefinitionMatch[1]};
-`;
-        }
-
-        // Handle operation schemas
-        const resourceMatch = schemaName.match(/[A-Z][a-zA-Z]+_Body/);
-        if (!resourceMatch) {
-          console.warn(`Warning: Invalid schema name format: ${schemaName}`);
-          return null;
-        }
-
-        const operationType = operationMatch[1].toLowerCase();
-        const resourceName = resourceMatch[0].replace("_Body", "");
-        const operationName = formatOperationName(operationType, resourceName);
-
-        const schemaDefinitionMatch = content.match(new RegExp(`const ${schemaName} = ([^;]+);`, "s"));
-        if (!schemaDefinitionMatch) {
-          console.warn(`Warning: Could not find schema definition for ${schemaName}`);
-          return null;
-        }
-
-        let schemaDefinition = schemaDefinitionMatch[1];
-
-        // Post-process: Add character limits to name and description fields
-        // Add max length validation from API schema (only if not already present)
-        schemaDefinition = schemaDefinition.replace(
-          /name: z\.string\(\)\.min\(1\)\.max\(100\)(?!\.max)/g,
-          'name: z.string().min(1).max(100, "Name must not exceed 100 characters")',
-        );
-        // Add description character limit - handles both union and nullable variants
-        schemaDefinition = schemaDefinition.replace(
-          /description: z\.union\(\[z\.string\(\)(?!\.max)/g,
-          'description: z.union([z.string().max(4000, "Description must not exceed 4000 characters")',
-        );
-
-        // Add min length to country
-        schemaDefinition = schemaDefinition.replace(/country: z\.string\(\)(?!\.min)/g, "country: z.string().min(1)");
-
-        return `
-// Schema for ${operationType} ${resourceName.toLowerCase()} operation
-const ${operationName}SchemaDefinition = ${schemaDefinition};
-
-// Type for ${operationType} ${resourceName.toLowerCase()} operation
-export type ${operationName.slice(0, 1).toUpperCase() + operationName.slice(1)}Schema = z.infer<typeof ${operationName}SchemaDefinition>;
-`;
-      })
-      .filter((schema) => schema !== null) // Remove null entries
-      .join("\n");
-
-    const exports = schemaNames
-      .filter((schemaName) => {
-        // Only export operation schemas, not dependencies
-        const operationMatch = schemaName.match(/(create|patch|update|delete|register|upload|send|preview|render)/i);
-        return operationMatch !== null && schemaName.includes("_Body");
-      })
-      .map((schemaName) => {
-        const operationMatch = schemaName.match(/(create|patch|update|delete|register|upload|send|preview|render)/i);
-        const resourceMatch = schemaName.match(/[A-Z][a-zA-Z]+_Body/);
-
-        if (!operationMatch || !resourceMatch) {
-          throw new Error(`Invalid schema name format: ${schemaName}`);
-        }
-
-        const operationType = operationMatch[1].toLowerCase();
-        const resourceName = resourceMatch[0].replace("_Body", "");
-        const operationName = formatOperationName(operationType, resourceName);
-        return `export const ${operationName}Schema = ${operationName}SchemaDefinition;`;
-      })
-      .join("\n");
-
-    const schemaContent = `/**
- * This file was automatically generated using 'bun generate-schemas'.
- * Do not edit this file manually. To update, run the generator again.
- * @generated
- */
-
-import { z } from 'zod';
-
-// Schemas for ${groupName} endpoints
-${schemas}
-${exports}
-`;
-
-    await fs.writeFile(path.join(SCHEMAS_DIR, `${groupName}.ts`), schemaContent);
   }
 
   // Create index file - export ALL schema files (not just schemasByGroup)

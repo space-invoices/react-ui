@@ -1,12 +1,15 @@
 export default {
   "Send Invoice by Email": "Pošlji račun po e-pošti",
-  "Send Estimate by Email": "Pošlji predračun po e-pošti",
+  "Send Estimate by Email": "Pošlji ponudbo po e-pošti",
+  "Send Proforma Invoice by Email": "Pošlji predračun po e-pošti",
   "Send Credit Note by Email": "Pošlji dobropis po e-pošti",
   "Send Advance Invoice by Email": "Pošlji avansni račun po e-pošti",
   "Send Delivery Note by Email": "Pošlji dobavnico po e-pošti",
   "Send invoice by email description":
     "Pošljite račun #{number} stranki po e-pošti. V besedilu je podprto oblikovanje Markdown.",
   "Send estimate by email description":
+    "Pošljite ponudbo #{number} stranki po e-pošti. V besedilu je podprto oblikovanje Markdown.",
+  "Send proforma invoice by email description":
     "Pošljite predračun #{number} stranki po e-pošti. V besedilu je podprto oblikovanje Markdown.",
   "Send credit note by email description":
     "Pošljite dobropis #{number} stranki po e-pošti. V besedilu je podprto oblikovanje Markdown.",
@@ -17,7 +20,8 @@ export default {
   "Recipient Email": "E-pošta prejemnika",
   "Subject (Optional)": "Zadeva (neobvezno)",
   "Invoice Subject": "Zadeva računa",
-  "Estimate Subject": "Zadeva predračuna",
+  "Estimate Subject": "Zadeva ponudbe",
+  "Proforma Invoice Subject": "Zadeva predračuna",
   "Credit Note Subject": "Zadeva dobropisa",
   "Advance Invoice Subject": "Zadeva avansnega računa",
   "Delivery Note Subject": "Zadeva dobavnice",
@@ -28,7 +32,8 @@ export default {
   "Send Email": "Pošlji e-pošto",
   "Email sent": "E-pošta poslana",
   "Invoice sent to": "Račun poslan na",
-  "Estimate sent to": "Predračun poslan na",
+  "Estimate sent to": "Ponudba poslana na",
+  "Proforma invoice sent to": "Predračun poslan na",
   "Credit note sent to": "Dobropis poslan na",
   "Advance invoice sent to": "Avansni račun poslan na",
   "Delivery note sent to": "Dobavnica poslana na",

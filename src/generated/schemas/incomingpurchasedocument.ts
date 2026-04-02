@@ -102,7 +102,7 @@ const IncomingPurchaseDocumentSummaryClassification = z.union([
 ]);
 
 
-// Schema for create incomingpurchasedocument operation
+// Schema for createIncomingPurchaseDocument operation
 const createIncomingPurchaseDocumentSchemaDefinition = z.object({
   type: z.enum(["invoice", "credit_note", "advance_invoice"]),
   is_draft: z.union([z.boolean(), z.null()]).optional(),
@@ -138,11 +138,8 @@ const createIncomingPurchaseDocumentSchemaDefinition = z.object({
   metadata: z.union([z.record(z.string(), z.any()), z.null()]).optional(),
 });
 
-// Type for create incomingpurchasedocument operation
-export type CreateIncomingPurchaseDocumentSchema = z.infer<typeof createIncomingPurchaseDocumentSchemaDefinition>;
 
-
-// Schema for update incomingpurchasedocument operation
+// Schema for updateIncomingPurchaseDocument operation
 const updateIncomingPurchaseDocumentSchemaDefinition = z
   .object({
     is_draft: z.union([z.boolean(), z.null()]),
@@ -175,8 +172,7 @@ const updateIncomingPurchaseDocumentSchemaDefinition = z
   })
   .partial();
 
-// Type for update incomingpurchasedocument operation
-export type UpdateIncomingPurchaseDocumentSchema = z.infer<typeof updateIncomingPurchaseDocumentSchemaDefinition>;
-
+export type CreateIncomingPurchaseDocumentSchema = z.infer<typeof createIncomingPurchaseDocumentSchemaDefinition>;
 export const createIncomingPurchaseDocumentSchema = createIncomingPurchaseDocumentSchemaDefinition;
+export type UpdateIncomingPurchaseDocumentSchema = z.infer<typeof updateIncomingPurchaseDocumentSchemaDefinition>;
 export const updateIncomingPurchaseDocumentSchema = updateIncomingPurchaseDocumentSchemaDefinition;

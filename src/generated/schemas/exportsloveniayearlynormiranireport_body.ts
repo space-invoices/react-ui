@@ -8,8 +8,8 @@ import { z } from 'zod';
 
 // Schemas for exportsloveniayearlynormiranireport_body endpoints
 
-// Dependency schema for exportsloveniayearlynormiranireport_body
-const exportSloveniaYearlyNormiraniReport_Body = z
+// Schema for exportSloveniaYearlyNormiraniReport operation
+const exportSloveniaYearlyNormiraniReportSchemaDefinition = z
   .object({
     year: z.number().int().gte(2025).lte(2100),
     manual_values: z
@@ -24,4 +24,5 @@ const exportSloveniaYearlyNormiraniReport_Body = z
   })
   .passthrough();
 
-
+export type ExportSloveniaYearlyNormiraniReportSchema = z.infer<typeof exportSloveniaYearlyNormiraniReportSchemaDefinition>;
+export const exportSloveniaYearlyNormiraniReportSchema = exportSloveniaYearlyNormiraniReportSchemaDefinition;

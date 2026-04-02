@@ -8,8 +8,8 @@ import { z } from 'zod';
 
 // Schemas for stripeappupdatesettings_body endpoints
 
-// Schema for update appupdatesettings operation
-const updateAppUpdateSettingsSchemaDefinition = z
+// Schema for stripeAppEntityUpdateSettings operation
+const stripeAppEntityUpdateSettingsSchemaDefinition = z
   .object({
     auto_invoice_enabled: z.boolean(),
     auto_invoice_events: z.array(
@@ -20,7 +20,7 @@ const updateAppUpdateSettingsSchemaDefinition = z
   })
   .partial();
 
-// Type for update appupdatesettings operation
-export type UpdateAppUpdateSettingsSchema = z.infer<typeof updateAppUpdateSettingsSchemaDefinition>;
-
-export const updateAppUpdateSettingsSchema = updateAppUpdateSettingsSchemaDefinition;
+export type StripeAppEntityUpdateSettingsSchema = z.infer<typeof stripeAppEntityUpdateSettingsSchemaDefinition>;
+export const stripeAppEntityUpdateSettingsSchema = stripeAppEntityUpdateSettingsSchemaDefinition;
+export type StripeAppUpdateSettingsSchema = z.infer<typeof stripeAppEntityUpdateSettingsSchemaDefinition>;
+export const stripeAppUpdateSettingsSchema = stripeAppEntityUpdateSettingsSchemaDefinition;

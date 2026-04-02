@@ -128,6 +128,7 @@ export default {
   "Delivery note": "Otpremnica",
   Invoice: "Račun",
   Estimate: "Ponuda",
+  "Proforma invoice": "Predračun",
   "Credit note": "Odobrenje",
   "Advance invoice": "Avansni račun",
   "FINA fiscalized invoices always use the current date": "FINA fiskalizirani računi uvijek koriste trenutni datum",

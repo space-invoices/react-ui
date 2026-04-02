@@ -8,7 +8,7 @@ import { z } from 'zod';
 
 // Schemas for registerfursrealestatepremise_body endpoints
 
-// Schema for register fursrealestatepremise operation
+// Schema for registerFursRealEstatePremise operation
 const registerFursRealEstatePremiseSchemaDefinition = z.object({
   business_premise_name: z.string().min(1).max(20),
   real_estate: z
@@ -30,7 +30,5 @@ const registerFursRealEstatePremiseSchemaDefinition = z.object({
     .passthrough(),
 });
 
-// Type for register fursrealestatepremise operation
 export type RegisterFursRealEstatePremiseSchema = z.infer<typeof registerFursRealEstatePremiseSchemaDefinition>;
-
 export const registerFursRealEstatePremiseSchema = registerFursRealEstatePremiseSchemaDefinition;

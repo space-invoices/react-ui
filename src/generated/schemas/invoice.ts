@@ -9,36 +9,6 @@ import { z } from 'zod';
 // Schemas for invoice endpoints
 
 // Dependency schema for invoice
-const CreateDocumentPayment = z.object({
-  amount: z.number().gt(0).optional(),
-  type: z.string().max(20),
-  date: z.string().optional(),
-  reference: z.union([z.string(), z.null()]).optional(),
-  note: z.union([z.string(), z.null()]).optional(),
-  metadata: z.union([z.record(z.string(), z.any()), z.null()]).optional(),
-});
-
-
-// Dependency schema for invoice
-const LineDiscount = z.object({
-  value: z.number().gte(0),
-  type: z.enum(["percent", "amount"]).optional().default("percent"),
-});
-
-
-// Dependency schema for invoice
-const DocumentItemTax = z
-  .object({
-    rate: z.number(),
-    tax_id: z.string(),
-    classification: z.string(),
-    reverse_charge: z.boolean(),
-    amount: z.number(),
-  })
-  .partial();
-
-
-// Dependency schema for invoice
 const DocumentEntity = z
   .object({
     name: z.union([z.string(), z.null()]),
@@ -53,19 +23,22 @@ const DocumentEntity = z
     tax_number: z.union([z.string(), z.null()]),
     tax_number_2: z.union([z.string(), z.null()]),
     company_number: z.union([z.string(), z.null()]),
+    phone: z.union([z.string(), z.null()]),
+    peppol_id: z.union([z.string(), z.null()]),
+    is_end_consumer: z.union([z.boolean(), z.null()]),
     bank_account: z.union([
       z
         .object({
           type: z
             .enum(["iban", "us_domestic", "uk_domestic", "other"])
             .default("iban"),
-          name: z.string(),
-          bank_name: z.string(),
-          iban: z.string(),
-          account_number: z.string(),
-          bic: z.string(),
-          routing_number: z.string(),
-          sort_code: z.string(),
+          name: z.union([z.string(), z.null()]),
+          bank_name: z.union([z.string(), z.null()]),
+          iban: z.union([z.string(), z.null()]),
+          account_number: z.union([z.string(), z.null()]),
+          bic: z.union([z.string(), z.null()]),
+          routing_number: z.union([z.string(), z.null()]),
+          sort_code: z.union([z.string(), z.null()]),
         })
         .partial()
         .passthrough(),
@@ -76,128 +49,189 @@ const DocumentEntity = z
   .passthrough();
 
 
-// Schema for create invoice operation
+// Dependency schema for invoice
+const CreateDocumentCustomer = DocumentEntity.and(
+  z.union([
+    z
+      .object({ save_customer: z.union([z.boolean(), z.null()]) })
+      .partial()
+      .passthrough(),
+    z.null(),
+  ])
+);
+
+
+// Dependency schema for invoice
+const PtDocumentInput = z.union([
+  z
+    .object({
+      series_id: z.union([z.string(), z.null()]),
+      manual: z.union([z.boolean(), z.null()]),
+      manual_sequential_number: z.union([z.number(), z.null()]),
+      manual_series_code: z.union([z.string(), z.null()]),
+      operator_first_name: z.union([z.string(), z.null()]),
+      operator_last_name: z.union([z.string(), z.null()]),
+      operator_tax_number: z.union([z.string(), z.null()]),
+      account_first_name: z.union([z.string(), z.null()]),
+      account_last_name: z.union([z.string(), z.null()]),
+      account_tax_number: z.union([z.string(), z.null()]),
+    })
+    .partial(),
+  z.null(),
+]);
+
+
+// Dependency schema for invoice
+const DocumentItemTax = z
+  .object({
+    rate: z.union([z.number(), z.null()]),
+    tax_id: z.union([z.string(), z.null()]),
+    classification: z.union([z.string(), z.null()]),
+    reverse_charge: z.union([z.boolean(), z.null()]),
+    amount: z.union([z.number(), z.null()]),
+    pt_exemption_code: z.union([z.string(), z.null()]),
+    pt_exemption_reason: z.union([z.string(), z.null()]),
+  })
+  .partial();
+
+
+// Dependency schema for invoice
+const LineDiscount = z.object({
+  value: z.number().gte(0),
+  type: z.enum(["percent", "amount"]).optional().default("percent"),
+});
+
+
+// Dependency schema for invoice
+const CreateDocumentItem = z
+  .object({
+    type: z.union([z.union([z.enum(["separator"]), z.null()]), z.null()]),
+    name: z.union([z.string(), z.null()]),
+    description: z.union([z.string(), z.null()]),
+    classification: z.union([
+      z.union([z.enum(["product", "service", "advance"]), z.null()]),
+      z.null(),
+    ]),
+    price: z.union([z.number(), z.null()]),
+    gross_price: z.union([z.number(), z.null()]),
+    quantity: z.union([z.number(), z.null()]),
+    unit: z.union([z.string(), z.null()]),
+    taxes: z.array(DocumentItemTax),
+    discounts: z.array(LineDiscount).max(5),
+    item_id: z.union([z.string(), z.null()]),
+    metadata: z.union([z.record(z.string(), z.any()), z.null()]),
+    save_item: z.union([z.boolean(), z.null()]),
+  })
+  .partial();
+
+
+// Dependency schema for invoice
+const CreateDocumentPayment = z.object({
+  incoming_purchase_document_id: z.union([z.string(), z.null()]).optional(),
+  applied_to_incoming_purchase_document_id: z
+    .union([z.string(), z.null()])
+    .optional(),
+  amount: z.union([z.number(), z.null()]).optional(),
+  type: z.enum([
+    "cash",
+    "bank_transfer",
+    "card",
+    "check",
+    "paypal",
+    "coupon",
+    "other",
+    "credit_note",
+    "advance",
+  ]),
+  date: z.union([z.string(), z.null()]).optional(),
+  tag: z.union([z.string(), z.null()]).optional(),
+  reference: z.union([z.string(), z.null()]).optional(),
+  note: z.union([z.string(), z.null()]).optional(),
+  metadata: z.union([z.record(z.string(), z.any()), z.null()]).optional(),
+});
+
+
+// Dependency schema for invoice
+const CreateFursDocumentData = z.union([
+  z
+    .object({
+      business_premise_name: z.union([z.string(), z.null()]),
+      electronic_device_name: z.union([z.string(), z.null()]),
+      operator_tax_number: z.union([z.string(), z.null()]),
+      operator_label: z.union([z.string(), z.null()]),
+      skip: z.union([z.boolean(), z.null()]),
+    })
+    .partial(),
+  z.null(),
+]);
+
+
+// Dependency schema for invoice
+const CreateFinaInvoiceData = z.union([
+  z
+    .object({
+      business_premise_name: z.union([z.string(), z.null()]),
+      electronic_device_name: z.union([z.string(), z.null()]),
+      operator_oib: z.union([z.string(), z.null()]),
+      operator_label: z.union([z.string(), z.null()]),
+      payment_type: z.union([
+        z.union([z.enum(["cash", "card", "online", "bank_transfer", "paypal", "crypto", "coupon", "other"]), z.null()]),
+        z.null(),
+      ]),
+      subsequent_submit: z.union([z.boolean(), z.null()]),
+    })
+    .partial(),
+  z.null(),
+]);
+
+
+// Dependency schema for invoice
+const EslogInput = z.union([
+  z
+    .object({ validation_enabled: z.union([z.boolean(), z.null()]) })
+    .partial()
+    .passthrough(),
+  z.null(),
+]);
+
+
+// Schema for createInvoice operation
 const createInvoiceSchemaDefinition = z.object({
   is_draft: z.boolean().optional(),
-  calculation_mode: z.enum(["b2b_standard", "b2c_gross_discount"]).optional(),
   date: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d{3})?Z?)?$/)
     .optional(),
   issuer: DocumentEntity.optional(),
   customer_id: z.union([z.string(), z.null()]).optional(),
-  customer: DocumentEntity.and(
-    z.union([
-      z
-        .object({ save_customer: z.boolean().default(true) })
-        .partial()
-        .passthrough(),
-      z.null(),
-    ])
-  ).optional(),
+  customer: CreateDocumentCustomer.optional(),
   note: z.union([z.string(), z.null()]).optional(),
   payment_terms: z.union([z.string(), z.null()]).optional(),
   tax_clause: z.union([z.string(), z.null()]).optional(),
   footer: z.union([z.string(), z.null()]).optional(),
   signature: z.union([z.string(), z.null()]).optional(),
-  reference: z.union([z.string(), z.null()]).optional(),
+  calculation_mode: z
+    .union([z.union([z.enum(["b2b_standard", "b2c_gross_discount"]), z.null()]), z.null()])
+    .optional(),
   currency_code: z.string().max(3).optional(),
   metadata: z.union([z.record(z.string(), z.any()), z.null()]).optional(),
+  reference: z.union([z.string(), z.null()]).optional(),
   date_due: z.union([z.string(), z.null()]).optional(),
+  pt: PtDocumentInput.optional(),
   date_service: z.union([z.string(), z.null()]).optional(),
   date_service_to: z.union([z.string(), z.null()]).optional(),
-  items: z
-    .array(
-      z.object({
-        type: z.enum(["separator"]).optional(),
-        name: z.string().min(1).optional(),
-        description: z.union([z.string().max(4000, "Description must not exceed 4000 characters"), z.null()]).optional(),
-        price: z.number().optional(),
-        gross_price: z.number().optional(),
-        quantity: z.number().gte(-140737488355328).lte(140737488355327).optional(),
-        unit: z.union([z.string(), z.null()]).optional(),
-        taxes: z.array(DocumentItemTax).optional(),
-        discounts: z.array(LineDiscount).max(5).optional(),
-        metadata: z
-          .union([
-            z.string(),
-            z.number(),
-            z.boolean(),
-            z.null(),
-            z.object({}).partial().passthrough(),
-            z.array(z.unknown()),
-            z.null(),
-          ])
-          .optional(),
-        item_id: z.string().optional(),
-      })
-    )
-    .min(1),
-  linked_documents: z.array(z.string().min(1)).optional(),
+  items: z.array(CreateDocumentItem).min(1),
+  linked_documents: z.union([z.array(z.string().min(1)), z.null()]).optional(),
   payments: z.union([z.array(CreateDocumentPayment), z.null()]).optional(),
-  furs: z
-    .union([
-      z
-        .object({
-          business_premise_name: z.string().min(1),
-          electronic_device_name: z.string().min(1),
-          operator_tax_number: z.string(),
-          operator_label: z.string(),
-          skip: z.boolean(),
-        })
-        .partial(),
-      z.null(),
-    ])
-    .optional(),
-  fina: z
-    .union([
-      z
-        .object({
-          premise_id: z
-            .string()
-            .min(1)
-            .max(20)
-            .regex(/^[0-9a-zA-Z]{1,20}$/),
-          device_id: z
-            .string()
-            .min(1)
-            .max(20)
-            .regex(/^\d{1,20}$/),
-          operator_oib: z.string().min(11).max(11),
-          is_end_consumer: z.boolean(),
-          payment_type: z.enum([
-            "cash",
-            "card",
-            "online",
-            "bank_transfer",
-            "paypal",
-            "crypto",
-            "coupon",
-            "other",
-          ]),
-          subsequent_submit: z.boolean(),
-        })
-        .partial(),
-      z.null(),
-    ])
-    .optional(),
-  eslog: z
-    .union([
-      z
-        .object({ validation_enabled: z.union([z.boolean(), z.null()]) })
-        .partial()
-        .passthrough(),
-      z.null(),
-    ])
-    .optional(),
-  expected_total_with_tax: z.number().gt(0).optional(),
+  furs: CreateFursDocumentData.optional(),
+  fina: CreateFinaInvoiceData.optional(),
+  eslog: EslogInput.optional(),
+  expected_total_with_tax: z.union([z.number(), z.null()]).optional(),
+  force_linked_documents: z.union([z.boolean(), z.null()]).optional(),
 });
 
-// Type for create invoice operation
-export type CreateInvoiceSchema = z.infer<typeof createInvoiceSchemaDefinition>;
 
-
-// Schema for update invoice operation
+// Schema for updateInvoice operation
 const updateInvoiceSchemaDefinition = z
   .object({
     date: z
@@ -205,45 +239,12 @@ const updateInvoiceSchemaDefinition = z
       .regex(/^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d{3})?Z?)?$/),
     issuer: DocumentEntity.and(z.unknown()),
     customer_id: z.union([z.string(), z.null()]),
-    customer: DocumentEntity.and(
-      z.union([
-        z
-          .object({ save_customer: z.boolean().default(true) })
-          .partial()
-          .passthrough(),
-        z.null(),
-      ])
-    ),
-    items: z
-      .array(
-        z.object({
-          name: z.string().min(1).optional(),
-          description: z.union([z.string().max(4000, "Description must not exceed 4000 characters"), z.null()]).optional(),
-          price: z.number().optional(),
-          gross_price: z.number().optional(),
-          quantity: z.number().gte(-140737488355328).lte(140737488355327),
-          unit: z.union([z.string(), z.null()]).optional(),
-          taxes: z.array(DocumentItemTax).optional(),
-          discounts: z.array(LineDiscount).max(5).optional(),
-          metadata: z
-            .union([
-              z.string(),
-              z.number(),
-              z.boolean(),
-              z.null(),
-              z.object({}).partial().passthrough(),
-              z.array(z.unknown()),
-              z.null(),
-            ])
-            .optional(),
-          item_id: z.string().optional(),
-        })
-      )
-      .min(1),
+    customer: CreateDocumentCustomer,
+    items: z.array(CreateDocumentItem).min(1),
     note: z.union([z.string(), z.null()]),
+    payment_terms: z.union([z.string(), z.null()]),
     tax_clause: z.union([z.string(), z.null()]),
     footer: z.union([z.string(), z.null()]),
-    payment_terms: z.union([z.string(), z.null()]),
     signature: z.union([z.string(), z.null()]),
     currency_code: z.string(),
     reference: z.union([z.string(), z.null()]),
@@ -254,18 +255,11 @@ const updateInvoiceSchemaDefinition = z
     date_service_to: z.union([z.string(), z.null()]),
     linked_documents: z.union([z.array(z.string().min(1)), z.null()]),
     force_linked_documents: z.boolean(),
-    eslog: z.union([
-      z
-        .object({ validation_enabled: z.union([z.boolean(), z.null()]) })
-        .partial()
-        .passthrough(),
-      z.null(),
-    ]),
+    eslog: EslogInput,
   })
   .partial();
 
-// Type for update invoice operation
-export type UpdateInvoiceSchema = z.infer<typeof updateInvoiceSchemaDefinition>;
-
+export type CreateInvoiceSchema = z.infer<typeof createInvoiceSchemaDefinition>;
 export const createInvoiceSchema = createInvoiceSchemaDefinition;
+export type UpdateInvoiceSchema = z.infer<typeof updateInvoiceSchemaDefinition>;
 export const updateInvoiceSchema = updateInvoiceSchemaDefinition;

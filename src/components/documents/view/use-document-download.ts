@@ -61,8 +61,8 @@ export function useDocumentDownload({
       // entity_id goes in SDKMethodOptions (last arg), not params
       // Note: renderPdf is on invoices module but works with any document ID via /documents/{id}/pdf
       const typeLabel =
-        documentType === "estimate" && (document as Estimate).title_type === "quote"
-          ? "Quote"
+        documentType === "estimate" && (document as Estimate).title_type === "proforma_invoice"
+          ? "Proforma Invoice"
           : TYPE_LABELS[documentType] || "Document";
       const params = language ? { language } : {};
       const fileName = `${typeLabel} ${document.number}.pdf`;

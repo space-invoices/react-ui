@@ -8,7 +8,7 @@ import { z } from 'zod';
 
 // Schemas for webhook endpoints
 
-// Schema for create webhook operation
+// Schema for createWebhook operation
 const createWebhookSchemaDefinition = z.object({
   url: z.string().max(2048).url(),
   description: z.string().max(500).optional(),
@@ -104,11 +104,8 @@ const createWebhookSchemaDefinition = z.object({
   metadata: z.union([z.record(z.string(), z.any()), z.null()]).optional(),
 });
 
-// Type for create webhook operation
-export type CreateWebhookSchema = z.infer<typeof createWebhookSchemaDefinition>;
 
-
-// Schema for update webhook operation
+// Schema for updateWebhook operation
 const updateWebhookSchemaDefinition = z
   .object({
     url: z.string().max(2048).url(),
@@ -206,8 +203,7 @@ const updateWebhookSchemaDefinition = z
   })
   .partial();
 
-// Type for update webhook operation
-export type UpdateWebhookSchema = z.infer<typeof updateWebhookSchemaDefinition>;
-
+export type CreateWebhookSchema = z.infer<typeof createWebhookSchemaDefinition>;
 export const createWebhookSchema = createWebhookSchemaDefinition;
+export type UpdateWebhookSchema = z.infer<typeof updateWebhookSchemaDefinition>;
 export const updateWebhookSchema = updateWebhookSchemaDefinition;

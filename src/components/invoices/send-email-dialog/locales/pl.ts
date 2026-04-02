@@ -1,6 +1,7 @@
 export default {
   "Send Invoice by Email": "Wyślij fakturę e-mailem",
   "Send Estimate by Email": "Wyślij kosztorys e-mailem",
+  "Send Proforma Invoice by Email": "Wyślij fakturę pro forma e-mailem",
   "Send Credit Note by Email": "Wyślij note kredytową e-mailem",
   "Send Advance Invoice by Email": "Wyślij fakturę zaliczkową e-mailem",
   "Send Delivery Note by Email": "Wyślij dokument dostawy e-mailem",
@@ -8,6 +9,8 @@ export default {
     "Wyślij fakturę #{number} do klienta e-mailem. Formatowanie Markdown jest obsługiwane w treści.",
   "Send estimate by email description":
     "Wyślij kosztorys #{number} do klienta e-mailem. Formatowanie Markdown jest obsługiwane w treści.",
+  "Send proforma invoice by email description":
+    "Wyślij fakturę pro forma #{number} do klienta e-mailem. Formatowanie Markdown jest obsługiwane w treści.",
   "Send credit note by email description":
     "Wyślij notę kredytową #{number} do klienta e-mailem. Formatowanie Markdown jest obsługiwane w treści.",
   "Send advance invoice by email description":
@@ -18,6 +21,7 @@ export default {
   "Subject (Optional)": "Temat (opcjonalnie)",
   "Invoice Subject": "Temat faktury",
   "Estimate Subject": "Temat kosztorysu",
+  "Proforma Invoice Subject": "Temat faktury pro forma",
   "Credit Note Subject": "Temat noty kredytowej",
   "Advance Invoice Subject": "Temat faktury zaliczkowej",
   "Delivery Note Subject": "Temat dokumentu dostawy",
@@ -29,6 +33,7 @@ export default {
   "Email sent": "E-mail wysłany",
   "Invoice sent to": "Faktura wysłana do",
   "Estimate sent to": "Kosztorys wysłany do",
+  "Proforma invoice sent to": "Faktura pro forma wysłana do",
   "Credit note sent to": "Nota kredytowa wysłana do",
   "Advance invoice sent to": "Faktura zaliczkowa wysłana do",
   "Delivery note sent to": "Dokument dostawy wysłany do",

@@ -8,7 +8,7 @@ import { z } from 'zod';
 
 // Schemas for tax endpoints
 
-// Schema for create tax operation
+// Schema for createTax operation
 const createTaxSchemaDefinition = z.object({
   name: z.string().max(100).optional(),
   tax_rates: z
@@ -26,11 +26,8 @@ const createTaxSchemaDefinition = z.object({
   metadata: z.union([z.record(z.string(), z.any()), z.null()]).optional(),
 });
 
-// Type for create tax operation
-export type CreateTaxSchema = z.infer<typeof createTaxSchemaDefinition>;
 
-
-// Schema for update tax operation
+// Schema for updateTax operation
 const updateTaxSchemaDefinition = z.object({
   tax_rates: z
     .array(
@@ -43,8 +40,9 @@ const updateTaxSchemaDefinition = z.object({
   is_default: z.boolean().optional(),
 });
 
-// Type for update tax operation
-export type UpdateTaxSchema = z.infer<typeof updateTaxSchemaDefinition>;
-
+export type CreateTaxSchema = z.infer<typeof createTaxSchemaDefinition>;
 export const createTaxSchema = createTaxSchemaDefinition;
+export type UpdateTaxSchema = z.infer<typeof updateTaxSchemaDefinition>;
 export const updateTaxSchema = updateTaxSchemaDefinition;
+export type ReplaceTaxSchema = z.infer<typeof createTaxSchemaDefinition>;
+export const replaceTaxSchema = createTaxSchemaDefinition;

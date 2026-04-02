@@ -8,7 +8,7 @@ import { z } from 'zod';
 
 // Schemas for me endpoints
 
-// Schema for patch me operation
+// Schema for patchMe operation
 const patchMeSchemaDefinition = z
   .object({
     name: z.union([z.string(), z.null()]),
@@ -19,7 +19,5 @@ const patchMeSchemaDefinition = z
   })
   .partial();
 
-// Type for patch me operation
 export type PatchMeSchema = z.infer<typeof patchMeSchemaDefinition>;
-
 export const patchMeSchema = patchMeSchemaDefinition;

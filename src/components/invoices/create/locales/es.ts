@@ -129,6 +129,7 @@ export default {
   "Delivery note": "Albarán",
   Invoice: "Factura",
   Estimate: "Presupuesto",
+  "Proforma invoice": "Factura proforma",
   "Credit note": "Nota de crédito",
   "Advance invoice": "Factura anticipada",
   "FINA fiscalized invoices always use the current date":

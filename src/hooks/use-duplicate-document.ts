@@ -1,5 +1,6 @@
 import type {
   AdvanceInvoice,
+  CalculateDocumentPreview,
   CreateAdvanceInvoiceRequest,
   CreateCreditNoteRequest,
   CreateDeliveryNoteRequest,
@@ -41,7 +42,11 @@ function shouldCheckForPreservedTotal(document: any): boolean {
   return document?.creation_source === "custom" || Math.abs(document?.rounding_correction ?? 0) > 0;
 }
 
-function buildCalculatePayload(values: Partial<CreateRequest>) {
+function buildCalculatePayload(values: Partial<CreateRequest>): CalculateDocumentPreview | null {
+  if (!values.items?.length) {
+    return null;
+  }
+
   return {
     items: values.items,
     customer_id: (values as any).customer_id,
@@ -188,7 +193,7 @@ function transformDocumentForDuplication(source: Document, targetType: DocumentT
   }
 
   if (sourceType === "estimate") {
-    const sourceDoc = source as Estimate & { title_type?: "estimate" | "quote" | null };
+    const sourceDoc = source as Estimate & { title_type?: "estimate" | "proforma_invoice" | null };
     if (sourceDoc.title_type) {
       (baseData as CreateEstimateRequest).title_type = sourceDoc.title_type;
     }
@@ -293,13 +298,16 @@ export function useDuplicateDocument({
         (initialValues as any)._custom_create_template = buildCustomCreateTemplateFromDocument(source);
       }
       if (shouldCheckForPreservedTotal(source)) {
-        const calculated = await documents.calculateDocumentPreview(
-          buildCalculatePayload(initialValues),
-          { type: targetType },
-          { entity_id: activeEntity.id },
-        );
-        if (totalsDifferByCents(calculated.total_with_tax, (source as any).total_with_tax)) {
-          (initialValues as any)._preserved_expected_total_with_tax = (source as any).total_with_tax;
+        const calculatePayload = buildCalculatePayload(initialValues);
+        if (calculatePayload) {
+          const calculated = await documents.calculateDocumentPreview(
+            calculatePayload,
+            { type: targetType },
+            { entity_id: activeEntity.id },
+          );
+          if (totalsDifferByCents(calculated.total_with_tax, (source as any).total_with_tax)) {
+            (initialValues as any)._preserved_expected_total_with_tax = (source as any).total_with_tax;
+          }
         }
       }
 

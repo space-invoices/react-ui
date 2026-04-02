@@ -8,7 +8,7 @@ import { z } from 'zod';
 
 // Schemas for recurringinvoice endpoints
 
-// Schema for create recurringinvoice operation
+// Schema for createRecurringInvoice operation
 const createRecurringInvoiceSchemaDefinition = z.object({
   document_id: z.string().max(36),
   name: z.string().min(1),
@@ -30,11 +30,8 @@ const createRecurringInvoiceSchemaDefinition = z.object({
   metadata: z.union([z.record(z.string(), z.any()), z.null()]).optional(),
 });
 
-// Type for create recurringinvoice operation
-export type CreateRecurringInvoiceSchema = z.infer<typeof createRecurringInvoiceSchemaDefinition>;
 
-
-// Schema for update recurringinvoice operation
+// Schema for updateRecurringInvoice operation
 const updateRecurringInvoiceSchemaDefinition = z
   .object({
     name: z.string().max(255),
@@ -54,8 +51,7 @@ const updateRecurringInvoiceSchemaDefinition = z
   })
   .partial();
 
-// Type for update recurringinvoice operation
-export type UpdateRecurringInvoiceSchema = z.infer<typeof updateRecurringInvoiceSchemaDefinition>;
-
+export type CreateRecurringInvoiceSchema = z.infer<typeof createRecurringInvoiceSchemaDefinition>;
 export const createRecurringInvoiceSchema = createRecurringInvoiceSchemaDefinition;
+export type UpdateRecurringInvoiceSchema = z.infer<typeof updateRecurringInvoiceSchemaDefinition>;
 export const updateRecurringInvoiceSchema = updateRecurringInvoiceSchemaDefinition;

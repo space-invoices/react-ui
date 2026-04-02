@@ -39,4 +39,6 @@ export default {
   "Copy to Invoice": "In Rechnung kopieren",
   "Finalize draft documents before copying to invoice":
     "Entwurfsdokumente abschließen, bevor Sie in eine Rechnung kopieren",
+  Type: "Typ",
+  "Proforma invoice": "Proformarechnung",
 } as const;

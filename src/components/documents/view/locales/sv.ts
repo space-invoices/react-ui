@@ -46,7 +46,7 @@ export default {
   Voided: "Makulerad",
   Overdue: "Förfallen",
   Shareable: "Shareable",
-  Quote: "Offert",
+  "Proforma invoice": "Proformafaktura",
   "Packing list": "Packlista",
   "FURS fiscalization failed": "FURS-fiskaliseringen misslyckades",
   "FINA fiscalization failed": "FINA-fiskaliseringen misslyckades",

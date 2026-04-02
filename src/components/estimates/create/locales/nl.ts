@@ -1,9 +1,9 @@
 export default {
   "Create Estimate": "Offerte aanmaken",
-  "Create Quote": "Prijsopgave aanmaken",
+  "Create Proforma invoice": "Proforma factuur aanmaken",
   Estimate: "Offerte",
-  Quote: "Prijsopgave",
-  "Click to switch to Quote": "Klik om naar Prijsopgave te wisselen",
+  "Proforma invoice": "Proforma factuur",
+  "Click to switch to Proforma invoice": "Klik om naar Proforma factuur te wisselen",
   "Click to switch to Estimate": "Klik om naar Offerte te wisselen",
   Details: "Details",
   Number: "Nummer",

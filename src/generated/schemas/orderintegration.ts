@@ -8,7 +8,7 @@ import { z } from 'zod';
 
 // Schemas for orderintegration endpoints
 
-// Schema for create orderintegration operation
+// Schema for createOrderIntegration operation
 const createOrderIntegrationSchemaDefinition = z.object({
   name: z.string().min(1),
   source: z
@@ -23,11 +23,8 @@ const createOrderIntegrationSchemaDefinition = z.object({
   metadata: z.union([z.record(z.string(), z.any()), z.null()]).optional(),
 });
 
-// Type for create orderintegration operation
-export type CreateOrderIntegrationSchema = z.infer<typeof createOrderIntegrationSchemaDefinition>;
 
-
-// Schema for update orderintegration operation
+// Schema for updateOrderIntegration operation
 const updateOrderIntegrationSchemaDefinition = z
   .object({
     name: z.string().min(1),
@@ -48,8 +45,7 @@ const updateOrderIntegrationSchemaDefinition = z
   })
   .partial();
 
-// Type for update orderintegration operation
-export type UpdateOrderIntegrationSchema = z.infer<typeof updateOrderIntegrationSchemaDefinition>;
-
+export type CreateOrderIntegrationSchema = z.infer<typeof createOrderIntegrationSchemaDefinition>;
 export const createOrderIntegrationSchema = createOrderIntegrationSchemaDefinition;
+export type UpdateOrderIntegrationSchema = z.infer<typeof updateOrderIntegrationSchemaDefinition>;
 export const updateOrderIntegrationSchema = updateOrderIntegrationSchemaDefinition;

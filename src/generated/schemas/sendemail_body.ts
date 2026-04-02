@@ -8,7 +8,7 @@ import { z } from 'zod';
 
 // Schemas for sendemail_body endpoints
 
-// Schema for send email operation
+// Schema for sendEmail operation
 const sendEmailSchemaDefinition = z.object({
   to: z.string().email(),
   subject: z.string().min(1).max(255).optional(),
@@ -70,7 +70,5 @@ const sendEmailSchemaDefinition = z.object({
     .optional(),
 });
 
-// Type for send email operation
 export type SendEmailSchema = z.infer<typeof sendEmailSchemaDefinition>;
-
 export const sendEmailSchema = sendEmailSchemaDefinition;

@@ -18,7 +18,7 @@ type RelatedDocumentSummary = {
   id: string;
   type: "invoice" | "estimate" | "credit_note" | "advance_invoice" | "delivery_note";
   number: string;
-  title_type?: "estimate" | "quote" | null;
+  title_type?: "estimate" | "proforma_invoice" | null;
 };
 type DocumentRelationWithSummary = DocumentRelation & {
   related_document?: RelatedDocumentSummary;
@@ -35,10 +35,10 @@ interface DocumentRelationsListProps extends ComponentTranslationProps {
 function getDocumentTypeLabel(
   type: string,
   t: (key: string) => string,
-  titleType?: "estimate" | "quote" | null,
+  titleType?: "estimate" | "proforma_invoice" | null,
 ): string {
-  if (type === "estimate" && titleType === "quote") {
-    return t("Quote");
+  if (type === "estimate" && titleType === "proforma_invoice") {
+    return t("Proforma invoice");
   }
 
   const labels: Record<string, string> = {

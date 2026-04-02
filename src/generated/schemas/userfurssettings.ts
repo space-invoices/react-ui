@@ -8,12 +8,10 @@ import { z } from 'zod';
 
 // Schemas for userfurssettings endpoints
 
-// Schema for update userfurssettings operation
+// Schema for updateUserFursSettings operation
 const updateUserFursSettingsSchemaDefinition = z
   .object({ operator_tax_number: z.string(), operator_label: z.string() })
   .partial();
 
-// Type for update userfurssettings operation
 export type UpdateUserFursSettingsSchema = z.infer<typeof updateUserFursSettingsSchemaDefinition>;
-
 export const updateUserFursSettingsSchema = updateUserFursSettingsSchemaDefinition;

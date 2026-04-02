@@ -8,13 +8,11 @@ import { z } from 'zod';
 
 // Schemas for stripeappcreateinvoice_body endpoints
 
-// Schema for create appcreateinvoice operation
-const createAppCreateInvoiceSchemaDefinition = z.object({
+// Schema for stripeAppCreateInvoice operation
+const stripeAppCreateInvoiceSchemaDefinition = z.object({
   stripe_object_id: z.string().min(1),
   note: z.string().max(2000).optional(),
 });
 
-// Type for create appcreateinvoice operation
-export type CreateAppCreateInvoiceSchema = z.infer<typeof createAppCreateInvoiceSchemaDefinition>;
-
-export const createAppCreateInvoiceSchema = createAppCreateInvoiceSchemaDefinition;
+export type StripeAppCreateInvoiceSchema = z.infer<typeof stripeAppCreateInvoiceSchemaDefinition>;
+export const stripeAppCreateInvoiceSchema = stripeAppCreateInvoiceSchemaDefinition;

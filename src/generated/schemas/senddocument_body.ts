@@ -8,7 +8,7 @@ import { z } from 'zod';
 
 // Schemas for senddocument_body endpoints
 
-// Schema for send document operation
+// Schema for sendDocument operation
 const sendDocumentSchemaDefinition = z.object({
   to: z.string().email(),
   subject: z.string().min(1).max(255).optional(),
@@ -18,7 +18,5 @@ const sendDocumentSchemaDefinition = z.object({
   sandbox_skip_delivery: z.boolean().optional().default(false),
 });
 
-// Type for send document operation
 export type SendDocumentSchema = z.infer<typeof sendDocumentSchemaDefinition>;
-
 export const sendDocumentSchema = sendDocumentSchemaDefinition;

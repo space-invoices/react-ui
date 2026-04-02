@@ -8,7 +8,7 @@ import { z } from 'zod';
 
 // Schemas for furssettings endpoints
 
-// Schema for update furssettings operation
+// Schema for updateFursSettings operation
 const updateFursSettingsSchemaDefinition = z
   .object({
     enabled: z.boolean(),
@@ -19,7 +19,5 @@ const updateFursSettingsSchemaDefinition = z
   })
   .partial();
 
-// Type for update furssettings operation
 export type UpdateFursSettingsSchema = z.infer<typeof updateFursSettingsSchemaDefinition>;
-
 export const updateFursSettingsSchema = updateFursSettingsSchemaDefinition;

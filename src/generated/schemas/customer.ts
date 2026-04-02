@@ -8,7 +8,7 @@ import { z } from 'zod';
 
 // Schemas for customer endpoints
 
-// Schema for create customer operation
+// Schema for createCustomer operation
 const createCustomerSchemaDefinition = z.object({
   name: z.string().min(1),
   address: z.union([z.string(), z.null()]).optional(),
@@ -27,11 +27,8 @@ const createCustomerSchemaDefinition = z.object({
   metadata: z.union([z.record(z.string(), z.any()), z.null()]).optional(),
 });
 
-// Type for create customer operation
-export type CreateCustomerSchema = z.infer<typeof createCustomerSchemaDefinition>;
 
-
-// Schema for update customer operation
+// Schema for updateCustomer operation
 const updateCustomerSchemaDefinition = z
   .object({
     name: z.string().min(1),
@@ -52,8 +49,7 @@ const updateCustomerSchemaDefinition = z
   })
   .partial();
 
-// Type for update customer operation
-export type UpdateCustomerSchema = z.infer<typeof updateCustomerSchemaDefinition>;
-
+export type CreateCustomerSchema = z.infer<typeof createCustomerSchemaDefinition>;
 export const createCustomerSchema = createCustomerSchemaDefinition;
+export type UpdateCustomerSchema = z.infer<typeof updateCustomerSchemaDefinition>;
 export const updateCustomerSchema = updateCustomerSchemaDefinition;

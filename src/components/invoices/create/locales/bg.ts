@@ -126,6 +126,7 @@ export default {
   "Delivery note": "Доставна бележка",
   Invoice: "Фактура",
   Estimate: "Оферта",
+  "Proforma invoice": "Проформа фактура",
   "Credit note": "Кредитно известие",
   "Advance invoice": "Авансова фактура",
   "FINA fiscalized invoices always use the current date": "FINA fiscalized invoices always use the current date",

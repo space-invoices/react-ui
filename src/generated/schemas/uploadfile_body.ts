@@ -8,7 +8,7 @@ import { z } from 'zod';
 
 // Schemas for uploadfile_body endpoints
 
-// Schema for upload file operation
+// Schema for uploadFile operation
 const uploadFileSchemaDefinition = z
   .object({
     file: z.instanceof(File).optional(),
@@ -18,7 +18,5 @@ const uploadFileSchemaDefinition = z
   })
   .passthrough();
 
-// Type for upload file operation
 export type UploadFileSchema = z.infer<typeof uploadFileSchemaDefinition>;
-
 export const uploadFileSchema = uploadFileSchemaDefinition;

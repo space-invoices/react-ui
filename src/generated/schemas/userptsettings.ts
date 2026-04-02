@@ -8,7 +8,7 @@ import { z } from 'zod';
 
 // Schemas for userptsettings endpoints
 
-// Schema for update userptsettings operation
+// Schema for updateUserPtSettings operation
 const updateUserPtSettingsSchemaDefinition = z
   .object({
     operator_first_name: z.string(),
@@ -20,7 +20,5 @@ const updateUserPtSettingsSchemaDefinition = z
   })
   .partial();
 
-// Type for update userptsettings operation
 export type UpdateUserPtSettingsSchema = z.infer<typeof updateUserPtSettingsSchemaDefinition>;
-
 export const updateUserPtSettingsSchema = updateUserPtSettingsSchemaDefinition;

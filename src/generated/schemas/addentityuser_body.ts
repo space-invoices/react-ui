@@ -8,11 +8,12 @@ import { z } from 'zod';
 
 // Schemas for addentityuser_body endpoints
 
-// Dependency schema for addentityuser_body
-const addEntityUser_Body = z.object({
+// Schema for addEntityUser operation
+const addEntityUserSchemaDefinition = z.object({
   email: z.string().email(),
   role: z.enum(["viewer", "editor", "admin"]).optional().default("editor"),
   send_invite: z.boolean().optional().default(true),
 });
 
-
+export type AddEntityUserSchema = z.infer<typeof addEntityUserSchemaDefinition>;
+export const addEntityUserSchema = addEntityUserSchemaDefinition;

@@ -203,6 +203,15 @@ export default function EstimateListTable({
   const columns: Column<Estimate>[] = useMemo(
     () => [
       {
+        id: "title_type",
+        header: t("Type"),
+        cell: (estimate) => (
+          <Badge variant="outline">
+            {estimate.title_type === "proforma_invoice" ? t("Proforma invoice") : t("Estimate")}
+          </Badge>
+        ),
+      },
+      {
         id: "number",
         header: t("Number"),
         sort: {

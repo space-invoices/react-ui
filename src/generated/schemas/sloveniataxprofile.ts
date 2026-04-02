@@ -8,7 +8,7 @@ import { z } from 'zod';
 
 // Schemas for sloveniataxprofile endpoints
 
-// Schema for update sloveniataxprofile operation
+// Schema for updateSloveniaTaxProfile operation
 const updateSloveniaTaxProfileSchemaDefinition = z
   .object({
     business_form: z.union([
@@ -112,7 +112,5 @@ const updateSloveniaTaxProfileSchemaDefinition = z
   .partial()
   .passthrough();
 
-// Type for update sloveniataxprofile operation
 export type UpdateSloveniaTaxProfileSchema = z.infer<typeof updateSloveniaTaxProfileSchemaDefinition>;
-
 export const updateSloveniaTaxProfileSchema = updateSloveniaTaxProfileSchemaDefinition;

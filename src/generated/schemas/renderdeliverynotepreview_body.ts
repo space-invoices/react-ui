@@ -197,13 +197,11 @@ const CompleteDeliveryNotePreview = z.object({
 });
 
 
-// Schema for render deliverynotepreview operation
+// Schema for renderDeliveryNotePreview operation
 const renderDeliveryNotePreviewSchemaDefinition = z.union([
   PartialDeliveryNotePreview,
   CompleteDeliveryNotePreview,
 ]);
 
-// Type for render deliverynotepreview operation
 export type RenderDeliveryNotePreviewSchema = z.infer<typeof renderDeliveryNotePreviewSchemaDefinition>;
-
 export const renderDeliveryNotePreviewSchema = renderDeliveryNotePreviewSchemaDefinition;

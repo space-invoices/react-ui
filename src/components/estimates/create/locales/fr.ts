@@ -1,9 +1,9 @@
 export default {
   "Create Estimate": "Créer un devis",
-  "Create Quote": "Créer une offre",
+  "Create Proforma invoice": "Créer une facture pro forma",
   Estimate: "Devis",
-  Quote: "Offre",
-  "Click to switch to Quote": "Cliquez pour passer à Offre",
+  "Proforma invoice": "Facture pro forma",
+  "Click to switch to Proforma invoice": "Cliquez pour passer à Facture pro forma",
   "Click to switch to Estimate": "Cliquez pour passer à Devis",
   Details: "Détails",
   Number: "Numéro",

@@ -10,7 +10,7 @@ type CustomerData = {
   country?: string | null;
   tax_number?: string | null;
   is_end_consumer?: boolean | null;
-  save_customer?: boolean;
+  save_customer?: boolean | null;
 };
 
 type BaseDocumentValues = {

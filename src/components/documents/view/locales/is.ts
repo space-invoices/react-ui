@@ -46,7 +46,7 @@ export default {
   Voided: "Ógildur",
   Overdue: "Á gjalddaga",
   Shareable: "Shareable",
-  Quote: "Quote",
+  "Proforma invoice": "Proforma reikningur",
   "Packing list": "Packing list",
   "FURS fiscalization failed": "FURS fiscalization failed",
   "FINA fiscalization failed": "FINA fiscalization failed",

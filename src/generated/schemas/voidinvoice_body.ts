@@ -8,8 +8,8 @@ import { z } from 'zod';
 
 // Schemas for voidinvoice_body endpoints
 
-// Dependency schema for voidinvoice_body
-const voidInvoice_Body = z
+// Schema for voidAdvanceInvoice operation
+const voidAdvanceInvoiceSchemaDefinition = z
   .object({
     reason: z.string().min(1),
     has_original_document: z.union([z.boolean(), z.null()]),
@@ -17,4 +17,9 @@ const voidInvoice_Body = z
   .partial()
   .passthrough();
 
-
+export type VoidAdvanceInvoiceSchema = z.infer<typeof voidAdvanceInvoiceSchemaDefinition>;
+export const voidAdvanceInvoiceSchema = voidAdvanceInvoiceSchemaDefinition;
+export type VoidCreditNoteSchema = z.infer<typeof voidAdvanceInvoiceSchemaDefinition>;
+export const voidCreditNoteSchema = voidAdvanceInvoiceSchemaDefinition;
+export type VoidInvoiceSchema = z.infer<typeof voidAdvanceInvoiceSchemaDefinition>;
+export const voidInvoiceSchema = voidAdvanceInvoiceSchemaDefinition;

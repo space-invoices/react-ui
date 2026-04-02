@@ -8,7 +8,7 @@ import { z } from 'zod';
 
 // Schemas for entity endpoints
 
-// Schema for create entity operation
+// Schema for createEntity operation
 const createEntitySchemaDefinition = z.object({
   name: z.string().min(1),
   address: z.union([z.string(), z.null()]).optional(),
@@ -351,11 +351,8 @@ const createEntitySchemaDefinition = z.object({
   metadata: z.union([z.record(z.string(), z.any()), z.null()]).optional(),
 });
 
-// Type for create entity operation
-export type CreateEntitySchema = z.infer<typeof createEntitySchemaDefinition>;
 
-
-// Schema for patch entity operation
+// Schema for patchEntity operation
 const patchEntitySchemaDefinition = z
   .object({
     name: z.string().min(1),
@@ -699,8 +696,7 @@ const patchEntitySchemaDefinition = z
   })
   .partial();
 
-// Type for patch entity operation
-export type PatchEntitySchema = z.infer<typeof patchEntitySchemaDefinition>;
-
+export type CreateEntitySchema = z.infer<typeof createEntitySchemaDefinition>;
 export const createEntitySchema = createEntitySchemaDefinition;
+export type PatchEntitySchema = z.infer<typeof patchEntitySchemaDefinition>;
 export const patchEntitySchema = patchEntitySchemaDefinition;

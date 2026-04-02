@@ -8,7 +8,7 @@ import { z } from 'zod';
 
 // Schemas for ptatcudseries endpoints
 
-// Schema for create ptatcudseries operation
+// Schema for createPtAtcudSeries operation
 const createPtAtcudSeriesSchemaDefinition = z.object({
   document_type: z.enum([
     "invoice",
@@ -24,7 +24,5 @@ const createPtAtcudSeriesSchemaDefinition = z.object({
   initial_sequence: z.number().int().gte(1).optional(),
 });
 
-// Type for create ptatcudseries operation
 export type CreatePtAtcudSeriesSchema = z.infer<typeof createPtAtcudSeriesSchemaDefinition>;
-
 export const createPtAtcudSeriesSchema = createPtAtcudSeriesSchemaDefinition;

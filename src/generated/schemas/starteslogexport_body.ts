@@ -24,10 +24,11 @@ const EslogExportByDateRange = z
   .passthrough();
 
 
-// Dependency schema for starteslogexport_body
-const startEslogExport_Body = z.union([
+// Schema for startEslogExport operation
+const startEslogExportSchemaDefinition = z.union([
   EslogExportByDocumentIds,
   EslogExportByDateRange,
 ]);
 
-
+export type StartEslogExportSchema = z.infer<typeof startEslogExportSchemaDefinition>;
+export const startEslogExportSchema = startEslogExportSchemaDefinition;

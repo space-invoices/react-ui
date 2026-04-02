@@ -1,6 +1,7 @@
 export default {
   "Send Invoice by Email": "Enviar fatura por e-mail",
   "Send Estimate by Email": "Enviar orçamento por e-mail",
+  "Send Proforma Invoice by Email": "Enviar fatura proforma por e-mail",
   "Send Credit Note by Email": "Enviar nota de crédito por e-mail",
   "Send Advance Invoice by Email": "Enviar fatura adiantada por e-mail",
   "Send Delivery Note by Email": "Enviar guia de remessa por e-mail",
@@ -8,6 +9,8 @@ export default {
     "Envie a fatura #{number} ao cliente por e-mail. A formatação Markdown é suportada no texto.",
   "Send estimate by email description":
     "Envie o orçamento #{number} ao cliente por e-mail. A formatação Markdown é suportada no texto.",
+  "Send proforma invoice by email description":
+    "Envie a fatura proforma #{number} ao cliente por e-mail. A formatação Markdown é suportada no texto.",
   "Send credit note by email description":
     "Envie a nota de crédito #{number} ao cliente por e-mail. A formatação Markdown é suportada no texto.",
   "Send advance invoice by email description":
@@ -18,6 +21,7 @@ export default {
   "Subject (Optional)": "Assunto (opcional)",
   "Invoice Subject": "Assunto da fatura",
   "Estimate Subject": "Assunto do orçamento",
+  "Proforma Invoice Subject": "Assunto da fatura proforma",
   "Credit Note Subject": "Assunto da nota de crédito",
   "Advance Invoice Subject": "Assunto da fatura adiantada",
   "Delivery Note Subject": "Assunto da guia de remessa",
@@ -29,6 +33,7 @@ export default {
   "Email sent": "E-mail enviado",
   "Invoice sent to": "Fatura enviada para",
   "Estimate sent to": "Orçamento enviado para",
+  "Proforma invoice sent to": "Fatura proforma enviada para",
   "Credit note sent to": "Nota de crédito enviada para",
   "Advance invoice sent to": "Fatura adiantada enviada para",
   "Delivery note sent to": "Guia de remessa enviada para",

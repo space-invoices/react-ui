@@ -238,13 +238,11 @@ const CompleteCreditNotePreview = z.object({
 });
 
 
-// Schema for render creditnotepreview operation
+// Schema for renderCreditNotePreview operation
 const renderCreditNotePreviewSchemaDefinition = z.union([
   PartialCreditNotePreview,
   CompleteCreditNotePreview,
 ]);
 
-// Type for render creditnotepreview operation
 export type RenderCreditNotePreviewSchema = z.infer<typeof renderCreditNotePreviewSchemaDefinition>;
-
 export const renderCreditNotePreviewSchema = renderCreditNotePreviewSchemaDefinition;

@@ -97,7 +97,7 @@ type CreateEstimateFormProps = {
   /** Initial values for form fields (used for document duplication) */
   initialValues?: Partial<CreateEstimateRequest> & {
     number?: string;
-    title_type?: "estimate" | "quote" | null;
+    title_type?: "estimate" | "proforma_invoice" | null;
   };
   mode?: "create" | "edit";
   documentId?: string;
@@ -138,8 +138,10 @@ export default function CreateEstimateForm({
   const queryClient = useQueryClient();
   const isEditMode = mode === "edit";
 
-  // Title type state: "estimate" (default) or "quote"
-  const [titleType, setTitleType] = useState<"estimate" | "quote">((initialValues as any)?.title_type || "estimate");
+  // Title type state: "estimate" (default) or "proforma_invoice"
+  const [titleType, setTitleType] = useState<"estimate" | "proforma_invoice">(
+    (initialValues as any)?.title_type || "estimate",
+  );
 
   // Draft submission state
   const [isDraftPending, setIsDraftPending] = useState(false);
@@ -304,22 +306,22 @@ export default function CreateEstimateForm({
     }
 
     const toggleTitle = () => {
-      setTitleType((prev) => (prev === "estimate" ? "quote" : "estimate"));
+      setTitleType((prev) => (prev === "estimate" ? "proforma_invoice" : "estimate"));
     };
 
     const titleLabel = isEditMode
       ? titleType === "estimate"
         ? t("Estimate")
-        : t("Quote")
+        : t("Proforma invoice")
       : titleType === "estimate"
         ? t("Create Estimate")
-        : t("Create Quote");
+        : t("Create Proforma invoice");
     const tooltipLabel = isEditMode
       ? titleType === "estimate"
-        ? t("Click to switch to Quote")
+        ? t("Click to switch to Proforma invoice")
         : t("Click to switch to Estimate")
       : titleType === "estimate"
-        ? t("Click to switch to Quote")
+        ? t("Click to switch to Proforma invoice")
         : t("Click to switch to Estimate");
     const headerActionSignature = JSON.stringify({
       titleLabel,
@@ -524,7 +526,7 @@ export default function CreateEstimateForm({
     formId: "create-estimate-form",
     isPending: isPending || isCreateCustomPending || isUpdatePending,
     isDirty: form.formState.isDirty || !!initialValues,
-    label: isEditMode ? t("Update") : titleType === "estimate" ? t("Create Estimate") : t("Create Quote"),
+    label: isEditMode ? t("Update") : titleType === "estimate" ? t("Create Estimate") : t("Create Proforma invoice"),
     secondaryAction,
   });
 

@@ -8,10 +8,11 @@ import { z } from 'zod';
 
 // Schemas for acceptentityinvitation_body endpoints
 
-// Dependency schema for acceptentityinvitation_body
-const acceptEntityInvitation_Body = z.object({
+// Schema for acceptEntityInvitation operation
+const acceptEntityInvitationSchemaDefinition = z.object({
   name: z.string().min(1).max(255),
   password: z.string().min(8),
 });
 
-
+export type AcceptEntityInvitationSchema = z.infer<typeof acceptEntityInvitationSchemaDefinition>;
+export const acceptEntityInvitationSchema = acceptEntityInvitationSchemaDefinition;

@@ -1,9 +1,9 @@
 export default {
   "Create Estimate": "Create Estimate",
-  "Create Quote": "Create Quote",
+  "Create Proforma invoice": "Create Proforma invoice",
   Estimate: "Estimate",
-  Quote: "Quote",
-  "Click to switch to Quote": "Click to switch to Quote",
+  "Proforma invoice": "Proforma invoice",
+  "Click to switch to Proforma invoice": "Click to switch to Proforma invoice",
   "Click to switch to Estimate": "Click to switch to Estimate",
   Details: "Details",
   Number: "Number",

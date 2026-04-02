@@ -35,4 +35,6 @@ export default {
   "Deselect all": "Tout désélectionner",
   "Copy to Invoice": "Copier vers facture",
   "Finalize draft documents before copying to invoice": "Finalisez les brouillons avant de copier en facture",
+  Type: "Type",
+  "Proforma invoice": "Facture pro forma",
 } as const;

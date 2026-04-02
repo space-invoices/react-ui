@@ -8,7 +8,7 @@ import { z } from 'zod';
 
 // Schemas for registerfursmovablepremise_body endpoints
 
-// Schema for register fursmovablepremise operation
+// Schema for registerFursMovablePremise operation
 const registerFursMovablePremiseSchemaDefinition = z.object({
   business_premise_name: z.string().min(1).max(20),
   movable_premise: z
@@ -16,7 +16,5 @@ const registerFursMovablePremiseSchemaDefinition = z.object({
     .passthrough(),
 });
 
-// Type for register fursmovablepremise operation
 export type RegisterFursMovablePremiseSchema = z.infer<typeof registerFursMovablePremiseSchemaDefinition>;
-
 export const registerFursMovablePremiseSchema = registerFursMovablePremiseSchemaDefinition;

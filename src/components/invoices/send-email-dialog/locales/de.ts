@@ -1,6 +1,7 @@
 export default {
   "Send Invoice by Email": "Rechnung per E-Mail senden",
   "Send Estimate by Email": "Angebot per E-Mail senden",
+  "Send Proforma Invoice by Email": "Proformarechnung per E-Mail senden",
   "Send Credit Note by Email": "Gutschrift per E-Mail senden",
   "Send Advance Invoice by Email": "Vorauszahlungsrechnung per E-Mail senden",
   "Send Delivery Note by Email": "Lieferschein per E-Mail senden",
@@ -8,6 +9,8 @@ export default {
     "Senden Sie Rechnung #{number} per E-Mail an einen Kunden. Markdown-Formatierung wird im Text unterstützt.",
   "Send estimate by email description":
     "Senden Sie Angebot #{number} per E-Mail an einen Kunden. Markdown-Formatierung wird im Text unterstützt.",
+  "Send proforma invoice by email description":
+    "Senden Sie Proformarechnung #{number} per E-Mail an einen Kunden. Markdown-Formatierung wird im Text unterstützt.",
   "Send credit note by email description":
     "Senden Sie Gutschrift #{number} per E-Mail an einen Kunden. Markdown-Formatierung wird im Text unterstützt.",
   "Send advance invoice by email description":
@@ -18,6 +21,7 @@ export default {
   "Subject (Optional)": "Betreff (Optional)",
   "Invoice Subject": "Rechnungsbetreff",
   "Estimate Subject": "Angebotsbetreff",
+  "Proforma Invoice Subject": "Betreff der Proformarechnung",
   "Credit Note Subject": "Gutschriftbetreff",
   "Advance Invoice Subject": "Vorauszahlungsrechnungsbetreff",
   "Delivery Note Subject": "Lieferscheinbetreff",
@@ -29,6 +33,7 @@ export default {
   "Email sent": "E-Mail gesendet",
   "Invoice sent to": "Rechnung gesendet an",
   "Estimate sent to": "Angebot gesendet an",
+  "Proforma invoice sent to": "Proformarechnung gesendet an",
   "Credit note sent to": "Gutschrift gesendet an",
   "Advance invoice sent to": "Vorauszahlungsrechnung gesendet an",
   "Delivery note sent to": "Lieferschein gesendet an",

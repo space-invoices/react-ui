@@ -8,7 +8,7 @@ import { z } from 'zod';
 
 // Schemas for item endpoints
 
-// Schema for create item operation
+// Schema for createItem operation
 const createItemSchemaDefinition = z.object({
   name: z.string().min(1),
   description: z.union([z.string().max(4000, "Description must not exceed 4000 characters"), z.null()]).optional(),
@@ -35,11 +35,8 @@ const createItemSchemaDefinition = z.object({
     .optional(),
 });
 
-// Type for create item operation
-export type CreateItemSchema = z.infer<typeof createItemSchemaDefinition>;
 
-
-// Schema for update item operation
+// Schema for updateItem operation
 const updateItemSchemaDefinition = z
   .object({
     name: z.string().min(1),
@@ -67,8 +64,7 @@ const updateItemSchemaDefinition = z
   })
   .partial();
 
-// Type for update item operation
-export type UpdateItemSchema = z.infer<typeof updateItemSchemaDefinition>;
-
+export type CreateItemSchema = z.infer<typeof createItemSchemaDefinition>;
 export const createItemSchema = createItemSchemaDefinition;
+export type UpdateItemSchema = z.infer<typeof updateItemSchemaDefinition>;
 export const updateItemSchema = updateItemSchemaDefinition;

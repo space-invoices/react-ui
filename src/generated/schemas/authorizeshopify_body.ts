@@ -8,8 +8,8 @@ import { z } from 'zod';
 
 // Schemas for authorizeshopify_body endpoints
 
-// Dependency schema for authorizeshopify_body
-const authorizeShopify_Body = z.object({
+// Schema for authorizeShopify operation
+const authorizeShopifySchemaDefinition = z.object({
   shop_domain: z.string().min(1),
   name: z.string().optional(),
   auto_process: z.boolean().optional(),
@@ -19,4 +19,5 @@ const authorizeShopify_Body = z.object({
   auto_process_delay_seconds: z.number().int().gte(0).optional(),
 });
 
-
+export type AuthorizeShopifySchema = z.infer<typeof authorizeShopifySchemaDefinition>;
+export const authorizeShopifySchema = authorizeShopifySchemaDefinition;

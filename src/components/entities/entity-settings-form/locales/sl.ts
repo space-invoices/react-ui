@@ -64,19 +64,19 @@ export default {
   "This note will be pre-filled when creating new invoices":
     "Ta pripis bo vnaprej izpolnjen pri ustvarjanju novih računov",
   "This note will be pre-filled when creating new estimates":
-    "Ta pripis bo vnaprej izpolnjen pri ustvarjanju novih predračunov",
+    "Ta pripis bo vnaprej izpolnjen pri ustvarjanju novih ponudb",
   "This note will be pre-filled when creating new credit notes":
     "Ta pripis bo vnaprej izpolnjen pri ustvarjanju novih dobropisov",
   "Payment terms pre-filled when creating new invoices":
     "Plačilni pogoji bodo vnaprej izpolnjeni pri ustvarjanju novih računov",
   "Payment terms pre-filled when creating new estimates":
-    "Plačilni pogoji bodo vnaprej izpolnjeni pri ustvarjanju novih predračunov",
+    "Plačilni pogoji bodo vnaprej izpolnjeni pri ustvarjanju novih ponudb",
   "Payment terms pre-filled when creating new credit notes":
     "Plačilni pogoji bodo vnaprej izpolnjeni pri ustvarjanju novih dobropisov",
   "Optional note for the document.": "Neobvezna opomba za dokument.",
   "Please remit payment using the bank details shown on the document.":
     "Plačilo izvedite po bančnih podatkih, navedenih na dokumentu.",
-  "This estimate is valid until {document_valid_until}.": "Ta predračun velja do {document_valid_until}.",
+  "This estimate is valid until {document_valid_until}.": "Ta ponudba velja do {document_valid_until}.",
   "Payment due upon acceptance.": "Plačilo ob sprejemu.",
   "Credit note for invoice {document_number}.": "Dobropis za račun {document_number}.",
   "Credit will be applied to your account.": "Dobropis bo upoštevan na vašem računu.",
@@ -167,7 +167,7 @@ export default {
     "UPN QR je slovenski standard za plačilne naloge. Ko je omogočen, bodo vaši računi vključevali QR kodo, ki jo stranke lahko skenirajo z mobilno bančno aplikacijo za takojšnje plačilo.",
   // Number format settings
   Invoice: "Račun",
-  Estimate: "Predračun",
+  Estimate: "Ponudba",
   "Credit Note": "Dobropis",
   "Advance Invoice": "Avansni račun",
   "Number Format": "Format številke",

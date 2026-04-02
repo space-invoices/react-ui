@@ -3,8 +3,11 @@ export default {
   "Send invoice by email description":
     "Send invoice #{number} to the customer by email. Markdown formatting is supported in the message body.",
   "Send Estimate by Email": "Send Estimate by Email",
+  "Send Proforma Invoice by Email": "Send Proforma Invoice by Email",
   "Send estimate by email description":
     "Send estimate #{number} to the customer by email. Markdown formatting is supported in the message body.",
+  "Send proforma invoice by email description":
+    "Send proforma invoice #{number} to the customer by email. Markdown formatting is supported in the message body.",
   "Send Credit Note by Email": "Send Credit Note by Email",
   "Send credit note by email description":
     "Send credit note #{number} to the customer by email. Markdown formatting is supported in the message body.",
@@ -18,6 +21,7 @@ export default {
   "Subject (Optional)": "Subject (Optional)",
   "Invoice Subject": "Invoice Subject",
   "Estimate Subject": "Estimate Subject",
+  "Proforma Invoice Subject": "Proforma Invoice Subject",
   "Credit Note Subject": "Credit Note Subject",
   "Advance Invoice Subject": "Advance Invoice Subject",
   "Delivery Note Subject": "Delivery Note Subject",
@@ -29,6 +33,7 @@ export default {
   "Email sent": "Email sent",
   "Invoice sent to": "Invoice sent to",
   "Estimate sent to": "Estimate sent to",
+  "Proforma invoice sent to": "Proforma invoice sent to",
   "Credit note sent to": "Credit note sent to",
   "Advance invoice sent to": "Advance invoice sent to",
   "Delivery note sent to": "Delivery note sent to",

@@ -51,7 +51,7 @@ export default {
   Voided: "Stornirano",
   Overdue: "Dospjelo",
   Shareable: "Dijeljivo",
-  Quote: "Ponuda",
+  "Proforma invoice": "Predračun",
   "Packing list": "Popis pakiranja",
   "FURS fiscalization failed": "FURS fiskalizacija nije uspjela",
   "FINA fiscalization failed": "FINA fiskalizacija nije uspjela",

@@ -1,6 +1,7 @@
 export default {
   "Send Invoice by Email": "Factuur per e-mail verzenden",
   "Send Estimate by Email": "Offerte per e-mail verzenden",
+  "Send Proforma Invoice by Email": "Proforma factuur per e-mail verzenden",
   "Send Credit Note by Email": "Creditnota per e-mail verzenden",
   "Send Advance Invoice by Email": "Voorschotfactuur per e-mail verzenden",
   "Send Delivery Note by Email": "Pakbon per e-mail verzenden",
@@ -8,6 +9,8 @@ export default {
     "Verstuur factuur #{number} per e-mail naar de klant. Markdown-opmaak wordt ondersteund in de tekst.",
   "Send estimate by email description":
     "Verstuur offerte #{number} per e-mail naar de klant. Markdown-opmaak wordt ondersteund in de tekst.",
+  "Send proforma invoice by email description":
+    "Verstuur proforma factuur #{number} per e-mail naar de klant. Markdown-opmaak wordt ondersteund in de tekst.",
   "Send credit note by email description":
     "Verstuur creditnota #{number} per e-mail naar de klant. Markdown-opmaak wordt ondersteund in de tekst.",
   "Send advance invoice by email description":
@@ -18,6 +21,7 @@ export default {
   "Subject (Optional)": "Onderwerp (optioneel)",
   "Invoice Subject": "Factuuronderwerp",
   "Estimate Subject": "Offerteonderwerp",
+  "Proforma Invoice Subject": "Onderwerp van de proforma factuur",
   "Credit Note Subject": "Creditnotaonderwerp",
   "Advance Invoice Subject": "Voorschotfactuuronderwerp",
   "Delivery Note Subject": "Pakbononderwerp",
@@ -29,6 +33,7 @@ export default {
   "Email sent": "E-mail verzonden",
   "Invoice sent to": "Factuur verzonden naar",
   "Estimate sent to": "Offerte verzonden naar",
+  "Proforma invoice sent to": "Proforma factuur verzonden naar",
   "Credit note sent to": "Creditnota verzonden naar",
   "Advance invoice sent to": "Voorschotfactuur verzonden naar",
   "Delivery note sent to": "Pakbon verzonden naar",

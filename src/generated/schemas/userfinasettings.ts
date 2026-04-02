@@ -8,12 +8,10 @@ import { z } from 'zod';
 
 // Schemas for userfinasettings endpoints
 
-// Schema for update userfinasettings operation
+// Schema for updateUserFinaSettings operation
 const updateUserFinaSettingsSchemaDefinition = z
   .object({ operator_oib: z.string(), operator_label: z.string() })
   .partial();
 
-// Type for update userfinasettings operation
 export type UpdateUserFinaSettingsSchema = z.infer<typeof updateUserFinaSettingsSchemaDefinition>;
-
 export const updateUserFinaSettingsSchema = updateUserFinaSettingsSchemaDefinition;

@@ -8,7 +8,7 @@ import { z } from 'zod';
 
 // Schemas for finasettings endpoints
 
-// Schema for update finasettings operation
+// Schema for updateFinaSettings operation
 const updateFinaSettingsSchemaDefinition = z
   .object({
     enabled: z.boolean().default(false),
@@ -20,7 +20,5 @@ const updateFinaSettingsSchemaDefinition = z
   })
   .partial();
 
-// Type for update finasettings operation
 export type UpdateFinaSettingsSchema = z.infer<typeof updateFinaSettingsSchemaDefinition>;
-
 export const updateFinaSettingsSchema = updateFinaSettingsSchemaDefinition;

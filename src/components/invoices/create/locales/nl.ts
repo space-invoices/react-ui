@@ -129,6 +129,7 @@ export default {
   "Delivery note": "Pakbon",
   Invoice: "Factuur",
   Estimate: "Offerte",
+  "Proforma invoice": "Proforma factuur",
   "Credit note": "Creditnota",
   "Advance invoice": "Voorschotfactuur",
   "FINA fiscalized invoices always use the current date":

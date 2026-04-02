@@ -1,6 +1,7 @@
 export default {
   "Send Invoice by Email": "Envoyer la facture par e-mail",
   "Send Estimate by Email": "Envoyer le devis par e-mail",
+  "Send Proforma Invoice by Email": "Envoyer la facture pro forma par e-mail",
   "Send Credit Note by Email": "Envoyer l'avoir par e-mail",
   "Send Advance Invoice by Email": "Envoyer la facture d'acompte par e-mail",
   "Send Delivery Note by Email": "Envoyer le bon de livraison par e-mail",
@@ -8,6 +9,8 @@ export default {
     "Envoyez la facture #{number} au client par e-mail. Le formatage Markdown est pris en charge dans le texte.",
   "Send estimate by email description":
     "Envoyez le devis #{number} au client par e-mail. Le formatage Markdown est pris en charge dans le texte.",
+  "Send proforma invoice by email description":
+    "Envoyez la facture pro forma #{number} au client par e-mail. Le formatage Markdown est pris en charge dans le texte.",
   "Send credit note by email description":
     "Envoyez l'avoir #{number} au client par e-mail. Le formatage Markdown est pris en charge dans le texte.",
   "Send advance invoice by email description":
@@ -18,6 +21,7 @@ export default {
   "Subject (Optional)": "Objet (facultatif)",
   "Invoice Subject": "Objet de la facture",
   "Estimate Subject": "Objet du devis",
+  "Proforma Invoice Subject": "Objet de la facture pro forma",
   "Credit Note Subject": "Objet de l'avoir",
   "Advance Invoice Subject": "Objet de la facture d'acompte",
   "Delivery Note Subject": "Objet du bon de livraison",
@@ -29,6 +33,7 @@ export default {
   "Email sent": "E-mail envoyé",
   "Invoice sent to": "Facture envoyée à",
   "Estimate sent to": "Devis envoyé à",
+  "Proforma invoice sent to": "Facture pro forma envoyée à",
   "Credit note sent to": "Avoir envoyé à",
   "Advance invoice sent to": "Facture d'acompte envoyée à",
   "Delivery note sent to": "Bon de livraison envoyé à",

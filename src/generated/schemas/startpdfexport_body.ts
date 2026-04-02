@@ -60,10 +60,11 @@ const PdfExportByDateRange = z
   .passthrough();
 
 
-// Dependency schema for startpdfexport_body
-const startPdfExport_Body = z.union([
+// Schema for startPdfExport operation
+const startPdfExportSchemaDefinition = z.union([
   PdfExportByDocumentIds,
   PdfExportByDateRange,
 ]);
 
-
+export type StartPdfExportSchema = z.infer<typeof startPdfExportSchemaDefinition>;
+export const startPdfExportSchema = startPdfExportSchemaDefinition;

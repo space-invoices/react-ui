@@ -126,6 +126,7 @@ export default {
   "Delivery note": "Afhendingarseðill",
   Invoice: "Reikningur",
   Estimate: "Tilboð",
+  "Proforma invoice": "Frumreikningur",
   "Credit note": "Kreditreikningur",
   "Advance invoice": "Fyrirframreikningur",
   "FINA fiscalized invoices always use the current date": "FINA fiscalized invoices always use the current date",

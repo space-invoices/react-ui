@@ -8,7 +8,7 @@ import { z } from 'zod';
 
 // Schemas for accountwebhook endpoints
 
-// Schema for create accountwebhook operation
+// Schema for createAccountWebhook operation
 const createAccountWebhookSchemaDefinition = z.object({
   url: z.string().max(2048).url(),
   description: z.union([z.string().max(4000, "Description must not exceed 4000 characters"), z.null()]).optional(),
@@ -31,11 +31,8 @@ const createAccountWebhookSchemaDefinition = z.object({
   metadata: z.union([z.record(z.string(), z.any()), z.null()]).optional(),
 });
 
-// Type for create accountwebhook operation
-export type CreateAccountWebhookSchema = z.infer<typeof createAccountWebhookSchemaDefinition>;
 
-
-// Schema for update accountwebhook operation
+// Schema for updateAccountWebhook operation
 const updateAccountWebhookSchemaDefinition = z
   .object({
     url: z.string().max(2048).url(),
@@ -60,8 +57,7 @@ const updateAccountWebhookSchemaDefinition = z
   })
   .partial();
 
-// Type for update accountwebhook operation
-export type UpdateAccountWebhookSchema = z.infer<typeof updateAccountWebhookSchemaDefinition>;
-
+export type CreateAccountWebhookSchema = z.infer<typeof createAccountWebhookSchemaDefinition>;
 export const createAccountWebhookSchema = createAccountWebhookSchemaDefinition;
+export type UpdateAccountWebhookSchema = z.infer<typeof updateAccountWebhookSchemaDefinition>;
 export const updateAccountWebhookSchema = updateAccountWebhookSchemaDefinition;

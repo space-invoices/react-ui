@@ -17,8 +17,8 @@ type PrepareOptions = {
   originalCustomer: CustomerData | null;
   /** Map of item index to gross price mode (collected from component state) */
   priceModes?: PriceModesMap;
-  /** Title type: "estimate" or "quote" */
-  titleType?: "estimate" | "quote";
+  /** Title type: "estimate" or "proforma_invoice" */
+  titleType?: "estimate" | "proforma_invoice";
   /** Whether to save as draft (skips numbering) */
   isDraft?: boolean;
 };

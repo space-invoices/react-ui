@@ -8,12 +8,10 @@ import { z } from 'zod';
 
 // Schemas for entityuserrole endpoints
 
-// Schema for update entityuserrole operation
+// Schema for updateEntityUserRole operation
 const updateEntityUserRoleSchemaDefinition = z.object({
   role: z.enum(["viewer", "editor", "admin"]),
 });
 
-// Type for update entityuserrole operation
 export type UpdateEntityUserRoleSchema = z.infer<typeof updateEntityUserRoleSchemaDefinition>;
-
 export const updateEntityUserRoleSchema = updateEntityUserRoleSchemaDefinition;

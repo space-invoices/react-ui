@@ -63,7 +63,7 @@ const OrderItem = z
   .passthrough();
 
 
-// Schema for create order operation
+// Schema for createOrder operation
 const createOrderSchemaDefinition = z.object({
   order_integration_id: z.string().max(36),
   source: z.enum(["shopify", "woocommerce", "manual"]),
@@ -97,11 +97,8 @@ const createOrderSchemaDefinition = z.object({
   metadata: z.union([z.record(z.string(), z.any()), z.null()]).optional(),
 });
 
-// Type for create order operation
-export type CreateOrderSchema = z.infer<typeof createOrderSchemaDefinition>;
 
-
-// Schema for update order operation
+// Schema for updateOrder operation
 const updateOrderSchemaDefinition = z
   .object({
     source_order_number: z.union([z.string(), z.null()]),
@@ -124,8 +121,7 @@ const updateOrderSchemaDefinition = z
   })
   .partial();
 
-// Type for update order operation
-export type UpdateOrderSchema = z.infer<typeof updateOrderSchemaDefinition>;
-
+export type CreateOrderSchema = z.infer<typeof createOrderSchemaDefinition>;
 export const createOrderSchema = createOrderSchemaDefinition;
+export type UpdateOrderSchema = z.infer<typeof updateOrderSchemaDefinition>;
 export const updateOrderSchema = updateOrderSchemaDefinition;

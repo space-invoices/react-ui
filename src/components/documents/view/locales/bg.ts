@@ -46,7 +46,7 @@ export default {
   Voided: "Анулирана",
   Overdue: "Просрочени",
   Shareable: "Shareable",
-  Quote: "Quote",
+  "Proforma invoice": "Проформа фактура",
   "Packing list": "Packing list",
   "FURS fiscalization failed": "FURS fiscalization failed",
   "FINA fiscalization failed": "FINA fiscalization failed",

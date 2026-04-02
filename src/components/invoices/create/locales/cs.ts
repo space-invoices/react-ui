@@ -126,6 +126,7 @@ export default {
   "Delivery note": "Dodací list",
   Invoice: "Faktura",
   Estimate: "Nabídka",
+  "Proforma invoice": "Proforma faktura",
   "Credit note": "Dobropis",
   "Advance invoice": "Zálohová faktura",
   "FINA fiscalized invoices always use the current date": "FINA fiscalized invoices always use the current date",

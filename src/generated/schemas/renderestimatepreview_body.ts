@@ -105,7 +105,7 @@ const PartialEstimatePreview = z.object({
   pt: PtDocumentInput.optional(),
   date_valid_till: z.union([z.string(), z.null()]).optional(),
   title_type: z
-    .union([z.union([z.enum(["estimate", "quote"]), z.null()]), z.null()])
+    .union([z.union([z.enum(["estimate", "proforma_invoice"]), z.null()]), z.null()])
     .optional(),
   date_due: z.union([z.string(), z.null()]).optional(),
   date_service: z.union([z.string(), z.null()]).optional(),
@@ -213,7 +213,7 @@ const CompleteEstimatePreview = z.object({
   pt: PtDocumentInput.optional(),
   date_valid_till: z.union([z.string(), z.null()]).optional(),
   title_type: z
-    .union([z.union([z.enum(["estimate", "quote"]), z.null()]), z.null()])
+    .union([z.union([z.enum(["estimate", "proforma_invoice"]), z.null()]), z.null()])
     .optional(),
   date_due: z.union([z.string(), z.null()]).optional(),
   date_service: z.union([z.string(), z.null()]).optional(),
@@ -223,13 +223,11 @@ const CompleteEstimatePreview = z.object({
 });
 
 
-// Schema for render estimatepreview operation
+// Schema for renderEstimatePreview operation
 const renderEstimatePreviewSchemaDefinition = z.union([
   PartialEstimatePreview,
   CompleteEstimatePreview,
 ]);
 
-// Type for render estimatepreview operation
 export type RenderEstimatePreviewSchema = z.infer<typeof renderEstimatePreviewSchemaDefinition>;
-
 export const renderEstimatePreviewSchema = renderEstimatePreviewSchemaDefinition;

@@ -8,8 +8,8 @@ import { z } from 'zod';
 
 // Schemas for syncshopifyorders_body endpoints
 
-// Dependency schema for syncshopifyorders_body
-const syncShopifyOrders_Body = z
+// Schema for syncShopifyOrders operation
+const syncShopifyOrdersSchemaDefinition = z
   .object({
     updated_since: z.string().datetime({ offset: true }),
     updated_until: z.string().datetime({ offset: true }),
@@ -17,4 +17,5 @@ const syncShopifyOrders_Body = z
   })
   .partial();
 
-
+export type SyncShopifyOrdersSchema = z.infer<typeof syncShopifyOrdersSchemaDefinition>;
+export const syncShopifyOrdersSchema = syncShopifyOrdersSchemaDefinition;

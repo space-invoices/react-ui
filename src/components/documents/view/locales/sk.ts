@@ -46,7 +46,7 @@ export default {
   Voided: "Stornovaná",
   Overdue: "Po splatnosti",
   Shareable: "Shareable",
-  Quote: "Quote",
+  "Proforma invoice": "Proforma faktúra",
   "Packing list": "Packing list",
   "FURS fiscalization failed": "FURS fiscalization failed",
   "FINA fiscalization failed": "FINA fiscalization failed",

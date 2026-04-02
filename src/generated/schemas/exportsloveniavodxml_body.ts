@@ -8,9 +8,10 @@ import { z } from 'zod';
 
 // Schemas for exportsloveniavodxml_body endpoints
 
-// Dependency schema for exportsloveniavodxml_body
-const exportSloveniaVodXml_Body = z
+// Schema for exportSloveniaVodXml operation
+const exportSloveniaVodXmlSchemaDefinition = z
   .object({ date_from: z.string(), date_to: z.string() })
   .passthrough();
 
-
+export type ExportSloveniaVodXmlSchema = z.infer<typeof exportSloveniaVodXmlSchemaDefinition>;
+export const exportSloveniaVodXmlSchema = exportSloveniaVodXmlSchemaDefinition;

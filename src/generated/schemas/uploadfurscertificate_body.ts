@@ -8,13 +8,13 @@ import { z } from 'zod';
 
 // Schemas for uploadfurscertificate_body endpoints
 
-// Schema for upload furscertificate operation
-const uploadFursCertificateSchemaDefinition = z
+// Schema for uploadFinaCertificate operation
+const uploadFinaCertificateSchemaDefinition = z
   .object({ file: z.instanceof(File), passphrase: z.string() })
   .partial()
   .passthrough();
 
-// Type for upload furscertificate operation
-export type UploadFursCertificateSchema = z.infer<typeof uploadFursCertificateSchemaDefinition>;
-
-export const uploadFursCertificateSchema = uploadFursCertificateSchemaDefinition;
+export type UploadFinaCertificateSchema = z.infer<typeof uploadFinaCertificateSchemaDefinition>;
+export const uploadFinaCertificateSchema = uploadFinaCertificateSchemaDefinition;
+export type UploadFursCertificateSchema = z.infer<typeof uploadFinaCertificateSchemaDefinition>;
+export const uploadFursCertificateSchema = uploadFinaCertificateSchemaDefinition;

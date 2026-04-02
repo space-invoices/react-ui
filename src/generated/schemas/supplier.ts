@@ -8,7 +8,7 @@ import { z } from 'zod';
 
 // Schemas for supplier endpoints
 
-// Schema for create supplier operation
+// Schema for createSupplier operation
 const createSupplierSchemaDefinition = z.object({
   name: z.string().min(1),
   address: z.union([z.string(), z.null()]).optional(),
@@ -27,11 +27,8 @@ const createSupplierSchemaDefinition = z.object({
   metadata: z.union([z.record(z.string(), z.any()), z.null()]).optional(),
 });
 
-// Type for create supplier operation
-export type CreateSupplierSchema = z.infer<typeof createSupplierSchemaDefinition>;
 
-
-// Schema for update supplier operation
+// Schema for updateSupplier operation
 const updateSupplierSchemaDefinition = z
   .object({
     name: z.string().min(1),
@@ -52,8 +49,7 @@ const updateSupplierSchemaDefinition = z
   })
   .partial();
 
-// Type for update supplier operation
-export type UpdateSupplierSchema = z.infer<typeof updateSupplierSchemaDefinition>;
-
+export type CreateSupplierSchema = z.infer<typeof createSupplierSchemaDefinition>;
 export const createSupplierSchema = createSupplierSchemaDefinition;
+export type UpdateSupplierSchema = z.infer<typeof updateSupplierSchemaDefinition>;
 export const updateSupplierSchema = updateSupplierSchemaDefinition;

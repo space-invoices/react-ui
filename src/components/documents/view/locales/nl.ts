@@ -51,7 +51,7 @@ export default {
   Voided: "Nietig verklaard",
   Overdue: "Achterstallig",
   Shareable: "Deelbaar",
-  Quote: "Offerte",
+  "Proforma invoice": "Proforma factuur",
   "Packing list": "Paklijst",
   "FURS fiscalization failed": "FURS-fiscalisatie mislukt",
   "FINA fiscalization failed": "FINA-fiscalisatie mislukt",

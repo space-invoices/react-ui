@@ -1,9 +1,9 @@
 export default {
   "Create Estimate": "Utwórz kosztorys",
-  "Create Quote": "Utwórz ofertę",
+  "Create Proforma invoice": "Utwórz fakturę pro forma",
   Estimate: "Kosztorys",
-  Quote: "Oferta",
-  "Click to switch to Quote": "Kliknij, aby przełączyć na Ofertę",
+  "Proforma invoice": "Faktura pro forma",
+  "Click to switch to Proforma invoice": "Kliknij, aby przełączyć na Fakturę pro forma",
   "Click to switch to Estimate": "Kliknij, aby przełączyć na Kosztorys",
   Details: "Szczegóły",
   Number: "Numer",

@@ -8,12 +8,12 @@ export default {
   "Total with Tax": "Skupaj z DDV",
   Actions: "Dejanja",
   "Open menu": "Odpri meni",
-  "Copy estimate ID": "Kopiraj ID predračuna",
-  "View estimate": "Poglej predračun",
+  "Copy estimate ID": "Kopiraj ID ponudbe",
+  "View estimate": "Poglej ponudbo",
   "Download PDF": "Prenesi PDF",
   "Downloading...": "Prenašanje...",
   Duplicate: "Podvoji",
-  Estimate: "Predračun",
+  Estimate: "Ponudba",
   "Failed to download PDF": "Prenos PDF ni uspel",
   // Filter translations
   "Search...": "Iskanje...",
@@ -25,11 +25,11 @@ export default {
   "Created At": "Ustvarjeno",
   Unshare: "Odstrani deljenje",
   // Empty state translations
-  "Your list is empty": "Vaš seznam predračunov je prazen",
-  "Get started by creating your first entry": "Začnite z ustvarjanjem prvega predračuna",
-  "Create new": "Ustvari predračun",
+  "Your list is empty": "Vaš seznam ponudb je prazen",
+  "Get started by creating your first entry": "Začnite z ustvarjanjem prve ponudbe",
+  "Create new": "Ustvari ponudbo",
   // No results translations
-  "No results found": "Ni najdenih predračunov",
+  "No results found": "Ni najdenih ponudb",
   "Try adjusting your search criteria": "Poskusite prilagoditi iskalne kriterije",
   "Clear search": "Počisti iskanje",
   "Clear all": "Počisti vse",
@@ -38,4 +38,6 @@ export default {
   "Deselect all": "Počisti izbiro",
   "Copy to Invoice": "Kopiraj v račun",
   "Finalize draft documents before copying to invoice": "Dokončajte osnutke dokumentov pred kopiranjem v račun",
+  Type: "Vrsta",
+  "Proforma invoice": "Predračun",
 } as const;

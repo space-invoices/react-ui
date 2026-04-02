@@ -126,6 +126,7 @@ export default {
   "Delivery note": "Saateleht",
   Invoice: "Arve",
   Estimate: "Hinnapakkumine",
+  "Proforma invoice": "Proforma arve",
   "Credit note": "Kreeditarve",
   "Advance invoice": "Ettemaksuarve",
   "FINA fiscalized invoices always use the current date": "FINA fiscalized invoices always use the current date",

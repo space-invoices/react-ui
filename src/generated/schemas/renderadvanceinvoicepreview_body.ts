@@ -236,13 +236,11 @@ const CompleteAdvanceInvoicePreview = z.object({
 });
 
 
-// Schema for render advanceinvoicepreview operation
+// Schema for renderAdvanceInvoicePreview operation
 const renderAdvanceInvoicePreviewSchemaDefinition = z.union([
   PartialAdvanceInvoicePreview,
   CompleteAdvanceInvoicePreview,
 ]);
 
-// Type for render advanceinvoicepreview operation
 export type RenderAdvanceInvoicePreviewSchema = z.infer<typeof renderAdvanceInvoicePreviewSchemaDefinition>;
-
 export const renderAdvanceInvoicePreviewSchema = renderAdvanceInvoicePreviewSchemaDefinition;

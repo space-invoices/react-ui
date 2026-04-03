@@ -13,6 +13,7 @@ import type {
 } from "@spaceinvoices/js-sdk";
 import { useQuery } from "@tanstack/react-query";
 import { buildCustomCreateTemplateFromDocument } from "@/ui/components/documents/create/custom-create-template";
+import { toDocumentFormItem } from "@/ui/components/documents/create/document-form-item";
 import { totalsDifferByCents } from "@/ui/components/documents/create/preserved-expected-total";
 import { useEntities } from "@/ui/providers/entities-context";
 import { advanceInvoices } from "../../../js-sdk/src/sdk/advance-invoices";
@@ -94,47 +95,7 @@ export function getAllowedDuplicateTargets(sourceType: DocumentType): DocumentTy
  * Copies relevant fields and resets computed/generated ones
  */
 function transformDocumentForDuplication(source: Document, targetType: DocumentType): Partial<CreateRequest> {
-  // Transform items - preserve the full editable item shape so duplicate flows
-  // stay in parity with the originating document forms.
-  const sourceItems = source.items as Array<{
-    type?: string | null;
-    item_id?: string | null;
-    name: string;
-    description: string | null;
-    quantity?: number | null;
-    price?: number | null;
-    gross_price?: number | null;
-    unit?: string | null;
-    classification?: string | null;
-    taxes: Array<{ tax_id?: string }>;
-    discounts?: Array<{ value: number; type?: string | null }>;
-  }>;
-  const items = sourceItems?.map((item) => ({
-    type: item.type ?? undefined,
-    name: item.name,
-    description: item.description,
-    // Separator items skip financial fields
-    ...(item.type !== "separator"
-      ? {
-          item_id: item.item_id ?? undefined,
-          quantity: item.quantity ?? 1,
-          unit: item.unit ?? undefined,
-          classification: item.classification ?? undefined,
-          // Use a single effective form price field while preserving the original
-          // gross-price mode for hydration.
-          price: item.gross_price ?? item.price ?? undefined,
-          // Copy tax references (tax_id), not computed tax data
-          taxes: item.taxes?.map((tax) => ({ tax_id: tax.tax_id })),
-          // Derive is_gross_price from whether gross_price is set
-          gross_price: item.gross_price ?? undefined,
-          discounts:
-            item.discounts?.map((discount) => ({
-              value: discount.value,
-              type: discount.type ?? undefined,
-            })) ?? [],
-        }
-      : {}),
-  }));
+  const items = source.items?.map((item) => toDocumentFormItem(item as any));
 
   // Build customer data - always copy if available (form needs this for display)
   const customerData = source.customer

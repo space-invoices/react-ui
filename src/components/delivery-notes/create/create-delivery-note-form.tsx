@@ -148,6 +148,7 @@ export default function CreateDeliveryNoteForm({
                   classification: item.classification ?? undefined,
                   taxes: item.taxes || [],
                   discounts: normalizeLineItemDiscountsForForm(item.discounts),
+                  metadata: item.metadata ?? undefined,
                 }
               : {}),
           }))

@@ -184,6 +184,7 @@ export default function CreateEstimateForm({
                   gross_price: item.gross_price ?? undefined,
                   taxes: item.taxes || [],
                   discounts: normalizeLineItemDiscountsForForm(item.discounts),
+                  metadata: item.metadata ?? undefined,
                 }
               : {}),
           }))

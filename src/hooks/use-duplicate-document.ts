@@ -101,14 +101,21 @@ function transformDocumentForDuplication(source: Document, targetType: DocumentT
   const customerData = source.customer
     ? {
         name: source.customer.name,
+        email: source.customer.email,
         address: source.customer.address,
         address_2: source.customer.address_2,
-        city: source.customer.city,
         post_code: source.customer.post_code,
+        city: source.customer.city,
+        state: source.customer.state,
         country: source.customer.country,
         country_code: source.customer.country_code,
         tax_number: source.customer.tax_number,
-        email: source.customer.email,
+        tax_number_2: source.customer.tax_number_2,
+        company_number: source.customer.company_number,
+        phone: source.customer.phone,
+        peppol_id: source.customer.peppol_id,
+        is_end_consumer: source.customer.is_end_consumer,
+        bank_account: source.customer.bank_account,
       }
     : undefined;
 
@@ -261,13 +268,17 @@ export function useDuplicateDocument({
       if (shouldCheckForPreservedTotal(source)) {
         const calculatePayload = buildCalculatePayload(initialValues);
         if (calculatePayload) {
-          const calculated = await documents.calculateDocumentPreview(
-            calculatePayload,
-            { type: targetType },
-            { entity_id: activeEntity.id },
-          );
-          if (totalsDifferByCents(calculated.total_with_tax, (source as any).total_with_tax)) {
-            (initialValues as any)._preserved_expected_total_with_tax = (source as any).total_with_tax;
+          try {
+            const calculated = await documents.calculateDocumentPreview(
+              calculatePayload,
+              { type: targetType },
+              { entity_id: activeEntity.id },
+            );
+            if (totalsDifferByCents(calculated.total_with_tax, (source as any).total_with_tax)) {
+              (initialValues as any)._preserved_expected_total_with_tax = (source as any).total_with_tax;
+            }
+          } catch {
+            // Keep duplicate prefill data even if preview validation is temporarily unavailable.
           }
         }
       }

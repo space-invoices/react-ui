@@ -28,6 +28,35 @@ function sanitizeDiscounts(discounts: any[] | undefined): any[] {
   }));
 }
 
+function getTaxIdentityKey(tax: any): string {
+  return JSON.stringify({
+    rate: tax?.rate ?? null,
+    reverse_charge: tax?.reverse_charge ?? false,
+  });
+}
+
+function collectResolvedItemTaxIds(items: any[] | undefined): Map<string, Set<string>> {
+  const taxIdsByKey = new Map<string, Set<string>>();
+
+  for (const item of items ?? []) {
+    if (item?.type === "separator") continue;
+
+    for (const tax of item?.taxes ?? []) {
+      if (!tax?.tax_id) continue;
+
+      const key = getTaxIdentityKey(tax);
+      const existing = taxIdsByKey.get(key);
+      if (existing) {
+        existing.add(tax.tax_id);
+      } else {
+        taxIdsByKey.set(key, new Set([tax.tax_id]));
+      }
+    }
+  }
+
+  return taxIdsByKey;
+}
+
 export function toCustomCreateItem(item: any): any {
   if (item?.type === "separator") {
     return {
@@ -55,9 +84,17 @@ export function toCustomCreateItem(item: any): any {
   };
 }
 
-export function sanitizeSummaryTaxes(taxes: any[] | undefined): any[] {
+export function sanitizeSummaryTaxes(taxes: any[] | undefined, items?: any[]): any[] {
+  const resolvedItemTaxIds = collectResolvedItemTaxIds(items);
+
   return (taxes ?? []).map((tax) => ({
-    tax_id: tax?.tax_id ?? undefined,
+    tax_id:
+      tax?.tax_id ??
+      (() => {
+        const candidates = resolvedItemTaxIds.get(getTaxIdentityKey(tax));
+        if (!candidates || candidates.size !== 1) return undefined;
+        return Array.from(candidates)[0];
+      })(),
     rate: tax?.rate ?? null,
     base: tax?.base ?? 0,
     amount: tax?.amount ?? 0,
@@ -73,11 +110,11 @@ function getSummaryTaxKey(tax: any): string {
   });
 }
 
-export function sumSummaryTaxes(documents: Array<{ taxes?: any[] }>): any[] {
+export function sumSummaryTaxes(documents: Array<{ taxes?: any[]; items?: any[] }>): any[] {
   const aggregated = new Map<string, any>();
 
   for (const document of documents) {
-    for (const tax of sanitizeSummaryTaxes(document.taxes)) {
+    for (const tax of sanitizeSummaryTaxes(document.taxes, document.items)) {
       const key = getSummaryTaxKey(tax);
       const existing = aggregated.get(key);
       if (existing) {
@@ -98,7 +135,7 @@ export function buildCustomCreateTemplateFromDocument(document: any): CustomCrea
     total: document?.total ?? 0,
     total_with_tax: document?.total_with_tax ?? 0,
     total_discount: document?.total_discount ?? 0,
-    taxes: sanitizeSummaryTaxes(document?.taxes),
+    taxes: sanitizeSummaryTaxes(document?.taxes, document?.items),
   };
 }
 

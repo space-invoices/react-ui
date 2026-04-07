@@ -10,12 +10,12 @@ import { Label } from "../ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 
 export type DocumentType = "invoice" | "estimate" | "credit_note" | "advance_invoice" | "delivery_note";
-type EslogDocumentType = Extract<DocumentType, "invoice" | "estimate" | "credit_note">;
+type EslogDocumentType = Extract<DocumentType, "invoice" | "estimate" | "credit_note" | "advance_invoice">;
 type AsyncArchiveExportFormat = "pdf_zip" | "eslog_zip";
 export type ExportFormat = "xlsx" | "csv" | AsyncArchiveExportFormat;
 
 const ALL_DOCUMENT_TYPES: DocumentType[] = ["invoice", "estimate", "credit_note", "advance_invoice", "delivery_note"];
-const ESLOG_DOCUMENT_TYPES: EslogDocumentType[] = ["invoice", "estimate", "credit_note"];
+const ESLOG_DOCUMENT_TYPES: EslogDocumentType[] = ["invoice", "estimate", "credit_note", "advance_invoice"];
 
 // Maximum date range for export (1 year in milliseconds)
 const MAX_DATE_RANGE_MS = 365 * 24 * 60 * 60 * 1000;

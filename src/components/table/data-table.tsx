@@ -153,6 +153,7 @@ export function DataTable<T extends { id: string }>({
       initialParams: queryParams,
       onChangeParams,
       disableUrlSync,
+      filterConfig,
     });
 
   // Fetch table data (use apiParams which has the query JSON for API)

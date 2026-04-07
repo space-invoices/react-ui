@@ -17,7 +17,9 @@ const EslogExportByDocumentIds = z
 // Dependency schema for starteslogexport_body
 const EslogExportByDateRange = z
   .object({
-    types: z.array(z.enum(["invoice", "estimate", "credit_note"])).min(1),
+    types: z
+      .array(z.enum(["invoice", "estimate", "credit_note", "advance_invoice"]))
+      .min(1),
     date_from: z.union([z.string(), z.null()]).optional(),
     date_to: z.union([z.string(), z.null()]).optional(),
   })

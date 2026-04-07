@@ -140,8 +140,10 @@ export function buildCustomCreateTemplateFromDocument(document: any): CustomCrea
 }
 
 export function applyCustomCreateTemplate<T extends Record<string, any>>(payload: T, template: CustomCreateTemplate): T {
+  const { calculation_mode: _calculationMode, ...restPayload } = payload;
+
   return {
-    ...payload,
+    ...restPayload,
     items: template.items,
     total: template.total,
     total_with_tax: template.total_with_tax,

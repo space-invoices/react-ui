@@ -47,7 +47,7 @@ export type TableQueryParams = {
   filter_date_field?: string;
   filter_date_from?: string; // YYYY-MM-DD
   filter_date_to?: string; // YYYY-MM-DD
-  filter_status?: string; // comma-separated: "paid,unpaid,overdue,voided"
+  filter_status?: string; // comma-separated status ids, e.g. "paid,partially_paid,voided"
   // HTTP-specific filter params (for request logs)
   filter_method?: string; // GET, POST, PATCH, PUT, DELETE
   filter_http_status?: string; // 2xx, 4xx, 5xx
@@ -71,9 +71,11 @@ export type DateFilter = {
 };
 
 /**
- * Status filter options (invoice status)
+ * Status filter options supported by document tables
  */
-export type StatusFilter = "paid" | "unpaid" | "overdue" | "voided";
+export type StatusFilter = "paid" | "partially_paid" | "unpaid" | "overdue" | "voided";
+
+export type StatusQueryPreset = "invoice" | "credit_note" | "advance_invoice";
 
 /**
  * HTTP method filter options
@@ -99,6 +101,8 @@ export type FilterableDateField = {
 export type FilterConfig = {
   dateFields?: FilterableDateField[];
   statusFilter?: boolean;
+  statusOptions?: StatusFilter[];
+  statusQueryPreset?: StatusQueryPreset;
   /** Enable HTTP method filter (for request logs) */
   httpMethodFilter?: boolean;
   /** Enable HTTP status code filter (for request logs) */

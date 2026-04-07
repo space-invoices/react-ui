@@ -23,6 +23,7 @@ import { useA4Scaling } from "./use-a4-scaling";
 
 const SAVED_PREVIEW_TIMING_EVENT = "si:saved-preview-timing";
 const SAVED_DOCUMENT_PREVIEW_QUERY_KEY = "document-preview-html";
+const SAVED_DOCUMENT_PREVIEW_RENDERER_VERSION = "html-preview-v16";
 const SAVED_DOCUMENT_PREVIEW_STALE_TIME = 1000 * 60 * 5;
 const SAVED_DOCUMENT_PREVIEW_GC_TIME = 1000 * 60 * 30;
 
@@ -50,6 +51,7 @@ export function getSavedDocumentPreviewQueryKey({
   return [
     SAVED_DOCUMENT_PREVIEW_QUERY_KEY,
     documentId,
+    SAVED_DOCUMENT_PREVIEW_RENDERER_VERSION,
     documentUpdatedAt ?? null,
     entityId ?? null,
     template ?? null,
@@ -174,6 +176,7 @@ export function DocumentPreviewDisplay({
           {
             entity_id: activeEntity.id,
             signal: abortController.signal,
+            cache: "no-store",
           },
         );
 
@@ -208,7 +211,7 @@ export function DocumentPreviewDisplay({
   const error = previewQuery.error instanceof Error ? previewQuery.error.message : null;
   const isWaitingForFetch = prerequisitesReady && !fetchEnabled && !previewHtml && !error;
   const isLoading = previewQuery.isPending || isWaitingForFetch;
-  const { containerRef, contentRef, scale, contentHeight, A4_WIDTH_PX } = useA4Scaling(previewHtml);
+  const { containerRef, scale, A4_WIDTH_PX } = useA4Scaling(previewHtml);
 
   useEffect(() => {
     if (isPublicView || prerequisitesReady) return;
@@ -225,7 +228,7 @@ export function DocumentPreviewDisplay({
   return (
     <div
       ref={containerRef}
-      className={cn("relative", containedScroll ? "flex h-full min-h-0 flex-col" : "min-h-full", className)}
+      className={cn("relative", containedScroll ? "flex h-full min-h-0 flex-col" : null, className)}
     >
       {/* Loading state */}
       {isLoading && <DocumentPreviewSkeleton />}
@@ -269,10 +272,7 @@ export function DocumentPreviewDisplay({
         <ScaledDocumentPreview
           htmlContent={previewHtml}
           scale={scale}
-          contentHeight={contentHeight}
           A4_WIDTH_PX={A4_WIDTH_PX}
-          contentRef={contentRef}
-          entityUpdatedAt={activeEntity?.updated_at ? new Date(activeEntity.updated_at) : null}
           containedScroll={containedScroll}
         />
       )}

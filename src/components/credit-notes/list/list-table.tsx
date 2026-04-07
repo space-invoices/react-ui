@@ -125,7 +125,9 @@ export default function CreditNoteListTable({
         { id: "date", label: t("Date") },
         { id: "created_at", label: t("Created At") },
       ],
-      statusFilter: true, // Credit notes have payment status
+      statusFilter: true,
+      statusOptions: ["paid", "partially_paid", "unpaid", "voided"],
+      statusQueryPreset: "credit_note",
     }),
     [t],
   );

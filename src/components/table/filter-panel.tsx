@@ -30,7 +30,7 @@ type FilterPanelProps = {
   locale?: string;
 };
 
-const STATUS_OPTIONS: StatusFilter[] = ["paid", "unpaid", "overdue", "voided"];
+const DEFAULT_STATUS_OPTIONS: StatusFilter[] = ["paid", "partially_paid", "unpaid", "overdue", "voided"];
 const HTTP_METHOD_OPTIONS: HttpMethodFilter[] = ["GET", "POST", "PATCH", "PUT", "DELETE"];
 const HTTP_STATUS_CODE_OPTIONS: HttpStatusCodeFilter[] = ["2xx", "4xx", "5xx"];
 
@@ -40,6 +40,7 @@ const HTTP_STATUS_CODE_OPTIONS: HttpStatusCodeFilter[] = ["2xx", "4xx", "5xx"];
 export function FilterPanel({ config, state, onChange, t = (key) => key, locale }: FilterPanelProps) {
   const hasDateFilters = config?.dateFields && config.dateFields.length > 0;
   const hasStatusFilter = config?.statusFilter;
+  const statusOptions = config?.statusOptions?.length ? config.statusOptions : DEFAULT_STATUS_OPTIONS;
   const hasHttpMethodFilter = config?.httpMethodFilter;
   const hasHttpStatusCodeFilter = config?.httpStatusCodeFilter;
 
@@ -109,7 +110,12 @@ export function FilterPanel({ config, state, onChange, t = (key) => key, locale 
 
         {/* Status Section */}
         {hasStatusFilter && (
-          <StatusFilterSection value={state?.statusFilters ?? []} onChange={handleStatusFilterChange} t={t} />
+          <StatusFilterSection
+            value={state?.statusFilters ?? []}
+            options={statusOptions}
+            onChange={handleStatusFilterChange}
+            t={t}
+          />
         )}
 
         {/* HTTP Method Section */}
@@ -294,11 +300,12 @@ function DatePicker({ value, onChange, placeholder, t, locale, minDate }: DatePi
 
 type StatusFilterSectionProps = {
   value: StatusFilter[];
+  options: StatusFilter[];
   onChange: (value: StatusFilter[]) => void;
   t: (key: string) => string;
 };
 
-function StatusFilterSection({ value, onChange, t }: StatusFilterSectionProps) {
+function StatusFilterSection({ value, options, onChange, t }: StatusFilterSectionProps) {
   const handleChange = useCallback(
     (status: string) => {
       if (status === "all") {
@@ -312,6 +319,7 @@ function StatusFilterSection({ value, onChange, t }: StatusFilterSectionProps) {
 
   const statusLabels: Record<StatusFilter, string> = {
     paid: t("Paid"),
+    partially_paid: t("Partially Paid"),
     unpaid: t("Unpaid"),
     overdue: t("Overdue"),
     voided: t("Voided"),
@@ -331,7 +339,7 @@ function StatusFilterSection({ value, onChange, t }: StatusFilterSectionProps) {
             {t("All statuses")}
           </Label>
         </div>
-        {STATUS_OPTIONS.map((status) => (
+        {options.map((status) => (
           <div key={status} className="flex cursor-pointer items-center gap-2">
             <RadioGroupItem value={status} id={`status-${status}`} className="cursor-pointer" />
             <Label htmlFor={`status-${status}`} className="cursor-pointer font-normal text-sm">

@@ -1,3 +1,5 @@
+export const ESLOG_XML_EXPORT_ENABLED = true;
+
 type EslogDocumentLike = {
   eslog?: {
     validation_status?: string | null;

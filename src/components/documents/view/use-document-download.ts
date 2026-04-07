@@ -13,7 +13,7 @@ import { useEntities } from "@/ui/providers/entities-context";
 
 type Document = Invoice | Estimate | CreditNote | AdvanceInvoice | DeliveryNote;
 type DocumentType = "invoice" | "estimate" | "credit_note" | "advance_invoice" | "delivery_note";
-type ESlogDocumentType = "invoice" | "estimate" | "credit_note";
+type ESlogDocumentType = "invoice" | "estimate" | "credit_note" | "advance_invoice";
 
 // Document type labels for PDF filename
 const TYPE_LABELS: Record<string, string> = {
@@ -94,6 +94,7 @@ export function useDocumentDownload({
         invoice: "invoice",
         credit_note: "credit_note",
         estimate: "estimate",
+        advance_invoice: "advance_invoice",
       };
       const eslogType = typeMap[documentType];
 

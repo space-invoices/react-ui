@@ -144,6 +144,8 @@ export default function InvoiceListTable({
         { id: "created_at", label: t("Created At") },
       ],
       statusFilter: true,
+      statusOptions: ["paid", "partially_paid", "unpaid", "overdue", "voided"],
+      statusQueryPreset: "invoice",
     }),
     [t],
   );

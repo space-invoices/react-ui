@@ -50,7 +50,7 @@ export function normalizeLineItemDiscountsForForm(
   return (
     discounts?.map((discount) => ({
       value: discount.value,
-      type: discount.type ?? undefined,
+      type: discount.type ?? "percent",
     })) ?? []
   );
 }

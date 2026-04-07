@@ -82,7 +82,7 @@ export function LiveInvoicePreview({
   const lastRequestKeyRef = useRef<string | null>(null);
   const hasDispatchedFirstPreviewRef = useRef(false);
 
-  const { containerRef, contentRef, scale: dynamicScale, contentHeight, A4_WIDTH_PX } = useA4Scaling(previewHtml);
+  const { containerRef, scale: dynamicScale, A4_WIDTH_PX } = useA4Scaling(previewHtml);
   const scale = fixedScale ?? dynamicScale;
 
   /**
@@ -356,13 +356,7 @@ export function LiveInvoicePreview({
             className={cn(isLoading && "opacity-75 transition-opacity duration-200")}
             data-demo="marketing-demo-totals-root"
           >
-            <ScaledDocumentPreview
-              htmlContent={previewHtml}
-              scale={scale}
-              contentHeight={contentHeight}
-              A4_WIDTH_PX={A4_WIDTH_PX}
-              contentRef={contentRef}
-            />
+            <ScaledDocumentPreview htmlContent={previewHtml} scale={scale} A4_WIDTH_PX={A4_WIDTH_PX} />
           </div>
         </div>
       )}

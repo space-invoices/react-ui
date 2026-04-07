@@ -5,10 +5,7 @@ import { type FC, useEffect, useRef, useState } from "react";
 interface ScaledDocumentPreviewProps {
   htmlContent: string;
   scale: number;
-  contentHeight: number | null;
   A4_WIDTH_PX: number;
-  contentRef: React.RefObject<HTMLDivElement | null>;
-  entityUpdatedAt?: Date | null;
   containedScroll?: boolean;
 }
 
@@ -47,6 +44,31 @@ function hoistFontFaces(html: string): string {
   return cleanedHtml;
 }
 
+function findPreviewMeasurementTarget(shadowRoot: ShadowRoot): HTMLElement | null {
+  const preferredTargets = [
+    shadowRoot.querySelector(".document-page > div"),
+    shadowRoot.querySelector(".document-page"),
+  ];
+
+  for (const target of preferredTargets) {
+    if (target instanceof HTMLElement) {
+      return target;
+    }
+  }
+
+  for (const node of shadowRoot.children) {
+    if (node instanceof HTMLElement && node.tagName !== "STYLE") {
+      return node;
+    }
+  }
+
+  return null;
+}
+
+function getMeasuredHeight(target: HTMLElement): number {
+  return Math.max(target.scrollHeight, target.offsetHeight, target.clientHeight);
+}
+
 /**
  * Scaled Document Preview Component
  *
@@ -62,6 +84,7 @@ export const ScaledDocumentPreview: FC<ScaledDocumentPreviewProps> = ({
 }) => {
   const shadowHostRef = useRef<HTMLDivElement>(null);
   const shadowRootRef = useRef<ShadowRoot | null>(null);
+  const resizeObserverRef = useRef<ResizeObserver | null>(null);
   // A4 height in pixels at 96 DPI (297mm)
   const A4_HEIGHT_PX = 1123;
   const [contentHeight, setContentHeight] = useState<number>(A4_HEIGHT_PX);
@@ -78,16 +101,32 @@ export const ScaledDocumentPreview: FC<ScaledDocumentPreviewProps> = ({
     const shadowRoot = shadowRootRef.current;
     shadowRoot.innerHTML = hoistFontFaces(htmlContent);
 
-    // Measure content height after render (wait for fonts to load)
+    const measurementTarget = findPreviewMeasurementTarget(shadowRoot);
+    if (!measurementTarget) {
+      setContentHeight(A4_HEIGHT_PX);
+      return;
+    }
+
     const measureHeight = () => {
-      const firstChild = shadowRoot.firstElementChild as HTMLElement;
-      if (firstChild) {
-        // Ensure minimum A4 page height
-        setContentHeight(Math.max(firstChild.scrollHeight, A4_HEIGHT_PX));
-      }
+      setContentHeight(Math.max(getMeasuredHeight(measurementTarget), A4_HEIGHT_PX));
     };
 
-    setTimeout(measureHeight, 100);
+    resizeObserverRef.current?.disconnect();
+    resizeObserverRef.current = new ResizeObserver(() => {
+      measureHeight();
+    });
+    resizeObserverRef.current.observe(measurementTarget);
+
+    const timeoutId = window.setTimeout(measureHeight, 100);
+    const rafId = window.requestAnimationFrame(measureHeight);
+    void document.fonts?.ready?.then(measureHeight);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+      window.cancelAnimationFrame(rafId);
+      resizeObserverRef.current?.disconnect();
+      resizeObserverRef.current = null;
+    };
   }, [htmlContent]);
 
   const scaledPage = (
@@ -96,14 +135,14 @@ export const ScaledDocumentPreview: FC<ScaledDocumentPreviewProps> = ({
         width: A4_WIDTH_PX * scale,
         height: contentHeight * scale,
         margin: "0 auto",
-        overflow: "hidden",
+        overflow: "visible",
       }}
     >
       <div
         ref={shadowHostRef}
         style={{
           width: A4_WIDTH_PX,
-          minHeight: contentHeight,
+          minHeight: `${contentHeight}px`,
           transform: `scale(${scale})`,
           transformOrigin: "top left",
           background: "white",

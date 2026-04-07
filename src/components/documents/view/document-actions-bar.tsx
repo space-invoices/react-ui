@@ -29,6 +29,7 @@ import {
 import { actionMenuTooltipProps, Tooltip, TooltipContent, TooltipTrigger } from "@/ui/components/ui/tooltip";
 import { type DocumentType, getAllowedDuplicateTargets } from "@/ui/hooks/use-duplicate-document";
 import { getDocumentCountryCapabilities } from "@/ui/lib/country-capabilities";
+import { ESLOG_XML_EXPORT_ENABLED } from "@/ui/lib/eslog-export";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
 import type { Entity } from "@/ui/providers/entities-context";
@@ -180,7 +181,7 @@ export function DocumentActionsBar({
   const supportsPayments =
     documentType === "invoice" || documentType === "advance_invoice" || documentType === "credit_note";
 
-  const eslogFeatureAvailable = entity.country_rules?.features?.includes("eslog") ?? false;
+  const eslogFeatureAvailable = ESLOG_XML_EXPORT_ENABLED && (entity.country_rules?.features?.includes("eslog") ?? false);
   const eslogValid = (document as Invoice).eslog?.validation_status === "valid";
   const showEslogDownload = eslogFeatureAvailable && eslogValid;
 

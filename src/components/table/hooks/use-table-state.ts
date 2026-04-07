@@ -1,11 +1,20 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { FilterState, HttpMethodFilter, HttpStatusCodeFilter, StatusFilter, TableQueryParams } from "../types";
+import type {
+  FilterConfig,
+  FilterState,
+  HttpMethodFilter,
+  HttpStatusCodeFilter,
+  StatusFilter,
+  StatusQueryPreset,
+  TableQueryParams,
+} from "../types";
 
 type UseTableStateProps = {
   initialParams?: TableQueryParams;
   onChangeParams?: (params: TableQueryParams) => void;
   /** When true, disables URL sync entirely (for embedded tables like dashboard) */
   disableUrlSync?: boolean;
+  filterConfig?: FilterConfig;
 };
 
 /**
@@ -66,7 +75,62 @@ function parseFilterStateFromParams(params: TableQueryParams): FilterState | nul
  * Note: API only supports flat field-level queries, not AND/OR operators
  * For multiple statuses, only the first is used (API limitation)
  */
-export function buildQueryFromFilterState(state: FilterState | null): string | undefined {
+function buildStatusQuery(status: StatusFilter, preset: StatusQueryPreset | undefined, today: string) {
+  switch (preset) {
+    case "credit_note":
+    case "advance_invoice":
+      switch (status) {
+        case "paid":
+          return { paid_in_full: { equals: true } };
+        case "partially_paid":
+          return {
+            paid_in_full: { equals: false },
+            total_paid: { gt: 0 },
+            voided_at: { equals: null },
+          };
+        case "unpaid":
+          return {
+            paid_in_full: { equals: false },
+            total_paid: { equals: 0 },
+            voided_at: { equals: null },
+          };
+        case "voided":
+          return { voided_at: { not: null } };
+        default:
+          return undefined;
+      }
+    case "invoice":
+    default:
+      switch (status) {
+        case "paid":
+          return { paid_in_full: { equals: true } };
+        case "partially_paid":
+          return {
+            paid_in_full: { equals: false },
+            total_paid: { gt: 0 },
+            voided_at: { equals: null },
+          };
+        case "unpaid":
+          return {
+            paid_in_full: { equals: false },
+            total_paid: { equals: 0 },
+            voided_at: { equals: null },
+          };
+        case "overdue":
+          return {
+            paid_in_full: { equals: false },
+            date_due: { lt: today },
+            voided_at: { equals: null },
+          };
+        case "voided":
+          return { voided_at: { not: null } };
+        default:
+          return undefined;
+      }
+  }
+}
+
+export function buildQueryFromFilterState(state: FilterState | null, filterConfig?: FilterConfig): string | undefined {
   if (!state) return undefined;
 
   const query: Record<string, unknown> = {};
@@ -89,23 +153,10 @@ export function buildQueryFromFilterState(state: FilterState | null): string | u
   if (state.statusFilters?.length) {
     const status = state.statusFilters[0]; // Use first status
     const today = formatDateForAPI(new Date());
+    const statusQuery = buildStatusQuery(status, filterConfig?.statusQueryPreset, today);
 
-    switch (status) {
-      case "paid":
-        query.paid_in_full = { equals: true };
-        break;
-      case "unpaid":
-        query.paid_in_full = { equals: false };
-        query.voided_at = { equals: null };
-        break;
-      case "overdue":
-        query.paid_in_full = { equals: false };
-        query.date_due = { lt: today };
-        query.voided_at = { equals: null };
-        break;
-      case "voided":
-        query.voided_at = { not: null };
-        break;
+    if (statusQuery) {
+      Object.assign(query, statusQuery);
     }
   }
 
@@ -165,7 +216,7 @@ function syncParamsToUrl(params: TableQueryParams) {
 /**
  * Manages table state (search, pagination, filters) with optional URL sync
  */
-export function useTableState({ initialParams = {}, onChangeParams, disableUrlSync = false }: UseTableStateProps) {
+export function useTableState({ initialParams = {}, onChangeParams, disableUrlSync = false, filterConfig }: UseTableStateProps) {
   const [params, setParams] = useState<TableQueryParams>({
     ...initialParams,
   });
@@ -306,9 +357,9 @@ export function useTableState({ initialParams = {}, onChangeParams, disableUrlSy
    * while query JSON is added for tables that use it (like invoices)
    */
   const apiParams = useMemo(() => {
-    const query = mergeApiQueries(params.query, buildQueryFromFilterState(filterState));
+    const query = mergeApiQueries(params.query, buildQueryFromFilterState(filterState, filterConfig));
     return { ...params, query };
-  }, [params, filterState]);
+  }, [params, filterState, filterConfig]);
 
   return {
     params,

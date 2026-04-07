@@ -121,6 +121,8 @@ export default function AdvanceInvoiceListTable({
         { id: "created_at", label: t("Created At") },
       ],
       statusFilter: true,
+      statusOptions: ["paid", "partially_paid", "unpaid", "voided"],
+      statusQueryPreset: "advance_invoice",
     }),
     [t],
   );

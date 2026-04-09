@@ -48,6 +48,7 @@ export type TableQueryParams = {
   filter_date_from?: string; // YYYY-MM-DD
   filter_date_to?: string; // YYYY-MM-DD
   filter_status?: string; // comma-separated status ids, e.g. "paid,partially_paid,voided"
+  filter_select?: string; // JSON string map of select filter id -> selected value
   // HTTP-specific filter params (for request logs)
   filter_method?: string; // GET, POST, PATCH, PUT, DELETE
   filter_http_status?: string; // 2xx, 4xx, 5xx
@@ -95,11 +96,23 @@ export type FilterableDateField = {
   label: string;
 };
 
+export type SelectFilterOption = {
+  value: string;
+  label: string;
+};
+
+export type SelectFilterConfig = {
+  id: string;
+  label: string;
+  options: SelectFilterOption[];
+};
+
 /**
  * Filter configuration for tables
  */
 export type FilterConfig = {
   dateFields?: FilterableDateField[];
+  selectFilters?: SelectFilterConfig[];
   statusFilter?: boolean;
   statusOptions?: StatusFilter[];
   statusQueryPreset?: StatusQueryPreset;
@@ -114,6 +127,7 @@ export type FilterConfig = {
  */
 export type FilterState = {
   dateFilter?: DateFilter;
+  selectValues?: Record<string, string>;
   statusFilters?: StatusFilter[];
   /** Selected HTTP method (for request logs) */
   httpMethod?: HttpMethodFilter;

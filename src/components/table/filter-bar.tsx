@@ -45,6 +45,7 @@ export function FilterBar({
 }: FilterBarProps) {
   const hasFilters =
     filterConfig?.dateFields?.length ||
+    filterConfig?.selectFilters?.length ||
     filterConfig?.statusFilter ||
     filterConfig?.httpMethodFilter ||
     filterConfig?.httpStatusCodeFilter;
@@ -105,6 +106,10 @@ function countActiveFilters(state?: FilterState): number {
   // Count date filter as 1 if any date is set
   if (state.dateFilter?.range.from || state.dateFilter?.range.to) {
     count += 1;
+  }
+
+  if (state.selectValues) {
+    count += Object.values(state.selectValues).filter(Boolean).length;
   }
 
   // Count each status filter

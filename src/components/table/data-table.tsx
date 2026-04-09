@@ -75,6 +75,7 @@ export type DataTableProps<T> = {
 function hasFilterControls(filterConfig?: FilterConfig) {
   return Boolean(
     filterConfig?.dateFields?.length ||
+      filterConfig?.selectFilters?.length ||
       filterConfig?.statusFilter ||
       filterConfig?.httpMethodFilter ||
       filterConfig?.httpStatusCodeFilter,
@@ -140,6 +141,7 @@ export function DataTable<T extends { id: string }>({
   const hasInitialFilters = Boolean(
     queryParams?.filter_date_from ||
       queryParams?.filter_date_to ||
+      queryParams?.filter_select ||
       queryParams?.filter_status ||
       queryParams?.filter_method ||
       queryParams?.filter_http_status ||
@@ -169,6 +171,7 @@ export function DataTable<T extends { id: string }>({
     params.search ||
       params.filter_date_from ||
       params.filter_date_to ||
+      params.filter_select ||
       params.filter_status ||
       params.filter_method ||
       params.filter_http_status ||

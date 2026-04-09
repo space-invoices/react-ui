@@ -14,6 +14,7 @@ import type {
   FilterState,
   HttpMethodFilter,
   HttpStatusCodeFilter,
+  SelectFilterConfig,
   StatusFilter,
 } from "./types";
 
@@ -39,6 +40,7 @@ const HTTP_STATUS_CODE_OPTIONS: HttpStatusCodeFilter[] = ["2xx", "4xx", "5xx"];
  */
 export function FilterPanel({ config, state, onChange, t = (key) => key, locale }: FilterPanelProps) {
   const hasDateFilters = config?.dateFields && config.dateFields.length > 0;
+  const selectFilters = config?.selectFilters ?? [];
   const hasStatusFilter = config?.statusFilter;
   const statusOptions = config?.statusOptions?.length ? config.statusOptions : DEFAULT_STATUS_OPTIONS;
   const hasHttpMethodFilter = config?.httpMethodFilter;
@@ -60,6 +62,25 @@ export function FilterPanel({ config, state, onChange, t = (key) => key, locale 
       const newState: FilterState = {
         ...state,
         statusFilters: statusFilters.length > 0 ? statusFilters : undefined,
+      };
+      onChange?.(hasActiveFilters(newState) ? newState : null);
+    },
+    [state, onChange],
+  );
+
+  const handleSelectFilterChange = useCallback(
+    (filterId: string, value: string | undefined) => {
+      const nextSelectValues = { ...(state?.selectValues ?? {}) };
+
+      if (value) {
+        nextSelectValues[filterId] = value;
+      } else {
+        delete nextSelectValues[filterId];
+      }
+
+      const newState: FilterState = {
+        ...state,
+        selectValues: Object.keys(nextSelectValues).length > 0 ? nextSelectValues : undefined,
       };
       onChange?.(hasActiveFilters(newState) ? newState : null);
     },
@@ -105,6 +126,15 @@ export function FilterPanel({ config, state, onChange, t = (key) => key, locale 
             onChange={handleDateFilterChange}
             t={t}
             locale={locale}
+          />
+        )}
+
+        {selectFilters.length > 0 && (
+          <SelectFiltersSection
+            filters={selectFilters}
+            values={state?.selectValues ?? {}}
+            onChange={handleSelectFilterChange}
+            t={t}
           />
         )}
 
@@ -298,6 +328,55 @@ function DatePicker({ value, onChange, placeholder, t, locale, minDate }: DatePi
   );
 }
 
+type SelectFiltersSectionProps = {
+  filters: SelectFilterConfig[];
+  values: Record<string, string>;
+  onChange: (filterId: string, value: string | undefined) => void;
+  t: (key: string) => string;
+};
+
+function SelectFiltersSection({ filters, values, onChange, t }: SelectFiltersSectionProps) {
+  return (
+    <div className="space-y-3">
+      <Label className="font-medium text-muted-foreground text-xs uppercase">{t("Filters")}</Label>
+      <div className="flex flex-wrap items-center gap-2">
+        {filters.map((filter) => (
+          <div key={filter.id} className="flex items-center gap-1">
+            <Select
+              value={values[filter.id] ?? "all"}
+              onValueChange={(value) => onChange(filter.id, !value || value === "all" ? undefined : value)}
+            >
+              <SelectTrigger size="sm" className="min-w-[180px]">
+                <SelectValue placeholder={filter.label} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t("All")}</SelectItem>
+                {filter.options.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {values[filter.id] ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 cursor-pointer p-0"
+                onClick={() => onChange(filter.id, undefined)}
+                aria-label={`${t("Clear filters")} ${filter.label}`}
+                title={`${t("Clear filters")} ${filter.label}`}
+              >
+                <XIcon className="h-3.5 w-3.5" />
+              </Button>
+            ) : null}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 type StatusFilterSectionProps = {
   value: StatusFilter[];
   options: StatusFilter[];
@@ -437,6 +516,7 @@ function HttpStatusCodeFilterSection({ value, onChange, t }: HttpStatusCodeFilte
 function hasActiveFilters(state?: FilterState): boolean {
   if (!state) return false;
   if (state.dateFilter?.range.from || state.dateFilter?.range.to) return true;
+  if (state.selectValues && Object.keys(state.selectValues).length > 0) return true;
   if (state.statusFilters?.length) return true;
   if (state.httpMethod) return true;
   if (state.httpStatusCode) return true;

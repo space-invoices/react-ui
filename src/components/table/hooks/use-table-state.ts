@@ -57,6 +57,21 @@ function parseFilterStateFromParams(params: TableQueryParams): FilterState | nul
     state.statusFilters = params.filter_status.split(",") as StatusFilter[];
   }
 
+  if (params.filter_select) {
+    try {
+      const parsed = JSON.parse(params.filter_select) as Record<string, unknown>;
+      const selectValues = Object.fromEntries(
+        Object.entries(parsed).filter(([, value]) => typeof value === "string" && value.length > 0),
+      ) as Record<string, string>;
+
+      if (Object.keys(selectValues).length > 0) {
+        state.selectValues = selectValues;
+      }
+    } catch {
+      // Ignore malformed select filter state in URL
+    }
+  }
+
   // Parse HTTP method filter
   if (params.filter_method) {
     state.httpMethod = params.filter_method as HttpMethodFilter;
@@ -157,6 +172,14 @@ export function buildQueryFromFilterState(state: FilterState | null, filterConfi
 
     if (statusQuery) {
       Object.assign(query, statusQuery);
+    }
+  }
+
+  if (state.selectValues) {
+    for (const [field, value] of Object.entries(state.selectValues)) {
+      if (value) {
+        query[field] = { equals: value };
+      }
     }
   }
 
@@ -301,6 +324,7 @@ export function useTableState({ initialParams = {}, onChangeParams, disableUrlSy
       filter_date_field: undefined,
       filter_date_from: undefined,
       filter_date_to: undefined,
+      filter_select: undefined,
       filter_status: undefined,
       filter_method: undefined,
       filter_http_status: undefined,
@@ -313,6 +337,10 @@ export function useTableState({ initialParams = {}, onChangeParams, disableUrlSy
       ...(state?.statusFilters?.length && {
         filter_status: state.statusFilters.join(","),
       }),
+      ...(state?.selectValues &&
+        Object.keys(state.selectValues).length > 0 && {
+          filter_select: JSON.stringify(state.selectValues),
+        }),
       ...(state?.httpMethod && {
         filter_method: state.httpMethod,
       }),
@@ -345,6 +373,7 @@ export function useTableState({ initialParams = {}, onChangeParams, disableUrlSy
     params.filter_date_field,
     params.filter_date_from,
     params.filter_date_to,
+    params.filter_select,
     params.filter_status,
     params.filter_method,
     params.filter_http_status,

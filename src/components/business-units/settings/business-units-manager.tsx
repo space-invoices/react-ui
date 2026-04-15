@@ -55,7 +55,7 @@ const translations = {
   sl: {
     ...pdfTemplateSelectorSlTranslations,
     "Account name": "Naziv računa",
-    "Add business unit": "Dodaj poslovno enoto",
+    "Add unit / brand": "Dodaj enoto / blagovno znamko",
     Address: "Naslov",
     "Address and contact": "Naslov in kontakt",
     "Address line 2": "Naslov 2. vrstica",
@@ -68,11 +68,11 @@ const translations = {
     "Bank name": "Naziv banke",
     "Brand assets uploaded": "Naloženi grafični elementi",
     Branding: "Celostna podoba",
-    "Business unit archived": "Poslovna enota je arhivirana",
+    "Unit / brand archived": "Enota / blagovna znamka je arhivirana",
     "BIC / SWIFT": "BIC / SWIFT",
-    "Business unit": "Poslovna enota",
-    "Business unit created": "Poslovna enota je ustvarjena",
-    "Business units": "Poslovne enote",
+    "Unit / Brand": "Enota / blagovna znamka",
+    "Unit / brand created": "Enota / blagovna znamka je ustvarjena",
+    "Units / Brands": "Enote / blagovne znamke",
     Cancel: "Prekliči",
     City: "Mesto",
     "Company number": "Matična številka",
@@ -87,13 +87,13 @@ const translations = {
     All: "Vse",
     Actions: "Dejanja",
     Filter: "Filter",
-    "Create a unit first, then configure its branding, defaults, and payment details from the settings panel.":
-      "Najprej ustvarite enoto, nato pa v nastavitvah uredite celostno podobo, privzete vrednosti in plačilne podatke.",
-    "Create a unit, then open its settings only when you need to change something.":
-      "Ustvarite enoto, nato pa odprite njene nastavitve samo takrat, ko želite nekaj spremeniti.",
-    "Create business unit": "Ustvari poslovno enoto",
-    "Create first business unit": "Ustvari prvo poslovno enoto",
-    "Create your first business unit": "Ustvarite svojo prvo poslovno enoto",
+    "Create a unit / brand first, then configure its branding, defaults, and payment details from the settings panel.":
+      "Najprej ustvarite enoto / blagovno znamko, nato pa v nastavitvah uredite celostno podobo, privzete vrednosti in plačilne podatke.",
+    "Create a unit / brand, then open its settings only when you need to change something.":
+      "Ustvarite enoto / blagovno znamko, nato pa odprite njene nastavitve samo takrat, ko želite nekaj spremeniti.",
+    "Create unit / brand": "Ustvari enoto / blagovno znamko",
+    "Create first unit / brand": "Ustvari prvo enoto / blagovno znamko",
+    "Create your first unit / brand": "Ustvarite svojo prvo enoto / blagovno znamko",
     "This hides the unit from new documents and integrations, but keeps existing references intact.":
       "To skrije enoto pri novih dokumentih in integracijah, obstoječe povezave pa ostanejo nespremenjene.",
     "Document defaults": "Privzete vrednosti dokumentov",
@@ -121,12 +121,12 @@ const translations = {
     "Loading...": "Nalaganje ...",
     Logo: "Logotip",
     "Logo scale %": "Velikost logotipa %",
-    "Manage branding, addresses, defaults, and payment details for this business unit.":
-      "Upravljajte celostno podobo, naslove, privzete vrednosti in plačilne podatke za to poslovno enoto.",
+    "Manage branding, addresses, defaults, and payment details for this unit / brand.":
+      "Upravljajte celostno podobo, naslove, privzete vrednosti in plačilne podatke za to enoto / blagovno znamko.",
     Name: "Naziv",
-    "No business units to show.": "Ni poslovnih enot za prikaz.",
-    "No active business units to show.": "Ni aktivnih poslovnih enot za prikaz.",
-    "No archived business units to show.": "Ni arhiviranih poslovnih enot za prikaz.",
+    "No units / brands to show.": "Ni enot / blagovnih znamk za prikaz.",
+    "No active units / brands to show.": "Ni aktivnih enot / blagovnih znamk za prikaz.",
+    "No archived units / brands to show.": "Ni arhiviranih enot / blagovnih znamk za prikaz.",
     "Overrides the main entity accent color for document rendering.": "Preglasi glavno poudarjeno barvo podjetja pri izrisu dokumentov.",
     "Payment accounts": "Plačilni računi",
     "PDF template": "PDF predloga",
@@ -161,8 +161,8 @@ const translations = {
       "Uporabite predlogo podjetja, razen če ta enota potrebuje drugačno postavitev.",
     Units: "Enote",
     "Use negative credit note values": "Uporabi negativne vrednosti na dobropisu",
-    "Use business units for alternate branding, addresses, defaults, and integration-specific document behavior.":
-      "Poslovne enote uporabite za drugo celostno podobo, naslove, privzete vrednosti in vedenje dokumentov, vezano na integracije.",
+    "Use units / brands for alternate branding, addresses, defaults, and integration-specific document behavior.":
+      "Enote / blagovne znamke uporabite za drugo celostno podobo, naslove, privzete vrednosti in vedenje dokumentov, vezano na integracije.",
     "Uses main entity address and defaults.": "Uporablja glavni naslov in privzete vrednosti podjetja.",
     Website: "Spletna stran",
     "Insert variable": "Vstavi spremenljivko",
@@ -487,7 +487,7 @@ function BusinessUnitCreateDialog({
     const created = await onCreate({
       name: values.name.trim(),
     });
-    toast.success(t("Business unit created"));
+    toast.success(t("Unit / brand created"));
     onCreated(created);
     onOpenChange(false);
   };
@@ -704,7 +704,7 @@ function BusinessUnitSettingsEditor({
               {unit.deleted_at ? <Badge variant="secondary">{t("Archived")}</Badge> : null}
             </div>
             <DialogDescription>
-              {t("Manage branding, addresses, defaults, and payment details for this business unit.")}
+              {t("Manage branding, addresses, defaults, and payment details for this unit / brand.")}
             </DialogDescription>
           </div>
         </div>
@@ -1190,7 +1190,7 @@ export function BusinessUnitsManager({
   const handleArchiveConfirmed = async () => {
     if (!archiveTargetUnit) return;
     await onArchive(archiveTargetUnit.id);
-    toast.success(t("Business unit archived"));
+    toast.success(t("Unit / brand archived"));
     if (editingUnitId === archiveTargetUnit.id) {
       setEditingUnitId(null);
     }
@@ -1205,24 +1205,24 @@ export function BusinessUnitsManager({
 
   const emptyMessage =
     filterMode === "archived"
-      ? t("No archived business units to show.")
+      ? t("No archived units / brands to show.")
       : filterMode === "active"
-        ? t("No active business units to show.")
-        : t("No business units to show.");
+        ? t("No active units / brands to show.")
+        : t("No units / brands to show.");
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="font-semibold text-lg">{t("Business units")}</h2>
+          <h2 className="font-semibold text-lg">{t("Units / Brands")}</h2>
           <p className="text-muted-foreground text-sm">
-            {t("Create a unit first, then configure its branding, defaults, and payment details from the settings panel.")}
+            {t("Create a unit / brand first, then configure its branding, defaults, and payment details from the settings panel.")}
           </p>
         </div>
         <div className="flex items-center gap-3">
           <Button onClick={() => setCreateOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />
-            {t("Add business unit")}
+            {t("Add unit / brand")}
           </Button>
         </div>
       </div>
@@ -1240,7 +1240,7 @@ export function BusinessUnitsManager({
               <div className="min-w-0">
                 <div className="text-base">{t("Units")}</div>
                 <div className="mt-1 text-muted-foreground text-sm">
-                  {t("Create a unit, then open its settings only when you need to change something.")}
+                  {t("Create a unit / brand, then open its settings only when you need to change something.")}
                 </div>
               </div>
               <DropdownMenu>

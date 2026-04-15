@@ -15,16 +15,16 @@ export function BusinessUnitEmptyState({ t, onCreate }: BusinessUnitEmptyStatePr
           <Building2 className="h-6 w-6" />
         </div>
         <CardTitle>
-          {t("Create your first business unit")}
+          {t("Create your first unit / brand")}
         </CardTitle>
         <CardDescription>
-          {t("Use business units for alternate branding, addresses, defaults, and integration-specific document behavior.")}
+          {t("Use units / brands for alternate branding, addresses, defaults, and integration-specific document behavior.")}
         </CardDescription>
       </CardHeader>
       <CardContent className="flex justify-center">
         <Button onClick={onCreate}>
           <Plus className="mr-2 h-4 w-4" />
-          {t("Create first business unit")}
+          {t("Create first unit / brand")}
         </Button>
       </CardContent>
     </Card>

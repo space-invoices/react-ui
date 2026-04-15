@@ -165,7 +165,7 @@ function getDefaultLockedMessage(feature: GatedFeature): string {
     eslog: "eSlog export requires an Advanced or Pro plan",
     recurring: "Recurring invoices require an Advanced or Pro plan",
     email_sending: "Email sending requires an Advanced or Pro plan",
-    business_units: "Business units require an Advanced or Pro plan",
+    business_units: "Units / Brands require an Advanced or Pro plan",
     custom_templates: "Custom templates require an Advanced plan",
     api_access: "API access requires an Advanced plan",
     webhooks: "Webhooks require an Advanced plan",

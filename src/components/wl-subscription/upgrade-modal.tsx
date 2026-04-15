@@ -226,6 +226,7 @@ function getFeatureDisplayName(feature: GatedFeature): string {
     eslog: "eSlog Export",
     recurring: "Recurring Invoices",
     email_sending: "Email Sending",
+    business_units: "Business Units",
     custom_templates: "Custom Templates",
     api_access: "API Access",
     webhooks: "Webhooks",

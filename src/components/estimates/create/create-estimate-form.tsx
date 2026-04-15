@@ -6,7 +6,7 @@ import type { ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Resolver } from "react-hook-form";
 import { useForm, useWatch } from "react-hook-form";
-import type { z } from "zod";
+import { z } from "zod";
 import { Form } from "@/ui/components/ui/form";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/ui/components/ui/tooltip";
 import { createEstimateSchema } from "@/ui/generated/schemas";
@@ -23,6 +23,13 @@ import { createTranslation } from "@/ui/lib/translation";
 import { useEntities } from "@/ui/providers/entities-context";
 import { useFormFooterRegistration } from "@/ui/providers/form-footer-context";
 import { CUSTOMERS_CACHE_KEY } from "../../customers/customers.hooks";
+import { BusinessUnitSelectField } from "../../documents/create/business-unit-select-field";
+import {
+  type BusinessUnitOption,
+  getDocumentDefaultFields,
+  mergeEntityAndBusinessUnitSettings,
+} from "../../documents/create/business-unit-utils";
+import { applyCustomCreateTemplate } from "../../documents/create/custom-create-template";
 import { withEstimateIssueDateValidation } from "../../documents/create/document-date-validation";
 import {
   DocumentDetailsSection,
@@ -36,8 +43,10 @@ import { withRequiredDocumentItemFields } from "../../documents/create/document-
 import { DocumentItemsSection, type PriceModesMap } from "../../documents/create/document-items-section";
 import { DocumentRecipientSection } from "../../documents/create/document-recipient-section";
 import { prepareDocumentItems } from "../../documents/create/prepare-document-submission";
-import { applyCustomCreateTemplate } from "../../documents/create/custom-create-template";
-import { financialInputsMatchInitial, resolvePreservedExpectedTotal } from "../../documents/create/preserved-expected-total";
+import {
+  financialInputsMatchInitial,
+  resolvePreservedExpectedTotal,
+} from "../../documents/create/preserved-expected-total";
 import type { DocumentTypes } from "../../documents/types";
 import { useCreateCustomEstimate, useCreateEstimate, useUpdateEstimate } from "../estimates.hooks";
 import de from "./locales/de";
@@ -72,6 +81,7 @@ const translations = {
 const createEstimateFormSchema = withEstimateIssueDateValidation(
   withRequiredDocumentItemFields(
     createEstimateSchema.extend({
+      business_unit_id: z.string().nullish(),
       pt: ptDocumentInputFormSchema.optional(),
     }),
   ),
@@ -83,7 +93,11 @@ type CreateEstimateFormValues = z.infer<typeof createEstimateFormSchema> & {
 };
 
 /** Preview payload extends request with display-only fields */
-type EstimatePreviewPayload = Partial<CreateEstimateRequest> & { number?: string; pt?: PtDocumentInputForm };
+type EstimatePreviewPayload = Partial<CreateEstimateRequest> & {
+  number?: string;
+  pt?: PtDocumentInputForm;
+  business_unit_id?: string | null;
+};
 
 type CreateEstimateFormProps = {
   type: DocumentTypes;
@@ -97,8 +111,12 @@ type CreateEstimateFormProps = {
   /** Initial values for form fields (used for document duplication) */
   initialValues?: Partial<CreateEstimateRequest> & {
     number?: string;
+    business_unit_id?: string | null;
     title_type?: "estimate" | "proforma_invoice" | null;
   };
+  businessUnits?: BusinessUnitOption[];
+  showBusinessUnitSelect?: boolean;
+  disableBusinessUnitSelect?: boolean;
   mode?: "create" | "edit";
   documentId?: string;
   /** Whether draft actions should be available in the UI */
@@ -117,6 +135,9 @@ export default function CreateEstimateForm({
   onAddNewTax,
   onHeaderActionChange,
   initialValues,
+  businessUnits = [],
+  showBusinessUnitSelect = businessUnits.length > 0 || !!(initialValues as any)?.business_unit_id,
+  disableBusinessUnitSelect = false,
   mode = "create",
   documentId,
   allowDrafts = true,
@@ -137,6 +158,14 @@ export default function CreateEstimateForm({
   const { activeEntity } = useEntities();
   const queryClient = useQueryClient();
   const isEditMode = mode === "edit";
+  const initialBusinessUnit = useMemo(
+    () => businessUnits.find((unit) => unit.id === ((initialValues as any)?.business_unit_id ?? null)) ?? null,
+    [businessUnits, initialValues],
+  );
+  const initialMergedSettings = useMemo(
+    () => mergeEntityAndBusinessUnitSettings((activeEntity?.settings as any) ?? {}, initialBusinessUnit),
+    [activeEntity?.settings, initialBusinessUnit],
+  );
 
   // Title type state: "estimate" (default) or "proforma_invoice"
   const [titleType, setTitleType] = useState<"estimate" | "proforma_invoice">(
@@ -147,22 +176,19 @@ export default function CreateEstimateForm({
   const [isDraftPending, setIsDraftPending] = useState(false);
 
   // Get default estimate note from entity settings
-  const defaultEstimateNote = (activeEntity?.settings as any)?.default_estimate_note || "";
+  const initialDocumentDefaults = getDocumentDefaultFields("estimate", initialMergedSettings);
+  const defaultEstimateNote = initialDocumentDefaults.note;
   const defaultEstimateValidDays = (activeEntity?.settings as any)?.default_estimate_valid_days ?? 30;
 
-  // Fetch next estimate number
-  const { data: nextNumberData } = useNextDocumentNumber(entityId, "estimate", {
-    enabled: !!entityId && !isEditMode,
-  });
-
   // Get default payment terms and footer from entity settings
-  const defaultPaymentTerms = (activeEntity?.settings as any)?.default_estimate_payment_terms || "";
-  const defaultFooter = (activeEntity?.settings as any)?.document_footer || "";
+  const defaultPaymentTerms = initialDocumentDefaults.payment_terms;
+  const defaultFooter = initialDocumentDefaults.footer;
 
   const form = useForm<CreateEstimateFormValues>({
     resolver: zodResolver(createEstimateFormSchema) as Resolver<CreateEstimateFormValues>,
     defaultValues: {
       number: initialValues?.number ?? "",
+      business_unit_id: (initialValues as any)?.business_unit_id ?? null,
       calculation_mode: (initialValues as any)?.calculation_mode ?? undefined,
       date: initialValues?.date || new Date().toISOString(),
       customer_id: initialValues?.customer_id ?? undefined,
@@ -202,7 +228,7 @@ export default function CreateEstimateForm({
       note: initialValues?.note ?? (isEditMode ? "" : defaultEstimateNote),
       tax_clause: (initialValues as any)?.tax_clause ?? "",
       payment_terms: initialValues?.payment_terms ?? (isEditMode ? "" : defaultPaymentTerms),
-      signature: (initialValues as any)?.signature ?? "",
+      signature: (initialValues as any)?.signature ?? (isEditMode ? "" : initialDocumentDefaults.signature),
       footer: (initialValues as any)?.footer ?? (isEditMode ? "" : defaultFooter),
       date_valid_till:
         initialValues?.date_valid_till ||
@@ -211,6 +237,23 @@ export default function CreateEstimateForm({
           : calculateDueDate(initialValues?.date || new Date().toISOString(), defaultEstimateValidDays)),
       pt: ((initialValues as any)?.pt as PtDocumentInputForm | undefined) ?? undefined,
     },
+  });
+  const selectedBusinessUnitId = useWatch({ control: form.control, name: "business_unit_id" as any });
+  const selectedBusinessUnit = useMemo(
+    () => businessUnits.find((unit) => unit.id === selectedBusinessUnitId) ?? null,
+    [businessUnits, selectedBusinessUnitId],
+  );
+  const mergedSettings = useMemo(
+    () => mergeEntityAndBusinessUnitSettings((activeEntity?.settings as any) ?? {}, selectedBusinessUnit),
+    [activeEntity?.settings, selectedBusinessUnit],
+  );
+  const derivedDocumentDefaults = useMemo(() => getDocumentDefaultFields("estimate", mergedSettings), [mergedSettings]);
+  const appliedDerivedDefaultsRef = useRef(derivedDocumentDefaults);
+
+  // Fetch next estimate number
+  const { data: nextNumberData } = useNextDocumentNumber(entityId, "estimate", {
+    businessUnitId: selectedBusinessUnitId ?? null,
+    enabled: !!entityId && !isEditMode,
   });
 
   // Price modes per item (gross vs net) - collected from component state at submit
@@ -268,17 +311,31 @@ export default function CreateEstimateForm({
     }
   }, [form, isEditMode, nextNumberData?.number]);
 
-  // Update default note and valid-till date when entity loads
+  // Update default note/signature/footer/payment terms when unit selection changes
+  useEffect(() => {
+    if (isEditMode) {
+      appliedDerivedDefaultsRef.current = derivedDocumentDefaults;
+      return;
+    }
+
+    const previousDefaults = appliedDerivedDefaultsRef.current;
+    for (const field of ["note", "payment_terms", "footer", "signature"] as const) {
+      const currentValue = form.getValues(field);
+      if (currentValue === "" || currentValue === previousDefaults[field]) {
+        form.setValue(field, derivedDocumentDefaults[field], {
+          shouldDirty: currentValue === previousDefaults[field] && currentValue !== derivedDocumentDefaults[field],
+          shouldTouch: false,
+          shouldValidate: false,
+        });
+      }
+    }
+
+    appliedDerivedDefaultsRef.current = derivedDocumentDefaults;
+  }, [derivedDocumentDefaults, form, isEditMode]);
+
+  // Update valid-till date when entity loads
   useEffect(() => {
     if (isEditMode) return;
-    const entityDefaultNote = (activeEntity?.settings as any)?.default_estimate_note;
-    if (entityDefaultNote && !form.getValues("note")) {
-      form.setValue("note", entityDefaultNote);
-    }
-    const entityDefaultSignature = (activeEntity?.settings as any)?.default_document_signature;
-    if (entityDefaultSignature && !form.getValues("signature")) {
-      form.setValue("signature", entityDefaultSignature);
-    }
     if (!initialValues?.date_valid_till) {
       const validDays = (activeEntity?.settings as any)?.default_estimate_valid_days ?? 30;
       const currentDate = form.getValues("date");
@@ -560,6 +617,7 @@ export default function CreateEstimateForm({
       const preservedExpectedTotalWithTax = getPreservedExpectedTotalWithTax(values);
       return {
         number: values.number,
+        business_unit_id: values.business_unit_id ?? null,
         date: values.date,
         customer_id: values.customer_id,
         customer: values.customer,
@@ -623,6 +681,14 @@ export default function CreateEstimateForm({
           />
 
           <DocumentDetailsSection control={form.control} documentType={type} t={t} locale={locale}>
+            {showBusinessUnitSelect && (
+              <BusinessUnitSelectField
+                control={form.control as any}
+                t={t}
+                options={businessUnits}
+                disabled={disableBusinessUnitSelect}
+              />
+            )}
             {detailsExtras}
           </DocumentDetailsSection>
         </div>

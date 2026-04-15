@@ -16,6 +16,7 @@ type CustomerData = {
 type BaseDocumentValues = {
   number?: string;
   date?: string;
+  business_unit_id?: string | null;
   customer_id?: string | null;
   customer?: CustomerData | null;
 
@@ -100,7 +101,9 @@ export function prepareDocumentCustomerData<T extends BaseDocumentValues>(
   }
 }
 
-export function cleanupEmptyCustomerId<T extends BaseDocumentValues>(nextValues: T & { customer_id?: string | null }): void {
+export function cleanupEmptyCustomerId<T extends BaseDocumentValues>(
+  nextValues: T & { customer_id?: string | null },
+): void {
   if (!nextValues.customer_id) {
     delete nextValues.customer_id;
   }
@@ -151,6 +154,7 @@ export function buildDocumentBasePayload(
 ): Record<string, any> {
   const {
     number: _number,
+    business_unit_id,
     note,
     payment_terms,
     reference,
@@ -165,6 +169,10 @@ export function buildDocumentBasePayload(
     ...restValues,
     date: normalizeDateOnlyInput(nextValues.date),
   };
+
+  if (business_unit_id !== undefined) {
+    payload.business_unit_id = business_unit_id || null;
+  }
 
   for (const [key, value] of Object.entries({
     note,

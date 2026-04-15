@@ -17,6 +17,7 @@ const authorizeShopifySchemaDefinition = z.object({
   issue_invoice_for_bank: z.boolean().optional(),
   issue_invoice_on_complete: z.boolean().optional(),
   auto_process_delay_seconds: z.number().int().gte(0).optional(),
+  business_unit_id: z.union([z.string(), z.null()]).optional(),
 });
 
 export type AuthorizeShopifySchema = z.infer<typeof authorizeShopifySchemaDefinition>;

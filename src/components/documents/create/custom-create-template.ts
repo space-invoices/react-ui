@@ -149,5 +149,5 @@ export function applyCustomCreateTemplate<T extends Record<string, any>>(payload
     total_with_tax: template.total_with_tax,
     total_discount: template.total_discount ?? 0,
     taxes: template.taxes ?? [],
-  };
+  } as unknown as T;
 }

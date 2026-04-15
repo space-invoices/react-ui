@@ -6,7 +6,7 @@ import type { ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Resolver } from "react-hook-form";
 import { useForm, useWatch } from "react-hook-form";
-import type { z } from "zod";
+import { z } from "zod";
 import { Alert, AlertDescription, AlertTitle } from "@/ui/components/ui/alert";
 import { Button } from "@/ui/components/ui/button";
 import { Form, FormRoot } from "@/ui/components/ui/form";
@@ -34,6 +34,13 @@ import { cn } from "@/ui/lib/utils";
 import { useEntities } from "@/ui/providers/entities-context";
 import { useFormFooterRegistration } from "@/ui/providers/form-footer-context";
 import { CUSTOMERS_CACHE_KEY } from "../../customers/customers.hooks";
+import { BusinessUnitSelectField } from "../../documents/create/business-unit-select-field";
+import {
+  type BusinessUnitOption,
+  getDocumentDefaultFields,
+  mergeEntityAndBusinessUnitSettings,
+} from "../../documents/create/business-unit-utils";
+import { applyCustomCreateTemplate } from "../../documents/create/custom-create-template";
 import { withInvoiceIssueDateValidation } from "../../documents/create/document-date-validation";
 import {
   DocumentDetailsSection,
@@ -58,8 +65,10 @@ import {
   validatePaymentRows,
 } from "../../documents/create/payment-rows";
 import { prepareDocumentItems } from "../../documents/create/prepare-document-submission";
-import { applyCustomCreateTemplate } from "../../documents/create/custom-create-template";
-import { financialInputsMatchInitial, resolvePreservedExpectedTotal } from "../../documents/create/preserved-expected-total";
+import {
+  financialInputsMatchInitial,
+  resolvePreservedExpectedTotal,
+} from "../../documents/create/preserved-expected-total";
 import { scrollToFirstInvalidField } from "../../documents/create/scroll-to-first-invalid-field";
 import type { DocumentTypes } from "../../documents/types";
 import { useCreateCustomInvoice, useCreateInvoice, useNextInvoiceNumber, useUpdateInvoice } from "../invoices.hooks";
@@ -122,6 +131,7 @@ const FORM_ID = "create-invoice-form";
 const createInvoiceFormSchema = withInvoiceIssueDateValidation(
   withRequiredDocumentItemFields(
     createInvoiceSchema.extend({
+      business_unit_id: z.string().nullish(),
       pt: ptDocumentInputFormSchema.optional(),
     }),
   ),
@@ -137,7 +147,12 @@ type CreateInvoiceFormValues = z.infer<typeof createInvoiceFormSchema> & {
 };
 
 /** Preview payload extends request with display-only fields */
-type InvoicePreviewPayload = Partial<CreateInvoiceRequest> & { id?: string; number?: string; pt?: PtDocumentInputForm };
+type InvoicePreviewPayload = Partial<CreateInvoiceRequest> & {
+  id?: string;
+  number?: string;
+  pt?: PtDocumentInputForm;
+  business_unit_id?: string | null;
+};
 
 type DocumentAddFormProps = {
   type: DocumentTypes;
@@ -148,7 +163,10 @@ type DocumentAddFormProps = {
   onAddNewTax?: () => void;
   onHeaderActionChange?: (action: ReactNode) => void;
   /** Initial values for form fields (used for document duplication or editing) */
-  initialValues?: Partial<CreateInvoiceRequest> & { number?: string };
+  initialValues?: Partial<CreateInvoiceRequest> & { number?: string; business_unit_id?: string | null };
+  businessUnits?: BusinessUnitOption[];
+  showBusinessUnitSelect?: boolean;
+  disableBusinessUnitSelect?: boolean;
   /** Source documents linked to this invoice (e.g., delivery notes merged into this invoice) */
   sourceDocuments?: LinkedDocumentSummary[];
   /** Force linking documents even if an advance invoice is already applied to another invoice */
@@ -176,7 +194,7 @@ function buildInvoiceFormValues({
   defaultInvoiceDueDays,
   isEditMode,
 }: {
-  initialValues?: Partial<CreateInvoiceRequest> & { number?: string };
+  initialValues?: Partial<CreateInvoiceRequest> & { number?: string; business_unit_id?: string | null };
   currencyCode?: string;
   defaultInvoiceNote: string;
   defaultPaymentTerms: string;
@@ -187,6 +205,7 @@ function buildInvoiceFormValues({
 }): CreateInvoiceFormValues {
   return {
     number: initialValues?.number || "",
+    business_unit_id: (initialValues as any)?.business_unit_id ?? null,
     calculation_mode: (initialValues as any)?.calculation_mode ?? undefined,
     date: initialValues?.date || new Date().toISOString(),
     customer_id: initialValues?.customer_id ?? undefined,
@@ -249,6 +268,9 @@ export default function CreateInvoiceForm({
   onAddNewTax,
   onHeaderActionChange,
   initialValues,
+  businessUnits = [],
+  showBusinessUnitSelect = businessUnits.length > 0 || !!(initialValues as any)?.business_unit_id,
+  disableBusinessUnitSelect = false,
   sourceDocuments,
   forceLinkedDocuments,
   mode = "create",
@@ -272,12 +294,21 @@ export default function CreateInvoiceForm({
   const isEditMode = mode === "edit";
   const { activeEntity } = useEntities();
   const queryClient = useQueryClient();
+  const initialBusinessUnit = useMemo(
+    () => businessUnits.find((unit) => unit.id === ((initialValues as any)?.business_unit_id ?? null)) ?? null,
+    [businessUnits, initialValues],
+  );
+  const initialMergedSettings = useMemo(
+    () => mergeEntityAndBusinessUnitSettings((activeEntity?.settings as any) ?? {}, initialBusinessUnit),
+    [activeEntity?.settings, initialBusinessUnit],
+  );
 
   // Get default invoice note and payment terms from entity settings
-  const defaultInvoiceNote = (activeEntity?.settings as any)?.default_invoice_note || "";
-  const defaultPaymentTerms = (activeEntity?.settings as any)?.default_invoice_payment_terms || "";
-  const defaultFooter = (activeEntity?.settings as any)?.document_footer || "";
-  const defaultSignature = (activeEntity?.settings as any)?.default_document_signature || "";
+  const initialDocumentDefaults = getDocumentDefaultFields("invoice", initialMergedSettings);
+  const defaultInvoiceNote = initialDocumentDefaults.note;
+  const defaultPaymentTerms = initialDocumentDefaults.payment_terms;
+  const defaultFooter = initialDocumentDefaults.footer;
+  const defaultSignature = initialDocumentDefaults.signature;
   const defaultInvoiceDueDays = (activeEntity?.settings as any)?.default_invoice_due_days ?? 30;
 
   // ============================================================================
@@ -434,6 +465,17 @@ export default function CreateInvoiceForm({
   });
 
   const watchedItems = useWatch({ control: form.control, name: "items" });
+  const selectedBusinessUnitId = useWatch({ control: form.control, name: "business_unit_id" as any });
+  const selectedBusinessUnit = useMemo(
+    () => businessUnits.find((unit) => unit.id === selectedBusinessUnitId) ?? null,
+    [businessUnits, selectedBusinessUnitId],
+  );
+  const mergedSettings = useMemo(
+    () => mergeEntityAndBusinessUnitSettings((activeEntity?.settings as any) ?? {}, selectedBusinessUnit),
+    [activeEntity?.settings, selectedBusinessUnit],
+  );
+  const derivedDocumentDefaults = useMemo(() => getDocumentDefaultFields("invoice", mergedSettings), [mergedSettings]);
+  const appliedDerivedDefaultsRef = useRef(derivedDocumentDefaults);
   const paymentDocumentTotal = useMemo(
     () => calculateDocumentTotal((watchedItems as any[]) ?? [], priceModesRef.current),
     [watchedItems],
@@ -567,6 +609,7 @@ export default function CreateInvoiceForm({
   const { data: nextNumberData, isLoading: isNextNumberLoading } = useNextInvoiceNumber(entityId, {
     business_premise_name: activePremiseName,
     electronic_device_name: activeDeviceNameForNumber,
+    business_unit_id: selectedBusinessUnitId ?? null,
     enabled:
       !!entityId && !furs.isLoading && furs.isSelectionReady && !fina.isLoading && fina.isSelectionReady && !isEditMode,
   });
@@ -710,6 +753,28 @@ export default function CreateInvoiceForm({
       form.setValue("number", nextNumberData.number);
     }
   }, [nextNumberData?.number, form]);
+
+  useEffect(() => {
+    if (isEditMode) {
+      appliedDerivedDefaultsRef.current = derivedDocumentDefaults;
+      return;
+    }
+
+    const previousDefaults = appliedDerivedDefaultsRef.current;
+
+    for (const field of ["note", "payment_terms", "footer", "signature"] as const) {
+      const currentValue = form.getValues(field);
+      if (currentValue === "" || currentValue === previousDefaults[field]) {
+        form.setValue(field, derivedDocumentDefaults[field], {
+          shouldDirty: currentValue === previousDefaults[field] && currentValue !== derivedDocumentDefaults[field],
+          shouldTouch: false,
+          shouldValidate: false,
+        });
+      }
+    }
+
+    appliedDerivedDefaultsRef.current = derivedDocumentDefaults;
+  }, [derivedDocumentDefaults, form, isEditMode]);
 
   useEffect(() => {
     if (!isFiscalizationDateLocked) return;
@@ -1148,7 +1213,7 @@ export default function CreateInvoiceForm({
         elapsedMs: Number((performance.now() - duplicateHydrationStartedAtRef.current).toFixed(1)),
       });
     }
-  }, [activeEntity, defaultSignature, form, hasInitialDueDate, hasInitialValues, initialValues, isEditMode]);
+  }, [activeEntity, defaultSignature, form, hasInitialDueDate, hasInitialValues, isEditMode]);
 
   // Recalculate due date when document date changes (skip in edit mode and custom due days)
   const prevDateRef = useRef(form.getValues("date"));
@@ -1188,6 +1253,7 @@ export default function CreateInvoiceForm({
       });
       return {
         number: formValues.number,
+        business_unit_id: formValues.business_unit_id ?? null,
         date: formValues.date,
         date_service: formValues.date_service,
         date_service_to: formValues.date_service_to,
@@ -1455,6 +1521,14 @@ export default function CreateInvoiceForm({
               reason: fiscalizationDateLockReason,
             }}
           >
+            {showBusinessUnitSelect && (
+              <BusinessUnitSelectField
+                control={form.control as any}
+                t={t}
+                options={businessUnits}
+                disabled={disableBusinessUnitSelect}
+              />
+            )}
             {/* Invoice-specific: Mark as paid section (UI-only state, not in form schema) */}
             {/* Hide in edit mode - payments are managed separately */}
             {!isEditMode && (

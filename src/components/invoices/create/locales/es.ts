@@ -87,6 +87,8 @@ export default {
   "Click to enable fiscalization": "Haga clic para activar la fiscalización",
   "Fiscally verify": "Verificación fiscal",
   "Click to skip fiscalization for this invoice": "Haga clic para omitir la fiscalización para esta factura",
+  "Business unit": "Business unit",
+  "No unit": "No unit",
   "e-SLOG": "e-SLOG",
   "Click to skip e-SLOG validation for this invoice": "Haga clic para omitir la validación e-SLOG para esta factura",
   "Click to enable e-SLOG validation": "Haga clic para activar la validación e-SLOG",

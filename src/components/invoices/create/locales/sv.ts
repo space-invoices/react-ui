@@ -87,6 +87,8 @@ export default {
   "Click to enable fiscalization": "Klicka för att aktivera fiskalisering",
   "Fiscally verify": "Fiskalisera",
   "Click to skip fiscalization for this invoice": "Klicka för att hoppa över fiskalisering för den här fakturan",
+  "Business unit": "Business unit",
+  "No unit": "No unit",
   "e-SLOG": "e-SLOG",
   "Click to skip e-SLOG validation for this invoice":
     "Klicka för att hoppa över e-SLOG-validering för den här fakturan",

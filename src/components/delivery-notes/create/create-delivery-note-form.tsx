@@ -17,6 +17,13 @@ import { createTranslation } from "@/ui/lib/translation";
 import { useEntities } from "@/ui/providers/entities-context";
 import { useFormFooterRegistration } from "@/ui/providers/form-footer-context";
 import { CUSTOMERS_CACHE_KEY } from "../../customers/customers.hooks";
+import { BusinessUnitSelectField } from "../../documents/create/business-unit-select-field";
+import {
+  type BusinessUnitOption,
+  getDocumentDefaultFields,
+  mergeEntityAndBusinessUnitSettings,
+} from "../../documents/create/business-unit-utils";
+import { applyCustomCreateTemplate } from "../../documents/create/custom-create-template";
 import {
   DocumentDetailsSection,
   DocumentFooterField,
@@ -28,8 +35,10 @@ import { withRequiredDocumentItemFields } from "../../documents/create/document-
 import { DocumentItemsSection, type PriceModesMap } from "../../documents/create/document-items-section";
 import { DocumentRecipientSection } from "../../documents/create/document-recipient-section";
 import { prepareDocumentItems } from "../../documents/create/prepare-document-submission";
-import { applyCustomCreateTemplate } from "../../documents/create/custom-create-template";
-import { financialInputsMatchInitial, resolvePreservedExpectedTotal } from "../../documents/create/preserved-expected-total";
+import {
+  financialInputsMatchInitial,
+  resolvePreservedExpectedTotal,
+} from "../../documents/create/preserved-expected-total";
 import type { DocumentTypes } from "../../documents/types";
 import { useCreateCustomDeliveryNote, useCreateDeliveryNote, useUpdateDeliveryNote } from "../delivery-notes.hooks";
 import de from "./locales/de";
@@ -59,10 +68,14 @@ const translations = {
 // Form values: extend schema with local-only fields (number is for display, not sent to API)
 type CreateDeliveryNoteFormValues = z.infer<typeof createDeliveryNoteSchema> & {
   number?: string;
+  business_unit_id?: string | null;
 };
 
 /** Preview payload extends request with display-only fields */
-type DeliveryNotePreviewPayload = Partial<CreateDeliveryNoteRequest> & { number?: string };
+type DeliveryNotePreviewPayload = Partial<CreateDeliveryNoteRequest> & {
+  number?: string;
+  business_unit_id?: string | null;
+};
 
 type CreateDeliveryNoteFormProps = {
   type: DocumentTypes;
@@ -72,7 +85,10 @@ type CreateDeliveryNoteFormProps = {
   onChange?: (data: DeliveryNotePreviewPayload) => void;
   onAddNewTax?: () => void;
   /** Initial values for form fields (used for document duplication) */
-  initialValues?: Partial<CreateDeliveryNoteRequest>;
+  initialValues?: Partial<CreateDeliveryNoteRequest> & { business_unit_id?: string | null };
+  businessUnits?: BusinessUnitOption[];
+  showBusinessUnitSelect?: boolean;
+  disableBusinessUnitSelect?: boolean;
   /** Whether draft actions should be available in the UI */
   allowDrafts?: boolean;
   mode?: "create" | "edit";
@@ -88,6 +104,9 @@ export default function CreateDeliveryNoteForm({
   onChange,
   onAddNewTax,
   initialValues,
+  businessUnits = [],
+  showBusinessUnitSelect = businessUnits.length > 0 || !!(initialValues as any)?.business_unit_id,
+  disableBusinessUnitSelect = false,
   allowDrafts = true,
   mode = "create",
   documentId,
@@ -107,20 +126,24 @@ export default function CreateDeliveryNoteForm({
   const { activeEntity } = useEntities();
   const queryClient = useQueryClient();
   const isEditMode = mode === "edit";
+  const initialBusinessUnit = useMemo(
+    () => businessUnits.find((unit) => unit.id === ((initialValues as any)?.business_unit_id ?? null)) ?? null,
+    [businessUnits, initialValues],
+  );
+  const initialMergedSettings = useMemo(
+    () => mergeEntityAndBusinessUnitSettings((activeEntity?.settings as any) ?? {}, initialBusinessUnit),
+    [activeEntity?.settings, initialBusinessUnit],
+  );
 
   // Draft submission state
   const [isDraftPending, setIsDraftPending] = useState(false);
 
   // Hide prices state (delivery note specific)
-  const defaultHidePrices = (activeEntity?.settings as any)?.delivery_note_hide_prices ?? false;
-  const defaultNote = (activeEntity?.settings as any)?.default_delivery_note_note || "";
-  const defaultFooter = (activeEntity?.settings as any)?.document_footer || "";
+  const defaultHidePrices = (initialMergedSettings as any)?.delivery_note_hide_prices ?? false;
+  const initialDocumentDefaults = getDocumentDefaultFields("delivery_note", initialMergedSettings);
+  const defaultNote = initialDocumentDefaults.note;
+  const defaultFooter = initialDocumentDefaults.footer;
   const [hidePrices, setHidePrices] = useState<boolean>((initialValues as any)?.hide_prices ?? defaultHidePrices);
-
-  // Fetch next delivery note number
-  const { data: nextNumberData } = useNextDocumentNumber(entityId, "delivery_note", {
-    enabled: !!entityId && !isEditMode,
-  });
 
   const form = useForm<CreateDeliveryNoteFormValues>({
     resolver: zodResolver(
@@ -128,6 +151,7 @@ export default function CreateDeliveryNoteForm({
     ) as Resolver<CreateDeliveryNoteFormValues>,
     defaultValues: {
       number: (initialValues as any)?.number ?? "",
+      business_unit_id: (initialValues as any)?.business_unit_id ?? null,
       calculation_mode: (initialValues as any)?.calculation_mode ?? undefined,
       date: initialValues?.date || new Date().toISOString(),
       customer_id: initialValues?.customer_id ?? undefined,
@@ -166,10 +190,28 @@ export default function CreateDeliveryNoteForm({
       note: initialValues?.note ?? (isEditMode ? "" : defaultNote),
       tax_clause: (initialValues as any)?.tax_clause ?? "",
       footer: (initialValues as any)?.footer ?? (isEditMode ? "" : defaultFooter),
-      signature:
-        (initialValues as any)?.signature ??
-        (isEditMode ? "" : (activeEntity?.settings as any)?.default_document_signature || ""),
+      signature: (initialValues as any)?.signature ?? (isEditMode ? "" : initialDocumentDefaults.signature),
     },
+  });
+  const selectedBusinessUnitId = useWatch({ control: form.control, name: "business_unit_id" as any });
+  const selectedBusinessUnit = useMemo(
+    () => businessUnits.find((unit) => unit.id === selectedBusinessUnitId) ?? null,
+    [businessUnits, selectedBusinessUnitId],
+  );
+  const mergedSettings = useMemo(
+    () => mergeEntityAndBusinessUnitSettings((activeEntity?.settings as any) ?? {}, selectedBusinessUnit),
+    [activeEntity?.settings, selectedBusinessUnit],
+  );
+  const derivedDocumentDefaults = useMemo(
+    () => getDocumentDefaultFields("delivery_note", mergedSettings),
+    [mergedSettings],
+  );
+  const appliedDerivedDefaultsRef = useRef(derivedDocumentDefaults);
+
+  // Fetch next delivery note number
+  const { data: nextNumberData } = useNextDocumentNumber(entityId, "delivery_note", {
+    businessUnitId: selectedBusinessUnitId ?? null,
+    enabled: !!entityId && !isEditMode,
   });
 
   // Price modes per item (gross vs net) - collected from component state at submit
@@ -222,6 +264,27 @@ export default function CreateDeliveryNoteForm({
       form.setValue("number", nextNumberData.number);
     }
   }, [nextNumberData?.number, form, isEditMode]);
+
+  useEffect(() => {
+    if (isEditMode) {
+      appliedDerivedDefaultsRef.current = derivedDocumentDefaults;
+      return;
+    }
+
+    const previousDefaults = appliedDerivedDefaultsRef.current;
+    for (const field of ["note", "footer", "signature"] as const) {
+      const currentValue = form.getValues(field);
+      if (currentValue === "" || currentValue === previousDefaults[field]) {
+        form.setValue(field, derivedDocumentDefaults[field], {
+          shouldDirty: currentValue === previousDefaults[field] && currentValue !== derivedDocumentDefaults[field],
+          shouldTouch: false,
+          shouldValidate: false,
+        });
+      }
+    }
+
+    appliedDerivedDefaultsRef.current = derivedDocumentDefaults;
+  }, [derivedDocumentDefaults, form, isEditMode]);
 
   // Set default footer from entity settings when entity data is available
   useEffect(() => {
@@ -433,6 +496,7 @@ export default function CreateDeliveryNoteForm({
       const preservedExpectedTotalWithTax = getPreservedExpectedTotalWithTax(values);
       return {
         number: values.number,
+        business_unit_id: values.business_unit_id ?? null,
         date: values.date,
         customer_id: values.customer_id,
         customer: values.customer,
@@ -493,6 +557,14 @@ export default function CreateDeliveryNoteForm({
           />
 
           <DocumentDetailsSection control={form.control} documentType={type} t={t} locale={locale}>
+            {showBusinessUnitSelect && (
+              <BusinessUnitSelectField
+                control={form.control as any}
+                t={t}
+                options={businessUnits}
+                disabled={disableBusinessUnitSelect}
+              />
+            )}
             {/* Delivery note specific: Hide prices toggle */}
             <div className="flex items-center gap-2">
               <Checkbox

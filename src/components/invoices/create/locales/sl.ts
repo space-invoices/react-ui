@@ -94,6 +94,8 @@ export default {
   "Click to enable fiscalization": "Kliknite za omogočanje davčnega potrjevanja",
   "Fiscally verify": "Davčno potrdi",
   "Click to skip fiscalization for this invoice": "Kliknite za preskočitev davčnega potrjevanja za ta račun",
+  "Business unit": "Poslovna enota",
+  "No unit": "Brez enote",
   // e-SLOG validation
   "e-SLOG": "e-SLOG",
   "Click to skip e-SLOG validation for this invoice": "Kliknite za preskočitev e-SLOG preverjanja za ta račun",

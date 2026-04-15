@@ -176,7 +176,6 @@ export function DocumentPreviewDisplay({
           {
             entity_id: activeEntity.id,
             signal: abortController.signal,
-            cache: "no-store",
           },
         );
 

@@ -9,6 +9,7 @@ export * from './accountwebhook';
 export * from './addentityuser_body';
 export * from './advanceinvoice';
 export * from './authorizeshopify_body';
+export * from './businessunit';
 export * from './calculatedocumentpreview';
 export * from './checktransactiontype';
 export * from './confirmpasswordreset_body';

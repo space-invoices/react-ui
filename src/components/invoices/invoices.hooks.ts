@@ -1,4 +1,10 @@
-import type { CreateInvoice, CustomCreateInvoice, Invoice, SDKMethodOptions, UpdateInvoice } from "@spaceinvoices/js-sdk";
+import type {
+  CreateInvoice,
+  CustomCreateInvoice,
+  Invoice,
+  SDKMethodOptions,
+  UpdateInvoice,
+} from "@spaceinvoices/js-sdk";
 import { documents, invoices } from "@spaceinvoices/js-sdk";
 import { useQuery } from "@tanstack/react-query";
 import { createResourceHooks } from "@/ui/hooks/create-resource-hooks";
@@ -70,6 +76,7 @@ export function useNextInvoiceNumber(
   options?: {
     business_premise_name?: string;
     electronic_device_name?: string;
+    business_unit_id?: string | null;
     enabled?: boolean;
   },
 ) {
@@ -79,6 +86,7 @@ export function useNextInvoiceNumber(
       entityId,
       options?.business_premise_name,
       options?.electronic_device_name,
+      options?.business_unit_id ?? null,
     ],
     queryFn: async () => {
       const response = await documents.getNextNumber(
@@ -86,7 +94,8 @@ export function useNextInvoiceNumber(
           type: "invoice",
           business_premise_name: options?.business_premise_name,
           electronic_device_name: options?.electronic_device_name,
-        },
+          business_unit_id: options?.business_unit_id ?? undefined,
+        } as any,
         { entity_id: entityId },
       );
       return response as NextInvoiceNumberResponse;

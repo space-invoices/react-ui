@@ -15,6 +15,26 @@ type PreviewDocument = {
   currency_code?: string | null;
   customer?: { name?: string | null; email?: string | null } | null;
   customer_id?: string | null;
+  issuer?:
+    | {
+        unit_name?: string | null;
+        email?: string | null;
+        address?: string | null;
+        post_code?: string | null;
+        city?: string | null;
+        country?: string | null;
+      }
+    | null;
+  business_unit?:
+    | {
+        name?: string | null;
+        email?: string | null;
+        address?: string | null;
+        post_code?: string | null;
+        city?: string | null;
+        country?: string | null;
+      }
+    | null;
 };
 
 interface InputWithPreviewProps {

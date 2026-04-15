@@ -6,7 +6,7 @@ import type { ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Resolver } from "react-hook-form";
 import { useForm, useWatch } from "react-hook-form";
-import type { z } from "zod";
+import { z } from "zod";
 import { Button } from "@/ui/components/ui/button";
 import { Form } from "@/ui/components/ui/form";
 import { Skeleton } from "@/ui/components/ui/skeleton";
@@ -28,6 +28,13 @@ import { cn } from "@/ui/lib/utils";
 import { useEntities } from "@/ui/providers/entities-context";
 import { useFormFooterRegistration } from "@/ui/providers/form-footer-context";
 import { CUSTOMERS_CACHE_KEY } from "../../customers/customers.hooks";
+import { BusinessUnitSelectField } from "../../documents/create/business-unit-select-field";
+import {
+  type BusinessUnitOption,
+  getDocumentDefaultFields,
+  mergeEntityAndBusinessUnitSettings,
+} from "../../documents/create/business-unit-utils";
+import { applyCustomCreateTemplate } from "../../documents/create/custom-create-template";
 import { withCreditNoteIssueDateValidation } from "../../documents/create/document-date-validation";
 import {
   DocumentDetailsSection,
@@ -51,8 +58,10 @@ import {
   validatePaymentRows,
 } from "../../documents/create/payment-rows";
 import { prepareDocumentItems } from "../../documents/create/prepare-document-submission";
-import { applyCustomCreateTemplate } from "../../documents/create/custom-create-template";
-import { financialInputsMatchInitial, resolvePreservedExpectedTotal } from "../../documents/create/preserved-expected-total";
+import {
+  financialInputsMatchInitial,
+  resolvePreservedExpectedTotal,
+} from "../../documents/create/preserved-expected-total";
 import { useDocumentCustomerForm } from "../../documents/create/use-document-customer-form";
 import type { DocumentTypes } from "../../documents/types";
 import invoiceDe from "../../invoices/create/locales/de";
@@ -90,6 +99,7 @@ const translations = {
 const createCreditNoteFormSchema = withCreditNoteIssueDateValidation(
   withRequiredDocumentItemFields(
     createCreditNoteSchema.extend({
+      business_unit_id: z.string().nullish(),
       pt: ptDocumentInputFormSchema.optional(),
     }),
   ),
@@ -114,7 +124,11 @@ type CreateCreditNoteFormValues = z.infer<typeof createCreditNoteFormSchema> & {
 };
 
 /** Preview payload extends request with display-only fields */
-type CreditNotePreviewPayload = Partial<CreateCreditNoteRequest> & { number?: string; pt?: PtDocumentInputForm };
+type CreditNotePreviewPayload = Partial<CreateCreditNoteRequest> & {
+  number?: string;
+  pt?: PtDocumentInputForm;
+  business_unit_id?: string | null;
+};
 
 type CreateCreditNoteFormProps = {
   type: DocumentTypes;
@@ -125,7 +139,10 @@ type CreateCreditNoteFormProps = {
   onAddNewTax?: () => void;
   onHeaderActionChange?: (action: ReactNode | null) => void;
   /** Initial values for form fields (used for document duplication) */
-  initialValues?: Partial<CreateCreditNoteRequest>;
+  initialValues?: Partial<CreateCreditNoteRequest> & { business_unit_id?: string | null };
+  businessUnits?: BusinessUnitOption[];
+  showBusinessUnitSelect?: boolean;
+  disableBusinessUnitSelect?: boolean;
   /** Whether draft actions should be available in the UI */
   allowDrafts?: boolean;
   mode?: "create" | "edit";
@@ -146,6 +163,9 @@ export default function CreateCreditNoteForm({
   onAddNewTax,
   onHeaderActionChange,
   initialValues,
+  businessUnits = [],
+  showBusinessUnitSelect = businessUnits.length > 0 || !!(initialValues as any)?.business_unit_id,
+  disableBusinessUnitSelect = false,
   allowDrafts = true,
   mode = "create",
   documentId,
@@ -167,6 +187,14 @@ export default function CreateCreditNoteForm({
   const { activeEntity } = useEntities();
   const queryClient = useQueryClient();
   const isEditMode = mode === "edit";
+  const initialBusinessUnit = useMemo(
+    () => businessUnits.find((unit) => unit.id === ((initialValues as any)?.business_unit_id ?? null)) ?? null,
+    [businessUnits, initialValues],
+  );
+  const initialMergedSettings = useMemo(
+    () => mergeEntityAndBusinessUnitSettings((activeEntity?.settings as any) ?? {}, initialBusinessUnit),
+    [activeEntity?.settings, initialBusinessUnit],
+  );
 
   // ============================================================================
   // FURS & FINA Premise Selection (shared hook)
@@ -227,15 +255,17 @@ export default function CreateCreditNoteForm({
   );
 
   // Get default payment terms and footer from entity settings
-  const defaultPaymentTerms = (activeEntity?.settings as any)?.default_credit_note_payment_terms || "";
-  const defaultFooter = (activeEntity?.settings as any)?.document_footer || "";
-  const defaultSignature = (activeEntity?.settings as any)?.default_document_signature || "";
+  const initialDocumentDefaults = getDocumentDefaultFields("credit_note", initialMergedSettings);
+  const defaultPaymentTerms = initialDocumentDefaults.payment_terms;
+  const defaultFooter = initialDocumentDefaults.footer;
+  const defaultSignature = initialDocumentDefaults.signature;
 
   const form = useForm<CreateCreditNoteFormValues>({
     // Cast resolver to accept extended form type (includes UI-only fields)
     resolver: zodResolver(createCreditNoteFormSchema) as Resolver<CreateCreditNoteFormValues>,
     defaultValues: {
       number: (initialValues as any)?.number ?? "",
+      business_unit_id: (initialValues as any)?.business_unit_id ?? null,
       calculation_mode: (initialValues as any)?.calculation_mode ?? undefined,
       date: initialValues?.date || new Date().toISOString(),
       customer_id: initialValues?.customer_id ?? undefined,
@@ -275,7 +305,7 @@ export default function CreateCreditNoteForm({
       date_service_to: (initialValues as any)?.date_service_to ?? undefined,
       currency_code: initialValues?.currency_code || activeEntity?.currency_code || "EUR",
       reference: (initialValues as any)?.reference ?? "",
-      note: initialValues?.note ?? (isEditMode ? "" : ""),
+      note: initialValues?.note ?? (isEditMode ? "" : initialDocumentDefaults.note),
       tax_clause: (initialValues as any)?.tax_clause ?? "",
       payment_terms: initialValues?.payment_terms ?? (isEditMode ? "" : defaultPaymentTerms),
       footer: (initialValues as any)?.footer ?? (isEditMode ? "" : defaultFooter),
@@ -283,6 +313,20 @@ export default function CreateCreditNoteForm({
       pt: ((initialValues as any)?.pt as PtDocumentInputForm | undefined) ?? undefined,
     },
   });
+  const selectedBusinessUnitId = useWatch({ control: form.control, name: "business_unit_id" as any });
+  const selectedBusinessUnit = useMemo(
+    () => businessUnits.find((unit) => unit.id === selectedBusinessUnitId) ?? null,
+    [businessUnits, selectedBusinessUnitId],
+  );
+  const mergedSettings = useMemo(
+    () => mergeEntityAndBusinessUnitSettings((activeEntity?.settings as any) ?? {}, selectedBusinessUnit),
+    [activeEntity?.settings, selectedBusinessUnit],
+  );
+  const derivedDocumentDefaults = useMemo(
+    () => getDocumentDefaultFields("credit_note", mergedSettings),
+    [mergedSettings],
+  );
+  const appliedDerivedDefaultsRef = useRef(derivedDocumentDefaults);
 
   const formValues = useWatch({
     control: form.control,
@@ -391,6 +435,7 @@ export default function CreateCreditNoteForm({
   const { data: nextNumberData, isLoading: isNextNumberLoading } = useNextDocumentNumber(entityId, "credit_note", {
     businessPremiseName: activePremiseNameForNumber,
     electronicDeviceName: activeDeviceNameForNumber,
+    businessUnitId: selectedBusinessUnitId ?? null,
     enabled:
       !!entityId && !furs.isLoading && furs.isSelectionReady && !fina.isLoading && fina.isSelectionReady && !isEditMode,
   });
@@ -682,24 +727,25 @@ export default function CreateCreditNoteForm({
 
   // Set default note and payment terms from entity settings when entity data is available
   useEffect(() => {
-    if (isEditMode) return;
-    const entityDefaultNote = (activeEntity?.settings as any)?.default_credit_note_note;
-    if (entityDefaultNote && !form.getValues("note")) {
-      form.setValue("note", entityDefaultNote);
+    if (isEditMode) {
+      appliedDerivedDefaultsRef.current = derivedDocumentDefaults;
+      return;
     }
-    const entityDefaultPaymentTerms = (activeEntity?.settings as any)?.default_credit_note_payment_terms;
-    if (entityDefaultPaymentTerms && !form.getValues("payment_terms")) {
-      form.setValue("payment_terms", entityDefaultPaymentTerms);
+
+    const previousDefaults = appliedDerivedDefaultsRef.current;
+    for (const field of ["note", "payment_terms", "footer", "signature"] as const) {
+      const currentValue = form.getValues(field);
+      if (currentValue === "" || currentValue === previousDefaults[field]) {
+        form.setValue(field, derivedDocumentDefaults[field], {
+          shouldDirty: currentValue === previousDefaults[field] && currentValue !== derivedDocumentDefaults[field],
+          shouldTouch: false,
+          shouldValidate: false,
+        });
+      }
     }
-    const entityDefaultFooter = (activeEntity?.settings as any)?.document_footer;
-    if (entityDefaultFooter && !form.getValues("footer")) {
-      form.setValue("footer", entityDefaultFooter);
-    }
-    const entityDefaultSignature = (activeEntity?.settings as any)?.default_document_signature;
-    if (entityDefaultSignature && !form.getValues("signature")) {
-      form.setValue("signature", entityDefaultSignature);
-    }
-  }, [activeEntity, form, isEditMode]);
+
+    appliedDerivedDefaultsRef.current = derivedDocumentDefaults;
+  }, [derivedDocumentDefaults, form, isEditMode]);
 
   // Auto-add tax field for tax subject entities
   useEffect(() => {
@@ -716,6 +762,7 @@ export default function CreateCreditNoteForm({
       const preservedExpectedTotalWithTax = getPreservedExpectedTotalWithTax(values);
       return {
         number: values.number,
+        business_unit_id: values.business_unit_id ?? null,
         date: values.date,
         date_service: (values as any).date_service,
         date_service_to: (values as any).date_service_to,
@@ -878,6 +925,14 @@ export default function CreateCreditNoteForm({
               reason: !isEditMode ? fiscalizationDateLockReason : "",
             }}
           >
+            {showBusinessUnitSelect && (
+              <BusinessUnitSelectField
+                control={form.control as any}
+                t={t}
+                options={businessUnits}
+                disabled={disableBusinessUnitSelect}
+              />
+            )}
             {/* Credit note specific: Mark as paid section (UI-only state, not in form schema) */}
             {!isEditMode && (
               <MarkAsPaidSection

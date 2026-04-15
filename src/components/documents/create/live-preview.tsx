@@ -131,17 +131,21 @@ export function LiveInvoicePreview({
           // Filter out unresolved tax_ids (race condition: form may add
           // { tax_id: undefined } before the tax dropdown auto-selects a value)
           items: filterUnresolvedTaxes(invoiceData.items),
-          issuer: {
-            name: activeEntity.name,
-            address: activeEntity.address,
-            address_2: activeEntity.address_2,
-            post_code: activeEntity.post_code,
-            city: activeEntity.city,
-            state: activeEntity.state,
-            country: activeEntity.country,
-            tax_number: activeEntity.tax_number,
-            ...invoiceData.issuer,
-          },
+          ...(invoiceData.issuer || !(invoiceData as any).business_unit_id
+            ? {
+                issuer: {
+                  name: activeEntity.name,
+                  address: activeEntity.address,
+                  address_2: activeEntity.address_2,
+                  post_code: activeEntity.post_code,
+                  city: activeEntity.city,
+                  state: activeEntity.state,
+                  country: activeEntity.country,
+                  tax_number: activeEntity.tax_number,
+                  ...invoiceData.issuer,
+                },
+              }
+            : {}),
         });
         const requestKey = JSON.stringify({
           documentType,

@@ -88,6 +88,8 @@ export default {
   "Click to enable fiscalization": "Klik om fiscalisatie in te schakelen",
   "Fiscally verify": "Fiscaal verifiëren",
   "Click to skip fiscalization for this invoice": "Klik om fiscalisatie over te slaan voor deze factuur",
+  "Business unit": "Business unit",
+  "No unit": "No unit",
   "e-SLOG": "e-SLOG",
   "Click to skip e-SLOG validation for this invoice": "Klik om e-SLOG-validatie over te slaan voor deze factuur",
   "Click to enable e-SLOG validation": "Klik om e-SLOG-validatie in te schakelen",

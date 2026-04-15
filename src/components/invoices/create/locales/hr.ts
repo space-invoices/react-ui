@@ -87,6 +87,8 @@ export default {
   "Click to enable fiscalization": "Kliknite za omogućavanje fiskalizacije",
   "Fiscally verify": "Fiskalno potvrdi",
   "Click to skip fiscalization for this invoice": "Kliknite za preskakanje fiskalizacije za ovaj račun",
+  "Business unit": "Business unit",
+  "No unit": "No unit",
   "e-SLOG": "e-SLOG",
   "Click to skip e-SLOG validation for this invoice": "Kliknite za preskakanje e-SLOG provjere za ovaj račun",
   "Click to enable e-SLOG validation": "Kliknite za omogućavanje e-SLOG provjere",

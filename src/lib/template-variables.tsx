@@ -10,6 +10,41 @@ type PreviewDocument = {
   currency_code?: string | null;
   customer?: { name?: string | null; email?: string | null } | null;
   customer_id?: string | null;
+  issuer?:
+    | {
+        unit_name?: string | null;
+        email?: string | null;
+        address?: string | null;
+        post_code?: string | null;
+        city?: string | null;
+        country?: string | null;
+      }
+    | null;
+  business_unit?:
+    | {
+        name?: string | null;
+        email?: string | null;
+        address?: string | null;
+        post_code?: string | null;
+        city?: string | null;
+        country?: string | null;
+        settings?:
+          | {
+              bank_accounts?:
+                | Array<{
+                    iban?: string | null;
+                    bank_name?: string | null;
+                    bic?: string | null;
+                    account_number?: string | null;
+                    routing_number?: string | null;
+                    sort_code?: string | null;
+                    is_default?: boolean | null;
+                  }>
+                | null;
+            }
+          | null;
+      }
+    | null;
 };
 
 type TemplateVariableDefinition = {
@@ -34,6 +69,7 @@ const TEMPLATE_VARIABLE_DEFINITIONS: TemplateVariableDefinition[] = [
     translationAliases: ["company-number"],
   },
   { name: "entity_starting_capital", label: "Starting capital", category: "Entity" },
+  { name: "unit_name", label: "Unit name", category: "Business unit" },
   { name: "document_number", label: "Invoice number", category: "Document" },
   { name: "document_date", label: "Invoice date", category: "Document" },
   { name: "document_due_date", label: "Due date", category: "Document" },
@@ -56,6 +92,24 @@ const TEMPLATE_VARIABLE_LOOKUP = new Map(
 );
 
 type TranslationFunction = (key: string) => string;
+
+function getBusinessUnitName(document: PreviewDocument | null | undefined): string | null {
+  if (!document) return null;
+  return document.business_unit?.name || document.issuer?.unit_name || null;
+}
+
+function getResolvedIssuerValue(
+  field: "email" | "address" | "post_code" | "city" | "country",
+  entity: Entity,
+  document?: PreviewDocument | null,
+): string | null {
+  return (
+    document?.business_unit?.[field] ||
+    document?.issuer?.[field] ||
+    (entity as any)[field] ||
+    null
+  );
+}
 
 /**
  * Convert snake_case variable name to Title Case for display
@@ -82,16 +136,17 @@ export function getVariableValue(
 
   // Entity-related variables
   if (varName === "entity_name") return entity.name || null;
-  if (varName === "entity_email") return entity.email || null;
-  if (varName === "entity_address") return entity.address || null;
-  if (varName === "entity_post_code") return entity.post_code || null;
-  if (varName === "entity_city") return entity.city || null;
-  if (varName === "entity_country") return entity.country || null;
+  if (varName === "entity_email") return getResolvedIssuerValue("email", entity, document);
+  if (varName === "entity_address") return getResolvedIssuerValue("address", entity, document);
+  if (varName === "entity_post_code") return getResolvedIssuerValue("post_code", entity, document);
+  if (varName === "entity_city") return getResolvedIssuerValue("city", entity, document);
+  if (varName === "entity_country") return getResolvedIssuerValue("country", entity, document);
   if (varName === "entity_tax_number") return entity.tax_number || null;
   if (varName === "entity_company_number") return entity.company_number || null;
   if (varName === "entity_starting_capital") {
     return entity.starting_capital != null ? String(entity.starting_capital) : null;
   }
+  if (varName === "unit_name") return getBusinessUnitName(document);
 
   // Date variables
   if (varName === "current_date") {
@@ -146,18 +201,31 @@ export function getVariableValue(
     }
   }
 
-  // Bank account variables (from entity settings)
-  const bankAccounts = (entity.settings as any)?.bank_accounts as
+  // Bank account variables (blend unit overrides over entity settings)
+  const bankAccounts =
+    (document?.business_unit?.settings?.bank_accounts as
+      | Array<{
+          iban?: string | null;
+          bank_name?: string | null;
+          bic?: string | null;
+          account_number?: string | null;
+          routing_number?: string | null;
+          sort_code?: string | null;
+          is_default?: boolean | null;
+        }>
+      | null
+      | undefined) ??
+    ((entity.settings as any)?.bank_accounts as
     | Array<{
-        iban?: string;
-        bank_name?: string;
-        bic?: string;
-        account_number?: string;
-        routing_number?: string;
-        sort_code?: string;
-        is_default?: boolean;
+        iban?: string | null;
+        bank_name?: string | null;
+        bic?: string | null;
+        account_number?: string | null;
+        routing_number?: string | null;
+        sort_code?: string | null;
+        is_default?: boolean | null;
       }>
-    | undefined;
+    | undefined);
   const bankAccount = bankAccounts?.find((acc) => acc.is_default) ?? bankAccounts?.[0];
 
   if (varName === "bank_account" && bankAccount) {

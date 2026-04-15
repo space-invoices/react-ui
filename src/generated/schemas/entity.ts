@@ -50,6 +50,19 @@ const createEntitySchemaDefinition = z.object({
           .passthrough(),
         z.null(),
       ]),
+      unit_number_formats: z.union([
+        z
+          .object({
+            invoice: z.union([z.string(), z.null()]),
+            estimate: z.union([z.string(), z.null()]),
+            credit_note: z.union([z.string(), z.null()]),
+            advance_invoice: z.union([z.string(), z.null()]),
+            delivery_note: z.union([z.string(), z.null()]),
+          })
+          .partial()
+          .passthrough(),
+        z.null(),
+      ]),
       primary_color: z.union([z.string(), z.null()]),
       logo_scale_percent: z.union([z.number(), z.null()]),
       has_logo: z.union([z.boolean(), z.null()]),
@@ -380,6 +393,19 @@ const patchEntitySchemaDefinition = z
           z.null(),
         ]),
         number_formats: z.union([
+          z
+            .object({
+              invoice: z.union([z.string(), z.null()]),
+              estimate: z.union([z.string(), z.null()]),
+              credit_note: z.union([z.string(), z.null()]),
+              advance_invoice: z.union([z.string(), z.null()]),
+              delivery_note: z.union([z.string(), z.null()]),
+            })
+            .partial()
+            .passthrough(),
+          z.null(),
+        ]),
+        unit_number_formats: z.union([
           z
             .object({
               invoice: z.union([z.string(), z.null()]),

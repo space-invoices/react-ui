@@ -12,6 +12,7 @@ import { z } from 'zod';
 const DocumentEntity = z
   .object({
     name: z.union([z.string(), z.null()]),
+    unit_name: z.union([z.string(), z.null()]),
     email: z.union([z.string(), z.null()]),
     address: z.union([z.string(), z.null()]),
     address_2: z.union([z.string(), z.null()]),
@@ -193,6 +194,7 @@ const createAdvanceInvoiceSchemaDefinition = z.object({
     .regex(/^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d{3})?Z?)?$/)
     .optional(),
   issuer: DocumentEntity.optional(),
+  business_unit_id: z.union([z.string(), z.null()]).optional(),
   customer_id: z.union([z.string(), z.null()]).optional(),
   customer: CreateDocumentCustomer.optional(),
   note: z.union([z.string(), z.null()]).optional(),
@@ -225,6 +227,7 @@ const updateAdvanceInvoiceSchemaDefinition = z
       .string()
       .regex(/^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d{3})?Z?)?$/),
     issuer: DocumentEntity.and(z.unknown()),
+    business_unit_id: z.union([z.string(), z.null()]),
     customer_id: z.union([z.string(), z.null()]),
     customer: CreateDocumentCustomer,
     items: z.array(CreateDocumentItem).min(1),

@@ -12,6 +12,7 @@ import { z } from 'zod';
 const DocumentEntity = z
   .object({
     name: z.union([z.string(), z.null()]),
+    unit_name: z.union([z.string(), z.null()]),
     email: z.union([z.string(), z.null()]),
     address: z.union([z.string(), z.null()]),
     address_2: z.union([z.string(), z.null()]),
@@ -136,6 +137,7 @@ const createCustomDeliveryNoteSchemaDefinition = z.object({
   issuer: DocumentEntity.and(
     z.union([z.object({}).partial().passthrough(), z.null()])
   ).optional(),
+  business_unit_id: z.union([z.string(), z.null()]).optional(),
   customer_id: z.union([z.string(), z.null()]).optional(),
   customer: CreateDocumentCustomer.optional(),
   note: z.union([z.string(), z.null()]).optional(),

@@ -56,6 +56,7 @@ const CreateDocumentItem = z
 const DocumentEntity = z
   .object({
     name: z.union([z.string(), z.null()]),
+    unit_name: z.union([z.string(), z.null()]),
     email: z.union([z.string(), z.null()]),
     address: z.union([z.string(), z.null()]),
     address_2: z.union([z.string(), z.null()]),

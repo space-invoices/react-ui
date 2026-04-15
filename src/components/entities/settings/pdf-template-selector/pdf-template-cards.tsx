@@ -1,18 +1,7 @@
 import { Check } from "lucide-react";
 import type { PdfTemplateId } from "@/ui/components/documents/create/live-preview";
 import { cn } from "@/ui/lib/utils";
-
-const TEMPLATES: Array<{
-  id: PdfTemplateId;
-  nameKey: string;
-  descriptionKey: string;
-}> = [
-  { id: "modern", nameKey: "Modern", descriptionKey: "Modern template description" },
-  { id: "classic", nameKey: "Classic", descriptionKey: "Classic template description" },
-  { id: "condensed", nameKey: "Condensed", descriptionKey: "Condensed template description" },
-  { id: "minimal", nameKey: "Minimal", descriptionKey: "Minimal template description" },
-  { id: "fashion", nameKey: "Fashion", descriptionKey: "Fashion template description" },
-];
+import { PDF_TEMPLATE_OPTIONS } from "./templates";
 
 export type PdfTemplateCardsProps = {
   selectedTemplate: PdfTemplateId;
@@ -25,7 +14,7 @@ export function PdfTemplateCards({ selectedTemplate, onTemplateChange, t }: PdfT
     <div className="space-y-3">
       <h3 className="font-medium text-muted-foreground text-sm">{t("Template")}</h3>
       <div className="grid gap-3">
-        {TEMPLATES.map((template) => (
+        {PDF_TEMPLATE_OPTIONS.map((template) => (
           <button
             key={template.id}
             type="button"

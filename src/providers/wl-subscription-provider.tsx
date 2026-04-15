@@ -84,6 +84,7 @@ export type GatedFeature =
   | "eslog"
   | "recurring"
   | "email_sending"
+  | "business_units"
   | "custom_templates"
   | "api_access"
   | "webhooks"

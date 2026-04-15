@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Resolver } from "react-hook-form";
 import { useForm, useWatch } from "react-hook-form";
-import type { z } from "zod";
+import { z } from "zod";
 import { Alert, AlertDescription, AlertTitle } from "@/ui/components/ui/alert";
 import { Button } from "@/ui/components/ui/button";
 import { Form, FormRoot } from "@/ui/components/ui/form";
@@ -33,6 +33,13 @@ import { createTranslation } from "@/ui/lib/translation";
 import { cn } from "@/ui/lib/utils";
 import { useEntities } from "@/ui/providers/entities-context";
 import { useFormFooterRegistration } from "@/ui/providers/form-footer-context";
+import { BusinessUnitSelectField } from "../../documents/create/business-unit-select-field";
+import {
+  type BusinessUnitOption,
+  getDocumentDefaultFields,
+  mergeEntityAndBusinessUnitSettings,
+} from "../../documents/create/business-unit-utils";
+import { applyCustomCreateTemplate } from "../../documents/create/custom-create-template";
 import {
   DocumentDetailsSection,
   DocumentFooterField,
@@ -54,8 +61,10 @@ import {
   validatePaymentRows,
 } from "../../documents/create/payment-rows";
 import { prepareDocumentItems } from "../../documents/create/prepare-document-submission";
-import { applyCustomCreateTemplate } from "../../documents/create/custom-create-template";
-import { financialInputsMatchInitial, resolvePreservedExpectedTotal } from "../../documents/create/preserved-expected-total";
+import {
+  financialInputsMatchInitial,
+  resolvePreservedExpectedTotal,
+} from "../../documents/create/preserved-expected-total";
 import { scrollToFirstInvalidField } from "../../documents/create/scroll-to-first-invalid-field";
 import { useDocumentCustomerForm } from "../../documents/create/use-document-customer-form";
 import type { DocumentTypes } from "../../documents/types";
@@ -76,7 +85,11 @@ import invoiceNl from "../../invoices/create/locales/nl";
 import invoicePl from "../../invoices/create/locales/pl";
 import invoicePt from "../../invoices/create/locales/pt";
 import invoiceSl from "../../invoices/create/locales/sl";
-import { useCreateAdvanceInvoice, useCreateCustomAdvanceInvoice, useUpdateAdvanceInvoice } from "../advance-invoices.hooks";
+import {
+  useCreateAdvanceInvoice,
+  useCreateCustomAdvanceInvoice,
+  useUpdateAdvanceInvoice,
+} from "../advance-invoices.hooks";
 import de from "./locales/de";
 import es from "./locales/es";
 import fr from "./locales/fr";
@@ -105,6 +118,7 @@ const translations = {
 const FORM_ID = "create-advance-invoice-form";
 const createAdvanceInvoiceFormSchema = withRequiredDocumentItemFields(
   createAdvanceInvoiceSchema.extend({
+    business_unit_id: z.string().nullish(),
     pt: ptDocumentInputFormSchema.optional(),
   }),
 );
@@ -118,6 +132,7 @@ type CreateAdvanceInvoiceFormValues = z.infer<typeof createAdvanceInvoiceFormSch
 type AdvanceInvoicePreviewPayload = Partial<CreateAdvanceInvoiceRequest> & {
   number?: string;
   pt?: PtDocumentInputForm;
+  business_unit_id?: string | null;
 };
 
 type CreateAdvanceInvoiceFormProps = {
@@ -129,7 +144,10 @@ type CreateAdvanceInvoiceFormProps = {
   onAddNewTax?: () => void;
   onHeaderActionChange?: (action: ReactNode) => void;
   /** Initial values for form fields (used for document duplication) */
-  initialValues?: Partial<CreateAdvanceInvoiceRequest>;
+  initialValues?: Partial<CreateAdvanceInvoiceRequest> & { business_unit_id?: string | null };
+  businessUnits?: BusinessUnitOption[];
+  showBusinessUnitSelect?: boolean;
+  disableBusinessUnitSelect?: boolean;
   /** Whether draft actions should be available in the UI */
   allowDrafts?: boolean;
   mode?: "create" | "edit";
@@ -150,6 +168,9 @@ export default function CreateAdvanceInvoiceForm({
   onAddNewTax,
   onHeaderActionChange,
   initialValues,
+  businessUnits = [],
+  showBusinessUnitSelect = businessUnits.length > 0 || !!(initialValues as any)?.business_unit_id,
+  disableBusinessUnitSelect = false,
   allowDrafts = true,
   mode = "create",
   documentId,
@@ -170,14 +191,20 @@ export default function CreateAdvanceInvoiceForm({
 
   const { activeEntity } = useEntities();
   const isEditMode = mode === "edit";
+  const initialBusinessUnit = useMemo(
+    () => businessUnits.find((unit) => unit.id === ((initialValues as any)?.business_unit_id ?? null)) ?? null,
+    [businessUnits, initialValues],
+  );
+  const initialMergedSettings = useMemo(
+    () => mergeEntityAndBusinessUnitSettings((activeEntity?.settings as any) ?? {}, initialBusinessUnit),
+    [activeEntity?.settings, initialBusinessUnit],
+  );
 
   // Advance invoices have their own default note setting.
   // Note: Advance invoices don't have payment terms - they are documents requesting payment.
-  const defaultNote =
-    (activeEntity?.settings as any)?.default_advance_invoice_note ||
-    (activeEntity?.settings as any)?.default_invoice_note ||
-    "";
-  const defaultFooter = (activeEntity?.settings as any)?.document_footer || "";
+  const initialDocumentDefaults = getDocumentDefaultFields("advance_invoice", initialMergedSettings);
+  const defaultNote = initialDocumentDefaults.note;
+  const defaultFooter = initialDocumentDefaults.footer;
 
   // ============================================================================
   // FURS & FINA Premise Selection (shared hook)
@@ -292,6 +319,7 @@ export default function CreateAdvanceInvoiceForm({
     resolver,
     defaultValues: {
       number: (initialValues as any)?.number ?? "",
+      business_unit_id: (initialValues as any)?.business_unit_id ?? null,
       calculation_mode: (initialValues as any)?.calculation_mode ?? undefined,
       date: initialValues?.date || new Date().toISOString(),
       customer_id: initialValues?.customer_id ?? undefined,
@@ -330,14 +358,26 @@ export default function CreateAdvanceInvoiceForm({
       note: initialValues?.note ?? (isEditMode ? "" : defaultNote),
       tax_clause: (initialValues as any)?.tax_clause ?? "",
       footer: (initialValues as any)?.footer ?? (isEditMode ? "" : defaultFooter),
-      signature:
-        (initialValues as any)?.signature ??
-        (isEditMode ? "" : (activeEntity?.settings as any)?.default_document_signature || ""),
+      signature: (initialValues as any)?.signature ?? (isEditMode ? "" : initialDocumentDefaults.signature),
       pt: ((initialValues as any)?.pt as PtDocumentInputForm | undefined) ?? undefined,
     },
   });
 
   const watchedItems = useWatch({ control: form.control, name: "items" });
+  const selectedBusinessUnitId = useWatch({ control: form.control, name: "business_unit_id" as any });
+  const selectedBusinessUnit = useMemo(
+    () => businessUnits.find((unit) => unit.id === selectedBusinessUnitId) ?? null,
+    [businessUnits, selectedBusinessUnitId],
+  );
+  const mergedSettings = useMemo(
+    () => mergeEntityAndBusinessUnitSettings((activeEntity?.settings as any) ?? {}, selectedBusinessUnit),
+    [activeEntity?.settings, selectedBusinessUnit],
+  );
+  const derivedDocumentDefaults = useMemo(
+    () => getDocumentDefaultFields("advance_invoice", mergedSettings),
+    [mergedSettings],
+  );
+  const appliedDerivedDefaultsRef = useRef(derivedDocumentDefaults);
   const paymentDocumentTotal = useMemo(
     () => calculateDocumentTotal((watchedItems as any[]) ?? [], priceModesRef.current),
     [watchedItems],
@@ -597,6 +637,7 @@ export default function CreateAdvanceInvoiceForm({
   const { data: nextNumberData, isLoading: isNextNumberLoading } = useNextDocumentNumber(entityId, "advance_invoice", {
     businessPremiseName: activePremiseNameForNumber,
     electronicDeviceName: activeDeviceNameForNumber,
+    businessUnitId: selectedBusinessUnitId ?? null,
     enabled:
       !!entityId && !furs.isLoading && furs.isSelectionReady && !fina.isLoading && fina.isSelectionReady && !isEditMode,
   });
@@ -807,22 +848,25 @@ export default function CreateAdvanceInvoiceForm({
 
   // Set default note, footer, and signature from entity settings (advance invoices don't have payment terms)
   useEffect(() => {
-    if (isEditMode) return;
-    const entityDefaultNote =
-      (activeEntity?.settings as any)?.default_advance_invoice_note ||
-      (activeEntity?.settings as any)?.default_invoice_note;
-    if (entityDefaultNote && !form.getValues("note")) {
-      form.setValue("note", entityDefaultNote);
+    if (isEditMode) {
+      appliedDerivedDefaultsRef.current = derivedDocumentDefaults;
+      return;
     }
-    const entityDefaultFooter = (activeEntity?.settings as any)?.document_footer;
-    if (entityDefaultFooter && !form.getValues("footer")) {
-      form.setValue("footer", entityDefaultFooter);
+
+    const previousDefaults = appliedDerivedDefaultsRef.current;
+    for (const field of ["note", "footer", "signature"] as const) {
+      const currentValue = form.getValues(field);
+      if (currentValue === "" || currentValue === previousDefaults[field]) {
+        form.setValue(field, derivedDocumentDefaults[field], {
+          shouldDirty: currentValue === previousDefaults[field] && currentValue !== derivedDocumentDefaults[field],
+          shouldTouch: false,
+          shouldValidate: false,
+        });
+      }
     }
-    const entityDefaultSignature = (activeEntity?.settings as any)?.default_document_signature;
-    if (entityDefaultSignature && !form.getValues("signature")) {
-      form.setValue("signature", entityDefaultSignature);
-    }
-  }, [activeEntity, form, isEditMode]);
+
+    appliedDerivedDefaultsRef.current = derivedDocumentDefaults;
+  }, [derivedDocumentDefaults, form, isEditMode]);
 
   // Auto-add tax field for tax subject entities
   useEffect(() => {
@@ -839,6 +883,7 @@ export default function CreateAdvanceInvoiceForm({
       const preservedExpectedTotalWithTax = getPreservedExpectedTotalWithTax(values);
       return {
         number: values.number,
+        business_unit_id: values.business_unit_id ?? null,
         date: values.date,
         customer_id: values.customer_id,
         customer: values.customer,
@@ -1014,6 +1059,14 @@ export default function CreateAdvanceInvoiceForm({
                 : undefined
             }
           >
+            {showBusinessUnitSelect && (
+              <BusinessUnitSelectField
+                control={form.control as any}
+                t={t}
+                options={businessUnits}
+                disabled={disableBusinessUnitSelect}
+              />
+            )}
             {/* Mark as paid section (UI-only state, not in form schema) */}
             {!isEditMode && (
               <MarkAsPaidSection

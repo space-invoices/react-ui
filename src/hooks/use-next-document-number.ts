@@ -36,6 +36,7 @@ export function useNextDocumentNumber(
   options?: {
     businessPremiseName?: string;
     electronicDeviceName?: string;
+    businessUnitId?: string | null;
     enabled?: boolean;
   },
 ) {
@@ -46,6 +47,7 @@ export function useNextDocumentNumber(
       type,
       options?.businessPremiseName,
       options?.electronicDeviceName,
+      options?.businessUnitId ?? null,
     ],
     queryFn: async () => {
       const response = await documents.getNextNumber(
@@ -53,7 +55,8 @@ export function useNextDocumentNumber(
           type: type as "invoice",
           business_premise_name: options?.businessPremiseName,
           electronic_device_name: options?.electronicDeviceName,
-        },
+          business_unit_id: options?.businessUnitId ?? undefined,
+        } as any,
         { entity_id: entityId },
       );
       return response;

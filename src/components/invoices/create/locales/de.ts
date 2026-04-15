@@ -96,6 +96,8 @@ export default {
   "Fiscally verify": "Steuerlich prüfen",
   "Click to skip fiscalization for this invoice":
     "Klicken Sie, um die Fiskalisierung für diese Rechnung zu überspringen",
+  "Business unit": "Business unit",
+  "No unit": "No unit",
   // e-SLOG validation
   "e-SLOG": "e-SLOG",
   "Click to skip e-SLOG validation for this invoice":

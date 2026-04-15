@@ -38,12 +38,15 @@ type CreateRequest =
   | CreateCreditNoteRequest
   | CreateAdvanceInvoiceRequest
   | CreateDeliveryNoteRequest;
+type CreateRequestWithBusinessUnit = CreateRequest & {
+  business_unit_id?: string | null;
+};
 
 function shouldCheckForPreservedTotal(document: any): boolean {
   return document?.creation_source === "custom" || Math.abs(document?.rounding_correction ?? 0) > 0;
 }
 
-function buildCalculatePayload(values: Partial<CreateRequest>): CalculateDocumentPreview | null {
+function buildCalculatePayload(values: Partial<CreateRequestWithBusinessUnit>): CalculateDocumentPreview | null {
   if (!values.items?.length) {
     return null;
   }
@@ -94,7 +97,10 @@ export function getAllowedDuplicateTargets(sourceType: DocumentType): DocumentTy
  * Transform a source document into form-compatible initial values
  * Copies relevant fields and resets computed/generated ones
  */
-function transformDocumentForDuplication(source: Document, targetType: DocumentType): Partial<CreateRequest> {
+function transformDocumentForDuplication(
+  source: Document,
+  targetType: DocumentType,
+): Partial<CreateRequestWithBusinessUnit> {
   const items = source.items?.map((item) => toDocumentFormItem(item as any));
 
   // Build customer data - always copy if available (form needs this for display)
@@ -124,7 +130,8 @@ function transformDocumentForDuplication(source: Document, targetType: DocumentT
   const isConversion = sourceType && sourceType !== targetType;
 
   // Build base duplicate data
-  const baseData: Partial<CreateRequest> = {
+  const baseData: Partial<CreateRequestWithBusinessUnit> = {
+    business_unit_id: (source as any).business_unit_id ?? undefined,
     // Customer - always pass both customer_id AND customer data when available
     // The form needs customer data for display, even when customer_id is set
     ...(source.customer_id ? { customer_id: source.customer_id } : {}),
@@ -197,7 +204,7 @@ export type LinkedDocumentSummary = {
 
 export type UseDuplicateDocumentResult = {
   /** Transformed initial values for the form */
-  initialValues: Partial<CreateRequest> | undefined;
+  initialValues: Partial<CreateRequestWithBusinessUnit> | undefined;
   /** Source documents linked to this document (populated for conversions) */
   sourceDocuments: LinkedDocumentSummary[];
   /** Loading state */

@@ -9,7 +9,12 @@ import { z } from "zod";
 import { SmartCodeInsertButton } from "@/ui/components/documents/create/smart-code-insert-button";
 import { ImageUploadWithCrop } from "@/ui/components/entities/entity-settings-form/image-upload-with-crop";
 import { InputWithPreview } from "@/ui/components/entities/entity-settings-form/input-with-preview";
-import { getPdfTemplateOption, PDF_TEMPLATE_IDS, PDF_TEMPLATE_OPTIONS } from "@/ui/components/entities/settings/pdf-template-selector";
+import {
+  getPdfTemplateOption,
+  PDF_TEMPLATE_IDS,
+  PDF_TEMPLATE_OPTIONS,
+} from "@/ui/components/entities/settings/pdf-template-selector";
+import pdfTemplateSelectorSlTranslations from "@/ui/components/entities/settings/pdf-template-selector/locales/sl";
 import {
   SettingsResourceListCard,
   SettingsResourceListEmptyState,
@@ -20,8 +25,6 @@ import {
   SettingsResourceListItemDescription,
   SettingsResourceListItemTitleRow,
 } from "@/ui/components/settings-resource-list";
-import { Badge } from "@/ui/components/ui/badge";
-import { Button } from "@/ui/components/ui/button";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -30,8 +33,17 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/ui/components/ui/alert-dialog";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/ui/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/ui/components/ui/dialog";
+import { Badge } from "@/ui/components/ui/badge";
+import { Button } from "@/ui/components/ui/button";
+import { Card, CardContent } from "@/ui/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/ui/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -41,14 +53,21 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/ui/components/ui/dropdown-menu";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/ui/components/ui/form";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/ui/components/ui/form";
 import { Input } from "@/ui/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui/components/ui/select";
 import { Switch } from "@/ui/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/ui/components/ui/tabs";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
-import pdfTemplateSelectorSlTranslations from "@/ui/components/entities/settings/pdf-template-selector/locales/sl";
 import { BusinessUnitEmptyState } from "./business-unit-empty-state";
 
 const translations = {
@@ -59,7 +78,8 @@ const translations = {
     Address: "Naslov",
     "Address and contact": "Naslov in kontakt",
     "Address line 2": "Naslov 2. vrstica",
-    "Adjust logo size for documents that use this unit branding.": "Prilagodite velikost logotipa za dokumente, izdane iz te enote.",
+    "Adjust logo size for documents that use this unit branding.":
+      "Prilagodite velikost logotipa za dokumente, izdane iz te enote.",
     "Advance Invoice": "Avansni račun",
     Archive: "Arhiviraj",
     "Archive this business unit?": "Arhiviram to poslovno enoto?",
@@ -127,7 +147,8 @@ const translations = {
     "No units / brands to show.": "Ni enot / blagovnih znamk za prikaz.",
     "No active units / brands to show.": "Ni aktivnih enot / blagovnih znamk za prikaz.",
     "No archived units / brands to show.": "Ni arhiviranih enot / blagovnih znamk za prikaz.",
-    "Overrides the main entity accent color for document rendering.": "Preglasi glavno poudarjeno barvo podjetja pri izrisu dokumentov.",
+    "Overrides the main entity accent color for document rendering.":
+      "Preglasi glavno poudarjeno barvo podjetja pri izrisu dokumentov.",
     "Payment accounts": "Plačilni računi",
     "PDF template": "PDF predloga",
     Phone: "Telefon",
@@ -137,7 +158,8 @@ const translations = {
     "Saved successfully": "Uspešno shranjeno",
     Summary: "Povzetek",
     "Show archived": "Prikaži arhivirane",
-    "Shown under the main entity name when this unit is selected.": "Prikaže se pod glavnim imenom podjetja, ko je ta enota izbrana.",
+    "Shown under the main entity name when this unit is selected.":
+      "Prikaže se pod glavnim imenom podjetja, ko je ta enota izbrana.",
     Signature: "Podpis",
     "Start with a name. You can configure branding, addresses, defaults, and payment details after the unit is created.":
       "Začnite z nazivom. Celostno podobo, naslove, privzete vrednosti in plačilne podatke lahko uredite po ustvarjanju enote.",
@@ -155,7 +177,8 @@ const translations = {
     "Unit email": "E-pošta enote",
     "Unit name": "Naziv enote",
     "Unit post code": "Poštna številka enote",
-    "Upload a dedicated logo for documents issued from this unit.": "Naložite namenski logotip za dokumente, izdane iz te enote.",
+    "Upload a dedicated logo for documents issued from this unit.":
+      "Naložite namenski logotip za dokumente, izdane iz te enote.",
     "Upload a signature image for PDFs issued from this unit.": "Naložite sliko podpisa za PDF-je, izdane iz te enote.",
     "Use the entity template unless this unit needs a different layout.":
       "Uporabite predlogo podjetja, razen če ta enota potrebuje drugačno postavitev.",
@@ -271,7 +294,7 @@ const addressFields = [
   ["website", "Website"],
 ] as const;
 
-const defaultsFields = [
+const _defaultsFields = [
   ["default_invoice_note", "Invoice note"],
   ["default_invoice_payment_terms", "Invoice payment terms"],
   ["default_estimate_note", "Estimate note"],
@@ -498,7 +521,9 @@ function BusinessUnitCreateDialog({
         <DialogHeader>
           <DialogTitle>{t("Create business unit")}</DialogTitle>
           <DialogDescription>
-            {t("Start with a name. You can configure branding, addresses, defaults, and payment details after the unit is created.")}
+            {t(
+              "Start with a name. You can configure branding, addresses, defaults, and payment details after the unit is created.",
+            )}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -680,10 +705,6 @@ function BusinessUnitSettingsEditor({
     }),
     [
       watchedValues.address,
-      watchedValues.bank_account_bic,
-      watchedValues.bank_account_bank_name,
-      watchedValues.bank_account_iban,
-      watchedValues.bank_account_name,
       watchedValues.city,
       watchedValues.country,
       watchedValues.email,
@@ -697,59 +718,462 @@ function BusinessUnitSettingsEditor({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-4xl">
         <DialogHeader className="space-y-4">
-        <div className="flex flex-col gap-3">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <DialogTitle className="text-lg">{unit.name}</DialogTitle>
-              {unit.deleted_at ? <Badge variant="secondary">{t("Archived")}</Badge> : null}
+          <div className="flex flex-col gap-3">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <DialogTitle className="text-lg">{unit.name}</DialogTitle>
+                {unit.deleted_at ? <Badge variant="secondary">{t("Archived")}</Badge> : null}
+              </div>
+              <DialogDescription>
+                {t("Manage branding, addresses, defaults, and payment details for this unit / brand.")}
+              </DialogDescription>
             </div>
-            <DialogDescription>
-              {t("Manage branding, addresses, defaults, and payment details for this unit / brand.")}
-            </DialogDescription>
           </div>
-        </div>
         </DialogHeader>
         <Form {...form}>
           <form className="space-y-6" onSubmit={form.handleSubmit(onSubmit)}>
-        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as (typeof sectionTabs)[number]["value"])}>
-          <TabsList className="flex h-auto w-full flex-wrap justify-start">
-            {sectionTabs.map(({ value, label, icon: Icon }) => (
-              <TabsTrigger key={value} value={value} className="gap-2">
-                <Icon className="h-4 w-4" />
-                {t(label)}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-            <div className="space-y-6 pt-6">
-              <TabsContent value="general" className="mt-0 space-y-6">
-                <div className="grid gap-4 md:grid-cols-2">
-                  <FormField
-                    control={form.control}
-                    name="name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="font-medium text-base">{t("Name")}</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormDescription className="text-xs">
-                          {t("Shown under the main entity name when this unit is selected.")}
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <div className="space-y-4 border-t pt-6">
-                  <div>
-                    <h3 className="font-medium text-sm">{t("Address and contact")}</h3>
-                    <p className="text-muted-foreground text-sm">
-                      {t("These details override the main entity when this unit is selected on a document.")}
-                    </p>
-                  </div>
+            <Tabs
+              value={activeTab}
+              onValueChange={(value) => setActiveTab(value as (typeof sectionTabs)[number]["value"])}
+            >
+              <TabsList className="flex h-auto w-full flex-wrap justify-start">
+                {sectionTabs.map(({ value, label, icon: Icon }) => (
+                  <TabsTrigger key={value} value={value} className="gap-2">
+                    <Icon className="h-4 w-4" />
+                    {t(label)}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+              <div className="space-y-6 pt-6">
+                <TabsContent value="general" className="mt-0 space-y-6">
                   <div className="grid gap-4 md:grid-cols-2">
-                    {addressFields.map(([name, label]) => (
+                    <FormField
+                      control={form.control}
+                      name="name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="font-medium text-base">{t("Name")}</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormDescription className="text-xs">
+                            {t("Shown under the main entity name when this unit is selected.")}
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <div className="space-y-4 border-t pt-6">
+                    <div>
+                      <h3 className="font-medium text-sm">{t("Address and contact")}</h3>
+                      <p className="text-muted-foreground text-sm">
+                        {t("These details override the main entity when this unit is selected on a document.")}
+                      </p>
+                    </div>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      {addressFields.map(([name, label]) => (
+                        <FormField
+                          key={name}
+                          control={form.control}
+                          name={name}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="font-medium text-sm">{t(label)}</FormLabel>
+                              <FormControl>
+                                <Input {...field} value={field.value ?? ""} />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="branding" className="mt-0 space-y-6">
+                  <div className="grid gap-4 md:grid-cols-3">
+                    <FormField
+                      control={form.control}
+                      name="pdf_template"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="font-medium text-sm">{t("PDF template")}</FormLabel>
+                          <Select
+                            onValueChange={(value) => field.onChange(value === "__none__" ? null : value)}
+                            value={field.value || "__none__"}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder={t("Entity default")}>
+                                  {field.value
+                                    ? t(getPdfTemplateOption(field.value)?.nameKey ?? field.value)
+                                    : t("Entity default")}
+                                </SelectValue>
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="__none__">{t("Entity default")}</SelectItem>
+                              {PDF_TEMPLATE_OPTIONS.map((template) => (
+                                <SelectItem key={template.id} value={template.id}>
+                                  {t(template.nameKey)}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormDescription className="text-xs">
+                            {t("Use the entity template unless this unit needs a different layout.")}
+                          </FormDescription>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="primary_color"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="font-medium text-sm">{t("Primary color")}</FormLabel>
+                          <FormControl>
+                            <Input {...field} value={field.value ?? ""} placeholder="#1d4ed8" />
+                          </FormControl>
+                          <FormDescription className="text-xs">
+                            {t("Overrides the main entity accent color for document rendering.")}
+                          </FormDescription>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="logo_scale_percent"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="font-medium text-sm">{t("Logo scale %")}</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              {...field}
+                              value={typeof field.value === "number" ? field.value : ""}
+                              onChange={(event) =>
+                                field.onChange(event.target.value ? Number(event.target.value) : null)
+                              }
+                            />
+                          </FormControl>
+                          <FormDescription className="text-xs">
+                            {t("Adjust logo size for documents that use this unit branding.")}
+                          </FormDescription>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <div className="grid gap-6 border-t pt-6 md:grid-cols-2">
+                    <div>
+                      <div className="mb-2 font-medium text-base">{t("Logo")}</div>
+                      <ImageUploadWithCrop
+                        value={logoUrl}
+                        onChange={noopImageValueChange}
+                        onUpload={(file) => handleUpload("logo", file)}
+                        translate={t}
+                        isUploading={isUploadingLogo}
+                      />
+                      <p className="mt-2 text-muted-foreground text-xs">
+                        {t("Upload a dedicated logo for documents issued from this unit.")}
+                      </p>
+                    </div>
+                    <div>
+                      <div className="mb-2 font-medium text-base">{t("Signature")}</div>
+                      <ImageUploadWithCrop
+                        value={signatureUrl}
+                        onChange={noopImageValueChange}
+                        onUpload={(file) => handleUpload("signature", file)}
+                        translate={t}
+                        isUploading={isUploadingSignature}
+                        imageType="signature"
+                      />
+                      <p className="mt-2 text-muted-foreground text-xs">
+                        {t("Upload a signature image for PDFs issued from this unit.")}
+                      </p>
+                    </div>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="defaults" className="mt-0 space-y-6">
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="font-medium text-sm">{t("Document defaults")}</h3>
+                      <p className="text-muted-foreground text-sm">
+                        {t("These values are used when new documents are created from this unit.")}
+                      </p>
+                    </div>
+                    <div className="border-t pt-6">
+                      <div className="mb-4 font-medium text-muted-foreground text-xs">
+                        {t("Document type defaults")}
+                      </div>
+                      <Tabs defaultValue="invoice" className="w-full">
+                        <TabsList className="h-auto w-full flex-wrap justify-start">
+                          {documentDefaultsTabs.map((tab) => (
+                            <TabsTrigger key={tab.value} value={tab.value} className="cursor-pointer">
+                              {t(tab.label)}
+                            </TabsTrigger>
+                          ))}
+                        </TabsList>
+                        {documentDefaultsTabs.map((tab) => (
+                          <TabsContent key={tab.value} value={tab.value} className="mt-4 space-y-4">
+                            <div className="grid gap-4 md:grid-cols-2">
+                              {tab.fields.map(([name, label]) => (
+                                <FormField
+                                  key={name}
+                                  control={form.control}
+                                  name={name}
+                                  render={({ field }) => (
+                                    <FormItem className={tab.fields.length === 1 ? "md:col-span-2" : ""}>
+                                      <div className="flex items-center justify-between">
+                                        <FormLabel className="font-medium text-sm">{t(label)}</FormLabel>
+                                        <SmartCodeInsertButton
+                                          textareaRef={
+                                            (name === "default_invoice_note"
+                                              ? invoiceNoteRef
+                                              : name === "default_invoice_payment_terms"
+                                                ? invoicePaymentTermsRef
+                                                : name === "default_estimate_note"
+                                                  ? estimateNoteRef
+                                                  : name === "default_estimate_payment_terms"
+                                                    ? estimatePaymentTermsRef
+                                                    : name === "default_credit_note_note"
+                                                      ? creditNoteNoteRef
+                                                      : name === "default_credit_note_payment_terms"
+                                                        ? creditNotePaymentTermsRef
+                                                        : name === "default_advance_invoice_note"
+                                                          ? advanceInvoiceNoteRef
+                                                          : deliveryNoteNoteRef) as React.RefObject<HTMLTextAreaElement | null>
+                                          }
+                                          value={field.value ?? ""}
+                                          onInsert={field.onChange}
+                                          t={t}
+                                        />
+                                      </div>
+                                      <FormControl>
+                                        <InputWithPreview
+                                          ref={
+                                            (name === "default_invoice_note"
+                                              ? invoiceNoteRef
+                                              : name === "default_invoice_payment_terms"
+                                                ? invoicePaymentTermsRef
+                                                : name === "default_estimate_note"
+                                                  ? estimateNoteRef
+                                                  : name === "default_estimate_payment_terms"
+                                                    ? estimatePaymentTermsRef
+                                                    : name === "default_credit_note_note"
+                                                      ? creditNoteNoteRef
+                                                      : name === "default_credit_note_payment_terms"
+                                                        ? creditNotePaymentTermsRef
+                                                        : name === "default_advance_invoice_note"
+                                                          ? advanceInvoiceNoteRef
+                                                          : deliveryNoteNoteRef) as React.RefObject<
+                                              HTMLTextAreaElement | HTMLTextAreaElement
+                                            >
+                                          }
+                                          value={field.value ?? ""}
+                                          onChange={field.onChange}
+                                          entity={entity}
+                                          document={previewDocument}
+                                          translatePreviewLabel={t}
+                                          multiline
+                                          rows={4}
+                                        />
+                                      </FormControl>
+                                    </FormItem>
+                                  )}
+                                />
+                              ))}
+                            </div>
+                          </TabsContent>
+                        ))}
+                      </Tabs>
+                    </div>
+                    <div className="border-t pt-6">
+                      <div className="mb-4 font-medium text-muted-foreground text-xs">{t("Shared defaults")}</div>
+                      <div className="grid gap-4 md:grid-cols-2">
+                        {sharedDefaultsFields.map(([name, label]) => (
+                          <FormField
+                            key={name}
+                            control={form.control}
+                            name={name}
+                            render={({ field }) => (
+                              <FormItem>
+                                <div className="flex items-center justify-between">
+                                  <FormLabel className="font-medium text-sm">{t(label)}</FormLabel>
+                                  <SmartCodeInsertButton
+                                    textareaRef={
+                                      (name === "document_footer"
+                                        ? documentFooterRef
+                                        : documentSignatureRef) as React.RefObject<HTMLTextAreaElement | null>
+                                    }
+                                    value={field.value ?? ""}
+                                    onInsert={field.onChange}
+                                    t={t}
+                                  />
+                                </div>
+                                <FormControl>
+                                  <InputWithPreview
+                                    ref={
+                                      (name === "document_footer"
+                                        ? documentFooterRef
+                                        : documentSignatureRef) as React.RefObject<
+                                        HTMLTextAreaElement | HTMLTextAreaElement
+                                      >
+                                    }
+                                    value={field.value ?? ""}
+                                    onChange={field.onChange}
+                                    entity={entity}
+                                    document={previewDocument}
+                                    translatePreviewLabel={t}
+                                    multiline
+                                    rows={4}
+                                  />
+                                </FormControl>
+                              </FormItem>
+                            )}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-4 border-t pt-6 md:grid-cols-3">
+                    {(
+                      [
+                        ["delivery_note_hide_prices", "Hide delivery note prices"],
+                        ["credit_note_negative_values", "Use negative credit note values"],
+                        ["show_payment_amounts", "Show payment amounts"],
+                      ] as const
+                    ).map(([name, label]) => (
+                      <FormField
+                        key={name}
+                        control={form.control}
+                        name={name}
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-center gap-3 rounded-lg border px-4 py-3">
+                            <FormLabel className="mb-0 flex-1 font-medium text-sm leading-tight">{t(label)}</FormLabel>
+                            <FormControl>
+                              <Switch checked={!!field.value} onCheckedChange={field.onChange} />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                    ))}
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="email" className="mt-0 space-y-6">
+                  <div className="border-t pt-6">
+                    <Tabs defaultValue="invoice" className="w-full">
+                      <TabsList className="h-auto w-full justify-start">
+                        {emailTemplateTabs.map((tab) => (
+                          <TabsTrigger key={tab.value} value={tab.value} className="cursor-pointer">
+                            {t(tab.label)}
+                          </TabsTrigger>
+                        ))}
+                      </TabsList>
+                      {emailTemplateTabs.map((tab) => (
+                        <TabsContent key={tab.value} value={tab.value} className="mt-4 space-y-4">
+                          <FormField
+                            control={form.control}
+                            name={tab.subject}
+                            render={({ field }) => (
+                              <FormItem>
+                                <div className="flex items-center justify-between">
+                                  <FormLabel className="font-medium text-sm">
+                                    {t(tab.label === "Invoice" ? "Invoice email subject" : "Estimate email subject")}
+                                  </FormLabel>
+                                  <SmartCodeInsertButton
+                                    textareaRef={
+                                      (tab.value === "invoice"
+                                        ? invoiceEmailSubjectRef
+                                        : estimateEmailSubjectRef) as React.RefObject<HTMLTextAreaElement | null>
+                                    }
+                                    value={field.value ?? ""}
+                                    onInsert={field.onChange}
+                                    t={t}
+                                  />
+                                </div>
+                                <FormControl>
+                                  <InputWithPreview
+                                    ref={
+                                      (tab.value === "invoice"
+                                        ? invoiceEmailSubjectRef
+                                        : estimateEmailSubjectRef) as React.RefObject<
+                                        HTMLInputElement | HTMLTextAreaElement
+                                      >
+                                    }
+                                    value={field.value ?? ""}
+                                    onChange={field.onChange}
+                                    entity={entity}
+                                    document={previewDocument}
+                                    translatePreviewLabel={t}
+                                  />
+                                </FormControl>
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name={tab.body}
+                            render={({ field }) => (
+                              <FormItem>
+                                <div className="flex items-center justify-between">
+                                  <FormLabel className="font-medium text-sm">
+                                    {t(tab.label === "Invoice" ? "Invoice email body" : "Estimate email body")}
+                                  </FormLabel>
+                                  <SmartCodeInsertButton
+                                    textareaRef={
+                                      (tab.value === "invoice"
+                                        ? invoiceEmailBodyRef
+                                        : estimateEmailBodyRef) as React.RefObject<HTMLTextAreaElement | null>
+                                    }
+                                    value={field.value ?? ""}
+                                    onInsert={field.onChange}
+                                    t={t}
+                                  />
+                                </div>
+                                <FormControl>
+                                  <InputWithPreview
+                                    ref={
+                                      (tab.value === "invoice"
+                                        ? invoiceEmailBodyRef
+                                        : estimateEmailBodyRef) as React.RefObject<
+                                        HTMLTextAreaElement | HTMLTextAreaElement
+                                      >
+                                    }
+                                    value={field.value ?? ""}
+                                    onChange={field.onChange}
+                                    entity={entity}
+                                    document={previewDocument}
+                                    translatePreviewLabel={t}
+                                    multiline
+                                    rows={6}
+                                  />
+                                </FormControl>
+                              </FormItem>
+                            )}
+                          />
+                        </TabsContent>
+                      ))}
+                    </Tabs>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="payments" className="mt-0 space-y-6">
+                  <div className="grid gap-4 border-t pt-6 md:grid-cols-2">
+                    {(
+                      [
+                        ["bank_account_iban", "IBAN"],
+                        ["bank_account_name", "Account name"],
+                        ["bank_account_bank_name", "Bank name"],
+                        ["bank_account_bic", "BIC / SWIFT"],
+                      ] as const
+                    ).map(([name, label]) => (
                       <FormField
                         key={name}
                         control={form.control}
@@ -765,359 +1189,9 @@ function BusinessUnitSettingsEditor({
                       />
                     ))}
                   </div>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="branding" className="mt-0 space-y-6">
-                <div className="grid gap-4 md:grid-cols-3">
-                  <FormField
-                    control={form.control}
-                    name="pdf_template"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="font-medium text-sm">{t("PDF template")}</FormLabel>
-                        <Select
-                          onValueChange={(value) => field.onChange(value === "__none__" ? null : value)}
-                          value={field.value || "__none__"}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder={t("Entity default")}>
-                            {field.value ? t(getPdfTemplateOption(field.value)?.nameKey ?? field.value) : t("Entity default")}
-                          </SelectValue>
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="__none__">{t("Entity default")}</SelectItem>
-                            {PDF_TEMPLATE_OPTIONS.map((template) => (
-                              <SelectItem key={template.id} value={template.id}>
-                                {t(template.nameKey)}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormDescription className="text-xs">{t("Use the entity template unless this unit needs a different layout.")}</FormDescription>
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="primary_color"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="font-medium text-sm">{t("Primary color")}</FormLabel>
-                        <FormControl>
-                          <Input {...field} value={field.value ?? ""} placeholder="#1d4ed8" />
-                        </FormControl>
-                        <FormDescription className="text-xs">{t("Overrides the main entity accent color for document rendering.")}</FormDescription>
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="logo_scale_percent"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="font-medium text-sm">{t("Logo scale %")}</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            {...field}
-                            value={typeof field.value === "number" ? field.value : ""}
-                            onChange={(event) => field.onChange(event.target.value ? Number(event.target.value) : null)}
-                          />
-                        </FormControl>
-                        <FormDescription className="text-xs">{t("Adjust logo size for documents that use this unit branding.")}</FormDescription>
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <div className="grid gap-6 border-t pt-6 md:grid-cols-2">
-                  <div>
-                    <div className="mb-2 font-medium text-base">{t("Logo")}</div>
-                    <ImageUploadWithCrop
-                      value={logoUrl}
-                      onChange={noopImageValueChange}
-                      onUpload={(file) => handleUpload("logo", file)}
-                      translate={t}
-                      isUploading={isUploadingLogo}
-                    />
-                    <p className="mt-2 text-muted-foreground text-xs">{t("Upload a dedicated logo for documents issued from this unit.")}</p>
-                  </div>
-                  <div>
-                    <div className="mb-2 font-medium text-base">{t("Signature")}</div>
-                    <ImageUploadWithCrop
-                      value={signatureUrl}
-                      onChange={noopImageValueChange}
-                      onUpload={(file) => handleUpload("signature", file)}
-                      translate={t}
-                      isUploading={isUploadingSignature}
-                      imageType="signature"
-                    />
-                    <p className="mt-2 text-muted-foreground text-xs">{t("Upload a signature image for PDFs issued from this unit.")}</p>
-                  </div>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="defaults" className="mt-0 space-y-6">
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="font-medium text-sm">{t("Document defaults")}</h3>
-                    <p className="text-muted-foreground text-sm">
-                      {t("These values are used when new documents are created from this unit.")}
-                    </p>
-                  </div>
-                  <div className="border-t pt-6">
-                    <div className="mb-4 font-medium text-muted-foreground text-xs">{t("Document type defaults")}</div>
-                    <Tabs defaultValue="invoice" className="w-full">
-                      <TabsList className="h-auto w-full flex-wrap justify-start">
-                        {documentDefaultsTabs.map((tab) => (
-                          <TabsTrigger key={tab.value} value={tab.value} className="cursor-pointer">
-                            {t(tab.label)}
-                          </TabsTrigger>
-                        ))}
-                      </TabsList>
-                      {documentDefaultsTabs.map((tab) => (
-                    <TabsContent key={tab.value} value={tab.value} className="mt-4 space-y-4">
-                          <div className="grid gap-4 md:grid-cols-2">
-                            {tab.fields.map(([name, label]) => (
-                              <FormField
-                                key={name}
-                                control={form.control}
-                                name={name}
-                                render={({ field }) => (
-                                  <FormItem className={tab.fields.length === 1 ? "md:col-span-2" : ""}>
-                                    <div className="flex items-center justify-between">
-                                      <FormLabel className="font-medium text-sm">{t(label)}</FormLabel>
-                                      <SmartCodeInsertButton
-                                        textareaRef={
-                                          (name === "default_invoice_note"
-                                            ? invoiceNoteRef
-                                            : name === "default_invoice_payment_terms"
-                                              ? invoicePaymentTermsRef
-                                              : name === "default_estimate_note"
-                                                ? estimateNoteRef
-                                                : name === "default_estimate_payment_terms"
-                                                  ? estimatePaymentTermsRef
-                                                  : name === "default_credit_note_note"
-                                                    ? creditNoteNoteRef
-                                                    : name === "default_credit_note_payment_terms"
-                                                      ? creditNotePaymentTermsRef
-                                                      : name === "default_advance_invoice_note"
-                                                        ? advanceInvoiceNoteRef
-                                                        : deliveryNoteNoteRef) as React.RefObject<HTMLTextAreaElement | null>
-                                        }
-                                        value={field.value ?? ""}
-                                        onInsert={field.onChange}
-                                        t={t}
-                                      />
-                                    </div>
-                                    <FormControl>
-                                      <InputWithPreview
-                                        ref={
-                                          (name === "default_invoice_note"
-                                            ? invoiceNoteRef
-                                            : name === "default_invoice_payment_terms"
-                                              ? invoicePaymentTermsRef
-                                              : name === "default_estimate_note"
-                                                ? estimateNoteRef
-                                                : name === "default_estimate_payment_terms"
-                                                  ? estimatePaymentTermsRef
-                                                  : name === "default_credit_note_note"
-                                                    ? creditNoteNoteRef
-                                                    : name === "default_credit_note_payment_terms"
-                                                      ? creditNotePaymentTermsRef
-                                                      : name === "default_advance_invoice_note"
-                                                        ? advanceInvoiceNoteRef
-                                                        : deliveryNoteNoteRef) as React.RefObject<HTMLTextAreaElement | HTMLTextAreaElement>
-                                        }
-                                        value={field.value ?? ""}
-                                        onChange={field.onChange}
-                                        entity={entity}
-                                        document={previewDocument}
-                                        translatePreviewLabel={t}
-                                        multiline
-                                        rows={4}
-                                      />
-                                    </FormControl>
-                                  </FormItem>
-                                )}
-                              />
-                            ))}
-                          </div>
-                        </TabsContent>
-                      ))}
-                    </Tabs>
-                  </div>
-                  <div className="border-t pt-6">
-                    <div className="mb-4 font-medium text-muted-foreground text-xs">{t("Shared defaults")}</div>
-                    <div className="grid gap-4 md:grid-cols-2">
-                      {sharedDefaultsFields.map(([name, label]) => (
-                        <FormField
-                          key={name}
-                          control={form.control}
-                          name={name}
-                          render={({ field }) => (
-                            <FormItem>
-                              <div className="flex items-center justify-between">
-                                <FormLabel className="font-medium text-sm">{t(label)}</FormLabel>
-                                <SmartCodeInsertButton
-                                  textareaRef={
-                                    (name === "document_footer" ? documentFooterRef : documentSignatureRef) as React.RefObject<HTMLTextAreaElement | null>
-                                  }
-                                  value={field.value ?? ""}
-                                  onInsert={field.onChange}
-                                  t={t}
-                                />
-                              </div>
-                              <FormControl>
-                                <InputWithPreview
-                                  ref={(name === "document_footer" ? documentFooterRef : documentSignatureRef) as React.RefObject<HTMLTextAreaElement | HTMLTextAreaElement>}
-                                  value={field.value ?? ""}
-                                  onChange={field.onChange}
-                                  entity={entity}
-                                  document={previewDocument}
-                                  translatePreviewLabel={t}
-                                  multiline
-                                  rows={4}
-                                />
-                              </FormControl>
-                            </FormItem>
-                          )}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid gap-4 border-t pt-6 md:grid-cols-3">
-                  {(
-                    [
-                      ["delivery_note_hide_prices", "Hide delivery note prices"],
-                      ["credit_note_negative_values", "Use negative credit note values"],
-                      ["show_payment_amounts", "Show payment amounts"],
-                    ] as const
-                  ).map(([name, label]) => (
-                    <FormField
-                      key={name}
-                      control={form.control}
-                      name={name}
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-center gap-3 rounded-lg border px-4 py-3">
-                          <FormLabel className="mb-0 flex-1 font-medium text-sm leading-tight">{t(label)}</FormLabel>
-                          <FormControl>
-                            <Switch checked={!!field.value} onCheckedChange={field.onChange} />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                  ))}
-                </div>
-              </TabsContent>
-
-              <TabsContent value="email" className="mt-0 space-y-6">
-                <div className="border-t pt-6">
-                  <Tabs defaultValue="invoice" className="w-full">
-                    <TabsList className="h-auto w-full justify-start">
-                      {emailTemplateTabs.map((tab) => (
-                        <TabsTrigger key={tab.value} value={tab.value} className="cursor-pointer">
-                          {t(tab.label)}
-                        </TabsTrigger>
-                      ))}
-                    </TabsList>
-                    {emailTemplateTabs.map((tab) => (
-                      <TabsContent key={tab.value} value={tab.value} className="mt-4 space-y-4">
-                        <FormField
-                          control={form.control}
-                          name={tab.subject}
-                          render={({ field }) => (
-                            <FormItem>
-                              <div className="flex items-center justify-between">
-                                <FormLabel className="font-medium text-sm">{t(tab.label === "Invoice" ? "Invoice email subject" : "Estimate email subject")}</FormLabel>
-                                <SmartCodeInsertButton
-                                  textareaRef={(tab.value === "invoice" ? invoiceEmailSubjectRef : estimateEmailSubjectRef) as React.RefObject<HTMLTextAreaElement | null>}
-                                  value={field.value ?? ""}
-                                  onInsert={field.onChange}
-                                  t={t}
-                                />
-                              </div>
-                              <FormControl>
-                                <InputWithPreview
-                                  ref={(tab.value === "invoice" ? invoiceEmailSubjectRef : estimateEmailSubjectRef) as React.RefObject<HTMLInputElement | HTMLTextAreaElement>}
-                                  value={field.value ?? ""}
-                                  onChange={field.onChange}
-                                  entity={entity}
-                                  document={previewDocument}
-                                  translatePreviewLabel={t}
-                                />
-                              </FormControl>
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name={tab.body}
-                          render={({ field }) => (
-                            <FormItem>
-                              <div className="flex items-center justify-between">
-                                <FormLabel className="font-medium text-sm">{t(tab.label === "Invoice" ? "Invoice email body" : "Estimate email body")}</FormLabel>
-                                <SmartCodeInsertButton
-                                  textareaRef={(tab.value === "invoice" ? invoiceEmailBodyRef : estimateEmailBodyRef) as React.RefObject<HTMLTextAreaElement | null>}
-                                  value={field.value ?? ""}
-                                  onInsert={field.onChange}
-                                  t={t}
-                                />
-                              </div>
-                              <FormControl>
-                                <InputWithPreview
-                                  ref={(tab.value === "invoice" ? invoiceEmailBodyRef : estimateEmailBodyRef) as React.RefObject<HTMLTextAreaElement | HTMLTextAreaElement>}
-                                  value={field.value ?? ""}
-                                  onChange={field.onChange}
-                                  entity={entity}
-                                  document={previewDocument}
-                                  translatePreviewLabel={t}
-                                  multiline
-                                  rows={6}
-                                />
-                              </FormControl>
-                            </FormItem>
-                          )}
-                        />
-                      </TabsContent>
-                    ))}
-                  </Tabs>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="payments" className="mt-0 space-y-6">
-                <div className="grid gap-4 border-t pt-6 md:grid-cols-2">
-                  {(
-                    [
-                      ["bank_account_iban", "IBAN"],
-                      ["bank_account_name", "Account name"],
-                      ["bank_account_bank_name", "Bank name"],
-                      ["bank_account_bic", "BIC / SWIFT"],
-                    ] as const
-                  ).map(([name, label]) => (
-                    <FormField
-                      key={name}
-                      control={form.control}
-                      name={name}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="font-medium text-sm">{t(label)}</FormLabel>
-                          <FormControl>
-                            <Input {...field} value={field.value ?? ""} />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                  ))}
-                </div>
-              </TabsContent>
-            </div>
-        </Tabs>
+                </TabsContent>
+              </div>
+            </Tabs>
             <DialogFooter className="border-t pt-4 sm:justify-between">
               <div className="flex items-center gap-2">
                 <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
@@ -1216,7 +1290,9 @@ export function BusinessUnitsManager({
         <div>
           <h2 className="font-semibold text-lg">{t("Units / Brands")}</h2>
           <p className="text-muted-foreground text-sm">
-            {t("Create a unit / brand first, then configure its branding, defaults, and payment details from the settings panel.")}
+            {t(
+              "Create a unit / brand first, then configure its branding, defaults, and payment details from the settings panel.",
+            )}
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -1261,70 +1337,68 @@ export function BusinessUnitsManager({
             </div>
           }
         >
-            {visibleUnits.length === 0 ? (
-              <SettingsResourceListEmptyState>
-                {emptyMessage}
-              </SettingsResourceListEmptyState>
-            ) : (
-              visibleUnits.map((unit) => {
-                const summary = formatUnitSummary(unit, t);
-                const templateId = (unit.settings as any)?.pdf_template;
-                const templateOption = templateId ? getPdfTemplateOption(templateId) : null;
+          {visibleUnits.length === 0 ? (
+            <SettingsResourceListEmptyState>{emptyMessage}</SettingsResourceListEmptyState>
+          ) : (
+            visibleUnits.map((unit) => {
+              const summary = formatUnitSummary(unit, t);
+              const templateId = (unit.settings as any)?.pdf_template;
+              const templateOption = templateId ? getPdfTemplateOption(templateId) : null;
 
-                return (
-                  <SettingsResourceListItem key={unit.id}>
-                    <SettingsResourceListItemBody>
-                      <SettingsResourceListItemTitleRow>
-                        <span className="font-medium">{unit.name}</span>
-                        {unit.deleted_at ? <Badge variant="secondary">{t("Archived")}</Badge> : null}
-                      </SettingsResourceListItemTitleRow>
-                      <SettingsResourceListItemDescription>
-                        {summary}
-                      </SettingsResourceListItemDescription>
-                      <SettingsResourceListItemBadges>
-                        <Badge variant="outline">
-                          {templateOption ? t(templateOption.nameKey) : t("Entity default template")}
-                        </Badge>
-                        {(unit.settings as any)?.default_invoice_note ? (
-                          <Badge variant="outline">{t("Invoice defaults set")}</Badge>
-                        ) : null}
-                        {unit.logo_file_id || unit.signature_file_id ? (
-                          <Badge variant="outline">{t("Brand assets uploaded")}</Badge>
-                        ) : null}
-                      </SettingsResourceListItemBadges>
-                    </SettingsResourceListItemBody>
+              return (
+                <SettingsResourceListItem key={unit.id}>
+                  <SettingsResourceListItemBody>
+                    <SettingsResourceListItemTitleRow>
+                      <span className="font-medium">{unit.name}</span>
+                      {unit.deleted_at ? <Badge variant="secondary">{t("Archived")}</Badge> : null}
+                    </SettingsResourceListItemTitleRow>
+                    <SettingsResourceListItemDescription>{summary}</SettingsResourceListItemDescription>
+                    <SettingsResourceListItemBadges>
+                      <Badge variant="outline">
+                        {templateOption ? t(templateOption.nameKey) : t("Entity default template")}
+                      </Badge>
+                      {(unit.settings as any)?.default_invoice_note ? (
+                        <Badge variant="outline">{t("Invoice defaults set")}</Badge>
+                      ) : null}
+                      {unit.logo_file_id || unit.signature_file_id ? (
+                        <Badge variant="outline">{t("Brand assets uploaded")}</Badge>
+                      ) : null}
+                    </SettingsResourceListItemBadges>
+                  </SettingsResourceListItemBody>
 
-                    <SettingsResourceListItemActions>
-                      <Button type="button" variant="outline" onClick={() => setEditingUnitId(unit.id)}>
-                        {t("Edit settings")}
-                      </Button>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button type="button" variant="ghost" size="icon" aria-label={t("Actions")}>
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => setEditingUnitId(unit.id)}>{t("Edit settings")}</DropdownMenuItem>
-                          {!unit.deleted_at ? (
-                            <>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem
-                                className="text-destructive"
-                                onClick={() => setArchiveTargetUnit(unit)}
-                                disabled={isArchivePending}
-                              >
-                                {t("Archive")}
-                              </DropdownMenuItem>
-                            </>
-                          ) : null}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </SettingsResourceListItemActions>
-                  </SettingsResourceListItem>
-                );
-              })
-            )}
+                  <SettingsResourceListItemActions>
+                    <Button type="button" variant="outline" onClick={() => setEditingUnitId(unit.id)}>
+                      {t("Edit settings")}
+                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button type="button" variant="ghost" size="icon" aria-label={t("Actions")}>
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => setEditingUnitId(unit.id)}>
+                          {t("Edit settings")}
+                        </DropdownMenuItem>
+                        {!unit.deleted_at ? (
+                          <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              className="text-destructive"
+                              onClick={() => setArchiveTargetUnit(unit)}
+                              disabled={isArchivePending}
+                            >
+                              {t("Archive")}
+                            </DropdownMenuItem>
+                          </>
+                        ) : null}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </SettingsResourceListItemActions>
+                </SettingsResourceListItem>
+              );
+            })
+          )}
         </SettingsResourceListCard>
       )}
 
@@ -1371,12 +1445,7 @@ export function BusinessUnitsManager({
             <Button type="button" variant="outline" onClick={() => setArchiveTargetUnit(null)}>
               {t("Cancel")}
             </Button>
-            <Button
-              type="button"
-              variant="destructive"
-              disabled={isArchivePending}
-              onClick={handleArchiveConfirmed}
-            >
+            <Button type="button" variant="destructive" disabled={isArchivePending} onClick={handleArchiveConfirmed}>
               {t("Archive")}
             </Button>
           </AlertDialogFooter>

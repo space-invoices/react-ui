@@ -1,6 +1,6 @@
 import type { ComponentPropsWithoutRef, ReactNode } from "react";
-import { cn } from "@/ui/lib/utils";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/ui/components/ui/card";
+import { cn } from "@/ui/lib/utils";
 
 export function SettingsResourceListCard({
   title,
@@ -26,29 +26,17 @@ export function SettingsResourceListCard({
   );
 }
 
-export function SettingsResourceListEmptyState({
-  children,
-  className,
-}: {
-  children: ReactNode;
-  className?: string;
-}) {
+export function SettingsResourceListEmptyState({ children, className }: { children: ReactNode; className?: string }) {
   return (
     <div
-      className={cn(
-        "rounded-lg border border-dashed px-4 py-6 text-center text-muted-foreground text-sm",
-        className,
-      )}
+      className={cn("rounded-lg border border-dashed px-4 py-6 text-center text-muted-foreground text-sm", className)}
     >
       {children}
     </div>
   );
 }
 
-export function SettingsResourceListItem({
-  className,
-  ...props
-}: ComponentPropsWithoutRef<"div">) {
+export function SettingsResourceListItem({ className, ...props }: ComponentPropsWithoutRef<"div">) {
   return (
     <div
       className={cn(
@@ -60,37 +48,22 @@ export function SettingsResourceListItem({
   );
 }
 
-export function SettingsResourceListItemBody({
-  className,
-  ...props
-}: ComponentPropsWithoutRef<"div">) {
+export function SettingsResourceListItemBody({ className, ...props }: ComponentPropsWithoutRef<"div">) {
   return <div className={cn("min-w-0 space-y-2", className)} {...props} />;
 }
 
-export function SettingsResourceListItemTitleRow({
-  className,
-  ...props
-}: ComponentPropsWithoutRef<"div">) {
+export function SettingsResourceListItemTitleRow({ className, ...props }: ComponentPropsWithoutRef<"div">) {
   return <div className={cn("flex items-center gap-2", className)} {...props} />;
 }
 
-export function SettingsResourceListItemDescription({
-  className,
-  ...props
-}: ComponentPropsWithoutRef<"p">) {
+export function SettingsResourceListItemDescription({ className, ...props }: ComponentPropsWithoutRef<"p">) {
   return <p className={cn("text-muted-foreground text-sm", className)} {...props} />;
 }
 
-export function SettingsResourceListItemBadges({
-  className,
-  ...props
-}: ComponentPropsWithoutRef<"div">) {
+export function SettingsResourceListItemBadges({ className, ...props }: ComponentPropsWithoutRef<"div">) {
   return <div className={cn("flex flex-wrap gap-2 text-xs", className)} {...props} />;
 }
 
-export function SettingsResourceListItemActions({
-  className,
-  ...props
-}: ComponentPropsWithoutRef<"div">) {
+export function SettingsResourceListItemActions({ className, ...props }: ComponentPropsWithoutRef<"div">) {
   return <div className={cn("flex shrink-0 items-center gap-2", className)} {...props} />;
 }

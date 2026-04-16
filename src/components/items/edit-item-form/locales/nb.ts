@@ -9,4 +9,8 @@ export default {
   "Net price": "Net price",
   "Gross price (tax included)": "Gross price (tax included)",
   "Net price (before tax)": "Net price (before tax)",
+  Category: "Category",
+  "Select category": "Select category",
+  "No category": "No category",
+  Archived: "Archived",
 } as const;

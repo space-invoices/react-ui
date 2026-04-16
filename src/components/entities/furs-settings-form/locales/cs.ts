@@ -231,6 +231,17 @@ export default {
   "Complete General Settings first": "Nejprve dokončete Obecná nastavení",
   "Operator tax number and label are required for FURS fiscalization":
     "Daňové číslo a označení operátora jsou pro fiscalizaci FURS povinné",
+  "FURS Integration Defaults Required": "Jsou vyžadovány výchozí hodnoty integrace FURS",
+  "You have store integrations that need this information when fiscalization is enabled so fiscalized documents can be issued correctly. Please add the default operator, business premise, and device to use for those integrations.":
+    "Máte obchodní integrace, které tyto údaje potřebují, když je zapnutá fiskalizace, aby mohly být fiskalizované doklady vystaveny správně. Vyplňte prosím výchozího operátora, provozovnu a zařízení, které se mají pro tyto integrace použít.",
+  "All integrations will use this premise and device after fiscalization is enabled":
+    "Všechny integrace budou po zapnutí fiskalizace používat tuto provozovnu a zařízení",
+  "Save, update integrations, and enable": "Uložit, aktualizovat integrace a povolit",
+  "Failed to update one or more integrations": "Nepodařilo se aktualizovat jednu nebo více integrací",
+  "Operator defaults saved, but integrations were not fully updated":
+    "Výchozí údaje operátora byly uloženy, ale integrace nebyly plně aktualizovány",
+  "Select business premise": "Vyberte provozovnu",
+  "Select electronic device": "Vyberte elektronické zařízení",
   "FURS Operator Settings Required": "Jsou vyžadována nastavení operátora FURS",
   "Your FURS operator information is needed to fiscalize this document. Please enter your operator details.":
     "K fiscalizaci tohoto dokumentu jsou potřeba údaje o vašem operátorovi FURS. Zadejte prosím údaje operátora.",

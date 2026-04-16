@@ -50,6 +50,8 @@ export default {
   Update: "Posodobi",
   "Save as Draft": "Shrani kot osnutek",
   "Pick a date": "Izberi datum",
+  Reference: "Referenca",
+  "e.g., PO-2024-001": "npr. PO-2024-001",
   // Currency
   Currency: "Valuta",
   "Select currency": "Izberi valuto",

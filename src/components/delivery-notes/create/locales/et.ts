@@ -37,6 +37,8 @@ export default {
   Update: "Uuenda",
   "Save as Draft": "Save as Draft",
   "Pick a date": "Pick a date",
+  Reference: "Viide",
+  "e.g., PO-2024-001": "nt PO-2024-001",
   Currency: "Valuuta",
   "Select currency": "Valige valuuta",
   "Percentage discount": "Percentage discount",

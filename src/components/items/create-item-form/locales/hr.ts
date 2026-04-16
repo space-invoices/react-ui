@@ -11,4 +11,8 @@ export default {
   "Net price": "Neto cijena",
   "Gross price (tax included)": "Bruto cijena (s porezom)",
   "Net price (before tax)": "Neto cijena (bez poreza)",
+  Category: "Kategorija",
+  "Select category": "Odaberite kategoriju",
+  "No category": "Bez kategorije",
+  Archived: "Arhivirano",
 };

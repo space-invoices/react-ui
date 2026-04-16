@@ -46,6 +46,8 @@ export default {
   Update: "Актуализирай",
   "Save as Draft": "Save as Draft",
   "Pick a date": "Pick a date",
+  Reference: "Референция",
+  "e.g., PO-2024-001": "напр., PO-2024-001",
   Currency: "Валута",
   "Select currency": "Изберете валута",
   "Percentage discount": "Percentage discount",

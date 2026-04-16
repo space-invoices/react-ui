@@ -9,4 +9,8 @@ export default {
   "Net price": "Precio neto",
   "Gross price (tax included)": "Precio bruto (IVA incluido)",
   "Net price (before tax)": "Precio neto (sin IVA)",
+  Category: "Categoría",
+  "Select category": "Seleccionar categoría",
+  "No category": "Sin categoría",
+  Archived: "Archivado",
 };

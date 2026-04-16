@@ -153,6 +153,17 @@ export default {
   Address: "Aadress",
   "Post Code": "Postiindeks",
   "Save Entity Info": "Salvesta ettevõtte andmed",
+  "FINA Integration Defaults Required": "FINA integratsiooni vaikeseaded on nõutavad",
+  "You have store integrations that need this information when fiscalization is enabled so fiscalized documents can be issued correctly. Please add the default operator, business premise, and device to use for those integrations.":
+    "Teil on poeintegratsioonid, mis vajavad neid andmeid siis, kui fiskaliseerimine on sisse lülitatud, et fiskaliseeritud dokumente saaks korrektselt väljastada. Palun lisage vaikeoperaator, tegevuskoht ja seade, mida nende integratsioonide jaoks kasutada.",
+  "All integrations will use this premise and device after fiscalization is enabled":
+    "Kõik integratsioonid kasutavad pärast fiskaliseerimise lubamist seda tegevuskohta ja seadet",
+  "Save, update integrations, and enable": "Salvesta, uuenda integratsioone ja luba",
+  "Failed to update one or more integrations": "Ühe või mitme integratsiooni uuendamine ebaõnnestus",
+  "Operator defaults saved, but integrations were not fully updated":
+    "Operaatori vaikeväärtused salvestati, kuid integratsioone ei uuendatud täielikult",
+  "Select business premise": "Vali tegevuskoht",
+  "Select electronic device": "Vali elektrooniline seade",
   "FINA Operator Settings Required": "FINA Operator Settings Required",
   "Your FINA operator information is needed to fiscalize this document. Please enter your operator details.":
     "Your FINA operator information is needed to fiscalize this document. Please enter your operator details.",

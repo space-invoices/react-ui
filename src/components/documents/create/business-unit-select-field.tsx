@@ -40,7 +40,7 @@ export function BusinessUnitSelectField({
               <FormControl>
                 <SelectTrigger className={triggerClassName}>
                   <SelectValue placeholder={mainEntityLabel ?? t("No unit")}>
-                    {options.find((unit) => unit.id === field.value)?.name ?? (mainEntityLabel ?? t("No unit"))}
+                    {options.find((unit) => unit.id === field.value)?.name ?? mainEntityLabel ?? t("No unit")}
                   </SelectValue>
                 </SelectTrigger>
               </FormControl>
@@ -71,7 +71,7 @@ export function BusinessUnitSelectField({
                 <FormControl>
                   <SelectTrigger className={triggerClassName ?? "flex-1"}>
                     <SelectValue placeholder={mainEntityLabel ?? t("No unit")}>
-                      {options.find((unit) => unit.id === field.value)?.name ?? (mainEntityLabel ?? t("No unit"))}
+                      {options.find((unit) => unit.id === field.value)?.name ?? mainEntityLabel ?? t("No unit")}
                     </SelectValue>
                   </SelectTrigger>
                 </FormControl>

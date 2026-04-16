@@ -1,6 +1,11 @@
+import type { OrderIntegration } from "@spaceinvoices/js-sdk";
+import { orderIntegrations } from "@spaceinvoices/js-sdk";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertCircle, AlertTriangle, Building2, CheckCircle2, ChevronRight, Info, User } from "lucide-react";
-import { type FC, type ReactNode, useEffect, useState } from "react";
+import { type FC, type ReactNode, useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 import { useUpdateEntity } from "@/ui/components/entities/entities.hooks";
+import { ORDER_INTEGRATIONS_CACHE_KEY } from "@/ui/components/order-integrations/order-integrations.hooks";
 import { Alert, AlertDescription, AlertTitle } from "@/ui/components/ui/alert";
 import { Button } from "@/ui/components/ui/button";
 import { Input } from "@/ui/components/ui/input";
@@ -14,6 +19,7 @@ import { createTranslation } from "@/ui/lib/translation";
 import { cn } from "@/ui/lib/utils";
 import { type FiscalizationStepConfig, useFiscalizationStepFlow } from "../shared/fiscalization-step-flow";
 import { FiscalizationStepTabs } from "../shared/fiscalization-step-tabs";
+import { FinaOperatorRequiredDialog } from "./fina-operator-required-dialog";
 import {
   useFinaPremises,
   useFinaSettings,
@@ -83,6 +89,7 @@ export const FinaSettingsForm: FC<FinaSettingsFormProps> = ({
   renderSection,
   hideUserOperatorSection,
 }) => {
+  const queryClient = useQueryClient();
   const translate = createTranslation({
     t: translateFn,
     namespace,
@@ -124,6 +131,25 @@ export const FinaSettingsForm: FC<FinaSettingsFormProps> = ({
   // Fetch FINA settings and premises
   const { data: finaSettings, isLoading: settingsLoading } = useFinaSettings(entity.id);
   const { data: premises, isLoading: premisesLoading } = useFinaPremises(entity.id);
+  const { data: integrationResponse, isLoading: integrationsLoading } = useQuery({
+    queryKey: [ORDER_INTEGRATIONS_CACHE_KEY, entity.id, "fina-settings-form"],
+    queryFn: async () =>
+      orderIntegrations.list({
+        entity_id: entity.id,
+        limit: 100,
+        order_by: "name",
+      }),
+    enabled: !!entity.id,
+    staleTime: 0,
+  });
+  const integrations = (integrationResponse?.data ?? []) as OrderIntegration[];
+  const integrationIds = useMemo(() => integrations.map((integration) => integration.id), [integrations]);
+  const hasOrderIntegrations = integrationIds.length > 0;
+  const [remediationDialogOpen, setRemediationDialogOpen] = useState(false);
+  const [pendingSettingsData, setPendingSettingsData] = useState<Record<string, any> | null>(null);
+  const [selectedPremiseId, setSelectedPremiseId] = useState("");
+  const [selectedDeviceId, setSelectedDeviceId] = useState("");
+  const [isBulkUpdatingIntegrations, setIsBulkUpdatingIntegrations] = useState(false);
 
   const { mutate: updateSettings, isPending } = useUpdateFinaSettings({
     onSuccess: () => {
@@ -206,6 +232,54 @@ export const FinaSettingsForm: FC<FinaSettingsFormProps> = ({
   const canAccessPremises = hasEntityTaxNumber && hasOperatorSettings && hasCertificate && certificateValid;
   const canAccessEnable =
     hasEntityTaxNumber && hasOperatorSettings && certificateValid && hasPremises && hasPremiseWithDevice;
+  const remediationPremises = useMemo(() => {
+    return ((premises || []) as any[])
+      .filter((premise) => premise.is_active)
+      .map((premise) => ({
+        value: premise.id,
+        label: premise.business_premise_name,
+        devices: (premise.Devices || [])
+          .filter((device: any) => device.is_active)
+          .map((device: any) => ({
+            value: device.id,
+            label: device.electronic_device_name,
+          })),
+      }))
+      .filter((premise) => premise.devices.length > 0);
+  }, [premises]);
+  const premiseOptions = useMemo(
+    () => remediationPremises.map(({ value, label }) => ({ value, label })),
+    [remediationPremises],
+  );
+  const deviceOptions = useMemo(
+    () => remediationPremises.find((premise) => premise.value === selectedPremiseId)?.devices ?? [],
+    [remediationPremises, selectedPremiseId],
+  );
+  const firstPremise = remediationPremises[0];
+  const firstDevice = firstPremise?.devices[0];
+
+  useEffect(() => {
+    if (!remediationDialogOpen) return;
+    if (!selectedPremiseId && firstPremise) {
+      setSelectedPremiseId(firstPremise.value);
+      setSelectedDeviceId(firstPremise.devices[0]?.value || "");
+      return;
+    }
+
+    const selectedPremise = remediationPremises.find((premise) => premise.value === selectedPremiseId);
+    if (!selectedPremise && firstPremise) {
+      setSelectedPremiseId(firstPremise.value);
+      setSelectedDeviceId(firstPremise.devices[0]?.value || "");
+      return;
+    }
+
+    if (
+      selectedPremise &&
+      !selectedPremise.devices.some((device: { value: string }) => device.value === selectedDeviceId)
+    ) {
+      setSelectedDeviceId(selectedPremise.devices[0]?.value || "");
+    }
+  }, [firstPremise, remediationDialogOpen, remediationPremises, selectedDeviceId, selectedPremiseId]);
 
   const steps: FiscalizationStepConfig<FinaStepType>[] = [
     {
@@ -265,7 +339,7 @@ export const FinaSettingsForm: FC<FinaSettingsFormProps> = ({
     );
   }
 
-  if (settingsLoading || premisesLoading) {
+  if (settingsLoading || premisesLoading || integrationsLoading) {
     return <PageLoadingSpinner />;
   }
 
@@ -281,14 +355,74 @@ export const FinaSettingsForm: FC<FinaSettingsFormProps> = ({
 
   const handleSaveSettings = () => {
     if (operatorOibError) return;
+    attemptSaveFinaSettings({
+      ...formData,
+      operator_oib: formData.operator_oib || undefined,
+      operator_label: formData.operator_label || undefined,
+    });
+  };
+
+  const replayPendingSettingsUpdate = (data: Record<string, any>) => {
     updateSettings({
       entityId: entity.id,
-      data: {
-        ...formData,
-        operator_oib: formData.operator_oib || undefined,
-        operator_label: formData.operator_label || undefined,
-      },
+      data,
     });
+  };
+
+  const requiresIntegrationRemediation = (data: Record<string, any>) => {
+    return !finaEnabled && data.enabled === true && hasOrderIntegrations && !data.operator_oib?.trim();
+  };
+
+  const attemptSaveFinaSettings = (data: Record<string, any>) => {
+    if (requiresIntegrationRemediation(data)) {
+      setPendingSettingsData(data);
+      setSelectedPremiseId(firstPremise?.value || "");
+      setSelectedDeviceId(firstDevice?.value || "");
+      setRemediationDialogOpen(true);
+      return;
+    }
+
+    replayPendingSettingsUpdate(data);
+  };
+
+  const applyIntegrationDefaults = async (savedValues: { operator_oib: string; operator_label?: string }) => {
+    if (!selectedPremiseId || !selectedDeviceId) return;
+
+    setIsBulkUpdatingIntegrations(true);
+
+    try {
+      for (const integrationId of integrationIds) {
+        await orderIntegrations.update(
+          integrationId,
+          {
+            business_premise_id: selectedPremiseId,
+            electronic_device_id: selectedDeviceId,
+          },
+          { entity_id: entity.id },
+        );
+      }
+
+      await queryClient.invalidateQueries({ queryKey: [ORDER_INTEGRATIONS_CACHE_KEY] });
+
+      const nextData = pendingSettingsData;
+      setPendingSettingsData(null);
+      setRemediationDialogOpen(false);
+
+      if (nextData) {
+        replayPendingSettingsUpdate({
+          ...nextData,
+          operator_oib: savedValues.operator_oib,
+          operator_label: savedValues.operator_label,
+        });
+      }
+    } catch (error) {
+      toast.error(translate("Failed to update one or more integrations"), {
+        description: translate("Operator defaults saved, but integrations were not fully updated"),
+      });
+      onError?.(error);
+    } finally {
+      setIsBulkUpdatingIntegrations(false);
+    }
   };
 
   const wrapSection = (section: FinaSectionType, content: ReactNode) => {
@@ -510,7 +644,7 @@ export const FinaSettingsForm: FC<FinaSettingsFormProps> = ({
           <div className="grid items-start gap-6 lg:grid-cols-[1fr_280px]">
             <Button
               onClick={handleSaveSettings}
-              disabled={isPending || !!operatorOibError}
+              disabled={isPending || isBulkUpdatingIntegrations || !!operatorOibError}
               data-testid="fina-settings-save"
             >
               {isPending ? translate("Saving...") : translate("Save Settings")}
@@ -656,7 +790,7 @@ export const FinaSettingsForm: FC<FinaSettingsFormProps> = ({
 
                     <Button
                       onClick={handleSaveSettings}
-                      disabled={isPending || !!operatorOibError}
+                      disabled={isPending || isBulkUpdatingIntegrations || !!operatorOibError}
                       size="sm"
                       data-testid="fina-advanced-settings-save"
                     >
@@ -733,17 +867,17 @@ export const FinaSettingsForm: FC<FinaSettingsFormProps> = ({
                   <Switch
                     checked={formData.enabled}
                     onCheckedChange={(checked) => {
-                      setFormData((prev) => ({ ...prev, enabled: checked }));
-                      updateSettings({
-                        entityId: entity.id,
-                        data: checked
-                          ? {
-                              ...formData,
-                              enabled: true,
-                              operator_oib: formData.operator_oib || undefined,
-                              operator_label: formData.operator_label || undefined,
-                            }
-                          : { enabled: false },
+                      if (!checked) {
+                        setFormData((prev) => ({ ...prev, enabled: false }));
+                        attemptSaveFinaSettings({ enabled: false });
+                        return;
+                      }
+
+                      attemptSaveFinaSettings({
+                        ...formData,
+                        enabled: true,
+                        operator_oib: formData.operator_oib || undefined,
+                        operator_label: formData.operator_label || undefined,
                       });
                     }}
                     data-testid="fina-enable-switch"
@@ -769,6 +903,34 @@ export const FinaSettingsForm: FC<FinaSettingsFormProps> = ({
           )}
         </div>
       )}
+      <FinaOperatorRequiredDialog
+        open={remediationDialogOpen}
+        onOpenChange={(open) => {
+          setRemediationDialogOpen(open);
+          if (!open) {
+            setPendingSettingsData(null);
+          }
+        }}
+        entityId={entity.id}
+        onSaved={applyIntegrationDefaults}
+        t={translate}
+        saveScope="entity"
+        mode="integration-remediation"
+        titleOverride={translate("FINA Integration Defaults Required")}
+        descriptionOverride={translate(
+          "You have store integrations that need this information when fiscalization is enabled so fiscalized documents can be issued correctly. Please add the default operator, business premise, and device to use for those integrations.",
+        )}
+        initialValues={{
+          operator_oib: finaSettings?.operator_oib || userFinaSettings?.operator_oib || "",
+          operator_label: finaSettings?.operator_label || userFinaSettings?.operator_label || "",
+        }}
+        premiseOptions={premiseOptions}
+        deviceOptions={deviceOptions}
+        selectedPremiseId={selectedPremiseId}
+        selectedDeviceId={selectedDeviceId}
+        onPremiseChange={setSelectedPremiseId}
+        onDeviceChange={setSelectedDeviceId}
+      />
     </div>
   );
 };

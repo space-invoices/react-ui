@@ -233,6 +233,17 @@ export default {
   "Complete General Settings first": "Viimeistele yleiset asetukset ensin",
   "Operator tax number and label are required for FURS fiscalization":
     "Operaattorin veronumero ja tunniste vaaditaan FURS-fiskalisointia varten",
+  "FURS Integration Defaults Required": "FURS-integraatioiden oletusarvot vaaditaan",
+  "You have store integrations that need this information when fiscalization is enabled so fiscalized documents can be issued correctly. Please add the default operator, business premise, and device to use for those integrations.":
+    "Sinulla on kauppaintegraatioita, jotka tarvitsevat nämä tiedot, kun fiskalisointi on käytössä, jotta fiskalisoidut asiakirjat voidaan laatia oikein. Lisää oletusoperaattori sekä toimipaikka ja laite, joita näissä integraatioissa käytetään.",
+  "All integrations will use this premise and device after fiscalization is enabled":
+    "Kaikki integraatiot käyttävät tätä toimipaikkaa ja laitetta, kun fiskalisointi on otettu käyttöön",
+  "Save, update integrations, and enable": "Tallenna, päivitä integraatiot ja ota käyttöön",
+  "Failed to update one or more integrations": "Yhden tai useamman integraation päivitys epäonnistui",
+  "Operator defaults saved, but integrations were not fully updated":
+    "Operaattorin oletusasetukset tallennettiin, mutta integraatioita ei päivitetty kokonaan",
+  "Select business premise": "Valitse toimipaikka",
+  "Select electronic device": "Valitse sähköinen laite",
   "FURS Operator Settings Required": "FURS-operaattorin asetukset vaaditaan",
   "Your FURS operator information is needed to fiscalize this document. Please enter your operator details.":
     "Tämän asiakirjan fiskalisointia varten tarvitaan FURS-operaattorisi tiedot. Syötä operaattorin tiedot.",

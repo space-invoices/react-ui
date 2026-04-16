@@ -46,6 +46,8 @@ export default {
   Update: "Uppdatera",
   "Save as Draft": "Save as Draft",
   "Pick a date": "Pick a date",
+  Reference: "Referens",
+  "e.g., PO-2024-001": "t.ex. PO-2024-001",
   Currency: "Valuta",
   "Select currency": "Välj valuta",
   "Percentage discount": "Percentage discount",

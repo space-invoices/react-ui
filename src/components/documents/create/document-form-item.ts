@@ -15,6 +15,7 @@ type SourceDocumentDiscount = {
 type SourceDocumentItem = {
   type?: string | null;
   item_id?: string | null;
+  financial_category_id?: string | null;
   name?: string | null;
   description?: string | null;
   quantity?: number | null;
@@ -53,6 +54,7 @@ export function toDocumentFormItem(item: SourceDocumentItem) {
     ...(item.type !== "separator"
       ? {
           item_id: item.item_id ?? undefined,
+          financial_category_id: item.financial_category_id ?? undefined,
           quantity: item.quantity ?? 1,
           price: item.gross_price ?? item.price ?? undefined,
           gross_price: item.gross_price ?? undefined,

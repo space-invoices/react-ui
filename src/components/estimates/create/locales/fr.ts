@@ -48,6 +48,8 @@ export default {
   Update: "Mettre à jour",
   "Save as Draft": "Enregistrer comme brouillon",
   "Pick a date": "Choisir une date",
+  Reference: "Référence",
+  "e.g., PO-2024-001": "p. ex. PO-2024-001",
   Currency: "Devise",
   "Select currency": "Sélectionner la devise",
   "Percentage discount": "Remise en pourcentage",

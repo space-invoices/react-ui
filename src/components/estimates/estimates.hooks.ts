@@ -24,7 +24,11 @@ const {
   ESTIMATES_CACHE_KEY,
 );
 
-const { useCreateResource: useCreateCustomEstimate } = createResourceHooks<Estimate, CustomCreateEstimate, UpdateEstimate>(
+const { useCreateResource: useCreateCustomEstimate } = createResourceHooks<
+  Estimate,
+  CustomCreateEstimate,
+  UpdateEstimate
+>(
   {
     create: estimates.createCustom,
     update: estimates.update,

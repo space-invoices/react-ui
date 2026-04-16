@@ -181,7 +181,8 @@ export function DocumentActionsBar({
   const supportsPayments =
     documentType === "invoice" || documentType === "advance_invoice" || documentType === "credit_note";
 
-  const eslogFeatureAvailable = ESLOG_XML_EXPORT_ENABLED && (entity.country_rules?.features?.includes("eslog") ?? false);
+  const eslogFeatureAvailable =
+    ESLOG_XML_EXPORT_ENABLED && (entity.country_rules?.features?.includes("eslog") ?? false);
   const eslogValid = (document as Invoice).eslog?.validation_status === "valid";
   const showEslogDownload = eslogFeatureAvailable && eslogValid;
 

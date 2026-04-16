@@ -47,6 +47,8 @@ export default {
   Update: "Ažuriraj",
   "Save as Draft": "Spremi kao skicu",
   "Pick a date": "Odaberi datum",
+  Reference: "Referenca",
+  "e.g., PO-2024-001": "npr. PO-2024-001",
   Currency: "Valuta",
   "Select currency": "Odaberi valutu",
   "Percentage discount": "Postotni popust",

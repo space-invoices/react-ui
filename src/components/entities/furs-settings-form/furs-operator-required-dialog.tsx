@@ -1,4 +1,4 @@
-import { type FC, useState } from "react";
+import { type FC, type FormEvent, useEffect, useMemo, useState } from "react";
 import { Button } from "@/ui/components/ui/button";
 import {
   Dialog,
@@ -9,15 +9,34 @@ import {
   DialogTitle,
 } from "@/ui/components/ui/dialog";
 import { Input } from "@/ui/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui/components/ui/select";
 import { useUpdateFursSettings, useUpdateUserFursSettings } from "./furs-settings.hooks";
+
+type RemediationOption = {
+  value: string;
+  label: string;
+};
 
 interface FursOperatorRequiredDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   entityId: string;
-  onSaved: () => void;
+  onSaved: (values: { operator_tax_number: string; operator_label: string }) => void;
   t: (key: string) => string;
   saveScope?: "user" | "entity";
+  mode?: "document-retry" | "integration-remediation";
+  titleOverride?: string;
+  descriptionOverride?: string;
+  initialValues?: {
+    operator_tax_number?: string;
+    operator_label?: string;
+  };
+  premiseOptions?: RemediationOption[];
+  deviceOptions?: RemediationOption[];
+  selectedPremiseId?: string;
+  selectedDeviceId?: string;
+  onPremiseChange?: (premiseId: string) => void;
+  onDeviceChange?: (deviceId: string) => void;
 }
 
 export const FursOperatorRequiredDialog: FC<FursOperatorRequiredDialogProps> = ({
@@ -27,14 +46,35 @@ export const FursOperatorRequiredDialog: FC<FursOperatorRequiredDialogProps> = (
   onSaved,
   t,
   saveScope = "user",
+  mode = "document-retry",
+  titleOverride,
+  descriptionOverride,
+  initialValues,
+  premiseOptions = [],
+  deviceOptions = [],
+  selectedPremiseId = "",
+  selectedDeviceId = "",
+  onPremiseChange,
+  onDeviceChange,
 }) => {
   const [operatorTaxNumber, setOperatorTaxNumber] = useState("");
   const [operatorLabel, setOperatorLabel] = useState("");
+  const isRemediationMode = mode === "integration-remediation";
+
+  useEffect(() => {
+    if (!open) return;
+    setOperatorTaxNumber(initialValues?.operator_tax_number || "");
+    setOperatorLabel(initialValues?.operator_label || "");
+  }, [initialValues?.operator_label, initialValues?.operator_tax_number, open]);
 
   const handleSuccess = () => {
+    const savedValues = {
+      operator_tax_number: operatorTaxNumber,
+      operator_label: operatorLabel,
+    };
     setOperatorTaxNumber("");
     setOperatorLabel("");
-    onSaved();
+    onSaved(savedValues);
   };
 
   const { mutate: updateUserSettings, isPending: isUserPending } = useUpdateUserFursSettings({
@@ -51,7 +91,7 @@ export const FursOperatorRequiredDialog: FC<FursOperatorRequiredDialogProps> = (
 
   const isPending = isUserPending || isEntityPending;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     e.stopPropagation();
     if (!operatorTaxNumber || !operatorLabel) return;
@@ -75,18 +115,30 @@ export const FursOperatorRequiredDialog: FC<FursOperatorRequiredDialogProps> = (
     });
   };
 
-  const isValid = operatorTaxNumber.trim() !== "" && operatorLabel.trim() !== "";
+  const isValid =
+    operatorTaxNumber.trim() !== "" &&
+    operatorLabel.trim() !== "" &&
+    (!isRemediationMode || (selectedPremiseId !== "" && selectedDeviceId !== ""));
+
+  const description = useMemo(() => {
+    if (descriptionOverride) return descriptionOverride;
+    if (isRemediationMode) {
+      return t(
+        "You have store integrations that need this information when fiscalization is enabled so fiscalized documents can be issued correctly. Please add the default operator, business premise, and device to use for those integrations.",
+      );
+    }
+
+    return t(
+      "Your FURS operator information is needed to fiscalize this document. Please enter your operator details.",
+    );
+  }, [descriptionOverride, isRemediationMode, t]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>{t("FURS Operator Settings Required")}</DialogTitle>
-          <DialogDescription>
-            {t(
-              "Your FURS operator information is needed to fiscalize this document. Please enter your operator details.",
-            )}
-          </DialogDescription>
+          <DialogTitle>{titleOverride || t("FURS Operator Settings Required")}</DialogTitle>
+          <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -116,12 +168,63 @@ export const FursOperatorRequiredDialog: FC<FursOperatorRequiredDialogProps> = (
             />
           </div>
 
+          {isRemediationMode ? (
+            <>
+              <div>
+                <label htmlFor="furs-dialog-business-premise" className="font-medium text-sm">
+                  {t("Business Premise")}
+                </label>
+                <Select
+                  value={selectedPremiseId || undefined}
+                  onValueChange={(value) => onPremiseChange?.(value ?? "")}
+                >
+                  <SelectTrigger id="furs-dialog-business-premise" className="mt-2 h-10">
+                    <SelectValue placeholder={t("Select business premise")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {premiseOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <label htmlFor="furs-dialog-electronic-device" className="font-medium text-sm">
+                  {t("Electronic Device")}
+                </label>
+                <Select value={selectedDeviceId || undefined} onValueChange={(value) => onDeviceChange?.(value ?? "")}>
+                  <SelectTrigger id="furs-dialog-electronic-device" className="mt-2 h-10">
+                    <SelectValue placeholder={t("Select electronic device")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {deviceOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <p className="text-muted-foreground text-xs">
+                {t("All integrations will use this premise and device after fiscalization is enabled")}
+              </p>
+            </>
+          ) : null}
+
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>
               {t("Cancel")}
             </Button>
             <Button type="submit" disabled={isPending || !isValid}>
-              {isPending ? t("Saving...") : t("Save & Retry")}
+              {isPending
+                ? t("Saving...")
+                : isRemediationMode
+                  ? t("Save, update integrations, and enable")
+                  : t("Save & Retry")}
             </Button>
           </DialogFooter>
         </form>

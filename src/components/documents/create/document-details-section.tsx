@@ -16,11 +16,11 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/ui/components/ui/popo
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui/components/ui/select";
 import { Textarea } from "@/ui/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/ui/components/ui/tooltip";
-import { normalizeDateOnlyInput, toLocalDateOnlyString } from "@/ui/lib/date-only";
 import { CURRENCY_CODES } from "@/ui/lib/constants";
+import { normalizeDateOnlyInput, toLocalDateOnlyString } from "@/ui/lib/date-only";
 import { replaceTemplateVariablesForPreview } from "@/ui/lib/template-variables";
 import { cn } from "@/ui/lib/utils";
-import { getDocumentConfig, type DocumentTypes } from "../types";
+import { type DocumentTypes, getDocumentConfig } from "../types";
 import type { AnyControl } from "./form-types";
 import { SmartCodeInsertButton } from "./smart-code-insert-button";
 
@@ -315,14 +315,14 @@ export function DocumentDetailsSection({
                     </FormControl>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={field.value ? new Date(field.value) : undefined}
-                        onSelect={(date) => field.onChange(date?.toISOString())}
-                        disabled={(date) => date > new Date() || date < MIN_DOCUMENT_DATE}
-                        initialFocus
-                      />
-                    </PopoverContent>
+                    <Calendar
+                      mode="single"
+                      selected={field.value ? new Date(field.value) : undefined}
+                      onSelect={(date) => field.onChange(date?.toISOString())}
+                      disabled={(date) => date > new Date() || date < MIN_DOCUMENT_DATE}
+                      initialFocus
+                    />
+                  </PopoverContent>
                 </Popover>
               )}
             </div>
@@ -349,7 +349,9 @@ export function DocumentDetailsSection({
                       "h-auto border-none p-0 font-medium text-sm shadow-none [&>svg]:ml-1 [&>svg]:size-3.5",
                     )}
                   >
-                    <SelectValue>{serviceDate.dateType === "single" ? t("Service Date") : t("Service Period")}</SelectValue>
+                    <SelectValue>
+                      {serviceDate.dateType === "single" ? t("Service Date") : t("Service Period")}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="single">{t("Service Date")}</SelectItem>

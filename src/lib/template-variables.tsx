@@ -10,41 +10,33 @@ type PreviewDocument = {
   currency_code?: string | null;
   customer?: { name?: string | null; email?: string | null } | null;
   customer_id?: string | null;
-  issuer?:
-    | {
-        unit_name?: string | null;
-        email?: string | null;
-        address?: string | null;
-        post_code?: string | null;
-        city?: string | null;
-        country?: string | null;
-      }
-    | null;
-  business_unit?:
-    | {
-        name?: string | null;
-        email?: string | null;
-        address?: string | null;
-        post_code?: string | null;
-        city?: string | null;
-        country?: string | null;
-        settings?:
-          | {
-              bank_accounts?:
-                | Array<{
-                    iban?: string | null;
-                    bank_name?: string | null;
-                    bic?: string | null;
-                    account_number?: string | null;
-                    routing_number?: string | null;
-                    sort_code?: string | null;
-                    is_default?: boolean | null;
-                  }>
-                | null;
-            }
-          | null;
-      }
-    | null;
+  issuer?: {
+    unit_name?: string | null;
+    email?: string | null;
+    address?: string | null;
+    post_code?: string | null;
+    city?: string | null;
+    country?: string | null;
+  } | null;
+  business_unit?: {
+    name?: string | null;
+    email?: string | null;
+    address?: string | null;
+    post_code?: string | null;
+    city?: string | null;
+    country?: string | null;
+    settings?: {
+      bank_accounts?: Array<{
+        iban?: string | null;
+        bank_name?: string | null;
+        bic?: string | null;
+        account_number?: string | null;
+        routing_number?: string | null;
+        sort_code?: string | null;
+        is_default?: boolean | null;
+      }> | null;
+    } | null;
+  } | null;
 };
 
 type TemplateVariableDefinition = {
@@ -103,12 +95,7 @@ function getResolvedIssuerValue(
   entity: Entity,
   document?: PreviewDocument | null,
 ): string | null {
-  return (
-    document?.business_unit?.[field] ||
-    document?.issuer?.[field] ||
-    (entity as any)[field] ||
-    null
-  );
+  return document?.business_unit?.[field] || document?.issuer?.[field] || (entity as any)[field] || null;
 }
 
 /**
@@ -216,16 +203,16 @@ export function getVariableValue(
       | null
       | undefined) ??
     ((entity.settings as any)?.bank_accounts as
-    | Array<{
-        iban?: string | null;
-        bank_name?: string | null;
-        bic?: string | null;
-        account_number?: string | null;
-        routing_number?: string | null;
-        sort_code?: string | null;
-        is_default?: boolean | null;
-      }>
-    | undefined);
+      | Array<{
+          iban?: string | null;
+          bank_name?: string | null;
+          bic?: string | null;
+          account_number?: string | null;
+          routing_number?: string | null;
+          sort_code?: string | null;
+          is_default?: boolean | null;
+        }>
+      | undefined);
   const bankAccount = bankAccounts?.find((acc) => acc.is_default) ?? bankAccounts?.[0];
 
   if (varName === "bank_account" && bankAccount) {

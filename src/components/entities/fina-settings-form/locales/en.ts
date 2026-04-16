@@ -151,6 +151,17 @@ export default {
   "Complete General Settings first": "Complete General Settings first",
   "Operator OIB and label are required for FINA fiscalization":
     "Operator OIB and label are required for FINA fiscalization",
+  "FINA Integration Defaults Required": "FINA Integration Defaults Required",
+  "You have store integrations that need this information when fiscalization is enabled so fiscalized documents can be issued correctly. Please add the default operator, business premise, and device to use for those integrations.":
+    "You have store integrations that need this information when fiscalization is enabled so fiscalized documents can be issued correctly. Please add the default operator, business premise, and device to use for those integrations.",
+  "All integrations will use this premise and device after fiscalization is enabled":
+    "All integrations will use this premise and device after fiscalization is enabled",
+  "Save, update integrations, and enable": "Save, update integrations, and enable",
+  "Failed to update one or more integrations": "Failed to update one or more integrations",
+  "Operator defaults saved, but integrations were not fully updated":
+    "Operator defaults saved, but integrations were not fully updated",
+  "Select business premise": "Select business premise",
+  "Select electronic device": "Select electronic device",
   Address: "Address",
   "Post Code": "Post Code",
   "Save Entity Info": "Save Entity Info",

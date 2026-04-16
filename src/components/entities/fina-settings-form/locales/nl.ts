@@ -152,6 +152,17 @@ export default {
   Address: "Adres",
   "Post Code": "Postcode",
   "Save Entity Info": "Bedrijfsgegevens opslaan",
+  "FINA Integration Defaults Required": "Standaardwaarden voor FINA-integraties vereist",
+  "You have store integrations that need this information when fiscalization is enabled so fiscalized documents can be issued correctly. Please add the default operator, business premise, and device to use for those integrations.":
+    "Je hebt winkelintegraties die deze informatie nodig hebben wanneer fiscalisatie is ingeschakeld, zodat gefiscaliseerde documenten correct kunnen worden uitgegeven. Voeg de standaardoperator toe, samen met de vestiging en het apparaat die voor deze integraties moeten worden gebruikt.",
+  "All integrations will use this premise and device after fiscalization is enabled":
+    "Alle integraties gebruiken deze vestiging en dit apparaat nadat fiscalisatie is ingeschakeld",
+  "Save, update integrations, and enable": "Opslaan, integraties bijwerken en inschakelen",
+  "Failed to update one or more integrations": "Bijwerken van een of meer integraties is mislukt",
+  "Operator defaults saved, but integrations were not fully updated":
+    "De standaardwaarden van de operator zijn opgeslagen, maar de integraties zijn niet volledig bijgewerkt",
+  "Select business premise": "Vestiging selecteren",
+  "Select electronic device": "Elektronisch apparaat selecteren",
   "Set operator OIB and label in General Settings first": "Set operator OIB and label in General Settings first",
   "Complete General Settings first": "Complete General Settings first",
   "Operator OIB and label are required for FINA fiscalization":

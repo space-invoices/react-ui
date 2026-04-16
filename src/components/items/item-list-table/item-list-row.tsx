@@ -11,9 +11,10 @@ type ItemListRowProps = {
   item: Item;
   onRowClick?: (item: Item) => void;
   onView?: (item: Item) => void;
+  onEdit?: (item: Item) => void;
 } & ComponentTranslationProps;
 
-export default memo(function ItemListRow({ item, onRowClick, onView, ...i18nProps }: ItemListRowProps) {
+export default memo(function ItemListRow({ item, onRowClick, onView, onEdit, ...i18nProps }: ItemListRowProps) {
   const t = createTranslation(i18nProps);
 
   return (
@@ -27,7 +28,7 @@ export default memo(function ItemListRow({ item, onRowClick, onView, ...i18nProp
       <TableCell>{item.description}</TableCell>
       <TableCell className="text-right">{item.price}</TableCell>
       <TableCell className="text-right">
-        <ItemListRowActions item={item} onView={onView} t={t} />
+        <ItemListRowActions item={item} onView={onView} onEdit={onEdit} t={t} />
       </TableCell>
     </TableRow>
   );

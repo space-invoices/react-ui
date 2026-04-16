@@ -103,6 +103,7 @@ const CustomDocumentItem = z
     total_with_tax: z.union([z.number(), z.null()]),
     item_id: z.union([z.string(), z.null()]),
     metadata: z.union([z.record(z.string(), z.any()), z.null()]),
+    financial_category_id: z.union([z.string(), z.null()]),
     save_item: z.union([z.boolean(), z.null()]),
   })
   .partial();
@@ -118,6 +119,15 @@ const DocumentSummaryTax = z
     reverse_charge: z.union([z.boolean(), z.null()]).optional(),
   })
   .passthrough();
+
+
+// Dependency schema for customestimate
+const CreateDocumentCategoryAssignment = z
+  .object({
+    item_index: z.union([z.number(), z.null()]),
+    financial_category_id: z.union([z.string(), z.null()]),
+  })
+  .partial();
 
 
 // Dependency schema for customestimate
@@ -173,6 +183,9 @@ const createCustomEstimateSchemaDefinition = z.object({
   total_with_tax: z.number(),
   total_discount: z.union([z.number(), z.null()]).optional(),
   taxes: z.array(DocumentSummaryTax).optional(),
+  category_assignments: z
+    .union([z.array(CreateDocumentCategoryAssignment), z.null()])
+    .optional(),
   eslog: EslogInput.optional(),
 });
 

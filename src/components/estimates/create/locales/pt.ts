@@ -48,6 +48,8 @@ export default {
   Update: "Atualizar",
   "Save as Draft": "Guardar como rascunho",
   "Pick a date": "Selecionar uma data",
+  Reference: "Referencia",
+  "e.g., PO-2024-001": "por ex., PO-2024-001",
   Currency: "Moeda",
   "Select currency": "Selecionar moeda",
   "Percentage discount": "Desconto percentual",

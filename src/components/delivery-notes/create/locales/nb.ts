@@ -37,6 +37,8 @@ export default {
   Update: "Oppdater",
   "Save as Draft": "Save as Draft",
   "Pick a date": "Pick a date",
+  Reference: "Referanse",
+  "e.g., PO-2024-001": "f.eks. PO-2024-001",
   Currency: "Valuta",
   "Select currency": "Velg valuta",
   "Percentage discount": "Percentage discount",

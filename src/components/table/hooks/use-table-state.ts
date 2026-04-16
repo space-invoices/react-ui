@@ -114,7 +114,6 @@ function buildStatusQuery(status: StatusFilter, preset: StatusQueryPreset | unde
         default:
           return undefined;
       }
-    case "invoice":
     default:
       switch (status) {
         case "paid":
@@ -239,7 +238,12 @@ function syncParamsToUrl(params: TableQueryParams) {
 /**
  * Manages table state (search, pagination, filters) with optional URL sync
  */
-export function useTableState({ initialParams = {}, onChangeParams, disableUrlSync = false, filterConfig }: UseTableStateProps) {
+export function useTableState({
+  initialParams = {},
+  onChangeParams,
+  disableUrlSync = false,
+  filterConfig,
+}: UseTableStateProps) {
   const [params, setParams] = useState<TableQueryParams>({
     ...initialParams,
   });

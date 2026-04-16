@@ -139,7 +139,10 @@ export function buildCustomCreateTemplateFromDocument(document: any): CustomCrea
   };
 }
 
-export function applyCustomCreateTemplate<T extends Record<string, any>>(payload: T, template: CustomCreateTemplate): T {
+export function applyCustomCreateTemplate<T extends Record<string, any>>(
+  payload: T,
+  template: CustomCreateTemplate,
+): T {
   const { calculation_mode: _calculationMode, ...restPayload } = payload;
 
   return {

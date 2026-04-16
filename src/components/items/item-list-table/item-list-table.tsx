@@ -10,28 +10,44 @@ import { withTableTranslations } from "../../table/locales";
 import type { Column, ListTableProps, TableQueryParams } from "../../table/types";
 import { ITEMS_CACHE_KEY } from "../items.hooks";
 import ItemListRowActions from "./item-list-row-actions";
+import bg from "./locales/bg";
+import cs from "./locales/cs";
 import de from "./locales/de";
 import en from "./locales/en";
 import es from "./locales/es";
+import et from "./locales/et";
+import fi from "./locales/fi";
 import fr from "./locales/fr";
 import hr from "./locales/hr";
+import is from "./locales/is";
 import it from "./locales/it";
+import nb from "./locales/nb";
 import nl from "./locales/nl";
 import pl from "./locales/pl";
 import pt from "./locales/pt";
+import sk from "./locales/sk";
 import sl from "./locales/sl";
+import sv from "./locales/sv";
 
 const translations = withTableTranslations({
   en,
   sl,
+  bg,
+  cs,
   de,
-  it,
-  fr,
   es,
-  pt,
+  et,
+  fi,
+  fr,
+  hr,
+  is,
+  it,
+  nb,
   nl,
   pl,
-  hr,
+  pt,
+  sk,
+  sv,
 } as const);
 
 type ItemListTableProps = {
@@ -41,6 +57,7 @@ type ItemListTableProps = {
   translationLocale?: string;
   entityId?: string;
   onView?: (item: Item) => void;
+  onEdit?: (item: Item) => void;
 } & ListTableProps<Item>;
 
 export default function ItemListTable({
@@ -48,6 +65,7 @@ export default function ItemListTable({
   createNewTrigger,
   onRowClick,
   onView,
+  onEdit,
   onChangeParams,
   entityId,
   ...i18nProps
@@ -91,10 +109,10 @@ export default function ItemListTable({
         id: "actions",
         header: "",
         align: "right",
-        cell: (item) => <ItemListRowActions item={item} onView={onView} t={t} />,
+        cell: (item) => <ItemListRowActions item={item} onView={onView} onEdit={onEdit} t={t} />,
       },
     ],
-    [t, onRowClick, onView],
+    [t, onRowClick, onView, onEdit],
   );
 
   return (

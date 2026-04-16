@@ -237,6 +237,17 @@ export default {
   "Complete General Settings first": "Conclua primeiro as Definições gerais",
   "Operator tax number and label are required for FURS fiscalization":
     "O número fiscal e a etiqueta do operador são obrigatórios para a fiscalização FURS",
+  "FURS Integration Defaults Required": "São necessários valores predefinidos de integração FURS",
+  "You have store integrations that need this information when fiscalization is enabled so fiscalized documents can be issued correctly. Please add the default operator, business premise, and device to use for those integrations.":
+    "Tem integrações de loja que precisam desta informação quando a fiscalização está ativada, para que os documentos fiscalizados possam ser emitidos corretamente. Adicione o operador predefinido, o estabelecimento e o dispositivo a utilizar nessas integrações.",
+  "All integrations will use this premise and device after fiscalization is enabled":
+    "Todas as integrações irão utilizar este estabelecimento e dispositivo depois de a fiscalização ser ativada",
+  "Save, update integrations, and enable": "Guardar, atualizar integrações e ativar",
+  "Failed to update one or more integrations": "Falha ao atualizar uma ou mais integrações",
+  "Operator defaults saved, but integrations were not fully updated":
+    "Os valores predefinidos do operador foram guardados, mas as integrações não foram totalmente atualizadas",
+  "Select business premise": "Selecionar estabelecimento",
+  "Select electronic device": "Selecionar dispositivo eletrónico",
   "FURS Operator Settings Required": "Definições do operador FURS obrigatórias",
   "Your FURS operator information is needed to fiscalize this document. Please enter your operator details.":
     "As informações do seu operador FURS são necessárias para fiscalizar este documento. Introduza os dados do operador.",

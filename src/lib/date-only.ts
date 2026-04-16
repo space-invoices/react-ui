@@ -45,14 +45,13 @@ export function formatDateOnlyForDisplay(
 ): string {
   if (!value) return "-";
 
-  const normalized = typeof value === "string" ? normalizeDateOnlyInput(value) ?? extractDateOnlyToken(value) : undefined;
+  const normalized =
+    typeof value === "string" ? (normalizeDateOnlyInput(value) ?? extractDateOnlyToken(value)) : undefined;
   const dateOnly = normalized ?? (value instanceof Date ? toLocalDateOnlyString(value) : undefined);
 
   if (!dateOnly) {
     return typeof value === "string" ? value : "-";
   }
 
-  return new Intl.DateTimeFormat(locale, { ...options, timeZone: "UTC" }).format(
-    new Date(`${dateOnly}T00:00:00.000Z`),
-  );
+  return new Intl.DateTimeFormat(locale, { ...options, timeZone: "UTC" }).format(new Date(`${dateOnly}T00:00:00.000Z`));
 }

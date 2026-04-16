@@ -10,9 +10,11 @@ import type {
 import { Card, CardContent } from "@/ui/components/ui/card";
 import { Separator } from "@/ui/components/ui/separator";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
+import { useWLSubscriptionOptional } from "@/ui/providers/wl-subscription-provider";
 import { FiscalizationStatusCard } from "../../invoices/view/fiscalization-status-card";
 import { DocumentActivitiesList } from "./document-activities-list";
 import { DocumentDetailsCard } from "./document-details-card";
+import { DocumentItemCategoriesCard } from "./document-item-categories-card";
 import { DocumentPaymentsList } from "./document-payments-list";
 import { DocumentRelationsList } from "./document-relations-list";
 import { DocumentVersionHistory } from "./document-version-history";
@@ -69,8 +71,14 @@ export function DocumentSidebar({
   isRetryingFiscalization,
   ...i18nProps
 }: DocumentSidebarProps) {
+  const subscription = useWLSubscriptionOptional();
   const documentRelations = (document as unknown as { document_relations?: DocumentRelation[] }).document_relations;
   const hasRelations = documentRelations && documentRelations.length > 0;
+  const hasFinancialCategoriesFeature = !subscription || subscription.hasFeature("financial_categories");
+  const hasCategorizedLineItems =
+    ((document as unknown as { items?: Array<{ type?: string | null }> }).items ?? []).some(
+      (item) => item.type !== "separator",
+    ) ?? false;
 
   return (
     <Card size="sm">
@@ -116,6 +124,19 @@ export function DocumentSidebar({
               locale={locale}
               onNavigate={onNavigateRelation}
               {...i18nProps}
+            />
+          </>
+        )}
+
+        {hasFinancialCategoriesFeature && hasCategorizedLineItems && (
+          <>
+            <Separator />
+            <DocumentItemCategoriesCard
+              document={document}
+              documentType={documentType}
+              entityId={entityId}
+              t={i18nProps.t}
+              translationLocale={i18nProps.translationLocale}
             />
           </>
         )}

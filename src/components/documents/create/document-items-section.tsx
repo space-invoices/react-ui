@@ -100,6 +100,7 @@ export function DocumentItemsSection({
       name: "",
       description: "",
       classification: undefined,
+      financial_category_id: undefined,
       quantity: 1,
       price: undefined,
       taxes: [],

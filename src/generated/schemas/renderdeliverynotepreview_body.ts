@@ -63,6 +63,15 @@ const CreateDocumentCustomer = DocumentEntity.and(
 
 
 // Dependency schema for renderdeliverynotepreview_body
+const CreateDocumentCategoryAssignment = z
+  .object({
+    item_index: z.union([z.number(), z.null()]),
+    financial_category_id: z.union([z.string(), z.null()]),
+  })
+  .partial();
+
+
+// Dependency schema for renderdeliverynotepreview_body
 const PartialDeliveryNotePreview = z.object({
   is_draft: z.boolean().optional(),
   date: z
@@ -119,6 +128,9 @@ const PartialDeliveryNotePreview = z.object({
         .passthrough()
     )
     .min(1),
+  category_assignments: z
+    .union([z.array(CreateDocumentCategoryAssignment), z.null()])
+    .optional(),
   linked_documents: z.union([z.array(z.string().min(1)), z.null()]).optional(),
   expected_total_with_tax: z.union([z.number(), z.null()]).optional(),
 });
@@ -163,6 +175,7 @@ const CreateDocumentItem = z
     discounts: z.array(LineDiscount).max(5),
     item_id: z.union([z.string(), z.null()]),
     metadata: z.union([z.record(z.string(), z.any()), z.null()]),
+    financial_category_id: z.union([z.string(), z.null()]),
     save_item: z.union([z.boolean(), z.null()]),
   })
   .partial();
@@ -195,6 +208,9 @@ const CompleteDeliveryNotePreview = z.object({
   date_service: z.union([z.string(), z.null()]).optional(),
   date_service_to: z.union([z.string(), z.null()]).optional(),
   items: z.array(CreateDocumentItem).min(1),
+  category_assignments: z
+    .union([z.array(CreateDocumentCategoryAssignment), z.null()])
+    .optional(),
   linked_documents: z.union([z.array(z.string().min(1)), z.null()]).optional(),
   expected_total_with_tax: z.union([z.number(), z.null()]).optional(),
 });

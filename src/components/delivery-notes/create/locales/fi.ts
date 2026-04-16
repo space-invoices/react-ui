@@ -37,6 +37,8 @@ export default {
   Update: "Päivitä",
   "Save as Draft": "Save as Draft",
   "Pick a date": "Pick a date",
+  Reference: "Reference",
+  "e.g., PO-2024-001": "esim. PO-2024-001",
   Currency: "Currency",
   "Select currency": "Select currency",
   "Percentage discount": "Percentage discount",

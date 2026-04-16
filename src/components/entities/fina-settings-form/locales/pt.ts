@@ -152,6 +152,17 @@ export default {
   Address: "Morada",
   "Post Code": "Código postal",
   "Save Entity Info": "Guardar dados da entidade",
+  "FINA Integration Defaults Required": "São necessários valores predefinidos de integração FINA",
+  "You have store integrations that need this information when fiscalization is enabled so fiscalized documents can be issued correctly. Please add the default operator, business premise, and device to use for those integrations.":
+    "Tem integrações de loja que precisam desta informação quando a fiscalização está ativada, para que os documentos fiscalizados possam ser emitidos corretamente. Adicione o operador predefinido, o estabelecimento e o dispositivo a utilizar nessas integrações.",
+  "All integrations will use this premise and device after fiscalization is enabled":
+    "Todas as integrações irão utilizar este estabelecimento e dispositivo depois de a fiscalização ser ativada",
+  "Save, update integrations, and enable": "Guardar, atualizar integrações e ativar",
+  "Failed to update one or more integrations": "Falha ao atualizar uma ou mais integrações",
+  "Operator defaults saved, but integrations were not fully updated":
+    "Os valores predefinidos do operador foram guardados, mas as integrações não foram totalmente atualizadas",
+  "Select business premise": "Selecionar estabelecimento",
+  "Select electronic device": "Selecionar dispositivo eletrónico",
   "Set operator OIB and label in General Settings first": "Set operator OIB and label in General Settings first",
   "Complete General Settings first": "Complete General Settings first",
   "Operator OIB and label are required for FINA fiscalization":

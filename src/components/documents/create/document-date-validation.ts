@@ -27,12 +27,7 @@ function getTodayDateOnly(): string {
   return normalizeDateOnlyInput(new Date().toISOString()) ?? "";
 }
 
-function addCustomIssue(
-  ctx: z.RefinementCtx,
-  path: string[],
-  message: string,
-  condition: boolean,
-) {
+function addCustomIssue(ctx: z.RefinementCtx, path: string[], message: string, condition: boolean) {
   if (!condition) return;
 
   ctx.addIssue({
@@ -81,7 +76,12 @@ export function withInvoiceIssueDateValidation<T extends z.ZodTypeAny>(schema: T
     const date = normalizeDateOnlyInput(document.date ?? undefined);
     const dateDue = normalizeDateOnlyInput(document.date_due ?? undefined);
 
-    addCustomIssue(ctx, ["date_due"], messages.dueDateBeforeIssueDate, !!date && !!dateDue && compareDateOnly(dateDue, date) < 0);
+    addCustomIssue(
+      ctx,
+      ["date_due"],
+      messages.dueDateBeforeIssueDate,
+      !!date && !!dateDue && compareDateOnly(dateDue, date) < 0,
+    );
   });
 }
 

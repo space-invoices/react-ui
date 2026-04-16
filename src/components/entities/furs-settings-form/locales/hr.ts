@@ -235,6 +235,17 @@ export default {
   "Complete General Settings first": "Najprije dovršite Opće postavke",
   "Operator tax number and label are required for FURS fiscalization":
     "Porezni broj i oznaka operatera obavezni su za FURS fiskalizaciju",
+  "FURS Integration Defaults Required": "Potrebne su zadane FURS postavke za integracije",
+  "You have store integrations that need this information when fiscalization is enabled so fiscalized documents can be issued correctly. Please add the default operator, business premise, and device to use for those integrations.":
+    "Imate integracije trgovine kojima su ove informacije potrebne kada je fiskalizacija uključena kako bi se fiskalizirani dokumenti mogli ispravno izdavati. Dodajte zadanog operatera te poslovni prostor i uređaj koji će se koristiti za te integracije.",
+  "All integrations will use this premise and device after fiscalization is enabled":
+    "Sve integracije koristit će ovaj poslovni prostor i uređaj nakon što se fiskalizacija omogući",
+  "Save, update integrations, and enable": "Spremi, ažuriraj integracije i omogući",
+  "Failed to update one or more integrations": "Ažuriranje jedne ili više integracija nije uspjelo",
+  "Operator defaults saved, but integrations were not fully updated":
+    "Zadane postavke operatera su spremljene, ali integracije nisu potpuno ažurirane",
+  "Select business premise": "Odaberite poslovni prostor",
+  "Select electronic device": "Odaberite elektronički uređaj",
   "FURS Operator Settings Required": "Potrebne su postavke FURS operatera",
   "Your FURS operator information is needed to fiscalize this document. Please enter your operator details.":
     "Podaci vašeg FURS operatera potrebni su za fiskalizaciju ovog dokumenta. Unesite podatke o operateru.",

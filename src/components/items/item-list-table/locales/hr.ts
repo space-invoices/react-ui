@@ -6,6 +6,7 @@ export default {
   "Open menu": "Otvori izbornik",
   Actions: "Akcije",
   "Copy item ID": "Kopiraj ID artikla",
+  "Edit item": "Uredi artikl",
   "View item": "Pogledaj artikl",
   // Empty state translations
   "Your list is empty": "Vaš popis artikala je prazan",

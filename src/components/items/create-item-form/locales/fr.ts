@@ -11,4 +11,8 @@ export default {
   "Net price": "Prix net",
   "Gross price (tax included)": "Prix brut (TTC)",
   "Net price (before tax)": "Prix net (HT)",
+  Category: "Catégorie",
+  "Select category": "Sélectionner une catégorie",
+  "No category": "Aucune catégorie",
+  Archived: "Archivé",
 };

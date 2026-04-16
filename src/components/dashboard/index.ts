@@ -28,6 +28,7 @@ export {
   PaymentTrendChart,
   usePaymentTrendData,
 } from "./payment-trend-chart";
+export { RevenueByCategoryChart } from "./revenue-by-category-chart";
 export type { RevenueCardProps } from "./revenue-card";
 export { RevenueCard } from "./revenue-card";
 export type { RevenueTrendChartData, RevenueTrendChartProps, RevenueTrendData } from "./revenue-trend-chart";

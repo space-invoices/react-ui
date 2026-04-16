@@ -66,6 +66,7 @@ export const lineItemSchema = z.object({
   name: z.string().min(1),
   description: z.string().nullish(),
   classification: z.enum(["product", "service", "advance"]).nullish(),
+  financial_category_id: z.string().nullish(),
   price: z.number().optional(),
   gross_price: z.number().optional(),
   quantity: z.number(),

@@ -103,6 +103,7 @@ const CustomDocumentItem = z
     total_with_tax: z.union([z.number(), z.null()]),
     item_id: z.union([z.string(), z.null()]),
     metadata: z.union([z.record(z.string(), z.any()), z.null()]),
+    financial_category_id: z.union([z.string(), z.null()]),
     save_item: z.union([z.boolean(), z.null()]),
   })
   .partial();
@@ -144,6 +145,15 @@ const CreateDocumentPayment = z.object({
   note: z.union([z.string(), z.null()]).optional(),
   metadata: z.union([z.record(z.string(), z.any()), z.null()]).optional(),
 });
+
+
+// Dependency schema for customadvanceinvoice
+const CreateDocumentCategoryAssignment = z
+  .object({
+    item_index: z.union([z.number(), z.null()]),
+    financial_category_id: z.union([z.string(), z.null()]),
+  })
+  .partial();
 
 
 // Dependency schema for customadvanceinvoice
@@ -220,6 +230,9 @@ const createCustomAdvanceInvoiceSchemaDefinition = z.object({
   taxes: z.array(DocumentSummaryTax).optional(),
   linked_documents: z.union([z.array(z.string().min(1)), z.null()]).optional(),
   payments: z.union([z.array(CreateDocumentPayment), z.null()]).optional(),
+  category_assignments: z
+    .union([z.array(CreateDocumentCategoryAssignment), z.null()])
+    .optional(),
   furs: CreateFursDocumentData.optional(),
   fina: CreateFinaInvoiceData.optional(),
 });

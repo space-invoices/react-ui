@@ -232,6 +232,17 @@ export default {
   "Complete General Settings first": "Първо завършете Общите настройки",
   "Operator tax number and label are required for FURS fiscalization":
     "Данъчният номер и етикетът на оператора са задължителни за FURS фискализация",
+  "FURS Integration Defaults Required": "Необходими са стандартни настройки за FURS интеграции",
+  "You have store integrations that need this information when fiscalization is enabled so fiscalized documents can be issued correctly. Please add the default operator, business premise, and device to use for those integrations.":
+    "Имате интеграции с магазини, които се нуждаят от тази информация, когато фискализацията е включена, за да могат фискализираните документи да се издават правилно. Моля, добавете оператора по подразбиране, търговския обект и устройството, които да се използват за тези интеграции.",
+  "All integrations will use this premise and device after fiscalization is enabled":
+    "Всички интеграции ще използват този търговски обект и устройство след активиране на фискализацията",
+  "Save, update integrations, and enable": "Запази, обнови интеграциите и активирай",
+  "Failed to update one or more integrations": "Неуспешно обновяване на една или повече интеграции",
+  "Operator defaults saved, but integrations were not fully updated":
+    "Настройките по подразбиране за оператора са запазени, но интеграциите не бяха напълно обновени",
+  "Select business premise": "Изберете търговски обект",
+  "Select electronic device": "Изберете електронно устройство",
   "FURS Operator Settings Required": "Необходими са настройки на FURS оператора",
   "Your FURS operator information is needed to fiscalize this document. Please enter your operator details.":
     "Информацията за вашия FURS оператор е необходима за фискализиране на този документ. Моля, въведете данните на оператора.",

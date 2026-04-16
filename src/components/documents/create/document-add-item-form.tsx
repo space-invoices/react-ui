@@ -149,6 +149,7 @@ export default function DocumentAddItemForm({
     const itemPricePath = `items.${index}.price`;
     const itemDescriptionPath = `items.${index}.description`;
     const itemClassificationPath = `items.${index}.classification`;
+    const itemFinancialCategoryPath = `items.${index}.financial_category_id`;
     const itemTaxesPath = `items.${index}.taxes`;
     const rowValidationPaths = [itemNamePath, itemQuantityPath, itemPricePath, itemTaxesPath] as const;
     if (item) {
@@ -175,6 +176,11 @@ export default function DocumentAddItemForm({
       if (item.classification) {
         form.setValue(itemClassificationPath, item.classification, { shouldDirty: true, shouldTouch: true });
       }
+
+      form.setValue(itemFinancialCategoryPath, item.financial_category_id ?? undefined, {
+        shouldDirty: true,
+        shouldTouch: true,
+      });
 
       // Prefill taxes from item's tax_ids (or clear if item has no taxes)
       if (item.tax_ids && item.tax_ids.length > 0) {

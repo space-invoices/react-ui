@@ -101,6 +101,7 @@ const CreateDocumentItem = z
     discounts: z.array(LineDiscount).max(5),
     item_id: z.union([z.string(), z.null()]),
     metadata: z.union([z.record(z.string(), z.any()), z.null()]),
+    financial_category_id: z.union([z.string(), z.null()]),
     save_item: z.union([z.boolean(), z.null()]),
   })
   .partial();
@@ -114,6 +115,15 @@ const EslogInput = z.union([
     .passthrough(),
   z.null(),
 ]);
+
+
+// Dependency schema for deliverynote
+const CreateDocumentCategoryAssignment = z
+  .object({
+    item_index: z.union([z.number(), z.null()]),
+    financial_category_id: z.union([z.string(), z.null()]),
+  })
+  .partial();
 
 
 // Schema for createDeliveryNote operation
@@ -144,6 +154,9 @@ const createDeliveryNoteSchemaDefinition = z.object({
   date_service_to: z.union([z.string(), z.null()]).optional(),
   items: z.array(CreateDocumentItem).min(1),
   eslog: EslogInput.optional(),
+  category_assignments: z
+    .union([z.array(CreateDocumentCategoryAssignment), z.null()])
+    .optional(),
   linked_documents: z.union([z.array(z.string().min(1)), z.null()]).optional(),
   expected_total_with_tax: z.union([z.number(), z.null()]).optional(),
 });

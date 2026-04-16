@@ -6,6 +6,7 @@ export default {
   "Open menu": "Menu openen",
   Actions: "Acties",
   "Copy item ID": "Artikel-ID kopiëren",
+  "Edit item": "Artikel bewerken",
   "View item": "Artikel bekijken",
   // Empty state translations
   "Your list is empty": "Uw artikelenlijst is leeg",

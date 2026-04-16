@@ -232,6 +232,17 @@ export default {
   "Complete General Settings first": "Ljúktu fyrst við Almennar stillingar",
   "Operator tax number and label are required for FURS fiscalization":
     "Skattnúmer og merki rekstraraðila eru nauðsynleg fyrir FURS-fjárvottun",
+  "FURS Integration Defaults Required": "Sjálfgefnar FURS-samþættingarstillingar eru nauðsynlegar",
+  "You have store integrations that need this information when fiscalization is enabled so fiscalized documents can be issued correctly. Please add the default operator, business premise, and device to use for those integrations.":
+    "Þú ert með verslunarsamþættingar sem þurfa þessar upplýsingar þegar fjárvæðing er virk svo hægt sé að gefa út fjárvottaðar færslur rétt. Bættu við sjálfgefnum rekstraraðila, starfsstöð og tæki sem á að nota fyrir þessar samþættingar.",
+  "All integrations will use this premise and device after fiscalization is enabled":
+    "Allar samþættingar munu nota þessa starfsstöð og þetta tæki eftir að fjárvottun er virkjuð",
+  "Save, update integrations, and enable": "Vista, uppfæra samþættingar og virkja",
+  "Failed to update one or more integrations": "Ekki tókst að uppfæra eina eða fleiri samþættingar",
+  "Operator defaults saved, but integrations were not fully updated":
+    "Sjálfgefnar stillingar rekstraraðila voru vistaðar, en samþættingar voru ekki uppfærðar að fullu",
+  "Select business premise": "Veldu starfsstöð",
+  "Select electronic device": "Veldu rafeindatæki",
   "FURS Operator Settings Required": "Stillingar FURS-rekstraraðila eru nauðsynlegar",
   "Your FURS operator information is needed to fiscalize this document. Please enter your operator details.":
     "Upplýsingar um FURS-rekstraraðila þinn eru nauðsynlegar til að fjárvotta þetta skjal. Vinsamlegast sláðu inn upplýsingar um rekstraraðila.",

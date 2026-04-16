@@ -46,6 +46,8 @@ export default {
   Update: "Aktualizovať",
   "Save as Draft": "Save as Draft",
   "Pick a date": "Pick a date",
+  Reference: "Referencia",
+  "e.g., PO-2024-001": "napr. PO-2024-001",
   Currency: "Mena",
   "Select currency": "Vyberte menu",
   "Percentage discount": "Percentage discount",

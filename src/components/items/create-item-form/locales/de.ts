@@ -11,4 +11,8 @@ export default {
   "Net price": "Nettopreis",
   "Gross price (tax included)": "Bruttopreis (inkl. MwSt.)",
   "Net price (before tax)": "Nettopreis (exkl. MwSt.)",
+  Category: "Kategorie",
+  "Select category": "Kategorie auswählen",
+  "No category": "Keine Kategorie",
+  Archived: "Archiviert",
 };

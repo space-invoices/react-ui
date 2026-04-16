@@ -233,9 +233,7 @@ export function NumberFormatSettingsForm({
                 <div className="space-y-4">
                   <div>
                     <h3 className="font-medium text-sm">{t("Main documents")}</h3>
-                    <p className="text-muted-foreground text-xs">
-                      {t("Used when no business unit is selected.")}
-                    </p>
+                    <p className="text-muted-foreground text-xs">{t("Used when no business unit is selected.")}</p>
                   </div>
 
                   <FormField
@@ -266,7 +264,9 @@ export function NumberFormatSettingsForm({
                     <div>
                       <h3 className="font-medium text-sm">{t("Business-unit documents")}</h3>
                       <p className="text-muted-foreground text-xs">
-                        {t("Used when a business unit is selected. Default formats should include {u} to stay distinct.")}
+                        {t(
+                          "Used when a business unit is selected. Default formats should include {u} to stay distinct.",
+                        )}
                       </p>
                     </div>
 

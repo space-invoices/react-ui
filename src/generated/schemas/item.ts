@@ -18,6 +18,7 @@ const createItemSchemaDefinition = z.object({
   price: z.number().optional(),
   gross_price: z.number().optional(),
   tax_ids: z.array(z.string().max(36)).optional(),
+  financial_category_id: z.union([z.string(), z.null()]).optional(),
   metadata: z.union([z.record(z.string(), z.any()), z.null()]).optional(),
   taxes: z
     .union([
@@ -48,6 +49,7 @@ const updateItemSchemaDefinition = z
     price: z.number(),
     gross_price: z.number(),
     tax_ids: z.array(z.string().max(36)),
+    financial_category_id: z.union([z.string(), z.null()]),
     metadata: z.union([z.record(z.string(), z.any()), z.null()]),
     taxes: z.union([
       z.array(

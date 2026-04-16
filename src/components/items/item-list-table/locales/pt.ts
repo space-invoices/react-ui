@@ -6,6 +6,7 @@ export default {
   "Open menu": "Abrir menu",
   Actions: "Ações",
   "Copy item ID": "Copiar ID do artigo",
+  "Edit item": "Editar artigo",
   "View item": "Ver artigo",
   // Empty state translations
   "Your list is empty": "A sua lista de artigos está vazia",

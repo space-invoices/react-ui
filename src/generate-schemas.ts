@@ -20,7 +20,10 @@ const getGroupName = (schemaName: string, alias?: string): string => {
 
   if (alias) {
     return alias
-      .replace(/^(create|patch|update|delete|register|upload|send|preview|render|accept|add|start|authorize|sync|void)/, "")
+      .replace(
+        /^(create|patch|update|delete|register|upload|send|preview|render|accept|add|start|authorize|sync|void)/,
+        "",
+      )
       .toLowerCase();
   }
 
@@ -28,12 +31,14 @@ const getGroupName = (schemaName: string, alias?: string): string => {
 };
 
 function extractOperationSchemaEntries(fullContent: string): OperationSchemaEntry[] {
-  const endpointBlockRegex = /  \{[\s\S]*?\n  \},?/g;
+  const endpointBlockRegex = / {2}\{[\s\S]*?\n {2}\},?/g;
   const dedupedEntries = new Map<string, OperationSchemaEntry>();
 
   for (const block of fullContent.match(endpointBlockRegex) ?? []) {
     const aliasMatch = block.match(/alias:\s*"([^"]+)"/);
-    const bodySchemaMatch = block.match(/type:\s*"Body",[\s\S]*?schema:\s*((?:[A-Z][A-Za-z0-9_]*|[a-z][A-Za-z0-9]*_Body))/);
+    const bodySchemaMatch = block.match(
+      /type:\s*"Body",[\s\S]*?schema:\s*((?:[A-Z][A-Za-z0-9_]*|[a-z][A-Za-z0-9]*_Body))/,
+    );
 
     if (!aliasMatch || !bodySchemaMatch) {
       continue;

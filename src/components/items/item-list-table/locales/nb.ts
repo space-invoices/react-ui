@@ -13,4 +13,5 @@ export default {
   "Try adjusting your search criteria": "Try adjusting your search criteria",
   "Clear search": "Clear search",
   "Clear all": "Clear all",
+  "Edit item": "Rediger vare",
 } as const;

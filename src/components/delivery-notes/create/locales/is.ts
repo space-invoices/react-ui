@@ -37,6 +37,8 @@ export default {
   Update: "Uppfæra",
   "Save as Draft": "Save as Draft",
   "Pick a date": "Pick a date",
+  Reference: "Tilvísun",
+  "e.g., PO-2024-001": "t.d. PO-2024-001",
   Currency: "Gjaldmiðill",
   "Select currency": "Veldu gjaldmiðil",
   "Percentage discount": "Percentage discount",

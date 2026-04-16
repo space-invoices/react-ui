@@ -152,6 +152,17 @@ export default {
   Address: "Naslov",
   "Post Code": "Poštna številka",
   "Save Entity Info": "Shrani podatke o podjetju",
+  "FINA Integration Defaults Required": "Privzete nastavitve FINA za integracije so obvezne",
+  "You have store integrations that need this information when fiscalization is enabled so fiscalized documents can be issued correctly. Please add the default operator, business premise, and device to use for those integrations.":
+    "Imate integracije trgovine, ki te podatke potrebujejo, ko je fiskalizacija omogočena, da se lahko fiskalizirani dokumenti pravilno izdajo. Dodajte privzetega operaterja ter poslovni prostor in napravo, ki naj se uporabljata za te integracije.",
+  "All integrations will use this premise and device after fiscalization is enabled":
+    "Vse integracije bodo po omogočitvi fiskalizacije uporabljale ta poslovni prostor in napravo",
+  "Save, update integrations, and enable": "Shrani, posodobi integracije in omogoči",
+  "Failed to update one or more integrations": "Posodobitev ene ali več integracij ni uspela",
+  "Operator defaults saved, but integrations were not fully updated":
+    "Privzete nastavitve operaterja so bile shranjene, vendar integracije niso bile v celoti posodobljene",
+  "Select business premise": "Izberite poslovni prostor",
+  "Select electronic device": "Izberite elektronsko napravo",
   "Set operator OIB and label in General Settings first":
     "Najprej nastavite OIB in oznako operaterja v splošnih nastavitvah",
   "Complete General Settings first": "Najprej dokončajte splošne nastavitve",

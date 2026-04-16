@@ -11,4 +11,8 @@ export default {
   "Net price": "Preço líquido",
   "Gross price (tax included)": "Preço bruto (com IVA)",
   "Net price (before tax)": "Preço líquido (sem IVA)",
+  Category: "Categoria",
+  "Select category": "Selecionar categoria",
+  "No category": "Sem categoria",
+  Archived: "Arquivado",
 };

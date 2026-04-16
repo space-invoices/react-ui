@@ -53,7 +53,9 @@ function normalizeComparableItems(items: any[] | undefined, priceModes: PriceMod
   });
 }
 
-export function financialInputsMatchInitial(options: Omit<ResolvePreservedExpectedTotalOptions, "initialExpectedTotalWithTax">): boolean {
+export function financialInputsMatchInitial(
+  options: Omit<ResolvePreservedExpectedTotalOptions, "initialExpectedTotalWithTax">,
+): boolean {
   if ((options.initialCurrencyCode ?? null) !== (options.currentCurrencyCode ?? null)) {
     return false;
   }

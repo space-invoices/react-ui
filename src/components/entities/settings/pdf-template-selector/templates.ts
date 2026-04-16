@@ -1,6 +1,12 @@
 import type { PdfTemplateId } from "@/ui/components/documents/create/live-preview";
 
-export const PDF_TEMPLATE_IDS = ["modern", "classic", "condensed", "minimal", "fashion"] as const satisfies readonly PdfTemplateId[];
+export const PDF_TEMPLATE_IDS = [
+  "modern",
+  "classic",
+  "condensed",
+  "minimal",
+  "fashion",
+] as const satisfies readonly PdfTemplateId[];
 
 export const PDF_TEMPLATE_OPTIONS: ReadonlyArray<{
   id: PdfTemplateId;

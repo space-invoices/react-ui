@@ -39,6 +39,8 @@ export default {
   Update: "Bijwerken",
   "Save as Draft": "Opslaan als concept",
   "Pick a date": "Kies een datum",
+  Reference: "Referentie",
+  "e.g., PO-2024-001": "bijv. PO-2024-001",
   Currency: "Valuta",
   "Select currency": "Valuta selecteren",
   "Percentage discount": "Percentuele korting",

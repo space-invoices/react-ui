@@ -11,4 +11,8 @@ export default {
   "Net price": "Prezzo netto",
   "Gross price (tax included)": "Prezzo lordo (IVA inclusa)",
   "Net price (before tax)": "Prezzo netto (IVA esclusa)",
+  Category: "Categoria",
+  "Select category": "Seleziona categoria",
+  "No category": "Nessuna categoria",
+  Archived: "Archiviato",
 };

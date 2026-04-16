@@ -47,6 +47,7 @@ const CreateDocumentItem = z
     discounts: z.array(LineDiscount).max(5),
     item_id: z.union([z.string(), z.null()]),
     metadata: z.union([z.record(z.string(), z.any()), z.null()]),
+    financial_category_id: z.union([z.string(), z.null()]),
     save_item: z.union([z.boolean(), z.null()]),
   })
   .partial();

@@ -102,7 +102,7 @@ export function RevenueTrendChart(props: RevenueTrendChartProps) {
         ];
 
   const chartContent = (
-    <ChartContainer config={chartConfig} className="h-[200px] w-full">
+    <ChartContainer config={chartConfig} className="h-[220px] w-full">
       <AreaChart data={hasData ? data : placeholderData} margin={{ left: 12, right: 12 }}>
         <CartesianGrid vertical={false} strokeDasharray="3 3" />
         <XAxis
@@ -140,7 +140,7 @@ export function RevenueTrendChart(props: RevenueTrendChartProps) {
   );
 
   return (
-    <Card>
+    <Card className="h-full">
       <CardHeader>
         <CardTitle>{t("Revenue Trend")}</CardTitle>
         <CardDescription>{t("Monthly revenue over the last 6 months")}</CardDescription>

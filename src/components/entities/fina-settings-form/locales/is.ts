@@ -154,6 +154,17 @@ export default {
   Address: "Heimilisfang",
   "Post Code": "Póstnúmer",
   "Save Entity Info": "Vista upplýsingar um einingu",
+  "FINA Integration Defaults Required": "Sjálfgefnar FINA-samþættingarstillingar eru nauðsynlegar",
+  "You have store integrations that need this information when fiscalization is enabled so fiscalized documents can be issued correctly. Please add the default operator, business premise, and device to use for those integrations.":
+    "Þú ert með verslunarsamþættingar sem þurfa þessar upplýsingar þegar fjárvæðing er virk svo hægt sé að gefa út fjárvottaðar færslur rétt. Bættu við sjálfgefnum rekstraraðila, starfsstöð og tæki sem á að nota fyrir þessar samþættingar.",
+  "All integrations will use this premise and device after fiscalization is enabled":
+    "Allar samþættingar munu nota þessa starfsstöð og þetta tæki eftir að fjárvottun er virkjuð",
+  "Save, update integrations, and enable": "Vista, uppfæra samþættingar og virkja",
+  "Failed to update one or more integrations": "Ekki tókst að uppfæra eina eða fleiri samþættingar",
+  "Operator defaults saved, but integrations were not fully updated":
+    "Sjálfgefnar stillingar rekstraraðila voru vistaðar, en samþættingar voru ekki uppfærðar að fullu",
+  "Select business premise": "Veldu starfsstöð",
+  "Select electronic device": "Veldu rafeindatæki",
   "FINA Operator Settings Required": "FINA Operator Settings Required",
   "Your FINA operator information is needed to fiscalize this document. Please enter your operator details.":
     "Your FINA operator information is needed to fiscalize this document. Please enter your operator details.",

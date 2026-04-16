@@ -1,9 +1,14 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import type { Entity } from "@spaceinvoices/js-sdk";
+import type { Entity, OrderIntegration } from "@spaceinvoices/js-sdk";
+import { orderIntegrations } from "@spaceinvoices/js-sdk";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertCircle, Info } from "lucide-react";
 import type { FC, ReactNode } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import type { z } from "zod";
+import { ORDER_INTEGRATIONS_CACHE_KEY } from "@/ui/components/order-integrations/order-integrations.hooks";
 import { Alert, AlertDescription, AlertTitle } from "@/ui/components/ui/alert";
 import { Form } from "@/ui/components/ui/form";
 import { PageLoadingSpinner } from "@/ui/components/ui/loading-spinner";
@@ -13,6 +18,7 @@ import { createTranslation } from "@/ui/lib/translation";
 import { useFormFooterRegistration } from "@/ui/providers/form-footer-context";
 import { type FiscalizationStepConfig, useFiscalizationStepFlow } from "../shared/fiscalization-step-flow";
 import { FiscalizationStepTabs } from "../shared/fiscalization-step-tabs";
+import { FursOperatorRequiredDialog } from "./furs-operator-required-dialog";
 import { useFursPremises, useFursSettings, useUpdateFursSettings, useUserFursSettings } from "./furs-settings.hooks";
 // Import locale files
 import bg from "./locales/bg";
@@ -107,6 +113,7 @@ export const FursSettingsForm: FC<FursSettingsFormProps> = ({
   renderSection,
   hideUserOperatorSection,
 }) => {
+  const queryClient = useQueryClient();
   // Create a guaranteed translation function using the createTranslation utility
   const translate = createTranslation({
     t: translateFn,
@@ -122,6 +129,25 @@ export const FursSettingsForm: FC<FursSettingsFormProps> = ({
   const { data: userFursSettings } = useUserFursSettings(entity.id, {
     enabled: !hideUserOperatorSection,
   });
+  const { data: integrationResponse, isLoading: integrationsLoading } = useQuery({
+    queryKey: [ORDER_INTEGRATIONS_CACHE_KEY, entity.id, "furs-settings-form"],
+    queryFn: async () =>
+      orderIntegrations.list({
+        entity_id: entity.id,
+        limit: 100,
+        order_by: "name",
+      }),
+    enabled: !!entity.id,
+    staleTime: 0,
+  });
+  const integrations = (integrationResponse?.data ?? []) as OrderIntegration[];
+  const integrationIds = useMemo(() => integrations.map((integration) => integration.id), [integrations]);
+  const hasOrderIntegrations = integrationIds.length > 0;
+  const [remediationDialogOpen, setRemediationDialogOpen] = useState(false);
+  const [pendingSettingsData, setPendingSettingsData] = useState<FursSettingsFormSchema | null>(null);
+  const [selectedPremiseId, setSelectedPremiseId] = useState("");
+  const [selectedDeviceId, setSelectedDeviceId] = useState("");
+  const [isBulkUpdatingIntegrations, setIsBulkUpdatingIntegrations] = useState(false);
 
   const { mutate: updateSettings, isPending } = useUpdateFursSettings({
     onSuccess: () => {
@@ -146,7 +172,7 @@ export const FursSettingsForm: FC<FursSettingsFormProps> = ({
   // Register with form footer for sticky save button
   useFormFooterRegistration({
     formId: "furs-settings-form",
-    isPending,
+    isPending: isPending || isBulkUpdatingIntegrations,
     isDirty: form.formState.isDirty,
     label: translate("Save Settings"),
   });
@@ -174,6 +200,54 @@ export const FursSettingsForm: FC<FursSettingsFormProps> = ({
   const canAccessPremises = hasEntityTaxNumber && hasOperatorSettings && hasCertificate && certificateValid;
   const canAccessEnable =
     hasEntityTaxNumber && hasOperatorSettings && certificateValid && hasPremises && hasPremiseWithDevice;
+  const remediationPremises = useMemo(() => {
+    return ((premises || []) as any[])
+      .filter((premise) => premise.is_active)
+      .map((premise) => ({
+        value: premise.id,
+        label: premise.business_premise_name,
+        devices: (premise.Devices || [])
+          .filter((device: any) => device.is_active && device.electronic_device_name !== "OLD")
+          .map((device: any) => ({
+            value: device.id,
+            label: device.electronic_device_name,
+          })),
+      }))
+      .filter((premise) => premise.devices.length > 0);
+  }, [premises]);
+  const premiseOptions = useMemo(
+    () => remediationPremises.map(({ value, label }) => ({ value, label })),
+    [remediationPremises],
+  );
+  const deviceOptions = useMemo(
+    () => remediationPremises.find((premise) => premise.value === selectedPremiseId)?.devices ?? [],
+    [remediationPremises, selectedPremiseId],
+  );
+  const firstPremise = remediationPremises[0];
+  const firstDevice = firstPremise?.devices[0];
+
+  useEffect(() => {
+    if (!remediationDialogOpen) return;
+    if (!selectedPremiseId && firstPremise) {
+      setSelectedPremiseId(firstPremise.value);
+      setSelectedDeviceId(firstPremise.devices[0]?.value || "");
+      return;
+    }
+
+    const selectedPremise = remediationPremises.find((premise) => premise.value === selectedPremiseId);
+    if (!selectedPremise && firstPremise) {
+      setSelectedPremiseId(firstPremise.value);
+      setSelectedDeviceId(firstPremise.devices[0]?.value || "");
+      return;
+    }
+
+    if (
+      selectedPremise &&
+      !selectedPremise.devices.some((device: { value: string }) => device.value === selectedDeviceId)
+    ) {
+      setSelectedDeviceId(selectedPremise.devices[0]?.value || "");
+    }
+  }, [firstPremise, remediationDialogOpen, remediationPremises, selectedDeviceId, selectedPremiseId]);
 
   const steps: FiscalizationStepConfig<StepType>[] = [
     {
@@ -240,14 +314,75 @@ export const FursSettingsForm: FC<FursSettingsFormProps> = ({
     );
   }
 
-  const onSubmit = (data: FursSettingsFormSchema) => {
+  const replayPendingSettingsUpdate = (data: FursSettingsFormSchema) => {
     updateSettings({
       entityId: entity.id,
       data,
     });
   };
 
-  if (settingsLoading || premisesLoading) {
+  const requiresIntegrationRemediation = (data: FursSettingsFormSchema) => {
+    return (
+      !fursEnabled &&
+      data.enabled === true &&
+      hasOrderIntegrations &&
+      !(data.operator_tax_number?.trim() && data.operator_label?.trim())
+    );
+  };
+
+  const attemptSaveFursSettings = (data: FursSettingsFormSchema) => {
+    if (requiresIntegrationRemediation(data)) {
+      setPendingSettingsData(data);
+      setSelectedPremiseId(firstPremise?.value || "");
+      setSelectedDeviceId(firstDevice?.value || "");
+      setRemediationDialogOpen(true);
+      return;
+    }
+
+    replayPendingSettingsUpdate(data);
+  };
+
+  const applyIntegrationDefaults = async (savedValues: { operator_tax_number: string; operator_label: string }) => {
+    if (!selectedPremiseId || !selectedDeviceId) return;
+
+    setIsBulkUpdatingIntegrations(true);
+
+    try {
+      for (const integrationId of integrationIds) {
+        await orderIntegrations.update(
+          integrationId,
+          {
+            business_premise_id: selectedPremiseId,
+            electronic_device_id: selectedDeviceId,
+          },
+          { entity_id: entity.id },
+        );
+      }
+
+      await queryClient.invalidateQueries({ queryKey: [ORDER_INTEGRATIONS_CACHE_KEY] });
+
+      const nextData = pendingSettingsData;
+      setPendingSettingsData(null);
+      setRemediationDialogOpen(false);
+
+      if (nextData) {
+        replayPendingSettingsUpdate({
+          ...nextData,
+          operator_tax_number: savedValues.operator_tax_number,
+          operator_label: savedValues.operator_label,
+        });
+      }
+    } catch (error) {
+      toast.error(translate("Failed to update one or more integrations"), {
+        description: translate("Operator defaults saved, but integrations were not fully updated"),
+      });
+      onError?.(error);
+    } finally {
+      setIsBulkUpdatingIntegrations(false);
+    }
+  };
+
+  if (settingsLoading || premisesLoading || integrationsLoading) {
     return <PageLoadingSpinner />;
   }
 
@@ -298,7 +433,7 @@ export const FursSettingsForm: FC<FursSettingsFormProps> = ({
 
   return (
     <Form {...form}>
-      <form id="furs-settings-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form id="furs-settings-form" onSubmit={form.handleSubmit(attemptSaveFursSettings)} className="space-y-6">
         {/* Sandbox notice - wrapped in grid for left alignment */}
         {isSandboxMode && (
           <div className="grid items-start gap-6 lg:grid-cols-[1fr_280px]">
@@ -381,6 +516,34 @@ export const FursSettingsForm: FC<FursSettingsFormProps> = ({
           />
         )}
       </form>
+      <FursOperatorRequiredDialog
+        open={remediationDialogOpen}
+        onOpenChange={(open) => {
+          setRemediationDialogOpen(open);
+          if (!open) {
+            setPendingSettingsData(null);
+          }
+        }}
+        entityId={entity.id}
+        onSaved={applyIntegrationDefaults}
+        t={translate}
+        saveScope="entity"
+        mode="integration-remediation"
+        titleOverride={translate("FURS Integration Defaults Required")}
+        descriptionOverride={translate(
+          "You have store integrations that need this information when fiscalization is enabled so fiscalized documents can be issued correctly. Please add the default operator, business premise, and device to use for those integrations.",
+        )}
+        initialValues={{
+          operator_tax_number: fursSettings?.operator_tax_number || userFursSettings?.operator_tax_number || "",
+          operator_label: fursSettings?.operator_label || userFursSettings?.operator_label || "",
+        }}
+        premiseOptions={premiseOptions}
+        deviceOptions={deviceOptions}
+        selectedPremiseId={selectedPremiseId}
+        selectedDeviceId={selectedDeviceId}
+        onPremiseChange={setSelectedPremiseId}
+        onDeviceChange={setSelectedDeviceId}
+      />
     </Form>
   );
 };

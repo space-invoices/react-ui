@@ -153,6 +153,17 @@ export default {
   Address: "Adresse",
   "Post Code": "Postnummer",
   "Save Entity Info": "Lagre enhetsinformasjon",
+  "FINA Integration Defaults Required": "Standardverdier for FINA-integrasjoner kreves",
+  "You have store integrations that need this information when fiscalization is enabled so fiscalized documents can be issued correctly. Please add the default operator, business premise, and device to use for those integrations.":
+    "Du har butikkintegrasjoner som trenger denne informasjonen når fiskalisering er aktivert, slik at fiskaliserte dokumenter kan utstedes riktig. Legg til standardoperatøren samt forretningsstedet og enheten som skal brukes for disse integrasjonene.",
+  "All integrations will use this premise and device after fiscalization is enabled":
+    "Alle integrasjoner vil bruke dette forretningsstedet og denne enheten når fiskalisering er aktivert",
+  "Save, update integrations, and enable": "Lagre, oppdater integrasjoner og aktiver",
+  "Failed to update one or more integrations": "Kunne ikke oppdatere én eller flere integrasjoner",
+  "Operator defaults saved, but integrations were not fully updated":
+    "Operatørens standardverdier ble lagret, men integrasjonene ble ikke fullstendig oppdatert",
+  "Select business premise": "Velg forretningssted",
+  "Select electronic device": "Velg elektronisk enhet",
   "FINA Operator Settings Required": "FINA Operator Settings Required",
   "Your FINA operator information is needed to fiscalize this document. Please enter your operator details.":
     "Your FINA operator information is needed to fiscalize this document. Please enter your operator details.",

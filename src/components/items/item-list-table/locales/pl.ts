@@ -6,6 +6,7 @@ export default {
   "Open menu": "Otwórz menu",
   Actions: "Akcje",
   "Copy item ID": "Kopiuj ID pozycji",
+  "Edit item": "Edytuj pozycję",
   "View item": "Pokaż pozycję",
   // Empty state translations
   "Your list is empty": "Lista pozycji jest pusta",

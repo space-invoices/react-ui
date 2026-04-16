@@ -15,9 +15,9 @@ import {
   FormLabel,
   FormMessage,
 } from "@/ui/components/ui/form";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui/components/ui/select";
 import { Switch } from "@/ui/components/ui/switch";
 import { Textarea } from "@/ui/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui/components/ui/select";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
 import { cn } from "@/ui/lib/utils";
@@ -96,7 +96,7 @@ export function TaxRulesSettingsForm({
       tax_clause_domestic: currentTaxClauseDefaults.domestic ?? "",
       tax_clause_intra_eu_b2c: currentTaxClauseDefaults.intra_eu_b2c ?? "",
     }),
-    [currentTaxClauseDefaults, currentTaxRules],
+    [currentTaxClauseDefaults, currentTaxRules, currentSettings.calculation?.default_mode],
   );
   const form = useForm<TaxRulesSettingsSchema>({
     resolver: zodResolver(taxRulesSettingsSchema),

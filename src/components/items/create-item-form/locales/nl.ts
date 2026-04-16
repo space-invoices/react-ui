@@ -11,4 +11,8 @@ export default {
   "Net price": "Nettoprijs",
   "Gross price (tax included)": "Brutoprijs (incl. BTW)",
   "Net price (before tax)": "Nettoprijs (excl. BTW)",
+  Category: "Categorie",
+  "Select category": "Categorie selecteren",
+  "No category": "Geen categorie",
+  Archived: "Gearchiveerd",
 };

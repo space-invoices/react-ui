@@ -18,6 +18,10 @@ type SelectItemsContextValue = {
 }
 
 const SelectItemsContext = React.createContext<SelectItemsContextValue | null>(null)
+const SelectValueContext = React.createContext<{
+  items?: Array<{ label: React.ReactNode; value: unknown }>
+  value?: unknown
+} | null>(null)
 
 function getSelectItemText(node: React.ReactNode): string {
   if (node == null || typeof node === "boolean") {
@@ -39,12 +43,57 @@ function getSelectItemText(node: React.ReactNode): string {
   return ""
 }
 
+function collectSelectItems(node: React.ReactNode, items: Array<{ label: React.ReactNode; value: unknown }>) {
+  if (node == null || typeof node === "boolean") {
+    return
+  }
+
+  if (Array.isArray(node)) {
+    node.forEach((child) => collectSelectItems(child, items))
+    return
+  }
+
+  if (!React.isValidElement<{ children?: React.ReactNode; label?: React.ReactNode; value?: unknown }>(node)) {
+    return
+  }
+
+  if (node.type === SelectItem) {
+    const derivedLabel = getSelectItemText(node.props.children).replace(/\s+/g, " ").trim()
+    const resolvedLabel = node.props.label ?? (derivedLabel.length > 0 ? derivedLabel : undefined)
+
+    if (resolvedLabel) {
+      items.push({
+        label: resolvedLabel,
+        value: node.props.value ?? null,
+      })
+    }
+  }
+
+  collectSelectItems(node.props.children, items)
+}
+
 function Select<Value, Multiple extends boolean | undefined = false>({
   children,
   items,
   ...props
 }: SelectPrimitive.Root.Props<Value, Multiple>) {
   const [registeredItems, setRegisteredItems] = React.useState<RegisteredSelectItem[]>([])
+  const staticItems = React.useMemo(() => {
+    const nextItems: Array<{ label: React.ReactNode; value: unknown }> = []
+    collectSelectItems(children, nextItems)
+    return nextItems
+  }, [children])
+  const [currentValue, setCurrentValue] = React.useState<unknown>(() => {
+    if ("value" in props) {
+      return props.value
+    }
+
+    if ("defaultValue" in props) {
+      return props.defaultValue
+    }
+
+    return undefined
+  })
 
   const upsertItem = React.useCallback((item: RegisteredSelectItem) => {
     setRegisteredItems((current) => {
@@ -69,7 +118,7 @@ function Select<Value, Multiple extends boolean | undefined = false>({
     setRegisteredItems((current) => current.filter((item) => item.id !== id))
   }, [])
 
-  const contextValue = React.useMemo<SelectItemsContextValue>(
+  const itemsContextValue = React.useMemo<SelectItemsContextValue>(
     () => ({ removeItem, upsertItem }),
     [removeItem, upsertItem]
   )
@@ -79,21 +128,53 @@ function Select<Value, Multiple extends boolean | undefined = false>({
       return items
     }
 
+    if (staticItems.length > 0) {
+      return staticItems
+    }
+
     if (registeredItems.length === 0) {
       return undefined
     }
 
     return registeredItems.map(({ label, value }) => ({ label, value }))
-  }, [items, registeredItems])
+  }, [items, registeredItems, staticItems])
+
+  const valueContextValue = React.useMemo(
+    () => ({
+      items: resolvedItems as Array<{ label: React.ReactNode; value: unknown }> | undefined,
+      value: "value" in props ? props.value : currentValue,
+    }),
+    [currentValue, props, resolvedItems]
+  )
+
+  const handleValueChange = React.useCallback(
+    (
+      nextValue: SelectPrimitive.Root.Props<Value, Multiple>["value"],
+      eventDetails: SelectPrimitive.Root.ChangeEventDetails
+    ) => {
+      setCurrentValue(nextValue)
+
+      if (nextValue !== undefined && (nextValue !== null || props.multiple !== true)) {
+        props.onValueChange?.(
+          nextValue as Parameters<NonNullable<SelectPrimitive.Root.Props<Value, Multiple>["onValueChange"]>>[0],
+          eventDetails
+        )
+      }
+    },
+    [props]
+  )
 
   return (
-    <SelectItemsContext.Provider value={contextValue}>
-      <SelectPrimitive.Root
-        {...props}
-        items={resolvedItems as SelectPrimitive.Root.Props<Value, Multiple>["items"]}
-      >
-        {children}
-      </SelectPrimitive.Root>
+    <SelectItemsContext.Provider value={itemsContextValue}>
+      <SelectValueContext.Provider value={valueContextValue}>
+        <SelectPrimitive.Root
+          {...props}
+          onValueChange={handleValueChange}
+          items={resolvedItems as SelectPrimitive.Root.Props<Value, Multiple>["items"]}
+        >
+          {children}
+        </SelectPrimitive.Root>
+      </SelectValueContext.Provider>
     </SelectItemsContext.Provider>
   )
 }
@@ -113,13 +194,21 @@ type SelectValueProps = SelectPrimitive.Value.Props & { placeholder?: string }
 function SelectValue({
   className,
   placeholder,
+  children,
   ...props
 }: SelectValueProps) {
+  const selectValueContext = React.useContext(SelectValueContext)
+  const resolvedLabel =
+    children ??
+    selectValueContext?.items?.find((item) => item.value === selectValueContext.value)?.label ??
+    (selectValueContext?.value != null ? "" : undefined)
+
   return (
     <SelectPrimitive.Value
       data-slot="select-value"
       className={cn("flex flex-1 text-left", className)}
       placeholder={placeholder}
+      {...(resolvedLabel !== undefined ? { children: resolvedLabel } : {})}
       {...props}
     />
   )

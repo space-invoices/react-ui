@@ -84,17 +84,30 @@ export default function ItemListTable({
         id: "name",
         header: t("Name"),
         sort: true,
+        className: "max-w-[18rem] lg:max-w-[24rem]",
         cell: (item) => (
-          <Button variant="link" className="py-0 underline" onClick={() => onRowClick?.(item)}>
+          <Button
+            variant="link"
+            className="h-auto w-full min-w-0 justify-start gap-2 px-0 py-0 text-left underline"
+            onClick={() => onRowClick?.(item)}
+          >
             <Package className="h-4 w-4 flex-shrink-0" />
-            {item.name}
+            <span className="min-w-0 truncate" title={item.name}>
+              {item.name}
+            </span>
           </Button>
         ),
       },
       {
         id: "description",
         header: t("Description"),
-        cell: (item) => item.description,
+        className: "max-w-[20rem] lg:max-w-[32rem]",
+        cell: (item) =>
+          item.description ? (
+            <div className="truncate text-muted-foreground" title={item.description}>
+              {item.description}
+            </div>
+          ) : null,
       },
       {
         id: "price",

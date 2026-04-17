@@ -2,6 +2,8 @@ import { Lock } from "lucide-react";
 import type { ReactNode } from "react";
 import { useState } from "react";
 
+import type { ComponentTranslationProps } from "@/ui/lib/translation";
+import { createTranslation } from "@/ui/lib/translation";
 import { type GatedFeature, useWLSubscriptionOptional } from "../../providers/wl-subscription-provider";
 import { UpgradeModal } from "./upgrade-modal";
 
@@ -16,7 +18,64 @@ type LockedFeatureProps = {
   showUpgradeModal?: boolean;
   /** Custom render for locked state */
   lockedRender?: () => ReactNode;
-};
+} & ComponentTranslationProps;
+
+type TranslateValues = Record<string, string | number>;
+
+function interpolateTranslation(template: string, values?: TranslateValues) {
+  if (!values) return template;
+
+  return Object.entries(values).reduce(
+    (result, [key, value]) => result.replaceAll(`{{${key}}}`, String(value)),
+    template,
+  );
+}
+
+function createLockedFeatureTranslation({ t, namespace, locale, translationLocale }: ComponentTranslationProps) {
+  const fallbackTranslation = createTranslation({
+    t,
+    namespace,
+    locale,
+    translationLocale,
+    translations: {
+      en: {
+        "wl-subscription.locked-feature.click-to-upgrade": "Click to upgrade",
+        "wl-subscription.locked-feature.requires.advanced-or-pro": "{{feature}} requires an Advanced or Pro plan",
+        "wl-subscription.locked-feature.requires.advanced": "{{feature}} requires an Advanced plan",
+        "wl-subscription.locked-feature.features.furs": "FURS fiscalization",
+        "wl-subscription.locked-feature.features.fina": "FINA fiscalization",
+        "wl-subscription.locked-feature.features.eslog": "eSlog export",
+        "wl-subscription.locked-feature.features.recurring": "Recurring invoices",
+        "wl-subscription.locked-feature.features.email_sending": "Email sending",
+        "wl-subscription.locked-feature.features.financial_categories": "Categories",
+        "wl-subscription.locked-feature.features.business_units": "Units / Brands",
+        "wl-subscription.locked-feature.features.custom_templates": "Custom templates",
+        "wl-subscription.locked-feature.features.api_access": "API access",
+        "wl-subscription.locked-feature.features.webhooks": "Webhooks",
+        "wl-subscription.locked-feature.features.priority_support": "Priority support",
+        "wl-subscription.locked-feature.features.e_invoicing": "E-Invoicing",
+      },
+    },
+  });
+
+  return (key: string, options?: { defaultValue?: string } & TranslateValues) => {
+    const fullKey = namespace ? `${namespace}.${key}` : key;
+
+    if (t) {
+      const translated = (t as (key: string, options?: Record<string, unknown>) => string)(fullKey, options);
+      if (translated !== fullKey && translated !== key) {
+        return interpolateTranslation(translated, options);
+      }
+    }
+
+    const fallback = fallbackTranslation(key);
+    if (fallback !== key) {
+      return interpolateTranslation(fallback, options);
+    }
+
+    return options?.defaultValue ? interpolateTranslation(options.defaultValue, options) : fallback;
+  };
+}
 
 /**
  * LockedFeature wrapper component
@@ -35,9 +94,14 @@ export function LockedFeature({
   lockedMessage,
   showUpgradeModal = true,
   lockedRender,
+  t: translateFn,
+  namespace,
+  locale,
+  translationLocale,
 }: LockedFeatureProps) {
   const subscription = useWLSubscriptionOptional();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const t = createLockedFeatureTranslation({ t: translateFn, namespace, locale, translationLocale });
 
   // If no subscription context, feature is unlocked (Space Invoices)
   if (!subscription) {
@@ -66,7 +130,15 @@ export function LockedFeature({
           {lockedRender()}
         </button>
         {showUpgradeModal && (
-          <UpgradeModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} feature={feature} />
+          <UpgradeModal
+            isOpen={isModalOpen}
+            onClose={() => setIsModalOpen(false)}
+            feature={feature}
+            t={translateFn}
+            namespace={namespace}
+            locale={locale}
+            translationLocale={translationLocale}
+          />
         )}
       </>
     );
@@ -86,15 +158,27 @@ export function LockedFeature({
               <Lock className="h-6 w-6 text-muted-foreground" />
             </div>
             <p className="font-medium text-muted-foreground text-sm">
-              {lockedMessage || getDefaultLockedMessage(feature)}
+              {lockedMessage || getDefaultLockedMessage(feature, t)}
             </p>
-            <p className="text-muted-foreground text-xs">Click to upgrade</p>
+            <p className="text-muted-foreground text-xs">
+              {t("wl-subscription.locked-feature.click-to-upgrade", {
+                defaultValue: "Click to upgrade",
+              })}
+            </p>
           </div>
         </div>
       </button>
 
       {showUpgradeModal && (
-        <UpgradeModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} feature={feature} />
+        <UpgradeModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          feature={feature}
+          t={translateFn}
+          namespace={namespace}
+          locale={locale}
+          translationLocale={translationLocale}
+        />
       )}
     </>
   );
@@ -157,22 +241,44 @@ export function UsageBadge() {
   );
 }
 
-// Helper to get default locked message for a feature
-function getDefaultLockedMessage(feature: GatedFeature): string {
-  const messages: Record<GatedFeature, string> = {
-    furs: "FURS fiscalization requires an Advanced or Pro plan",
-    fina: "FINA fiscalization requires an Advanced or Pro plan",
-    eslog: "eSlog export requires an Advanced or Pro plan",
-    recurring: "Recurring invoices require an Advanced or Pro plan",
-    email_sending: "Email sending requires an Advanced or Pro plan",
-    financial_categories: "Categories require an Advanced or Pro plan",
-    business_units: "Units / Brands require an Advanced or Pro plan",
-    custom_templates: "Custom templates require an Advanced plan",
-    api_access: "API access requires an Advanced plan",
-    webhooks: "Webhooks require an Advanced plan",
-    priority_support: "Priority support requires an Advanced plan",
-    e_invoicing: "E-Invoicing requires an Advanced or Pro plan",
+function getFeatureDisplayName(feature: GatedFeature, t: ReturnType<typeof createLockedFeatureTranslation>): string {
+  const defaultNames: Record<GatedFeature, string> = {
+    furs: "FURS fiscalization",
+    fina: "FINA fiscalization",
+    eslog: "eSlog export",
+    recurring: "Recurring invoices",
+    email_sending: "Email sending",
+    financial_categories: "Categories",
+    business_units: "Units / Brands",
+    custom_templates: "Custom templates",
+    api_access: "API access",
+    webhooks: "Webhooks",
+    priority_support: "Priority support",
+    e_invoicing: "E-Invoicing",
   };
 
-  return messages[feature] || "This feature requires a plan upgrade";
+  return t(`wl-subscription.locked-feature.features.${feature}`, {
+    defaultValue: defaultNames[feature] || feature,
+  });
+}
+
+// Helper to get default locked message for a feature
+function getDefaultLockedMessage(feature: GatedFeature, t: ReturnType<typeof createLockedFeatureTranslation>): string {
+  const advancedOnlyFeatures = new Set<GatedFeature>([
+    "custom_templates",
+    "api_access",
+    "webhooks",
+    "priority_support",
+  ]);
+  const featureLabel = getFeatureDisplayName(feature, t);
+
+  return advancedOnlyFeatures.has(feature)
+    ? t("wl-subscription.locked-feature.requires.advanced", {
+        feature: featureLabel,
+        defaultValue: "{{feature}} requires an Advanced plan",
+      })
+    : t("wl-subscription.locked-feature.requires.advanced-or-pro", {
+        feature: featureLabel,
+        defaultValue: "{{feature}} requires an Advanced or Pro plan",
+      });
 }

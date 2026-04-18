@@ -123,14 +123,27 @@ export function prepareDocumentItems(items: any[] | undefined, priceModes: Price
       };
     }
 
-    const { price, gross_price, ...rest } = item;
+    const { price, gross_price } = item;
     const isGrossPrice = priceModes[index] ?? false;
     const effectivePrice = price ?? gross_price;
     const priceFields =
       effectivePrice === undefined ? {} : isGrossPrice ? { gross_price: effectivePrice } : { price: effectivePrice };
 
-    return {
-      ...rest,
+    // Keep this list aligned with the strict CreateDocumentItemDto payload shape.
+    // Saved catalog items can carry read-only fields such as `price_with_tax`,
+    // which must not be forwarded when creating documents.
+    const preparedItem = {
+      type: item.type ?? undefined,
+      item_id: item.item_id ?? undefined,
+      save_item: item.save_item ?? undefined,
+      name: item.name,
+      description: item.description ?? undefined,
+      unit: item.unit ?? undefined,
+      quantity: item.quantity,
+      discounts: item.discounts,
+      metadata: item.metadata ?? undefined,
+      classification: item.classification ?? undefined,
+      financial_category_id: item.financial_category_id ?? undefined,
       ...priceFields,
       taxes: item.taxes
         ?.map((tax: any) => {
@@ -145,6 +158,8 @@ export function prepareDocumentItems(items: any[] | undefined, priceModes: Price
         })
         .filter((tax: any) => tax.tax_id || tax.rate !== undefined || tax.classification),
     };
+
+    return Object.fromEntries(Object.entries(preparedItem).filter(([, value]) => value !== undefined));
   });
 }
 

@@ -1151,13 +1151,6 @@ export default function CreateInvoiceForm({
     if (!activeEntity) return;
 
     if (isEditMode) {
-      if (activeEntity.is_tax_subject) {
-        const items = form.getValues("items") || [];
-        if (items.length > 0 && (!items[0].taxes || items[0].taxes.length === 0)) {
-          form.setValue("items.0.taxes", [{ tax_id: undefined }]);
-        }
-      }
-
       initialSetupDoneRef.current = true;
       if (hasInitialValues && duplicateHydrationStartedAtRef.current && !duplicateHydrationLoggedRef.current) {
         duplicateHydrationLoggedRef.current = true;
@@ -1194,14 +1187,6 @@ export default function CreateInvoiceForm({
         form.setValue("date_due", calculateDueDate(currentDate, dueDays));
       }
       setDueDaysType((DUE_DAYS_PRESETS as readonly number[]).includes(dueDays) ? dueDays : "custom");
-    }
-
-    // Auto-add tax field for tax subject entities
-    if (activeEntity.is_tax_subject) {
-      const items = form.getValues("items") || [];
-      if (items.length > 0 && (!items[0].taxes || items[0].taxes.length === 0)) {
-        form.setValue("items.0.taxes", [{ tax_id: undefined }]);
-      }
     }
 
     initialSetupDoneRef.current = true;
@@ -1571,6 +1556,7 @@ export default function CreateInvoiceForm({
           taxesDisabledMessage={
             reverseChargeApplies ? t("Reverse charge - tax exempt EU B2B sale") : viesWarning ? viesWarning : undefined
           }
+          isTaxSubject={activeEntity?.is_tax_subject ?? false}
           maxTaxesPerItem={activeEntity?.country_rules?.max_taxes_per_item}
           priceModesRef={priceModesRef}
           initialPriceModes={initialPriceModes}

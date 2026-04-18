@@ -3,6 +3,7 @@
  * Handles: item management (add, remove, reorder)
  */
 import { PlusIcon, SeparatorHorizontal } from "lucide-react";
+import { useEffect } from "react";
 import type { MutableRefObject } from "react";
 import type {
   UseFormClearErrors,
@@ -15,6 +16,7 @@ import { useController, useFieldArray } from "react-hook-form";
 import type { DocumentTypes } from "@/ui/components/documents/types";
 import { Button } from "@/ui/components/ui/button";
 import { cn } from "@/ui/lib/utils";
+import { useListTaxes } from "@/ui/components/taxes/taxes.hooks";
 import DocumentAddItemForm from "./document-add-item-form";
 import type { AnyControl } from "./form-types";
 
@@ -57,6 +59,7 @@ type DocumentItemsSectionProps = {
   /** Called when item ordering or price mode changes outside normal field edits. */
   onItemsStateChange?: () => void;
   locale?: string;
+  isTaxSubject?: boolean;
 };
 
 export function DocumentItemsSection({
@@ -79,16 +82,21 @@ export function DocumentItemsSection({
   initialPriceModes = {},
   onItemsStateChange,
   locale = "en",
+  isTaxSubject = false,
 }: DocumentItemsSectionProps) {
   const { fields, append, remove, move } = useFieldArray({
     control: control as any,
     name: "items",
   });
+  const { data: taxesResponse } = useListTaxes(entityId);
+  const hasEntityTaxes = (taxesResponse?.data?.length ?? 0) > 0;
   const itemsController = useController({
     control: control as any,
     name: "items" as any,
   });
   const itemsError = itemsController.fieldState.error?.message;
+
+  const buildInitialTaxes = () => (isTaxSubject && hasEntityTaxes ? [{ tax_id: undefined }] : []);
 
   const syncPriceModes = (updater: (current: PriceModesMap) => PriceModesMap) => {
     if (!priceModesRef) return;
@@ -103,7 +111,7 @@ export function DocumentItemsSection({
       financial_category_id: undefined,
       quantity: 1,
       price: undefined,
-      taxes: [],
+      taxes: buildInitialTaxes(),
     });
     syncPriceModes((current) => ({ ...current, [fields.length]: false }));
     onItemsStateChange?.();
@@ -157,6 +165,20 @@ export function DocumentItemsSection({
   };
 
   const items = watch("items") || fields;
+  useEffect(() => {
+    if (!isTaxSubject || !hasEntityTaxes) return;
+
+    const currentItems = getValues("items") || [];
+    currentItems.forEach((item: any, index: number) => {
+      if (item?.type === "separator") return;
+      if (item?.taxes && item.taxes.length > 0) return;
+      setValue(`items.${index}.taxes`, [{ tax_id: undefined }], {
+        shouldDirty: false,
+        shouldTouch: false,
+        shouldValidate: false,
+      });
+    });
+  }, [getValues, hasEntityTaxes, isTaxSubject, setValue]);
 
   return (
     <div className="flex flex-col gap-4">

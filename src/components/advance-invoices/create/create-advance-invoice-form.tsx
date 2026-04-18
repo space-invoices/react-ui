@@ -868,16 +868,6 @@ export default function CreateAdvanceInvoiceForm({
     appliedDerivedDefaultsRef.current = derivedDocumentDefaults;
   }, [derivedDocumentDefaults, form, isEditMode]);
 
-  // Auto-add tax field for tax subject entities
-  useEffect(() => {
-    if (activeEntity?.is_tax_subject) {
-      const items = form.getValues("items") || [];
-      if (items.length > 0 && (!items[0].taxes || items[0].taxes.length === 0)) {
-        form.setValue("items.0.taxes", [{ tax_id: undefined }]);
-      }
-    }
-  }, [activeEntity?.is_tax_subject, form]);
-
   const buildPreviewPayload = useCallback(
     (values: CreateAdvanceInvoiceFormValues): AdvanceInvoicePreviewPayload => {
       const preservedExpectedTotalWithTax = getPreservedExpectedTotalWithTax(values);
@@ -1110,6 +1100,7 @@ export default function CreateAdvanceInvoiceForm({
           taxesDisabledMessage={
             reverseChargeApplies ? t("Reverse charge - tax exempt EU B2B sale") : viesWarning ? viesWarning : undefined
           }
+          isTaxSubject={activeEntity?.is_tax_subject ?? false}
           maxTaxesPerItem={activeEntity?.country_rules?.max_taxes_per_item}
           priceModesRef={priceModesRef}
           initialPriceModes={initialPriceModes}

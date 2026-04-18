@@ -304,16 +304,6 @@ export default function CreateDeliveryNoteForm({
     }
   }, [activeEntity, form, isEditMode]);
 
-  // Auto-add tax field for tax subject entities
-  useEffect(() => {
-    if (activeEntity?.is_tax_subject) {
-      const items = form.getValues("items") || [];
-      if (items.length > 0 && (!items[0].taxes || items[0].taxes.length === 0)) {
-        form.setValue("items.0.taxes", [{ tax_id: undefined }]);
-      }
-    }
-  }, [activeEntity?.is_tax_subject, form]);
-
   // Set default signature from entity settings
   useEffect(() => {
     if (isEditMode) return;
@@ -593,6 +583,7 @@ export default function CreateDeliveryNoteForm({
           onAddNewTax={onAddNewTax}
           t={t}
           locale={locale}
+          isTaxSubject={activeEntity?.is_tax_subject ?? false}
           maxTaxesPerItem={activeEntity?.country_rules?.max_taxes_per_item}
           priceModesRef={priceModesRef}
           initialPriceModes={initialPriceModes}

@@ -1,7 +1,8 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { CreateItemRequest, Item } from "@spaceinvoices/js-sdk";
 import { Minus, Plus } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import type { FieldErrors } from "react-hook-form";
 import { useForm, useWatch } from "react-hook-form";
 import { useFinancialCategories } from "@/ui/components/financial-categories/financial-categories.hooks";
 import { FormInput } from "@/ui/components/form";
@@ -119,6 +120,20 @@ export default function CreateItemForm({
       taxes: [],
     },
   });
+
+  useEffect(() => {
+    if (!activeEntity?.is_tax_subject) return;
+    if (availableTaxes.length === 0) return;
+
+    const currentTaxes = form.getValues("taxes") || [];
+    if (currentTaxes.length > 0) return;
+
+    form.setValue("taxes", [{}], {
+      shouldDirty: false,
+      shouldTouch: false,
+      shouldValidate: false,
+    });
+  }, [activeEntity?.is_tax_subject, availableTaxes.length, form]);
   const price = useWatch({
     control: form.control,
     name: "price",
@@ -168,7 +183,14 @@ export default function CreateItemForm({
     entityId,
     onSuccess: (item, _variables, _context) => {
       onSuccess?.(item);
-      form.reset(); // Reset form after successful submission
+      form.reset({
+        name: "",
+        description: "",
+        classification: isPortugal ? "product" : undefined,
+        financial_category_id: undefined,
+        price: 0,
+        taxes: activeEntity?.is_tax_subject && availableTaxes.length > 0 ? [{}] : [],
+      });
     },
     onError: (error, _variables, _context) => {
       form.setError("root", {
@@ -191,13 +213,22 @@ export default function CreateItemForm({
     createItem(payload as CreateItemRequest);
   };
 
+  const onInvalid = (errors: FieldErrors<CreateItemSchema>) => {
+    if (!errors.name) return;
+
+    form.setError("name", {
+      type: "required",
+      message: t("Name is required"),
+    });
+  };
+
   const handleSubmitClick = () => {
-    form.handleSubmit(onSubmit)();
+    form.handleSubmit(onSubmit, onInvalid)();
   };
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-4">
         <FormInput control={form.control} name="name" label={t("Name")} placeholder={t("Enter name")} />
 
         <FormInput

@@ -2,9 +2,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import type { CreateItemRequest, Item } from "@spaceinvoices/js-sdk";
 import { Minus, Plus } from "lucide-react";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { useFinancialCategories } from "@/ui/components/financial-categories/financial-categories.hooks";
 import { FormInput } from "@/ui/components/form";
+import TaxSelectField, { getCurrentRate } from "@/ui/components/taxes/tax-select-field";
+import { useListTaxes } from "@/ui/components/taxes/taxes.hooks";
 import { Button } from "@/ui/components/ui/button";
 import {
   DropdownMenu,
@@ -15,6 +17,7 @@ import {
 } from "@/ui/components/ui/dropdown-menu";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/ui/components/ui/form";
 import { Input } from "@/ui/components/ui/input";
+import { Label } from "@/ui/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui/components/ui/select";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/ui/components/ui/tooltip";
 import type { CreateItemSchema } from "@/ui/generated/schemas";
@@ -72,6 +75,7 @@ type EditItemFormProps = {
   onSuccess?: (item: Item) => void;
   onError?: (error: Error) => void;
   renderSubmitButton?: (props: { isSubmitting: boolean; submit: () => void }) => React.ReactNode;
+  onAddNewTax?: () => void;
 } & ComponentTranslationProps;
 
 export default function EditItemForm({
@@ -80,6 +84,7 @@ export default function EditItemForm({
   onSuccess,
   onError,
   renderSubmitButton,
+  onAddNewTax,
   ...i18nProps
 }: EditItemFormProps) {
   const t = createTranslation({
@@ -90,9 +95,12 @@ export default function EditItemForm({
   const subscription = useWLSubscriptionOptional();
   const countryCapabilities = getEntityCountryCapabilities(activeEntity);
   const lockPortugalSavedItemFields = !countryCapabilities.allowSavedItemFullEdit;
+  const maxTaxesPerItem = activeEntity?.country_rules?.max_taxes_per_item ?? 1;
   const hasFinancialCategoriesFeature = !subscription || subscription.hasFeature("financial_categories");
   const { data: categoriesResponse } = useFinancialCategories(entityId, true);
+  const { data: taxesResponse } = useListTaxes(entityId);
   const categories = categoriesResponse?.data ?? [];
+  const availableTaxes = taxesResponse?.data ?? [];
   const visibleCategories = categories.filter(
     (category) => !category.archived_at || category.id === item.financial_category_id,
   );
@@ -119,12 +127,53 @@ export default function EditItemForm({
       name: item.name ?? "",
       description: item.description ?? "",
       price: isGrossPrice ? (item.gross_price ?? 0) : item.price,
+      taxes: item.tax_ids?.map((tax_id) => ({ tax_id })) ?? [],
     },
+  });
+  const price = useWatch({
+    control: form.control,
+    name: "price",
+  });
+  const selectedTaxes = useWatch({
+    control: form.control,
+    name: "taxes",
   });
 
   const setPriceMode = (mode: string) => {
     setIsGrossPrice(mode === "gross");
   };
+
+  const addTax = () => {
+    const currentTaxes = selectedTaxes || [];
+    if (currentTaxes.length >= maxTaxesPerItem) return;
+
+    form.setValue("taxes", [...currentTaxes, {}], { shouldDirty: true, shouldTouch: true });
+  };
+
+  const removeTax = (taxIndex: number) => {
+    const currentTaxes = selectedTaxes || [];
+    form.setValue(
+      "taxes",
+      currentTaxes.filter((_: unknown, index: number) => index !== taxIndex),
+      { shouldDirty: true, shouldTouch: true },
+    );
+  };
+
+  const selectedTaxRate = (selectedTaxes ?? []).reduce((sum: number, tax: any) => {
+    if (!tax?.tax_id) {
+      return sum;
+    }
+
+    const selectedTax = availableTaxes.find((candidate) => candidate.id === tax.tax_id);
+    return sum + (selectedTax ? getCurrentRate(selectedTax) : 0);
+  }, 0);
+
+  const priceWithTax =
+    typeof price === "number" && Number.isFinite(price)
+      ? isGrossPrice
+        ? price
+        : Math.round(price * (1 + selectedTaxRate / 100) * 100) / 100
+      : undefined;
 
   const { mutate: updateItem, isPending } = useUpdateItem({
     entityId,
@@ -141,9 +190,10 @@ export default function EditItemForm({
   });
 
   const onSubmit = async (values: CreateItemSchema) => {
-    const { price, ...rest } = values;
+    const { price, taxes, ...rest } = values;
+    const tax_ids = (taxes ?? []).flatMap((tax: any) => (tax?.tax_id ? [tax.tax_id] : []));
 
-    const payload = isGrossPrice ? { ...rest, gross_price: price } : { ...rest, price };
+    const payload = isGrossPrice ? { ...rest, gross_price: price, tax_ids } : { ...rest, price, tax_ids };
 
     updateItem({
       id: item.id,
@@ -238,6 +288,35 @@ export default function EditItemForm({
             </FormItem>
           )}
         />
+
+        <div className="space-y-2">
+          <Label>{t("Tax")}</Label>
+          {(selectedTaxes ?? []).map((_tax: any, taxIndex: number) => (
+            <TaxSelectField
+              // biome-ignore lint/suspicious/noArrayIndexKey: list order is form-controlled
+              key={taxIndex}
+              name={`taxes.${taxIndex}.tax_id`}
+              control={form.control}
+              entityId={entityId}
+              onRemove={() => removeTax(taxIndex)}
+              onAddNewTax={onAddNewTax}
+              showLabel={false}
+              disabled={lockPortugalSavedItemFields}
+              t={t}
+            />
+          ))}
+          {(!selectedTaxes || selectedTaxes.length < maxTaxesPerItem) && (
+            <Button type="button" variant="outline" size="sm" onClick={addTax} disabled={lockPortugalSavedItemFields}>
+              <Plus className="h-4 w-4" />
+              {t("Add tax")}
+            </Button>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="item-price-with-tax">{t("Price with tax")}</Label>
+          <Input id="item-price-with-tax" value={priceWithTax ?? ""} readOnly aria-readonly="true" />
+        </div>
 
         {hasFinancialCategoriesFeature && visibleCategories.length > 0 && (
           <FormField

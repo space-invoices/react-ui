@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useWatch } from "react-hook-form";
 
 import { ItemCombobox } from "@/ui/components/items/item-combobox";
+import TaxSelectField from "@/ui/components/taxes/tax-select-field";
 import { Button } from "@/ui/components/ui/button";
 import {
   DropdownMenu,
@@ -19,8 +20,6 @@ import { Textarea } from "@/ui/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/ui/components/ui/tooltip";
 import { getEntityCountryCapabilities } from "@/ui/lib/country-capabilities";
 import { useEntities } from "@/ui/providers/entities-context";
-
-import DocumentAddItemTaxRateField from "./document-add-item-tax-rate-field";
 
 type DocumentAddItemFormProps = {
   index: number;
@@ -512,11 +511,10 @@ export default function DocumentAddItemForm({
             ) : (
               <>
                 {taxes?.map((_tax: any, taxIndex: number) => (
-                  <DocumentAddItemTaxRateField
+                  <TaxSelectField
                     // biome-ignore lint/suspicious/noArrayIndexKey: index is stable
                     key={taxIndex}
-                    index={index}
-                    taxIndex={taxIndex}
+                    name={`items.${index}.taxes.${taxIndex}.tax_id`}
                     control={control}
                     entityId={entityId}
                     onRemove={() => removeTax(taxIndex)}

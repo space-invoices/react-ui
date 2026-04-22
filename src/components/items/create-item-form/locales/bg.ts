@@ -1,5 +1,6 @@
 export default {
   Name: "Име",
+  "Name is required": "Name is required",
   "Enter name": "Въведете име",
   Description: "Описание",
   "Enter description": "Enter description",

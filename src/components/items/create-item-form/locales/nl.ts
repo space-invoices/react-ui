@@ -1,5 +1,6 @@
 export default {
   Name: "Naam",
+  "Name is required": "Name is required",
   "Enter name": "Naam invoeren",
   Description: "Beschrijving",
   "Enter description": "Beschrijving invoeren",

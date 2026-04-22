@@ -7,6 +7,8 @@ export default {
   "Bank Transfer": "Bankoverføring",
   Card: "Kort",
   Check: "Sjekk",
+  PayPal: "PayPal",
+  Coupon: "Coupon",
   "Credit Note": "Kreditnota",
   Advance: "Advance",
   Other: "Annet",

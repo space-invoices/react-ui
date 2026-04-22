@@ -4,14 +4,35 @@ import { CalendarIcon } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/ui/components/ui/button";
 import { Calendar } from "@/ui/components/ui/calendar";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/ui/components/ui/form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/ui/components/ui/form";
 import { Input } from "@/ui/components/ui/input";
-import { Popover, PopoverContent, PopoverTrigger } from "@/ui/components/ui/popover";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/ui/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/ui/components/ui/select";
 import { Textarea } from "@/ui/components/ui/textarea";
 import type { CreatePaymentSchema } from "@/ui/generated/schemas/payment";
 import { createPaymentSchema } from "@/ui/generated/schemas/payment";
 import { toUtcMidnightIsoString } from "@/ui/lib/date-only";
+import {
+  DOCUMENT_PAYMENT_FORM_LABELS,
+  DOCUMENT_PAYMENT_FORM_TYPES,
+} from "@/ui/lib/payment-types";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
 import { cn } from "@/ui/lib/utils";
@@ -39,24 +60,16 @@ const translations = {
   hr,
 } as const;
 
-// Labels for payment types (used for translations)
-const PAYMENT_TYPE_LABELS: Record<string, string> = {
-  cash: "Cash",
-  bank_transfer: "Bank Transfer",
-  card: "Card",
-  check: "Check",
-  credit_note: "Credit Note",
-  advance: "Advance",
-  other: "Other",
-};
-
 type CreatePaymentFormProps = {
   entityId: string;
   documentId: string;
   documentTotal: number;
   onSuccess?: (payment: Payment) => void;
   onError?: (error: Error) => void;
-  renderSubmitButton?: (props: { isSubmitting: boolean; submit: () => void }) => React.ReactNode;
+  renderSubmitButton?: (props: {
+    isSubmitting: boolean;
+    submit: () => void;
+  }) => React.ReactNode;
 } & ComponentTranslationProps;
 
 export default function CreatePaymentForm({
@@ -151,14 +164,15 @@ export default function CreatePaymentForm({
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder={t("Select payment type")}>
-                      {field.value && t(PAYMENT_TYPE_LABELS[field.value])}
+                      {field.value &&
+                        t(DOCUMENT_PAYMENT_FORM_LABELS[field.value])}
                     </SelectValue>
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {Object.entries(PAYMENT_TYPE_LABELS).map(([value, label]) => (
-                    <SelectItem key={value} value={value}>
-                      {t(label)}
+                  {DOCUMENT_PAYMENT_FORM_TYPES.map((paymentType) => (
+                    <SelectItem key={paymentType} value={paymentType}>
+                      {t(DOCUMENT_PAYMENT_FORM_LABELS[paymentType])}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -179,10 +193,15 @@ export default function CreatePaymentForm({
                   <FormControl>
                     <Button
                       variant="outline"
-                      className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
+                      className={cn(
+                        "w-full pl-3 text-left font-normal",
+                        !field.value && "text-muted-foreground",
+                      )}
                     >
                       {field.value ? (
-                        new Date(field.value).toLocaleDateString(i18nProps.locale)
+                        new Date(field.value).toLocaleDateString(
+                          i18nProps.locale,
+                        )
                       ) : (
                         <span>{t("Pick a date")}</span>
                       )}
@@ -195,7 +214,9 @@ export default function CreatePaymentForm({
                     mode="single"
                     selected={field.value ? new Date(field.value) : undefined}
                     onSelect={(date) => field.onChange(date?.toISOString())}
-                    disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
+                    disabled={(date) =>
+                      date > new Date() || date < new Date("1900-01-01")
+                    }
                     initialFocus
                   />
                 </PopoverContent>
@@ -212,7 +233,11 @@ export default function CreatePaymentForm({
             <FormItem>
               <FormLabel>{t("Reference")}</FormLabel>
               <FormControl>
-                <Input placeholder={t("Enter reference number")} {...field} value={field.value ?? ""} />
+                <Input
+                  placeholder={t("Enter reference number")}
+                  {...field}
+                  value={field.value ?? ""}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -226,7 +251,11 @@ export default function CreatePaymentForm({
             <FormItem>
               <FormLabel>{t("Note")}</FormLabel>
               <FormControl>
-                <Textarea placeholder={t("Enter payment notes")} {...field} value={field.value ?? ""} />
+                <Textarea
+                  placeholder={t("Enter payment notes")}
+                  {...field}
+                  value={field.value ?? ""}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>

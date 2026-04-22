@@ -7,6 +7,8 @@ export default {
   "Bank Transfer": "Bankovní převod",
   Card: "Karta",
   Check: "Šek",
+  PayPal: "PayPal",
+  Coupon: "Coupon",
   "Credit Note": "Dobropis",
   Advance: "Advance",
   Other: "Jiné",

@@ -1,5 +1,6 @@
 export default {
   Name: "Nazwa",
+  "Name is required": "Name is required",
   "Enter name": "Wprowadź nazwę",
   Description: "Opis",
   "Enter description": "Wprowadź opis",

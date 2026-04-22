@@ -7,6 +7,8 @@ export default {
   "Bank Transfer": "Virement bancaire",
   Card: "Carte",
   Check: "Chèque",
+  PayPal: "PayPal",
+  Coupon: "Coupon",
   "Credit Note": "Avoir",
   Advance: "Acompte",
   Other: "Autre",

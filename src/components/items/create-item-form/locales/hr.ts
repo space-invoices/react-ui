@@ -1,5 +1,6 @@
 export default {
   Name: "Naziv",
+  "Name is required": "Name is required",
   "Enter name": "Unesite naziv",
   Description: "Opis",
   "Enter description": "Unesite opis",

@@ -1,5 +1,6 @@
 export default {
   Name: "Nimi",
+  "Name is required": "Name is required",
   "Enter name": "Kirjoita nimi",
   Description: "Description",
   "Enter description": "Enter description",

@@ -1,5 +1,6 @@
 export default {
   Name: "Nafn",
+  "Name is required": "Name is required",
   "Enter name": "Sláðu inn nafn",
   Description: "Lýsing",
   "Enter description": "Enter description",

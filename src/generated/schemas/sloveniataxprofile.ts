@@ -30,7 +30,10 @@ const updateSloveniaTaxProfileSchemaDefinition = z
     yearly_reporting: z.union([
       z
         .object({
-          activity_code: z.union([z.string(), z.null()]),
+          activity_codes: z.union([
+            z.array(z.string().regex(/^\d{2}\.\d{3}$/)),
+            z.null(),
+          ]),
           registration_number: z.union([z.string(), z.null()]),
           accounting_type: z.union([
             z.union([z.enum(["records", "single_entry", "double_entry"]), z.null()]),

@@ -1,7 +1,7 @@
 {
   "name": "@spaceinvoices/react-ui",
   "type": "module",
-  "version": "0.4.48",
+  "version": "0.4.49",
   "private": false,
   "license": "MIT",
   "description": "Space Invoices UI components - copy-paste distribution with CLI support",

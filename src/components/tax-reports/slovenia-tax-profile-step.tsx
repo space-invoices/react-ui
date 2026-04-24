@@ -1,6 +1,7 @@
 import { AlertCircle } from "lucide-react";
 import type { ChangeEvent } from "react";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
+import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
@@ -10,7 +11,7 @@ export type SloveniaTaxProfileFormState = {
   income_tax_regime: "normirani" | "dejanski" | "";
   vat_profile: "standard" | "special_vat_identified" | "non_vat_subject" | "";
   tax_residency: "resident" | "non_resident" | "";
-  activity_code: string;
+  activity_codes: string[];
   registration_number: string;
   normiranec_insurance_basis: "full_time_self_employed" | "other" | "";
 };
@@ -19,6 +20,7 @@ type SloveniaTaxProfileStepProps = {
   form: SloveniaTaxProfileFormState;
   t: (key: string) => string;
   onFieldChange: (field: keyof SloveniaTaxProfileFormState, value: string) => void;
+  onActivityCodesChange: (value: string[]) => void;
   unsupportedReason: string | null;
   year: number;
   onYearChange: (year: number) => void;
@@ -29,6 +31,7 @@ export function SloveniaTaxProfileStep({
   form,
   t,
   onFieldChange,
+  onActivityCodesChange,
   unsupportedReason,
   year,
   onYearChange,
@@ -49,6 +52,7 @@ export function SloveniaTaxProfileStep({
   const insuranceBasisLabel = form.normiranec_insurance_basis
     ? t(`slovenia-yearly.profile.insurance-basis.options.${form.normiranec_insurance_basis}`)
     : undefined;
+  const activityCodes = form.activity_codes.length > 0 ? form.activity_codes : [""];
 
   return (
     <div className="space-y-4">
@@ -169,13 +173,35 @@ export function SloveniaTaxProfileStep({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="si-yearly-activity-code">{t("slovenia-yearly.profile.activity-code.label")}</Label>
-          <Input
-            id="si-yearly-activity-code"
-            value={form.activity_code}
-            onChange={(event: ChangeEvent<HTMLInputElement>) => onFieldChange("activity_code", event.target.value)}
-            placeholder={t("slovenia-yearly.profile.activity-code.placeholder")}
-          />
+          <Label>{t("slovenia-yearly.profile.activity-code.label")}</Label>
+          <div className="space-y-2">
+            {activityCodes.map((activityCode, index) => (
+              <div key={`activity-code-${index}`} className="flex items-center gap-2">
+                <Input
+                  id={index === 0 ? "si-yearly-activity-code" : undefined}
+                  value={activityCode}
+                  onChange={(event: ChangeEvent<HTMLInputElement>) => {
+                    const nextCodes = [...activityCodes];
+                    nextCodes[index] = event.target.value;
+                    onActivityCodesChange(nextCodes);
+                  }}
+                  placeholder={t("slovenia-yearly.profile.activity-code.placeholder")}
+                />
+                {activityCodes.length > 1 && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => onActivityCodesChange(activityCodes.filter((_, currentIndex) => currentIndex !== index))}
+                  >
+                    {t("slovenia-yearly.profile.activity-code.remove")}
+                  </Button>
+                )}
+              </div>
+            ))}
+            <Button type="button" variant="outline" onClick={() => onActivityCodesChange([...activityCodes, ""])}>
+              {t("slovenia-yearly.profile.activity-code.add")}
+            </Button>
+          </div>
         </div>
 
         <div className="space-y-2">

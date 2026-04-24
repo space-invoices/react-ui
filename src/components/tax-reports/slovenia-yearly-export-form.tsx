@@ -65,8 +65,10 @@ const translations = {
     "slovenia-yearly.profile.insurance-basis.placeholder": "Select insurance basis",
     "slovenia-yearly.profile.insurance-basis.options.full_time_self_employed": "Full-time self-employed",
     "slovenia-yearly.profile.insurance-basis.options.other": "Other",
-    "slovenia-yearly.profile.activity-code.label": "Activity code",
+    "slovenia-yearly.profile.activity-code.label": "Activity codes",
     "slovenia-yearly.profile.activity-code.placeholder": "62.010",
+    "slovenia-yearly.profile.activity-code.add": "Add activity code",
+    "slovenia-yearly.profile.activity-code.remove": "Remove",
     "slovenia-yearly.profile.registration-number.label": "Registration number",
     "slovenia-yearly.profile.registration-number.placeholder": "Optional",
     "slovenia-yearly.profile.unsupported.title": "Stored, but not exportable yet",
@@ -142,8 +144,10 @@ const translations = {
     "slovenia-yearly.profile.insurance-basis.placeholder": "Izberi zavarovalno podlago",
     "slovenia-yearly.profile.insurance-basis.options.full_time_self_employed": "Polni s.p.",
     "slovenia-yearly.profile.insurance-basis.options.other": "Drugo",
-    "slovenia-yearly.profile.activity-code.label": "Šifra dejavnosti",
+    "slovenia-yearly.profile.activity-code.label": "Šifre dejavnosti",
     "slovenia-yearly.profile.activity-code.placeholder": "62.010",
+    "slovenia-yearly.profile.activity-code.add": "Dodaj šifro dejavnosti",
+    "slovenia-yearly.profile.activity-code.remove": "Odstrani",
     "slovenia-yearly.profile.registration-number.label": "Matična številka",
     "slovenia-yearly.profile.registration-number.placeholder": "Neobvezno",
     "slovenia-yearly.profile.unsupported.title": "Shranjeno, vendar še ni mogoče izvoziti",
@@ -219,8 +223,10 @@ const translations = {
     "slovenia-yearly.profile.insurance-basis.placeholder": "Odaberi osnovu osiguranja",
     "slovenia-yearly.profile.insurance-basis.options.full_time_self_employed": "Puni samostalni obrt",
     "slovenia-yearly.profile.insurance-basis.options.other": "Drugo",
-    "slovenia-yearly.profile.activity-code.label": "Šifra djelatnosti",
+    "slovenia-yearly.profile.activity-code.label": "Šifre djelatnosti",
     "slovenia-yearly.profile.activity-code.placeholder": "62.010",
+    "slovenia-yearly.profile.activity-code.add": "Dodaj šifru djelatnosti",
+    "slovenia-yearly.profile.activity-code.remove": "Ukloni",
     "slovenia-yearly.profile.registration-number.label": "Matični broj",
     "slovenia-yearly.profile.registration-number.placeholder": "Opcionalno",
     "slovenia-yearly.profile.unsupported.title": "Spremljeno, ali još nije moguće izvesti",
@@ -256,13 +262,29 @@ function getDefaultYear(): number {
   return new Date().getFullYear() - 1;
 }
 
+function normalizeActivityCodes(activityCodes: string[]): string[] {
+  const seen = new Set<string>();
+
+  return activityCodes.reduce<string[]>((codes, activityCode) => {
+    const trimmed = activityCode.trim();
+
+    if (!trimmed || seen.has(trimmed)) {
+      return codes;
+    }
+
+    seen.add(trimmed);
+    codes.push(trimmed);
+    return codes;
+  }, []);
+}
+
 function createDefaultProfileForm(): SloveniaTaxProfileFormState {
   return {
     business_form: "sp",
     income_tax_regime: "normirani",
     vat_profile: "",
     tax_residency: "resident",
-    activity_code: "",
+    activity_codes: [],
     registration_number: "",
     normiranec_insurance_basis: "full_time_self_employed",
   };
@@ -285,7 +307,7 @@ function profileToForm(profile: ProfileResponse): SloveniaTaxProfileFormState {
     income_tax_regime: profile.income_tax_regime ?? "normirani",
     vat_profile: profile.vat_profile ?? "",
     tax_residency: profile.tax_residency ?? "resident",
-    activity_code: profile.yearly_reporting.activity_code ?? "",
+    activity_codes: normalizeActivityCodes(profile.yearly_reporting.activity_codes ?? []),
     registration_number: profile.yearly_reporting.registration_number ?? "",
     normiranec_insurance_basis: profile.yearly_reporting.normiranec_insurance_basis ?? "full_time_self_employed",
   };
@@ -362,7 +384,7 @@ export function SloveniaYearlyExportForm({
         vat_profile: profileForm.vat_profile || undefined,
         tax_residency: profileForm.tax_residency || undefined,
         yearly_reporting: {
-          activity_code: profileForm.activity_code || null,
+          activity_codes: normalizeActivityCodes(profileForm.activity_codes),
           registration_number: profileForm.registration_number || null,
           normiranec_insurance_basis: profileForm.normiranec_insurance_basis || null,
         },
@@ -450,6 +472,9 @@ export function SloveniaYearlyExportForm({
             t={t}
             onFieldChange={(field, value) => {
               setProfileForm((current) => ({ ...current, [field]: value }));
+            }}
+            onActivityCodesChange={(activityCodes) => {
+              setProfileForm((current) => ({ ...current, activity_codes: activityCodes }));
             }}
             unsupportedReason={unsupportedReason}
             year={year}

@@ -116,8 +116,6 @@ const DocumentSummaryTax = z
     tax_id: z.union([z.string(), z.null()]).optional(),
     base: z.number(),
     amount: z.number(),
-    base_converted: z.union([z.number(), z.null()]).optional(),
-    amount_converted: z.union([z.number(), z.null()]).optional(),
     reverse_charge: z.union([z.boolean(), z.null()]).optional(),
   })
   .passthrough();

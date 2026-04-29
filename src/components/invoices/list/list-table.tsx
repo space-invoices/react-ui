@@ -73,6 +73,7 @@ type InvoiceListTableProps = {
   isVoiding?: boolean;
   onCreateNew?: () => void;
   allowSendEmail?: boolean;
+  onEmailVerificationRequired?: () => void | Promise<void>;
   showSearchToolbar?: boolean;
   showPagination?: boolean;
   contentInsetClassName?: string;
@@ -106,6 +107,7 @@ export default function InvoiceListTable({
   isVoiding,
   onCreateNew,
   allowSendEmail = true,
+  onEmailVerificationRequired,
   showSearchToolbar,
   showPagination,
   contentInsetClassName,
@@ -321,6 +323,7 @@ export default function InvoiceListTable({
             onVoid={onVoid}
             isVoiding={isVoiding}
             allowSendEmail={allowSendEmail}
+            onEmailVerificationRequired={onEmailVerificationRequired}
             t={t}
             locale={i18nProps.locale}
           />
@@ -339,6 +342,7 @@ export default function InvoiceListTable({
       onVoid,
       isVoiding,
       allowSendEmail,
+      onEmailVerificationRequired,
       i18nProps.locale,
       fiscalizationFeatures,
     ],

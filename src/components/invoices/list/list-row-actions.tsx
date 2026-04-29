@@ -37,6 +37,7 @@ type InvoiceListRowActionsProps = {
   onVoid?: (invoice: Invoice) => void;
   isVoiding?: boolean;
   allowSendEmail?: boolean;
+  onEmailVerificationRequired?: () => void | Promise<void>;
 } & ComponentTranslationProps;
 
 export default memo(function InvoiceListRowActions({
@@ -52,6 +53,7 @@ export default memo(function InvoiceListRowActions({
   onVoid,
   isVoiding,
   allowSendEmail = true,
+  onEmailVerificationRequired,
   ...i18nProps
 }: InvoiceListRowActionsProps) {
   const t = createTranslation({ ...i18nProps, translations });
@@ -170,6 +172,7 @@ export default memo(function InvoiceListRowActions({
           defaultEmail={invoice.customer?.email || ""}
           open={emailDialogOpen}
           onOpenChange={setEmailDialogOpen}
+          onEmailVerificationRequired={onEmailVerificationRequired}
           locale={i18nProps.locale}
           translationFn={t}
           translationLocale={i18nProps.translationLocale}

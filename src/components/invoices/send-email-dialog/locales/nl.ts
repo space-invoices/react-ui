@@ -38,6 +38,9 @@ export default {
   "Advance invoice sent to": "Voorschotfactuur verzonden naar",
   "Delivery note sent to": "Pakbon verzonden naar",
   "Failed to send email": "E-mail verzenden mislukt",
+  "Email verification required": "E-mailverificatie vereist",
+  "Email verification required description": "Verifieer je e-mailadres voordat je e-mails verstuurt.",
+  "Resend verification email": "Verificatie-e-mail opnieuw verzenden",
   "Sandbox email warning":
     "In sandbox-modus kunnen e-mails alleen worden verzonden naar geverifieerde teamleden van dit account.",
   "PDF Language": "PDF-taal",

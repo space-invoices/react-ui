@@ -38,6 +38,9 @@ export default {
   "Advance invoice sent to": "Vorauszahlungsrechnung gesendet an",
   "Delivery note sent to": "Lieferschein gesendet an",
   "Failed to send email": "E-Mail konnte nicht gesendet werden",
+  "Email verification required": "E-Mail-Bestätigung erforderlich",
+  "Email verification required description": "Bitte bestätigen Sie Ihre E-Mail-Adresse, bevor Sie E-Mails senden.",
+  "Resend verification email": "Bestätigungs-E-Mail erneut senden",
   "Sandbox email warning":
     "Im Sandbox-Modus können E-Mails nur an verifizierte Teammitglieder dieses Kontos gesendet werden.",
   "PDF Language": "PDF-Sprache",

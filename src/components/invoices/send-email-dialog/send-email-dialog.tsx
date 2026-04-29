@@ -35,6 +35,7 @@ import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
 import { useEntities } from "@/ui/providers/entities-context";
 import type { SendEmailBodyLanguage } from "../../../../../js-sdk/src/generated/model/sendEmailBodyLanguage";
+import { getSendEmailErrorMessage, isEmailVerificationRequiredError } from "./error-utils";
 import de from "./locales/de";
 import en from "./locales/en";
 import es from "./locales/es";
@@ -155,6 +156,8 @@ type SendEmailDialogProps = {
   onOpenChange?: (open: boolean) => void;
   /** UI language used to display locale names in the selector. */
   translationLocale?: string;
+  /** Optional web/app callback to help users verify their email after a handled 403 response. */
+  onEmailVerificationRequired?: () => void | Promise<void>;
 } & ComponentTranslationProps;
 
 export function SendEmailDialog({
@@ -170,6 +173,7 @@ export function SendEmailDialog({
   translationLocale,
   open: controlledOpen,
   onOpenChange,
+  onEmailVerificationRequired,
   locale = "en",
   ...i18nProps
 }: SendEmailDialogProps) {
@@ -300,9 +304,21 @@ export function SendEmailDialog({
       reset();
       onSuccess?.();
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : t("Failed to send email");
-      toast.error(t("Failed to send email"), {
+      const requiresEmailVerification = isEmailVerificationRequiredError(error);
+      const errorMessage = getSendEmailErrorMessage(error, t);
+
+      toast.error(requiresEmailVerification ? t("Email verification required") : t("Failed to send email"), {
         description: errorMessage,
+        duration: requiresEmailVerification && onEmailVerificationRequired ? 10000 : 5000,
+        action:
+          requiresEmailVerification && onEmailVerificationRequired
+            ? {
+                label: t("Resend verification email"),
+                onClick: () => {
+                  void Promise.resolve(onEmailVerificationRequired()).catch(() => undefined);
+                },
+              }
+            : undefined,
       });
       onError?.(errorMessage);
     } finally {

@@ -38,6 +38,9 @@ export default {
   "Advance invoice sent to": "Fatura adiantada enviada para",
   "Delivery note sent to": "Guia de remessa enviada para",
   "Failed to send email": "Falha ao enviar o e-mail",
+  "Email verification required": "Verificação de e-mail obrigatória",
+  "Email verification required description": "Verifique o seu endereço de e-mail antes de enviar e-mails.",
+  "Resend verification email": "Reenviar e-mail de verificação",
   "Sandbox email warning":
     "No modo sandbox, os e-mails só podem ser enviados para membros verificados da equipa desta conta.",
   "PDF Language": "Idioma do PDF",

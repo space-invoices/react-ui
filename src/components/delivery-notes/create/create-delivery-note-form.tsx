@@ -23,7 +23,10 @@ import {
   getDocumentDefaultFields,
   mergeEntityAndBusinessUnitSettings,
 } from "../../documents/create/business-unit-utils";
-import { applyCustomCreateTemplate } from "../../documents/create/custom-create-template";
+import {
+  applyCustomCreatePreviewTemplate,
+  applyCustomCreateTemplate,
+} from "../../documents/create/custom-create-template";
 import {
   DocumentDetailsSection,
   DocumentFooterField,
@@ -484,7 +487,7 @@ export default function CreateDeliveryNoteForm({
   const buildPreviewPayload = useCallback(
     (values: CreateDeliveryNoteFormValues): DeliveryNotePreviewPayload => {
       const preservedExpectedTotalWithTax = getPreservedExpectedTotalWithTax(values);
-      return {
+      const previewPayload = {
         number: values.number,
         business_unit_id: values.business_unit_id ?? null,
         date: values.date,
@@ -502,8 +505,17 @@ export default function CreateDeliveryNoteForm({
           ? { expected_total_with_tax: preservedExpectedTotalWithTax }
           : {}),
       };
+
+      if (customCreateTemplate && financialInputsMatchSource(values)) {
+        return applyCustomCreatePreviewTemplate(
+          previewPayload as any,
+          customCreateTemplate,
+        ) as DeliveryNotePreviewPayload;
+      }
+
+      return previewPayload;
     },
-    [getPreservedExpectedTotalWithTax, hidePrices],
+    [customCreateTemplate, financialInputsMatchSource, getPreservedExpectedTotalWithTax, hidePrices],
   );
 
   const emitPreviewPayload = useCallback((payload: DeliveryNotePreviewPayload) => {

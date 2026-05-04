@@ -72,6 +72,20 @@ const CreateDocumentCategoryAssignment = z
 
 
 // Dependency schema for renderdeliverynotepreview_body
+const DocumentSummaryTax = z
+  .object({
+    rate: z.union([z.number(), z.null()]),
+    tax_id: z.union([z.string(), z.null()]).optional(),
+    base: z.number(),
+    amount: z.number(),
+    base_converted: z.union([z.number(), z.null()]).optional(),
+    amount_converted: z.union([z.number(), z.null()]).optional(),
+    reverse_charge: z.union([z.boolean(), z.null()]).optional(),
+  })
+  .passthrough();
+
+
+// Dependency schema for renderdeliverynotepreview_body
 const PartialDeliveryNotePreview = z.object({
   is_draft: z.boolean().optional(),
   date: z
@@ -122,6 +136,8 @@ const PartialDeliveryNotePreview = z.object({
               .partial()
               .passthrough()
           ),
+          total: z.number(),
+          total_with_tax: z.number(),
           metadata: z.record(z.string(), z.any()),
         })
         .partial()
@@ -133,6 +149,11 @@ const PartialDeliveryNotePreview = z.object({
     .optional(),
   linked_documents: z.union([z.array(z.string().min(1)), z.null()]).optional(),
   expected_total_with_tax: z.union([z.number(), z.null()]).optional(),
+  creation_source: z.literal("custom").optional(),
+  total: z.number().optional(),
+  total_with_tax: z.number().optional(),
+  total_discount: z.union([z.number(), z.null()]).optional(),
+  taxes: z.array(DocumentSummaryTax).optional(),
 });
 
 
@@ -213,6 +234,11 @@ const CompleteDeliveryNotePreview = z.object({
     .optional(),
   linked_documents: z.union([z.array(z.string().min(1)), z.null()]).optional(),
   expected_total_with_tax: z.union([z.number(), z.null()]).optional(),
+  creation_source: z.literal("custom").optional(),
+  total: z.number().optional(),
+  total_with_tax: z.number().optional(),
+  total_discount: z.union([z.number(), z.null()]).optional(),
+  taxes: z.array(DocumentSummaryTax).optional(),
 });
 
 

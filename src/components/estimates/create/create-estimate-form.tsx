@@ -29,7 +29,10 @@ import {
   getDocumentDefaultFields,
   mergeEntityAndBusinessUnitSettings,
 } from "../../documents/create/business-unit-utils";
-import { applyCustomCreateTemplate } from "../../documents/create/custom-create-template";
+import {
+  applyCustomCreatePreviewTemplate,
+  applyCustomCreateTemplate,
+} from "../../documents/create/custom-create-template";
 import { withEstimateIssueDateValidation } from "../../documents/create/document-date-validation";
 import {
   DocumentDetailsSection,
@@ -605,7 +608,7 @@ export default function CreateEstimateForm({
   const buildPreviewPayload = useCallback(
     (values: CreateEstimateFormValues): EstimatePreviewPayload => {
       const preservedExpectedTotalWithTax = getPreservedExpectedTotalWithTax(values);
-      return {
+      const previewPayload = {
         number: values.number,
         business_unit_id: values.business_unit_id ?? null,
         date: values.date,
@@ -626,8 +629,14 @@ export default function CreateEstimateForm({
           : {}),
         ...(normalizePtDocumentInput(values.pt) ? { pt: normalizePtDocumentInput(values.pt) } : {}),
       };
+
+      if (customCreateTemplate && financialInputsMatchSource(values)) {
+        return applyCustomCreatePreviewTemplate(previewPayload as any, customCreateTemplate) as EstimatePreviewPayload;
+      }
+
+      return previewPayload;
     },
-    [getPreservedExpectedTotalWithTax, titleType],
+    [customCreateTemplate, financialInputsMatchSource, getPreservedExpectedTotalWithTax, titleType],
   );
 
   const emitPreviewPayload = useCallback((payload: EstimatePreviewPayload) => {

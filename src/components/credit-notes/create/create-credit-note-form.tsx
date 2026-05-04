@@ -34,7 +34,10 @@ import {
   getDocumentDefaultFields,
   mergeEntityAndBusinessUnitSettings,
 } from "../../documents/create/business-unit-utils";
-import { applyCustomCreateTemplate } from "../../documents/create/custom-create-template";
+import {
+  applyCustomCreatePreviewTemplate,
+  applyCustomCreateTemplate,
+} from "../../documents/create/custom-create-template";
 import { withCreditNoteIssueDateValidation } from "../../documents/create/document-date-validation";
 import {
   DocumentDetailsSection,
@@ -750,7 +753,7 @@ export default function CreateCreditNoteForm({
   const buildPreviewPayload = useCallback(
     (values: CreateCreditNoteFormValues): CreditNotePreviewPayload => {
       const preservedExpectedTotalWithTax = getPreservedExpectedTotalWithTax(values);
-      return {
+      const previewPayload = {
         number: values.number,
         business_unit_id: values.business_unit_id ?? null,
         date: values.date,
@@ -771,8 +774,17 @@ export default function CreateCreditNoteForm({
           : {}),
         ...(normalizePtDocumentInput(values.pt) ? { pt: normalizePtDocumentInput(values.pt) } : {}),
       };
+
+      if (customCreateTemplate && financialInputsMatchSource(values)) {
+        return applyCustomCreatePreviewTemplate(
+          previewPayload as any,
+          customCreateTemplate,
+        ) as CreditNotePreviewPayload;
+      }
+
+      return previewPayload;
     },
-    [getPreservedExpectedTotalWithTax],
+    [customCreateTemplate, financialInputsMatchSource, getPreservedExpectedTotalWithTax],
   );
 
   const emitPreviewPayload = useCallback((payload: CreditNotePreviewPayload) => {

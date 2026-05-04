@@ -154,3 +154,13 @@ export function applyCustomCreateTemplate<T extends Record<string, any>>(
     taxes: template.taxes ?? [],
   } as unknown as T;
 }
+
+export function applyCustomCreatePreviewTemplate<T extends Record<string, any>>(
+  payload: T,
+  template: CustomCreateTemplate,
+): T & { creation_source: "custom" } {
+  return {
+    ...applyCustomCreateTemplate(payload, template),
+    creation_source: "custom",
+  };
+}

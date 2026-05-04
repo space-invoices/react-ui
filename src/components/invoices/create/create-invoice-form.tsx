@@ -40,7 +40,10 @@ import {
   getDocumentDefaultFields,
   mergeEntityAndBusinessUnitSettings,
 } from "../../documents/create/business-unit-utils";
-import { applyCustomCreateTemplate } from "../../documents/create/custom-create-template";
+import {
+  applyCustomCreatePreviewTemplate,
+  applyCustomCreateTemplate,
+} from "../../documents/create/custom-create-template";
 import { withInvoiceIssueDateValidation } from "../../documents/create/document-date-validation";
 import {
   DocumentDetailsSection,
@@ -317,6 +320,7 @@ export default function CreateInvoiceForm({
   const furs = usePremiseSelection({ entityId, type: "furs" });
   const fina = usePremiseSelection({ entityId, type: "fina" });
   const [skipFiscalization, setSkipFiscalization] = useState(false);
+  const [skipPreferenceInitialized, setSkipPreferenceInitialized] = useState(isEditMode);
 
   // ============================================================================
   // e-SLOG Validation (shared hook)
@@ -482,18 +486,25 @@ export default function CreateInvoiceForm({
   );
   const hasExplicitNonBankTransferPayment =
     markAsPaid && paymentRows.some((row) => row.type != null && row.type !== "bank_transfer");
-  const skipPreferenceInitializedRef = useRef(false);
+  const skipPreferenceInitializedRef = useRef(isEditMode);
   const skipPaymentCoercionPendingRef = useRef(false);
   const previousSkipFiscalizationRef = useRef(skipFiscalization);
   const previousMarkAsPaidRef = useRef(markAsPaid);
 
   useEffect(() => {
-    if (skipPreferenceInitializedRef.current || furs.isLoading || isEditMode) return;
+    if (isEditMode) {
+      skipPreferenceInitializedRef.current = true;
+      setSkipPreferenceInitialized(true);
+      return;
+    }
+
+    if (skipPreferenceInitializedRef.current || furs.isLoading) return;
 
     skipPreferenceInitializedRef.current = true;
     if (furs.settings?.default_skip_fiscalization === true) {
       setSkipFiscalization(true);
     }
+    setSkipPreferenceInitialized(true);
   }, [furs.isLoading, furs.settings?.default_skip_fiscalization, isEditMode]);
 
   useEffect(() => {
@@ -611,13 +622,24 @@ export default function CreateInvoiceForm({
     electronic_device_name: activeDeviceNameForNumber,
     business_unit_id: selectedBusinessUnitId ?? null,
     enabled:
-      !!entityId && !furs.isLoading && furs.isSelectionReady && !fina.isLoading && fina.isSelectionReady && !isEditMode,
+      !!entityId &&
+      !furs.isLoading &&
+      skipPreferenceInitialized &&
+      furs.isSelectionReady &&
+      !fina.isLoading &&
+      fina.isSelectionReady &&
+      !isEditMode,
   });
 
   // Overall loading state - wait until we have FURS/FINA data, selection ready, and next number (only in create mode)
   const isFormDataLoading = isEditMode
     ? false // In edit mode, don't wait for next number
-    : furs.isLoading || !furs.isSelectionReady || fina.isLoading || !fina.isSelectionReady || isNextNumberLoading;
+    : furs.isLoading ||
+      !skipPreferenceInitialized ||
+      !furs.isSelectionReady ||
+      fina.isLoading ||
+      !fina.isSelectionReady ||
+      isNextNumberLoading;
 
   // Update header action with FURS and e-SLOG toggle buttons
   const headerActionSignatureRef = useRef<string | null>(null);
@@ -625,7 +647,7 @@ export default function CreateInvoiceForm({
     if (!onHeaderActionChange) return;
 
     // Don't set header action while loading or in edit mode (FURS/FINA/e-SLOG not editable)
-    if (furs.isLoading || fina.isLoading || isEditMode) {
+    if (furs.isLoading || !skipPreferenceInitialized || fina.isLoading || isEditMode) {
       if (headerActionSignatureRef.current === null) return;
       headerActionSignatureRef.current = null;
       onHeaderActionChange(null);
@@ -735,6 +757,7 @@ export default function CreateInvoiceForm({
     }
   }, [
     furs.isLoading,
+    skipPreferenceInitialized,
     fina.isLoading,
     furs.isEnabled,
     furs.hasPremises,
@@ -1236,10 +1259,11 @@ export default function CreateInvoiceForm({
         const { id: _id, ...rest } = item;
         return rest;
       });
-      return {
-        number: formValues.number,
+      const previewPayload = {
+        number: isNextNumberLoading ? undefined : formValues.number,
         business_unit_id: formValues.business_unit_id ?? null,
         date: formValues.date,
+        date_due: formValues.date_due,
         date_service: formValues.date_service,
         date_service_to: formValues.date_service_to,
         customer_id: formValues.customer_id,
@@ -1254,19 +1278,79 @@ export default function CreateInvoiceForm({
         tax_clause: formValues.tax_clause,
         footer: formValues.footer,
         signature: formValues.signature,
+        ...(!isEditMode && furs.isEnabled && furs.hasPremises
+          ? {
+              furs: skipFiscalization
+                ? { skip: true }
+                : activePremiseName && activeDeviceNameForNumber
+                  ? {
+                      business_premise_name: activePremiseName,
+                      electronic_device_name: activeDeviceNameForNumber,
+                    }
+                  : undefined,
+            }
+          : {}),
         ...(preservedExpectedTotalWithTax !== undefined
           ? { expected_total_with_tax: preservedExpectedTotalWithTax }
           : {}),
         ...(normalizePtDocumentInput(formValues.pt) ? { pt: normalizePtDocumentInput(formValues.pt) } : {}),
       };
+
+      if (customCreateTemplate && financialInputsMatchSource(formValues)) {
+        return applyCustomCreatePreviewTemplate(previewPayload as any, customCreateTemplate);
+      }
+
+      return previewPayload;
     },
-    [forceLinkedDocuments, getPreservedExpectedTotalWithTax],
+    [
+      activeDeviceNameForNumber,
+      activePremiseName,
+      customCreateTemplate,
+      financialInputsMatchSource,
+      forceLinkedDocuments,
+      furs.hasPremises,
+      furs.isEnabled,
+      getPreservedExpectedTotalWithTax,
+      isEditMode,
+      isNextNumberLoading,
+      skipFiscalization,
+    ],
   );
 
   const emitCurrentPreviewPayload = useCallback(() => {
     if (!onChange) return;
-    onChange(buildPreviewPayload(form.getValues()));
+    const payload = buildPreviewPayload(form.getValues());
+    prevPayloadRef.current = JSON.stringify(payload);
+    onChange(payload);
   }, [buildPreviewPayload, form, onChange]);
+
+  const previousFiscalPreviewSignatureRef = useRef<string | null>(null);
+  useEffect(() => {
+    const fiscalPreviewSignature = JSON.stringify({
+      skipFiscalization,
+      activePremiseName,
+      activeDeviceNameForNumber,
+      isNextNumberLoading,
+    });
+
+    if (previousFiscalPreviewSignatureRef.current === null) {
+      previousFiscalPreviewSignatureRef.current = fiscalPreviewSignature;
+      return;
+    }
+
+    if (previousFiscalPreviewSignatureRef.current === fiscalPreviewSignature) return;
+    previousFiscalPreviewSignatureRef.current = fiscalPreviewSignature;
+
+    if (hasInitialValues && !hasEmittedSettledInitialPreviewRef.current) return;
+    emitCurrentPreviewPayload();
+  }, [
+    activeDeviceNameForNumber,
+    activePremiseName,
+    emitCurrentPreviewPayload,
+    hasInitialValues,
+    isNextNumberLoading,
+    skipFiscalization,
+  ]);
 
   useEffect(() => {
     if (!onChange) return;

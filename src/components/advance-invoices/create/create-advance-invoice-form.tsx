@@ -39,7 +39,10 @@ import {
   getDocumentDefaultFields,
   mergeEntityAndBusinessUnitSettings,
 } from "../../documents/create/business-unit-utils";
-import { applyCustomCreateTemplate } from "../../documents/create/custom-create-template";
+import {
+  applyCustomCreatePreviewTemplate,
+  applyCustomCreateTemplate,
+} from "../../documents/create/custom-create-template";
 import {
   DocumentDetailsSection,
   DocumentFooterField,
@@ -871,7 +874,7 @@ export default function CreateAdvanceInvoiceForm({
   const buildPreviewPayload = useCallback(
     (values: CreateAdvanceInvoiceFormValues): AdvanceInvoicePreviewPayload => {
       const preservedExpectedTotalWithTax = getPreservedExpectedTotalWithTax(values);
-      return {
+      const previewPayload = {
         number: values.number,
         business_unit_id: values.business_unit_id ?? null,
         date: values.date,
@@ -889,8 +892,17 @@ export default function CreateAdvanceInvoiceForm({
           : {}),
         ...(normalizePtDocumentInput(values.pt) ? { pt: normalizePtDocumentInput(values.pt) } : {}),
       };
+
+      if (customCreateTemplate && financialInputsMatchSource(values)) {
+        return applyCustomCreatePreviewTemplate(
+          previewPayload as any,
+          customCreateTemplate,
+        ) as AdvanceInvoicePreviewPayload;
+      }
+
+      return previewPayload;
     },
-    [getPreservedExpectedTotalWithTax],
+    [customCreateTemplate, financialInputsMatchSource, getPreservedExpectedTotalWithTax],
   );
 
   const emitPreviewPayload = useCallback((payload: AdvanceInvoicePreviewPayload) => {

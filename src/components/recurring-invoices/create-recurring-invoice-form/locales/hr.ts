@@ -8,6 +8,9 @@ export default {
   Monthly: "Mjesečno",
   Yearly: "Godišnje",
   Interval: "Interval",
+  "Interval help": "Pomoć za interval",
+  "Interval controls how often the schedule repeats. For example, Monthly with interval 3 issues every 3 months, which is quarterly.":
+    "Interval određuje koliko se često raspored ponavlja. Na primjer, Mjesečno s intervalom 3 izdaje svaka 3 mjeseca, odnosno tromjesečno.",
   "Day of Week": "Dan u tjednu",
   "Select day": "Odaberi dan",
   Sunday: "Nedjelja",

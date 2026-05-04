@@ -8,6 +8,9 @@ export default {
   Monthly: "Maandelijks",
   Yearly: "Jaarlijks",
   Interval: "Interval",
+  "Interval help": "Hulp bij interval",
+  "Interval controls how often the schedule repeats. For example, Monthly with interval 3 issues every 3 months, which is quarterly.":
+    "Het interval bepaalt hoe vaak het schema wordt herhaald. Bijvoorbeeld: Maandelijks met interval 3 maakt elke 3 maanden aan, dus per kwartaal.",
   "Day of Week": "Dag van de week",
   "Select day": "Selecteer dag",
   Sunday: "Zondag",

@@ -326,6 +326,26 @@ const createEntitySchemaDefinition = z.object({
         z.object({ enabled: z.boolean() }).passthrough(),
         z.null(),
       ]),
+      hub3_qr: z.union([
+        z
+          .object({
+            enabled: z.boolean(),
+            purpose_code: z
+              .string()
+              .min(4)
+              .max(4)
+              .regex(/^[A-Z]{4}$/)
+              .optional()
+              .default("OTHR"),
+            reference_model: z
+              .string()
+              .regex(/^HR\d{2}$/)
+              .optional()
+              .default("HR00"),
+          })
+          .passthrough(),
+        z.null(),
+      ]),
       bank_accounts: z.union([z.array(z.any()), z.null()]),
       eslog_validation_enabled: z.union([z.boolean(), z.null()]),
       delivery_note_hide_prices: z.union([z.boolean(), z.null()]),
@@ -685,6 +705,26 @@ const patchEntitySchemaDefinition = z
         ]),
         epc_qr: z.union([
           z.object({ enabled: z.boolean() }).passthrough(),
+          z.null(),
+        ]),
+        hub3_qr: z.union([
+          z
+            .object({
+              enabled: z.boolean(),
+              purpose_code: z
+                .string()
+                .min(4)
+                .max(4)
+                .regex(/^[A-Z]{4}$/)
+                .optional()
+                .default("OTHR"),
+              reference_model: z
+                .string()
+                .regex(/^HR\d{2}$/)
+                .optional()
+                .default("HR00"),
+            })
+            .passthrough(),
           z.null(),
         ]),
         bank_accounts: z.union([z.array(z.any()), z.null()]),

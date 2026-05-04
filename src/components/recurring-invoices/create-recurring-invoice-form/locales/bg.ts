@@ -8,6 +8,9 @@ export default {
   Monthly: "Месечно",
   Yearly: "Годишно",
   Interval: "Интервал",
+  "Interval help": "Помощ за интервала",
+  "Interval controls how often the schedule repeats. For example, Monthly with interval 3 issues every 3 months, which is quarterly.":
+    "Интервалът определя колко често се повтаря графикът. Например Месечно с интервал 3 издава на всеки 3 месеца, което е тримесечно.",
   "Day of Week": "Ден от седмицата",
   "Select day": "Изберете ден",
   Sunday: "Неделя",

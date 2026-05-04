@@ -8,6 +8,9 @@ export default {
   Monthly: "Monthly",
   Yearly: "Yearly",
   Interval: "Interval",
+  "Interval help": "Interval help",
+  "Interval controls how often the schedule repeats. For example, Monthly with interval 3 issues every 3 months, which is quarterly.":
+    "Interval controls how often the schedule repeats. For example, Monthly with interval 3 issues every 3 months, which is quarterly.",
   "Day of Week": "Day of Week",
   "Select day": "Select day",
   Sunday: "Sunday",

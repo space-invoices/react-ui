@@ -8,6 +8,9 @@ export default {
   Monthly: "Månadsvis",
   Yearly: "Årsvis",
   Interval: "Intervall",
+  "Interval help": "Hjälp för intervall",
+  "Interval controls how often the schedule repeats. For example, Monthly with interval 3 issues every 3 months, which is quarterly.":
+    "Intervallet styr hur ofta schemat upprepas. Till exempel utfärdar Månadsvis med intervallet 3 var 3:e månad, alltså kvartalsvis.",
   "Day of Week": "Veckodag",
   "Select day": "Välj dag",
   Sunday: "Söndag",

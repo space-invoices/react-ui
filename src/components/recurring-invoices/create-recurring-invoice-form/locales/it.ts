@@ -8,6 +8,9 @@ export default {
   Monthly: "Mensile",
   Yearly: "Annuale",
   Interval: "Intervallo",
+  "Interval help": "Aiuto intervallo",
+  "Interval controls how often the schedule repeats. For example, Monthly with interval 3 issues every 3 months, which is quarterly.":
+    "L’intervallo controlla ogni quanto si ripete il programma. Ad esempio, Mensile con intervallo 3 emette ogni 3 mesi, cioè trimestralmente.",
   "Day of Week": "Giorno della settimana",
   "Select day": "Seleziona giorno",
   Sunday: "Domenica",

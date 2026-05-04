@@ -8,6 +8,9 @@ export default {
   Monthly: "Mesačne",
   Yearly: "Ročne",
   Interval: "Interval",
+  "Interval help": "Pomoc k intervalu",
+  "Interval controls how often the schedule repeats. For example, Monthly with interval 3 issues every 3 months, which is quarterly.":
+    "Interval určuje, ako často sa plán opakuje. Napríklad Mesačne s intervalom 3 vystavuje každé 3 mesiace, teda štvrťročne.",
   "Day of Week": "Deň v týždni",
   "Select day": "Vyberte deň",
   Sunday: "Nedeľa",

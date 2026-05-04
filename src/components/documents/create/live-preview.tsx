@@ -44,6 +44,9 @@ type LiveInvoicePreviewProps = {
     upn_qr_enabled?: boolean;
     upn_qr_display_mode?: "qr_only" | "full_slip";
     epc_qr_enabled?: boolean;
+    hub3_qr_enabled?: boolean;
+    hub3_qr_purpose_code?: string;
+    hub3_qr_reference_model?: string;
   };
 };
 
@@ -185,6 +188,15 @@ export function LiveInvoicePreview({
         if (qrOverrides?.epc_qr_enabled !== undefined) {
           renderParams.epc_qr_enabled = qrOverrides.epc_qr_enabled ? "true" : "false";
         }
+        if (qrOverrides?.hub3_qr_enabled !== undefined) {
+          renderParams.hub3_qr_enabled = qrOverrides.hub3_qr_enabled ? "true" : "false";
+          if (qrOverrides.hub3_qr_purpose_code) {
+            renderParams.hub3_qr_purpose_code = qrOverrides.hub3_qr_purpose_code;
+          }
+          if (qrOverrides.hub3_qr_reference_model) {
+            renderParams.hub3_qr_reference_model = qrOverrides.hub3_qr_reference_model;
+          }
+        }
         const requestOpts = { entity_id: activeEntity.id, signal: abortController.signal };
         let html: string;
         switch (documentType) {
@@ -264,6 +276,9 @@ export function LiveInvoicePreview({
       qrOverrides?.upn_qr_enabled,
       qrOverrides?.upn_qr_display_mode,
       qrOverrides?.epc_qr_enabled,
+      qrOverrides?.hub3_qr_enabled,
+      qrOverrides?.hub3_qr_purpose_code,
+      qrOverrides?.hub3_qr_reference_model,
     ],
   );
 

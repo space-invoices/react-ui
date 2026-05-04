@@ -8,6 +8,9 @@ export default {
   Monthly: "Mánaðarlega",
   Yearly: "Árlega",
   Interval: "Bil",
+  "Interval help": "Hjálp fyrir bil",
+  "Interval controls how often the schedule repeats. For example, Monthly with interval 3 issues every 3 months, which is quarterly.":
+    "Bilið stýrir því hversu oft áætlunin endurtekur sig. Til dæmis gefur Mánaðarlega með bilinu 3 út á 3 mánaða fresti, sem er ársfjórðungslega.",
   "Day of Week": "Dagur vikunnar",
   "Select day": "Veldu dag",
   Sunday: "Sunnudagur",

@@ -8,6 +8,9 @@ export default {
   Monthly: "Kuukausittain",
   Yearly: "Vuosittain",
   Interval: "Väli",
+  "Interval help": "Välin ohje",
+  "Interval controls how often the schedule repeats. For example, Monthly with interval 3 issues every 3 months, which is quarterly.":
+    "Väli määrittää, kuinka usein aikataulu toistuu. Esimerkiksi Kuukausittain ja väli 3 luo laskun 3 kuukauden välein eli neljännesvuosittain.",
   "Day of Week": "Viikonpäivä",
   "Select day": "Valitse päivä",
   Sunday: "Sunnuntai",

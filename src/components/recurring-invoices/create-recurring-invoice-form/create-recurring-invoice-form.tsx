@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { CreateRecurringInvoiceBody, RecurringInvoice, UpdateRecurringInvoiceBody } from "@spaceinvoices/js-sdk";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, CircleHelp } from "lucide-react";
 import { useEffect, useMemo } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { Button } from "@/ui/components/ui/button";
@@ -18,6 +18,7 @@ import {
 import { Input } from "@/ui/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/ui/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui/components/ui/select";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/ui/components/ui/tooltip";
 import type { CreateRecurringInvoiceSchema } from "@/ui/generated/schemas/recurringinvoice";
 import { createRecurringInvoiceSchema } from "@/ui/generated/schemas/recurringinvoice";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
@@ -284,7 +285,25 @@ export default function CreateRecurringInvoiceForm({
             name="interval"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>{t("Interval")}</FormLabel>
+                <div className="flex w-full items-center justify-between gap-2">
+                  <FormLabel>{t("Interval")}</FormLabel>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        type="button"
+                        aria-label={t("Interval help")}
+                        className="inline-flex h-4 w-4 items-center justify-center rounded-full text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                      >
+                        <CircleHelp className="h-3.5 w-3.5" aria-hidden="true" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="max-w-xs">
+                      {t(
+                        "Interval controls how often the schedule repeats. For example, Monthly with interval 3 issues every 3 months, which is quarterly.",
+                      )}
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
                 <FormControl>
                   <Input
                     type="number"

@@ -8,6 +8,9 @@ export default {
   Monthly: "Monatlich",
   Yearly: "Jährlich",
   Interval: "Intervall",
+  "Interval help": "Hilfe zum Intervall",
+  "Interval controls how often the schedule repeats. For example, Monthly with interval 3 issues every 3 months, which is quarterly.":
+    "Das Intervall steuert, wie oft der Plan wiederholt wird. Zum Beispiel erstellt Monatlich mit Intervall 3 alle 3 Monate eine Rechnung, also vierteljährlich.",
   "Day of Week": "Wochentag",
   "Select day": "Tag wählen",
   Sunday: "Sonntag",

@@ -72,7 +72,6 @@ const EPC_QR_COUNTRIES = new Set([
   "AT",
   "BE",
   "BG",
-  "HR",
   "CY",
   "CZ",
   "DK",
@@ -151,6 +150,9 @@ const entitySettingsFormSchema = patchEntitySchema
       .optional(),
     // EPC QR settings (EU + CH)
     epc_qr_enabled: z.union([z.boolean(), z.null()]).optional(),
+    hub3_qr_enabled: z.union([z.boolean(), z.null()]).optional(),
+    hub3_qr_purpose_code: z.union([z.string(), z.null()]).optional(),
+    hub3_qr_reference_model: z.union([z.string(), z.null()]).optional(),
     show_payment_amounts: z.union([z.boolean(), z.null()]).optional(),
   });
 
@@ -221,6 +223,9 @@ export function EntitySettingsForm({
       upn_qr_display_mode: currentSettings.upn_qr?.display_mode || "qr_only",
       upn_qr_purpose_code: currentSettings.upn_qr?.purpose_code || "OTHR",
       epc_qr_enabled: currentSettings.epc_qr?.enabled || false,
+      hub3_qr_enabled: currentSettings.hub3_qr?.enabled || false,
+      hub3_qr_purpose_code: currentSettings.hub3_qr?.purpose_code || "OTHR",
+      hub3_qr_reference_model: currentSettings.hub3_qr?.reference_model || "HR00",
       show_payment_amounts: currentSettings.show_payment_amounts || false,
     },
   });
@@ -365,6 +370,14 @@ export function EntitySettingsForm({
           // EPC QR settings - only include if enabled or was previously enabled
           epc_qr:
             values.epc_qr_enabled || currentSettings.epc_qr ? { enabled: values.epc_qr_enabled || false } : undefined,
+          hub3_qr:
+            values.hub3_qr_enabled || currentSettings.hub3_qr
+              ? {
+                  enabled: values.hub3_qr_enabled || false,
+                  purpose_code: values.hub3_qr_purpose_code || "OTHR",
+                  reference_model: values.hub3_qr_reference_model || "HR00",
+                }
+              : undefined,
           show_payment_amounts: values.show_payment_amounts ?? undefined,
           // Bank accounts - store in array format (preserving other accounts if any)
           bank_accounts: values.bank_account_iban
@@ -1069,6 +1082,114 @@ export function EntitySettingsForm({
                     <p className="text-muted-foreground/80 text-xs leading-relaxed">
                       {translate(
                         "UPN QR is a Slovenian standard for payment slips. When enabled, your invoices will include a QR code that customers can scan with their mobile banking app to pay instantly.",
+                      )}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* HUB3 PDF417 Section - Croatian entities */}
+        {(entity as any).country_code === "HR" && (
+          <div className="grid gap-8 border-t pt-8 lg:grid-cols-2">
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-sky-500/10">
+                  <QrCode className="h-5 w-5 text-sky-600 dark:text-sky-400" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-lg">{translate("Croatian HUB3 Payment Barcode")}</h3>
+                  <p className="text-muted-foreground text-sm">
+                    {translate("PDF417 barcode for Croatian payment orders")}
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-6 pl-[52px]">
+                <FormField
+                  control={form.control}
+                  name="hub3_qr_enabled"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                      <div className="space-y-0.5">
+                        <FormLabel className="font-medium text-base">
+                          {translate("Enable HUB3 barcode on invoices")}
+                        </FormLabel>
+                        <FormDescription className="text-xs">
+                          {translate("Show the Croatian HUB3 PDF417 payment barcode on EUR invoices")}
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value || false}
+                          onCheckedChange={field.onChange}
+                          disabled={!form.watch("bank_account_iban")}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                {form.watch("hub3_qr_enabled") && (
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <FormField
+                      control={form.control}
+                      name="hub3_qr_purpose_code"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{translate("Purpose Code")}</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value || "OTHR"}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="OTHR">OTHR</SelectItem>
+                              <SelectItem value="GDSV">GDSV</SelectItem>
+                              <SelectItem value="SUPP">SUPP</SelectItem>
+                              <SelectItem value="COST">COST</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="hub3_qr_reference_model"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{translate("Reference model")}</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value || "HR00"}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="HR00">HR00</SelectItem>
+                              <SelectItem value="HR01">HR01</SelectItem>
+                              <SelectItem value="HR02">HR02</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="hidden lg:block">
+              <div className="sticky top-6 space-y-3 border-muted border-l-2 pl-4">
+                <div className="flex items-start gap-2">
+                  <QrCode className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground/70" />
+                  <div className="space-y-2">
+                    <p className="font-medium text-muted-foreground text-sm">{translate("HUB3 Barcode")}</p>
+                    <p className="text-muted-foreground/80 text-xs leading-relaxed">
+                      {translate(
+                        "HUB3 is the Croatian PDF417 payment barcode used by local banking apps for domestic EUR payment orders.",
                       )}
                     </p>
                   </div>

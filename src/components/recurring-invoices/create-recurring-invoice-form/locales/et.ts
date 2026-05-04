@@ -8,6 +8,9 @@ export default {
   Monthly: "Kuutasuga",
   Yearly: "Aastatasuga",
   Interval: "Intervall",
+  "Interval help": "Intervalli abi",
+  "Interval controls how often the schedule repeats. For example, Monthly with interval 3 issues every 3 months, which is quarterly.":
+    "Intervall määrab, kui sageli ajakava kordub. Näiteks Kuutasuga intervalliga 3 väljastab iga 3 kuu järel ehk kord kvartalis.",
   "Day of Week": "Nädalapäev",
   "Select day": "Vali päev",
   Sunday: "Pühapäev",

@@ -1,10 +1,12 @@
 import type { CreateInvoiceRequest } from "@spaceinvoices/js-sdk";
 import type { CreateInvoiceSchema } from "@/ui/generated/schemas";
+import { assignDocumentValidationPayload } from "@/ui/lib/document-validation-payload";
 import { normalizePtDocumentInput, type PtDocumentInputForm } from "@/ui/lib/pt-document-input";
 import {
   buildDocumentBasePayload,
   cleanupEmptyCustomerId,
   normalizeClearableFormTextField,
+  omitUnchangedUpdatePayloadFields,
   prepareDocumentCustomerData,
   prepareDocumentItems,
   prepareDocumentSubmission,
@@ -28,6 +30,23 @@ type FinaData = {
 
 type EslogData = {
   validation_enabled?: boolean;
+  validation_required?: boolean;
+} | null;
+
+type UjpData = {
+  validation_enabled?: boolean;
+  validation_required?: boolean;
+} | null;
+
+type GermanEInvoicingData = {
+  xrechnung?: {
+    validation_enabled?: boolean;
+    validation_required?: boolean;
+  };
+  zugferd?: {
+    validation_enabled?: boolean;
+    validation_required?: boolean;
+  };
 };
 
 /** Map of item index to gross price mode */
@@ -45,8 +64,18 @@ type PrepareOptions = {
   fina?: FinaData;
   /** e-SLOG validation data (for Slovenia) */
   eslog?: EslogData;
+  /** UJP package validation data (for Slovenia) */
+  ujp?: UjpData;
+  /** German XRechnung/ZUGFeRD validation data */
+  germanEInvoicing?: GermanEInvoicingData;
   /** Map of item index to gross price mode (collected from component state) */
   priceModes?: PriceModesMap;
+  /** Original edit form values used to omit unchanged update fields. */
+  initialValues?: CreateInvoiceSchema & { pt?: PtDocumentInputForm | null };
+  /** Original gross/net item price modes used to compare unchanged edit items. */
+  initialPriceModes?: PriceModesMap;
+  initialEslog?: EslogData;
+  initialUjp?: UjpData;
   /** Whether to save as draft (skips numbering and fiscalization) */
   isDraft?: boolean;
 };
@@ -98,11 +127,15 @@ export function prepareInvoiceSubmission(
     };
   }
 
-  // Add e-SLOG data if provided
-  if (options.eslog !== undefined) {
-    (payload as any).eslog = {
-      validation_enabled: options.eslog.validation_enabled,
-    };
+  assignDocumentValidationPayload(payload, "eslog", options.eslog);
+  assignDocumentValidationPayload(payload, "ujp", options.ujp);
+  if (options.germanEInvoicing !== undefined) {
+    if (options.germanEInvoicing.xrechnung) {
+      (payload as any).xrechnung = options.germanEInvoicing.xrechnung;
+    }
+    if (options.germanEInvoicing.zugferd) {
+      (payload as any).zugferd = options.germanEInvoicing.zugferd;
+    }
   }
   const pt = normalizePtDocumentInput(values.pt);
   if (pt) {
@@ -111,9 +144,9 @@ export function prepareInvoiceSubmission(
   return payload;
 }
 
-export function prepareInvoiceUpdateSubmission(
+function buildInvoiceUpdatePayload(
   values: CreateInvoiceSchema & { pt?: PtDocumentInputForm | null },
-  options: Pick<PrepareOptions, "originalCustomer" | "wasCustomerFormShown" | "priceModes" | "eslog">,
+  options: Pick<PrepareOptions, "originalCustomer" | "wasCustomerFormShown" | "priceModes" | "eslog" | "ujp">,
 ): Record<string, unknown> {
   const nextValues: any = {
     ...values,
@@ -130,7 +163,9 @@ export function prepareInvoiceUpdateSubmission(
   const payload = buildDocumentBasePayload(nextValues, {
     documentType: "invoice",
     secondaryDate: values.date_due ?? undefined,
+    includeCalculationMode: false,
   });
+  delete payload.calculation_mode;
 
   if (Array.isArray(nextValues.linked_documents)) {
     payload.linked_documents = nextValues.linked_documents;
@@ -142,17 +177,44 @@ export function prepareInvoiceUpdateSubmission(
     payload.force_linked_documents = nextValues.force_linked_documents;
   }
 
-  if (options.eslog !== undefined) {
-    payload.eslog = {
-      validation_enabled: options.eslog.validation_enabled,
-    };
-  }
+  assignDocumentValidationPayload(payload, "eslog", options.eslog);
+  assignDocumentValidationPayload(payload, "ujp", options.ujp);
 
   for (const key of ["note", "payment_terms", "reference", "signature", "tax_clause", "footer"] as const) {
     const normalized = normalizeClearableFormTextField((values as any)[key]);
     if (normalized !== undefined) {
       payload[key] = normalized;
     }
+  }
+
+  return payload;
+}
+
+export function prepareInvoiceUpdateSubmission(
+  values: CreateInvoiceSchema & { pt?: PtDocumentInputForm | null },
+  options: Pick<
+    PrepareOptions,
+    | "originalCustomer"
+    | "wasCustomerFormShown"
+    | "priceModes"
+    | "eslog"
+    | "ujp"
+    | "initialValues"
+    | "initialPriceModes"
+    | "initialEslog"
+    | "initialUjp"
+  >,
+): Record<string, unknown> {
+  const payload = buildInvoiceUpdatePayload(values, options);
+
+  if (options.initialValues) {
+    const baselinePayload = buildInvoiceUpdatePayload(options.initialValues, {
+      ...options,
+      priceModes: options.initialPriceModes ?? options.priceModes,
+      eslog: options.initialEslog,
+      ujp: options.initialUjp,
+    });
+    omitUnchangedUpdatePayloadFields(payload, baselinePayload);
   }
 
   return payload;

@@ -28,6 +28,7 @@ export default {
   "Downloading...": "Downloading...",
   Duplicate: "Duplicate",
   "Send Email": "Send Email",
+  "Send reminder": "Send reminder",
   Invoice: "Invoice",
   "Failed to download PDF": "Failed to download PDF",
   "Search...": "Search...",

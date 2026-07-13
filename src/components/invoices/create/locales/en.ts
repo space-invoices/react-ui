@@ -16,6 +16,15 @@ export default {
   Quantity: "Quantity",
   Price: "Price",
   Unit: "Unit",
+  "E-invoicing unit code": "E-invoicing unit code",
+  "E-invoicing unit settings": "E-invoicing unit settings",
+  "Only affects e-invoicing XML. The document unit stays unchanged.":
+    "Only affects e-invoicing XML. The document unit stays unchanged.",
+  "Select XML unit code": "Select XML unit code",
+  "Enter a supported UN/ECE code": "Enter a supported UN/ECE code",
+  "Use display unit": "Use display unit",
+  "Clear unit code": "Clear unit code",
+  "custom code": "custom code",
   Discount: "Discount",
   Tax: "Tax",
   "Tax rate": "Tax rate",
@@ -37,6 +46,9 @@ export default {
   Other: "Other",
   Note: "Note",
   "Insert variable": "Insert variable",
+  Bold: "Bold",
+  Italic: "Italic",
+  "Bullet list": "Bullet list",
   "Add payment instructions, terms, or other notes...": "Add payment instructions, terms, or other notes...",
   Signature: "Signature",
   "Add signature text...": "Add signature text...",
@@ -66,6 +78,19 @@ export default {
   State: "State",
   Country: "Country",
   "Tax Number": "Tax Number",
+  "Bank Account": "Bank Account",
+  "Account Type": "Account Type",
+  BIC: "BIC",
+  IBAN: "IBAN",
+  "US domestic": "US domestic",
+  "UK domestic": "UK domestic",
+  "Account Number": "Account Number",
+  "Routing Number": "Routing Number",
+  "Sort Code": "Sort Code",
+  "Company Number": "Company Number",
+  "UJP receiver identifier": "UJP receiver identifier",
+  "UJP receiver agent": "UJP receiver agent",
+  "UJP receiver mailbox": "UJP receiver mailbox",
   "Percentage discount": "Percentage discount",
   "Fixed amount discount": "Fixed amount discount",
   Percentage: "Percentage",
@@ -110,6 +135,31 @@ export default {
   "Entity currency must be EUR for e-SLOG when invoice uses a different currency.":
     "Entity currency must be EUR for e-SLOG when invoice uses a different currency.",
   "Customer name is required when customer is provided.": "Customer name is required when customer is provided.",
+  "Customer tax number is required for e-SLOG business recipients.":
+    "Customer tax number is required for e-SLOG business recipients.",
+  "Customer address is required for UJP package validation.":
+    "Customer address is required for UJP package validation.",
+  "Customer postal code is required for UJP package validation.":
+    "Customer postal code is required for UJP package validation.",
+  "Customer city is required for UJP package validation.": "Customer city is required for UJP package validation.",
+  "Customer tax number or company number is required for UJP package validation.":
+    "Customer tax number or company number is required for UJP package validation.",
+  "Customer IBAN and BIC are required for UJP package validation.":
+    "Customer IBAN and BIC are required for UJP package validation.",
+  "Customer IBAN is required for UJP package validation.": "Customer IBAN is required for UJP package validation.",
+  "Customer BIC is required for UJP package validation.": "Customer BIC is required for UJP package validation.",
+  "Entity IBAN is required for UJP package validation. Update in Settings > Company.":
+    "Entity IBAN is required for UJP package validation. Update in Settings > Company.",
+  "Entity IBAN must be a valid Slovenian IBAN for UJP package validation.":
+    "Entity IBAN must be a valid Slovenian IBAN for UJP package validation.",
+  "Entity BIC is required for UJP package validation. Update in Settings > Company.":
+    "Entity BIC is required for UJP package validation. Update in Settings > Company.",
+  "Entity BIC must be a valid 8- or 11-character BIC for UJP package validation.":
+    "Entity BIC must be a valid 8- or 11-character BIC for UJP package validation.",
+  "Customer IBAN must be a valid Slovenian IBAN for UJP package validation.":
+    "Customer IBAN must be a valid Slovenian IBAN for UJP package validation.",
+  "Customer BIC must be a valid 8- or 11-character BIC for UJP package validation.":
+    "Customer BIC must be a valid 8- or 11-character BIC for UJP package validation.",
   "At least one line item is required for e-SLOG.": "At least one line item is required for e-SLOG.",
   "Item name is required for e-SLOG.": "Item name is required for e-SLOG.",
   "Quantity must be greater than 0.": "Quantity must be greater than 0.",
@@ -139,7 +189,6 @@ export default {
   "60 days": "60 days",
   "90 days": "90 days",
   Custom: "Custom",
-  // Service date
   "Service Date": "Service Date",
   "Service Period": "Service Period",
   From: "From",
@@ -172,4 +221,6 @@ export default {
   "Remaining to allocate": "Remaining to allocate",
   "This document must be fully paid on creation": "This document must be fully paid on creation",
   "Record one or more payments on creation": "Record one or more payments on creation",
+  "Entity bank account is required for e-SLOG payment instructions. Update in Settings > Company.":
+    "Entity bank account is required for e-SLOG payment instructions. Update in Settings > Company.",
 } as const;

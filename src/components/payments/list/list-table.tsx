@@ -41,7 +41,7 @@ type PaymentWithDocument = Payment & {
   Invoice?: { id: string; number: string } | null;
   CreditNote?: { id: string; number: string } | null;
   AdvanceInvoice?: { id: string; number: string } | null;
-  IncomingPurchaseDocument?: { id: string; supplier_document_number?: string | null } | null;
+  Expense?: { id: string; supplier_document_number?: string | null } | null;
 };
 
 type PaymentListTableProps = {
@@ -81,7 +81,7 @@ export default function PaymentListTable({
       order_by: params.order_by,
       search: params.search,
       query: params.query,
-      include: "Invoice,CreditNote,AdvanceInvoice,IncomingPurchaseDocument",
+      include: "Invoice,CreditNote,AdvanceInvoice,Expense",
     });
     return response as unknown as TableQueryResponse<PaymentWithDocument>;
   }, entityId);

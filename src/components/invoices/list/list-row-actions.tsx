@@ -1,6 +1,6 @@
 import type { Invoice } from "@spaceinvoices/js-sdk";
 
-import { Ban, Copy, Download, Eye, Link2Off, Loader2, Mail, MoreHorizontal, Plus } from "lucide-react";
+import { Ban, Bell, Copy, Download, Eye, Link2Off, Loader2, Mail, MoreHorizontal, Plus } from "lucide-react";
 import { memo, useState } from "react";
 import { Button } from "@/ui/components/ui/button";
 import {
@@ -13,9 +13,11 @@ import {
   DropdownMenuTrigger,
 } from "@/ui/components/ui/dropdown-menu";
 import { actionMenuTooltipProps, Tooltip, TooltipContent, TooltipTrigger } from "@/ui/components/ui/tooltip";
+import { isApiDateOnlyBefore } from "@/ui/lib/date-only";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
 import { SendEmailDialog } from "../send-email-dialog";
+import { SendPaymentReminderDialog } from "../send-payment-reminder-dialog";
 import { useInvoiceDownload } from "./use-invoice-download";
 
 const translations = {
@@ -37,8 +39,21 @@ type InvoiceListRowActionsProps = {
   onVoid?: (invoice: Invoice) => void;
   isVoiding?: boolean;
   allowSendEmail?: boolean;
+  allowSendPaymentReminder?: boolean;
   onEmailVerificationRequired?: () => void | Promise<void>;
 } & ComponentTranslationProps;
+
+function getPaymentReminderDisabledReason(invoice: Invoice, t: (key: string) => string): string | undefined {
+  if (!invoice.customer_id) return t("Customer is required");
+  if (invoice.paid_in_full) return t("Invoice is already paid");
+  if (invoice.voided_at) return t("Invoice is voided");
+  if (!invoice.date_due) return t("Due date is required");
+  if (Number(invoice.total_due ?? 0) <= 0) return t("Invoice has no amount due");
+
+  if (!isApiDateOnlyBefore(invoice.date_due)) return t("Invoice is not overdue");
+
+  return undefined;
+}
 
 export default memo(function InvoiceListRowActions({
   invoice,
@@ -53,11 +68,14 @@ export default memo(function InvoiceListRowActions({
   onVoid,
   isVoiding,
   allowSendEmail = true,
+  allowSendPaymentReminder = true,
   onEmailVerificationRequired,
   ...i18nProps
 }: InvoiceListRowActionsProps) {
   const t = createTranslation({ ...i18nProps, translations });
   const [emailDialogOpen, setEmailDialogOpen] = useState(false);
+  const [paymentReminderDialogOpen, setPaymentReminderDialogOpen] = useState(false);
+  const paymentReminderDisabledReason = getPaymentReminderDisabledReason(invoice, t);
   const { isDownloading, downloadPDF } = useInvoiceDownload({
     onDownloadStart,
     onDownloadSuccess,
@@ -96,6 +114,20 @@ export default memo(function InvoiceListRowActions({
               <DropdownMenuItem className="cursor-pointer" onClick={() => setEmailDialogOpen(true)}>
                 <Mail className="h-4 w-4" />
                 {t("Send Email")}
+              </DropdownMenuItem>
+            )}
+            {allowSendPaymentReminder && (
+              <DropdownMenuItem
+                className="cursor-pointer"
+                disabled={!!paymentReminderDisabledReason}
+                onClick={() => {
+                  if (!paymentReminderDisabledReason) {
+                    setPaymentReminderDialogOpen(true);
+                  }
+                }}
+              >
+                <Bell className="h-4 w-4" />
+                {t("Send reminder")}
               </DropdownMenuItem>
             )}
             {onDuplicate && (
@@ -175,6 +207,17 @@ export default memo(function InvoiceListRowActions({
           onEmailVerificationRequired={onEmailVerificationRequired}
           locale={i18nProps.locale}
           translationFn={t}
+          translationLocale={i18nProps.translationLocale}
+        />
+      )}
+      {allowSendPaymentReminder && paymentReminderDialogOpen && (
+        <SendPaymentReminderDialog
+          invoice={invoice}
+          open={paymentReminderDialogOpen}
+          onOpenChange={setPaymentReminderDialogOpen}
+          onEmailVerificationRequired={onEmailVerificationRequired}
+          locale={i18nProps.locale}
+          t={t}
           translationLocale={i18nProps.translationLocale}
         />
       )}

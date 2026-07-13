@@ -250,4 +250,15 @@ export default {
   "A premise with this name already exists": "Et forretningssted med dette navnet finnes allerede",
   "Exactly 4 digits": "Nøyaktig 4 sifre",
   "Your Name": "Navnet ditt",
+  "Starting Number": "Startnummer",
+  "First invoice number for this premise sequence": "Første fakturanummer for denne sekvensen for forretningsstedet",
+  "First invoice number for this device sequence": "Første fakturanummer for denne enhetssekvensen",
+  "Set Starting Number": "Angi startnummer",
+  "Starting number can no longer be changed after invoices have been issued for this fiscal sequence.":
+    "Startnummeret kan ikke lenger endres etter at fakturaer er utstedt for denne fiskale sekvensen.",
+  "Set this before issuing invoices for the selected fiscal sequence. Leave empty to clear it.":
+    "Angi dette før du utsteder fakturaer for den valgte fiskale sekvensen. La stå tomt for å tømme.",
+  "Fiscal Sequence": "Fiskal sekvens",
+  "Starting number must be between 1 and 999999999": "Startnummeret må være mellom 1 og 999999999",
+  Save: "Lagre",
 } as const;

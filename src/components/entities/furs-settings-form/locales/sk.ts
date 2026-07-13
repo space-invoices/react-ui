@@ -251,4 +251,15 @@ export default {
   "A premise with this name already exists": "Prevádzkareň s týmto názvom už existuje",
   "Exactly 4 digits": "Presne 4 číslice",
   "Your Name": "Vaše meno",
+  "Starting Number": "Počiatočné číslo",
+  "First invoice number for this premise sequence": "Prvé číslo faktúry pre túto sekvenciu prevádzky",
+  "First invoice number for this device sequence": "Prvé číslo faktúry pre túto sekvenciu zariadenia",
+  "Set Starting Number": "Nastaviť počiatočné číslo",
+  "Starting number can no longer be changed after invoices have been issued for this fiscal sequence.":
+    "Počiatočné číslo už nemožno zmeniť po vystavení faktúr pre túto fiškálnu sekvenciu.",
+  "Set this before issuing invoices for the selected fiscal sequence. Leave empty to clear it.":
+    "Nastavte pred vystavením faktúr pre vybranú fiškálnu sekvenciu. Nechajte prázdne na vymazanie.",
+  "Fiscal Sequence": "Fiškálna sekvencia",
+  "Starting number must be between 1 and 999999999": "Počiatočné číslo musí byť medzi 1 a 999999999",
+  Save: "Uložiť",
 } as const;

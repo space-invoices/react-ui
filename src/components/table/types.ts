@@ -74,9 +74,18 @@ export type DateFilter = {
 /**
  * Status filter options supported by document tables
  */
-export type StatusFilter = "paid" | "partially_paid" | "unpaid" | "overdue" | "voided";
+export type StatusFilter =
+  | "paid"
+  | "partially_paid"
+  | "unpaid"
+  | "overdue"
+  | "due_soon"
+  | "voided"
+  | "draft"
+  | "open"
+  | "missing_attachment";
 
-export type StatusQueryPreset = "invoice" | "credit_note" | "advance_invoice";
+export type StatusQueryPreset = "invoice" | "credit_note" | "advance_invoice" | "expense";
 
 /**
  * HTTP method filter options

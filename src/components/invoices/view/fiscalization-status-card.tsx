@@ -6,19 +6,28 @@ import { Button } from "@/ui/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/ui/components/ui/card";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
+import bg from "../../documents/view/locales/bg";
+import cs from "../../documents/view/locales/cs";
 import de from "../../documents/view/locales/de";
+import en from "../../documents/view/locales/en";
 import es from "../../documents/view/locales/es";
+import et from "../../documents/view/locales/et";
+import fi from "../../documents/view/locales/fi";
 import fr from "../../documents/view/locales/fr";
 import hr from "../../documents/view/locales/hr";
+import is from "../../documents/view/locales/is";
 import it from "../../documents/view/locales/it";
+import nb from "../../documents/view/locales/nb";
 import nl from "../../documents/view/locales/nl";
 import pl from "../../documents/view/locales/pl";
 import pt from "../../documents/view/locales/pt";
+import sk from "../../documents/view/locales/sk";
 import sl from "../../documents/view/locales/sl";
+import sv from "../../documents/view/locales/sv";
 
-const translations = { de, es, fr, hr, it, nl, pl, pt, sl } as const;
+const translations = { bg, cs, de, en, es, et, fi, fr, hr, is, it, nb, nl, pl, pt, sk, sl, sv } as const;
 
-type FiscalizationStatus = "pending" | "success" | "failed" | "skipped";
+type FiscalizationStatus = "not_fiscalized" | "pending" | "success" | "failed" | "skipped";
 type FiscalizationData = (Exclude<FursFiscalizationResponse, null> | Exclude<FinaFiscalizationResponse, null>) & {
   status: FiscalizationStatus;
 };
@@ -50,14 +59,11 @@ export function FiscalizationStatusCard({
     translations,
   });
 
-  if (!fiscalizationData) {
-    return null;
-  }
-
   const label = fiscalizationType === "furs" ? "FURS" : "FINA";
+  const status = fiscalizationData?.status ?? "not_fiscalized";
 
   const getStatusBadge = () => {
-    switch (fiscalizationData.status) {
+    switch (status) {
       case "success":
         return (
           <Badge
@@ -90,6 +96,13 @@ export function FiscalizationStatusCard({
             {t("Skipped")}
           </Badge>
         );
+      case "not_fiscalized":
+        return (
+          <Badge className="bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100">
+            <MinusCircle className="mr-1 h-3 w-3" />
+            {t("Not fiscalized")}
+          </Badge>
+        );
       default:
         return null;
     }
@@ -97,28 +110,32 @@ export function FiscalizationStatusCard({
 
   const bodyContent = (
     <>
-      {fiscalizationData.status === "skipped" ? (
+      {status === "not_fiscalized" ? (
+        <div className="text-muted-foreground text-sm">
+          {label} &middot; {t("Not fiscalized")}
+        </div>
+      ) : status === "skipped" ? (
         <div className="text-muted-foreground text-sm">
           {label} &middot; {t("Skipped by user")}
         </div>
       ) : (
         <div className="text-muted-foreground text-sm">
           {label} &middot;{" "}
-          {fiscalizationData.fiscalized_at && new Date(fiscalizationData.fiscalized_at).toLocaleString(locale)}
+          {fiscalizationData?.fiscalized_at && new Date(fiscalizationData.fiscalized_at).toLocaleString(locale)}
         </div>
       )}
 
-      {fiscalizationData.status === "failed" && fiscalizationData.error && (
+      {status === "failed" && fiscalizationData?.error && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription className="text-sm">{fiscalizationData.error}</AlertDescription>
         </Alert>
       )}
 
-      {fiscalizationData.status === "failed" && onRetry && (
+      {(status === "not_fiscalized" || status === "skipped" || status === "failed") && onRetry && (
         <Button variant="outline" size="sm" onClick={onRetry} disabled={isRetrying}>
           {isRetrying ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
-          {t("Retry fiscalization")}
+          {status === "failed" ? t("Retry fiscalization") : t("Fiscalize")}
         </Button>
       )}
     </>

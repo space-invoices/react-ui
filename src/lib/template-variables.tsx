@@ -7,11 +7,15 @@ type PreviewDocument = {
   date_due?: string | Date | null;
   date_valid_till?: string | Date | null;
   total_with_tax?: number | null;
+  total_due?: number | null;
   currency_code?: string | null;
   customer?: { name?: string | null; email?: string | null } | null;
   customer_id?: string | null;
+  invoice_list?: string | null;
+  payment_instructions?: string | null;
+  total_amount?: number | string | null;
+  overdue_count?: number | string | null;
   issuer?: {
-    unit_name?: string | null;
     email?: string | null;
     address?: string | null;
     post_code?: string | null;
@@ -70,11 +74,21 @@ const TEMPLATE_VARIABLE_DEFINITIONS: TemplateVariableDefinition[] = [
   { name: "document_currency", label: "Currency", category: "Document" },
   { name: "customer_name", label: "Customer name", category: "Customer" },
   { name: "customer_email", label: "Customer email", category: "Customer" },
+  { name: "invoice_list", label: "Invoice list", category: "Payment reminder" },
+  { name: "payment_instructions", label: "Payment instructions", category: "Payment reminder" },
+  { name: "total_amount", label: "Total amount", category: "Payment reminder" },
+  { name: "overdue_count", label: "Overdue invoice count", category: "Payment reminder" },
   { name: "bank_account", label: "Bank Account", category: "Bank Account" },
   { name: "bank_account.iban", label: "IBAN", category: "Bank Account" },
   { name: "bank_account.bank_name", label: "Bank Name", category: "Bank Account" },
   { name: "bank_account.bic", label: "BIC/SWIFT", category: "Bank Account" },
   { name: "bank_account.account_number", label: "Account number", category: "Bank Account" },
+  { name: "iban", label: "IBAN", category: "Bank Account" },
+  { name: "bic", label: "BIC/SWIFT", category: "Bank Account" },
+  { name: "bank_name", label: "Bank Name", category: "Bank Account" },
+  { name: "account_number", label: "Account number", category: "Bank Account" },
+  { name: "routing_number", label: "Routing number", category: "Bank Account" },
+  { name: "sort_code", label: "Sort code", category: "Bank Account" },
   { name: "current_date", label: "Today's date", category: "Other" },
   { name: "current_year", label: "Current year", category: "Other" },
 ];
@@ -87,7 +101,7 @@ type TranslationFunction = (key: string) => string;
 
 function getBusinessUnitName(document: PreviewDocument | null | undefined): string | null {
   if (!document) return null;
-  return document.business_unit?.name || document.issuer?.unit_name || null;
+  return document.business_unit?.name || null;
 }
 
 function getResolvedIssuerValue(
@@ -158,6 +172,19 @@ export function getVariableValue(
       }).format(Number((document as any).total_with_tax));
     }
     if (varName === "document_currency") return (document as any).currency_code || null;
+    if (varName === "invoice_list") return document.invoice_list || "INV-001 - $120.00";
+    if (varName === "payment_instructions") {
+      return document.payment_instructions || "Please remit payment to the bank account on file.";
+    }
+    if (varName === "total_amount" && document.total_amount != null) return String(document.total_amount);
+    if (varName === "total_amount" && (document as any).total_due) {
+      return new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: (document as any).currency_code || "USD",
+      }).format(Number((document as any).total_due));
+    }
+    if (varName === "overdue_count" && document.overdue_count != null) return String(document.overdue_count);
+    if (varName === "overdue_count") return "1";
 
     // Invoice due date
     if ("date_due" in document && varName === "document_due_date") {
@@ -220,6 +247,8 @@ export function getVariableValue(
     if (bankAccount.bank_name) lines.push(bankAccount.bank_name);
     if (bankAccount.iban) lines.push(`IBAN: ${bankAccount.iban}`);
     else if (bankAccount.account_number) lines.push(`Account: ${bankAccount.account_number}`);
+    if (bankAccount.routing_number) lines.push(`Routing: ${bankAccount.routing_number}`);
+    if (bankAccount.sort_code) lines.push(`Sort code: ${bankAccount.sort_code}`);
     if (bankAccount.bic) lines.push(`BIC: ${bankAccount.bic}`);
     return lines.join(", ") || null;
   }
@@ -227,6 +256,12 @@ export function getVariableValue(
   if (varName === "bank_account.bank_name") return bankAccount?.bank_name || null;
   if (varName === "bank_account.bic") return bankAccount?.bic || null;
   if (varName === "bank_account.account_number") return bankAccount?.account_number || null;
+  if (varName === "iban") return bankAccount?.iban || null;
+  if (varName === "bic") return bankAccount?.bic || null;
+  if (varName === "bank_name") return bankAccount?.bank_name || null;
+  if (varName === "account_number") return bankAccount?.account_number || null;
+  if (varName === "routing_number") return bankAccount?.routing_number || null;
+  if (varName === "sort_code") return bankAccount?.sort_code || null;
 
   return null;
 }
@@ -317,4 +352,23 @@ export function replaceTemplateVariablesForPreview(
   }
 
   return parts;
+}
+
+/**
+ * Replace template variables with plain text before markdown parsing.
+ *
+ * Markdown textarea previews need a continuous string so markers can wrap
+ * variables, e.g. **{customer_name}** should render the resolved value as bold.
+ */
+export function replaceTemplateVariablesForMarkdownPreview(
+  template: string,
+  entity?: Entity | null,
+  document?: PreviewDocument | null,
+  translate?: TranslationFunction,
+): string {
+  if (!template) return "";
+
+  return template.replace(/\{([^}]+)\}/g, (_match, varName: string) => {
+    return getVariableValue(varName, entity, document) || getTemplateVariableLabel(varName, translate);
+  });
 }

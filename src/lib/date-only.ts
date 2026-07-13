@@ -8,6 +8,10 @@ export function toLocalDateOnlyString(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
+export function toUtcDateOnlyString(date = new Date()): string {
+  return date.toISOString().slice(0, 10);
+}
+
 export function normalizeDateOnlyInput(value: string | undefined): string | undefined {
   if (!value) return undefined;
   if (DATE_ONLY_PATTERN.test(value)) return value;
@@ -30,13 +34,37 @@ export function toUtcMidnightIsoString(value: string | undefined): string | unde
   return dateOnly ? `${dateOnly}T00:00:00.000Z` : undefined;
 }
 
+export function toLocalCalendarDate(value: Date | string | null | undefined): Date | undefined {
+  if (!value) return undefined;
+
+  const dateOnly = value instanceof Date ? normalizeDateOnlyInput(value.toISOString()) : normalizeDateOnlyInput(value);
+  if (!dateOnly || !DATE_ONLY_PATTERN.test(dateOnly)) return undefined;
+
+  const [year, month, day] = dateOnly.split("-").map(Number);
+  return new Date(year, month - 1, day);
+}
+
 export function extractDateOnlyToken(value: string | undefined): string | undefined {
   return value?.match(LEADING_DATE_ONLY_PATTERN)?.[1];
 }
 
+export function normalizeApiDateOnlyInput(value: Date | string | null | undefined): string | undefined {
+  if (!value) return undefined;
+  if (value instanceof Date) return toUtcDateOnlyString(value);
+  return extractDateOnlyToken(value) ?? normalizeDateOnlyInput(value);
+}
+
+export function isApiDateOnlyBefore(
+  value: Date | string | null | undefined,
+  comparisonDateOnly = toUtcDateOnlyString(),
+): boolean {
+  const dateOnly = normalizeApiDateOnlyInput(value);
+  return Boolean(dateOnly && dateOnly < comparisonDateOnly);
+}
+
 export function formatDateOnlyForDisplay(
   value: Date | string | null | undefined,
-  locale: string,
+  locale?: string,
   options: Intl.DateTimeFormatOptions = {
     year: "numeric",
     month: "short",

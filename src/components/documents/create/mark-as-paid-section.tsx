@@ -1,4 +1,5 @@
 import { HelpCircle, Plus, Trash2 } from "lucide-react";
+import { useId } from "react";
 import { Button } from "@/ui/components/ui/button";
 import { Checkbox } from "@/ui/components/ui/checkbox";
 import { Input } from "@/ui/components/ui/input";
@@ -45,6 +46,13 @@ type MarkAsPaidSectionProps = {
   forced?: boolean;
   validationMessage?: string;
   requireFullPayment?: boolean;
+  /** Optional unchecked-state copy for consumers that record a payment without implying full settlement. */
+  checkedLabel?: string;
+  uncheckedLabel?: string;
+  uncheckedDescription?: string;
+  removePaymentLabel?: string;
+  /** Optional root className (e.g. to drop the default border when nested). */
+  className?: string;
 };
 
 export function MarkAsPaidSection({
@@ -58,7 +66,13 @@ export function MarkAsPaidSection({
   forced,
   validationMessage,
   requireFullPayment,
+  checkedLabel,
+  uncheckedLabel,
+  uncheckedDescription,
+  removePaymentLabel,
+  className,
 }: MarkAsPaidSectionProps) {
+  const checkboxId = useId();
   const showPaymentTypes = forced || checked || alwaysShowPaymentType;
   const showPaymentAmounts = paymentRows.length > 1;
   const showPaymentSummary = paymentRows.length > 1;
@@ -67,21 +81,24 @@ export function MarkAsPaidSection({
   const remainingTotal = Math.max(0, Math.round((documentTotal - recordedTotal) * 100) / 100);
 
   return (
-    <div className={cn("flex flex-col gap-4 rounded-md border p-4", showPaymentTypes && "gap-3")}>
+    <div className={cn("flex flex-col gap-4 rounded-md border p-4", showPaymentTypes && "gap-3", className)}>
       {forced ? (
         <div className="flex flex-row items-center space-x-3 space-y-0">
           <Label>{t("Paid")}</Label>
         </div>
       ) : (
         <div className="flex flex-row items-center space-x-3 space-y-0">
-          <Checkbox checked={checked} onCheckedChange={(v) => onCheckedChange(v === true)} />
+          <Checkbox id={checkboxId} checked={checked} onCheckedChange={(v) => onCheckedChange(v === true)} />
           <div className="flex items-center gap-1 leading-none">
-            <Label>{checked ? t("Paid") : t("Mark as Paid")}</Label>
+            <Label htmlFor={checkboxId} className="cursor-pointer">
+              {checked ? (checkedLabel ?? t("Paid")) : (uncheckedLabel ?? t("Mark as Paid"))}
+            </Label>
             {!checked && (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button
                     type="button"
+                    aria-label={uncheckedLabel ?? t("Payment details")}
                     className="rounded-full p-1 transition-colors hover:bg-accent"
                     onClick={(e) => e.preventDefault()}
                   >
@@ -89,9 +106,10 @@ export function MarkAsPaidSection({
                   </button>
                 </TooltipTrigger>
                 <TooltipContent side="top">
-                  {requireFullPayment
-                    ? t("This document must be fully paid on creation")
-                    : t("Record one or more payments on creation")}
+                  {uncheckedDescription ??
+                    (requireFullPayment
+                      ? t("This document must be fully paid on creation")
+                      : t("Record one or more payments on creation"))}
                 </TooltipContent>
               </Tooltip>
             )}
@@ -109,7 +127,9 @@ export function MarkAsPaidSection({
               key={row.id ?? `${row.type ?? "payment"}-${row.amount || "empty"}`}
               className={cn(
                 "grid gap-2 md:items-center",
-                showPaymentAmounts ? "md:grid-cols-[minmax(0,1fr)_140px_auto]" : "md:grid-cols-[minmax(0,1fr)_auto]",
+                showPaymentAmounts
+                  ? "md:grid-cols-[minmax(0,14rem)_7.5rem_auto] lg:grid-cols-[minmax(0,1fr)_8.5rem_auto]"
+                  : "md:grid-cols-[minmax(0,14rem)_auto] lg:grid-cols-[minmax(0,1fr)_auto]",
               )}
             >
               <Select
@@ -120,7 +140,7 @@ export function MarkAsPaidSection({
                   onPaymentRowsChange(updated);
                 }}
               >
-                <SelectTrigger className="w-full md:w-fit">
+                <SelectTrigger className="w-full min-w-0" aria-label={t("Payment Type")}>
                   <SelectValue placeholder={t("Select payment type")}>
                     {row.type ? t(PAYMENT_TYPE_LABELS[row.type]) : undefined}
                   </SelectValue>
@@ -149,6 +169,8 @@ export function MarkAsPaidSection({
                     onPaymentRowsChange(updated);
                   }}
                   placeholder={t("Amount")}
+                  aria-label={t("Amount")}
+                  className="min-w-0"
                 />
               )}
               {paymentRows.length > 1 && (
@@ -157,6 +179,7 @@ export function MarkAsPaidSection({
                   variant="ghost"
                   size="icon"
                   className="size-8 shrink-0"
+                  aria-label={removePaymentLabel ?? t("Remove payment")}
                   onClick={() => {
                     const updated = paymentRows.filter((_, i) => i !== index);
                     onPaymentRowsChange(updated);

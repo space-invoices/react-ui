@@ -145,7 +145,7 @@ export function PaymentTrendChart(props: PaymentTrendChartProps) {
         <CardTitle>{t("Payment Trend")}</CardTitle>
         <CardDescription>{t("Monthly payments received over the last 6 months")}</CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="overflow-hidden">
         {hasData ? chartContent : <ChartEmptyState label={t("No data available")}>{chartContent}</ChartEmptyState>}
       </CardContent>
     </Card>

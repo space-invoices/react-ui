@@ -84,6 +84,8 @@ function MethodBadge({ method }: { method: string }) {
 type RequestLogListTableProps = ListTableProps<RequestLogResponse> & {
   /** Environment filter for account-level queries */
   environment?: "live" | "sandbox";
+  /** Account ID for account-level queries */
+  accountId?: string;
   /** Show entity column (for account-level view) */
   showEntityColumn?: boolean;
   /** Selected log for detail panel */
@@ -103,6 +105,7 @@ export function RequestLogListTable({
   onChangeParams,
   entityId,
   environment,
+  accountId,
   showEntityColumn = false,
   selectedLog,
   onSelectLog,
@@ -177,6 +180,7 @@ export function RequestLogListTable({
           Authorization: `Bearer ${token}`,
           ...getClientHeaders("ui"),
           "Content-Type": "application/json",
+          ...(accountId && !entityId ? { "x-account-id": accountId } : {}),
         },
       });
 
@@ -186,7 +190,7 @@ export function RequestLogListTable({
 
       return (await response.json()) as TableQueryResponse<RequestLogResponse>;
     },
-    [entityId, environment],
+    [accountId, entityId, environment],
   );
 
   const columns: Column<RequestLogResponse>[] = useMemo(() => {
@@ -271,7 +275,7 @@ export function RequestLogListTable({
 
   const cacheKey = entityId
     ? `${REQUEST_LOGS_CACHE_KEY}-${entityId}`
-    : `${REQUEST_LOGS_CACHE_KEY}-account-${environment || "live"}`;
+    : `${REQUEST_LOGS_CACHE_KEY}-account-${accountId || "default"}-${environment || "live"}`;
 
   const detailContent = selectedLog ? <RequestLogDetail log={selectedLog} t={translate} locale={locale} /> : null;
 

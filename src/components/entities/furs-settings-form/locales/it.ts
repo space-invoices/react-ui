@@ -256,4 +256,15 @@ export default {
   "A premise with this name already exists": "Esiste già una sede con questo nome",
   "Exactly 4 digits": "Esattamente 4 cifre",
   "Your Name": "Il tuo nome",
+  "Starting Number": "Numero iniziale",
+  "First invoice number for this premise sequence": "Primo numero fattura per questa sequenza della sede",
+  "First invoice number for this device sequence": "Primo numero fattura per questa sequenza del dispositivo",
+  "Set Starting Number": "Imposta numero iniziale",
+  "Starting number can no longer be changed after invoices have been issued for this fiscal sequence.":
+    "Il numero iniziale non può più essere modificato dopo l'emissione di fatture per questa sequenza fiscale.",
+  "Set this before issuing invoices for the selected fiscal sequence. Leave empty to clear it.":
+    "Impostalo prima di emettere fatture per la sequenza fiscale selezionata. Lascia vuoto per cancellarlo.",
+  "Fiscal Sequence": "Sequenza fiscale",
+  "Starting number must be between 1 and 999999999": "Il numero iniziale deve essere compreso tra 1 e 999999999",
+  Save: "Salva",
 } as const;

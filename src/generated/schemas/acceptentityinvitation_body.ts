@@ -10,8 +10,8 @@ import { z } from 'zod';
 
 // Schema for acceptEntityInvitation operation
 const acceptEntityInvitationSchemaDefinition = z.object({
-  name: z.string().min(1).max(255),
-  password: z.string().min(8),
+  name: z.string().max(255).optional(),
+  password: z.string().min(1),
 });
 
 export type AcceptEntityInvitationSchema = z.infer<typeof acceptEntityInvitationSchemaDefinition>;

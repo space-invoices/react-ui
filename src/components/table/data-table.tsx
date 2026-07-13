@@ -70,6 +70,8 @@ export type DataTableProps<T> = {
   contentInsetClassName?: string;
   /** Bottom padding on the overall table wrapper */
   bottomPaddingClassName?: string;
+  /** Optional className for the underlying table element */
+  tableClassName?: string;
 };
 
 function hasFilterControls(filterConfig?: FilterConfig) {
@@ -134,6 +136,7 @@ export function DataTable<T extends { id: string }>({
   showPagination = true,
   contentInsetClassName = "px-4",
   bottomPaddingClassName = "pb-4",
+  tableClassName,
 }: DataTableProps<T>) {
   const hasFilters = hasFilterControls(filterConfig);
   const displayRows = Math.max(queryParams?.limit ?? 10, 1);
@@ -299,15 +302,17 @@ export function DataTable<T extends { id: string }>({
 
       {selectable && selectedCount > 0 && selectionToolbar && (
         <div className={contentInsetClassName}>
-          <div className="flex items-center gap-3 rounded-lg border bg-muted/50 px-4 py-2">
-            {selectionToolbar(selectedCount, data)}
+          <div className="max-w-full overflow-x-auto rounded-lg border bg-muted/50">
+            <div className="flex w-max min-w-full items-center gap-3 px-4 py-2">
+              {selectionToolbar(selectedCount, data)}
+            </div>
           </div>
         </div>
       )}
 
       <div className={contentInsetClassName}>
         <div className="rounded-lg border">
-          <Table>
+          <Table className={tableClassName}>
             {renderHeader ? (
               renderHeader()
             ) : (

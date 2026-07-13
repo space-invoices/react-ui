@@ -29,6 +29,9 @@ export default {
   Device: "Uređaj",
   "FINA fiscalized invoices always use the current date": "FINA fiskalizirani dokumenti uvijek koriste trenutni datum",
   // Signature field
+  Bold: "Podebljano",
+  Italic: "Kurziv",
+  "Bullet list": "Popis s oznakama",
   Signature: "Potpis",
   "Add signature text...": "Dodaj tekst potpisa...",
   Reference: "Referenca",
@@ -59,4 +62,12 @@ export default {
   "Remaining to allocate": "Preostalo za raspodjelu",
   "This document must be fully paid on creation": "Ovaj dokument mora biti u potpunosti plaćen pri izradi",
   "Record one or more payments on creation": "Evidentiraj jedno ili više plaćanja pri izradi",
+  "E-invoicing unit settings": "Postavke jedinice za e-račun",
+  "Only affects e-invoicing XML. The document unit stays unchanged.":
+    "Utječe samo na XML e-računa. Jedinica na dokumentu ostaje nepromijenjena.",
+  "Select XML unit code": "Odaberite XML šifru jedinice",
+  "Enter a supported UN/ECE code": "Unesite podržanu UN/ECE šifru",
+  "Use display unit": "Koristi prikazanu jedinicu",
+  "Clear unit code": "Očisti šifru jedinice",
+  "custom code": "prilagođena šifra",
 } as const;

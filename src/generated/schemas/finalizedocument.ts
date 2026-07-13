@@ -9,42 +9,39 @@ import { z } from 'zod';
 // Schemas for finalizedocument endpoints
 
 // Dependency schema for finalizedocument
-const CreateFursDocumentData = z.union([
-  z
-    .object({
-      business_premise_name: z.union([z.string(), z.null()]),
-      electronic_device_name: z.union([z.string(), z.null()]),
-      operator_tax_number: z.union([z.string(), z.null()]),
-      operator_label: z.union([z.string(), z.null()]),
-      skip: z.union([z.boolean(), z.null()]),
-    })
-    .partial(),
-  z.null(),
-]);
+const CreateFursDocumentData = z
+  .object({
+    business_premise_name: z.union([z.string(), z.null()]),
+    electronic_device_name: z.union([z.string(), z.null()]),
+    operator_tax_number: z.union([z.string(), z.null()]),
+    operator_label: z.union([z.string(), z.null()]),
+    skip: z.union([z.boolean(), z.null()]),
+  })
+  .partial();
 
 
 // Dependency schema for finalizedocument
-const CreateFinaInvoiceData = z.union([
-  z
-    .object({
-      business_premise_name: z.union([z.string(), z.null()]),
-      electronic_device_name: z.union([z.string(), z.null()]),
-      operator_oib: z.union([z.string(), z.null()]),
-      operator_label: z.union([z.string(), z.null()]),
-      payment_type: z.union([
-        z.union([z.enum(["cash", "card", "online", "bank_transfer", "paypal", "crypto", "coupon", "other"]), z.null()]),
-        z.null(),
-      ]),
-      subsequent_submit: z.union([z.boolean(), z.null()]),
-    })
-    .partial(),
-  z.null(),
-]);
+const CreateFinaInvoiceData = z
+  .object({
+    business_premise_name: z.union([z.string(), z.null()]),
+    electronic_device_name: z.union([z.string(), z.null()]),
+    operator_oib: z.union([z.string(), z.null()]),
+    operator_label: z.union([z.string(), z.null()]),
+    payment_type: z.union([
+      z.union([z.enum(["cash", "card", "online", "bank_transfer", "paypal", "crypto", "coupon", "other"]), z.null()]),
+      z.null(),
+    ]),
+    subsequent_submit: z.union([z.boolean(), z.null()]),
+  })
+  .partial();
 
 
 // Schema for finalizeDocument operation
 const finalizeDocumentSchemaDefinition = z
-  .object({ furs: CreateFursDocumentData, fina: CreateFinaInvoiceData })
+  .object({
+    furs: z.union([CreateFursDocumentData, z.null()]),
+    fina: z.union([CreateFinaInvoiceData, z.null()]),
+  })
   .partial()
   .passthrough();
 

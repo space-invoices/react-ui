@@ -145,7 +145,7 @@ export function RevenueTrendChart(props: RevenueTrendChartProps) {
         <CardTitle>{t("Revenue Trend")}</CardTitle>
         <CardDescription>{t("Monthly revenue over the last 6 months")}</CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="overflow-hidden">
         {hasData ? chartContent : <ChartEmptyState label={t("No data available")}>{chartContent}</ChartEmptyState>}
       </CardContent>
     </Card>

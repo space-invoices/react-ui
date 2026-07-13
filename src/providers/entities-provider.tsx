@@ -1,15 +1,17 @@
+import { entities as entitiesApi } from "@spaceinvoices/js-sdk";
 import { useQuery } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useCookies } from "react-cookie";
+import { ENTITIES_CACHE_KEY } from "@/ui/components/entities/entities.hooks";
 import { ACTIVE_ENTITY_COOKIE, ACTIVE_ENVIRONMENT_COOKIE } from "@/ui/components/entities/keys";
 import { useSpaceInvoicesRuntime } from "@/ui/providers/space-invoices-provider";
-import { entities as entitiesApi } from "../../../js-sdk/src/sdk/entities";
 
 import { EntitiesContext, type Entity, type EntityEnvironment } from "./entities-context";
 
-// Define a constant for the entities cache key
-export const ENTITIES_QUERY_KEY = ["entities"] as const;
+// Derived from ENTITIES_CACHE_KEY so prefix invalidations elsewhere
+// (useUpdateEntity, FURS/FINA settings hooks) always match this query
+export const ENTITIES_QUERY_KEY = [ENTITIES_CACHE_KEY] as const;
 
 function LoadingFallback() {
   return (
@@ -28,6 +30,8 @@ type EntitiesProviderProps = {
   urlEntityId?: string;
   /** When provided, determines environment from URL instead of cookie. true = sandbox, false = live. */
   isSandbox?: boolean;
+  /** Optional account context used to keep entity caches separated for multi-account users. */
+  accountId?: string | null;
   /** Called when urlEntityId is not found in any environment, allowing parent to try other accounts */
   onEntityNotFound?: (entityId: string) => boolean | undefined | Promise<boolean | undefined>;
 };
@@ -39,9 +43,11 @@ export function EntitiesProvider({
   cookieDomain,
   urlEntityId,
   isSandbox,
+  accountId,
   onEntityNotFound,
 }: EntitiesProviderProps) {
-  const { hasAccessToken, isResolvingAccessToken } = useSpaceInvoicesRuntime();
+  const { accountId: runtimeAccountId, hasAccessToken, isResolvingAccessToken } = useSpaceInvoicesRuntime();
+  const resolvedAccountId = accountId ?? runtimeAccountId ?? null;
   const [cookies, setCookie, removeCookie] = useCookies([ACTIVE_ENTITY_COOKIE, ACTIVE_ENVIRONMENT_COOKIE]);
   const isInitialMount = useRef(true);
   const initialEnvironmentFromCookie = cookies[ACTIVE_ENVIRONMENT_COOKIE] as EntityEnvironment | undefined;
@@ -89,9 +95,13 @@ export function EntitiesProvider({
     error,
     status,
   } = useQuery({
-    queryKey: [...ENTITIES_QUERY_KEY, environment],
+    queryKey: [...ENTITIES_QUERY_KEY, resolvedAccountId ?? "no-account", environment],
     queryFn: async () => {
-      const response = await entitiesApi.list({ limit: 100, environment });
+      const response = await entitiesApi.list({
+        limit: 100,
+        environment,
+        ...(resolvedAccountId ? { account_id: resolvedAccountId } : {}),
+      });
       return response.data;
     },
     enabled: hasAccessToken && !isResolvingAccessToken,
@@ -175,7 +185,7 @@ export function EntitiesProvider({
       hasTriedFallback.current = true;
       const altEnv = environment === "live" ? "sandbox" : "live";
       entitiesApi
-        .list({ limit: 1, environment: altEnv })
+        .list({ limit: 1, environment: altEnv, ...(resolvedAccountId ? { account_id: resolvedAccountId } : {}) })
         .then((res) => {
           if (res.data.length > 0) {
             // Other environment has entities — auto-switch
@@ -203,6 +213,7 @@ export function EntitiesProvider({
     onNoEntities,
     refetch,
     hasAccessToken,
+    resolvedAccountId,
     environment,
     isSandbox,
     urlEntityId,
@@ -253,8 +264,10 @@ export function EntitiesProvider({
         if (updatedEntity) {
           // Always update with fresh data from the server
           setActiveEntityState(updatedEntity);
+        } else if (urlEntityId) {
+          // Do not activate an unrelated entity while URL-entity fallback/account probing is still resolving.
+          setActiveEntityState(null);
         } else if (currentActive) {
-          // URL entity not found but we have a current active — keep it or fall back
           const stillExists = memoizedEntities.find((entity) => entity.id === currentActive.id);
           setActiveEntityState(stillExists ?? memoizedEntities[0]);
         } else {

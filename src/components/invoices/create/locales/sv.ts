@@ -18,6 +18,15 @@ export default {
   Quantity: "Antal",
   Price: "Pris",
   Unit: "Enhet",
+  "E-invoicing unit code": "Enhetskod för e-fakturering",
+  "E-invoicing unit settings": "Inställningar för e-fakturaenhet",
+  "Only affects e-invoicing XML. The document unit stays unchanged.":
+    "Påverkar endast XML för e-faktura. Dokumentets enhet ändras inte.",
+  "Select XML unit code": "Välj XML-enhetskod",
+  "Enter a supported UN/ECE code": "Ange en stödd UN/ECE-kod",
+  "Use display unit": "Använd visad enhet",
+  "Clear unit code": "Rensa enhetskod",
+  "custom code": "anpassad kod",
   Discount: "Rabatt",
   Tax: "Skatt",
   "Tax rate": "Skattesats",
@@ -39,6 +48,9 @@ export default {
   Other: "Övrigt",
   Note: "Anteckning",
   "Insert variable": "Infoga variabel",
+  Bold: "Fet",
+  Italic: "Kursiv",
+  "Bullet list": "Punktlista",
   "Add payment instructions, terms, or other notes...":
     "Lägg till betalningsinstruktioner, villkor eller andra anteckningar...",
   Signature: "Signatur",
@@ -68,6 +80,19 @@ export default {
   City: "Stad",
   State: "Län",
   Country: "Land",
+  "Bank Account": "Bankkonto",
+  "Account Type": "Kontotyp",
+  BIC: "BIC",
+  IBAN: "IBAN",
+  "US domestic": "Inrikes USA",
+  "UK domestic": "Inrikes Storbritannien",
+  "Account Number": "Kontonummer",
+  "Routing Number": "Routingnummer",
+  "Sort Code": "Sorteringskod",
+  "Company Number": "Företagsnummer",
+  "UJP receiver identifier": "UJP-mottagaridentifier",
+  "UJP receiver agent": "UJP-mottagaragent",
+  "UJP receiver mailbox": "UJP-mottagarbrevlåda",
   "Tax Number": "Skattenummer",
   "Percentage discount": "Procentuell rabatt",
   "Fixed amount discount": "Fast rabattbelopp",
@@ -89,8 +114,8 @@ export default {
   "Click to enable fiscalization": "Klicka för att aktivera fiskalisering",
   "Fiscally verify": "Fiskalisera",
   "Click to skip fiscalization for this invoice": "Klicka för att hoppa över fiskalisering för den här fakturan",
-  "Business unit": "Business unit",
-  "No unit": "No unit",
+  "Business unit": "Affärsenhet",
+  "No unit": "Ingen enhet",
   "e-SLOG": "e-SLOG",
   "Click to skip e-SLOG validation for this invoice":
     "Klicka för att hoppa över e-SLOG-validering för den här fakturan",
@@ -114,6 +139,18 @@ export default {
   "Entity currency must be EUR for e-SLOG when invoice uses a different currency.":
     "Enhetens valuta måste vara EUR för e-SLOG när fakturan använder en annan valuta.",
   "Customer name is required when customer is provided.": "Kundnamn krävs när en kund anges.",
+  "Entity IBAN is required for UJP package validation. Update in Settings > Company.":
+    "Entitetens IBAN krävs för UJP-paketvalidering. Uppdatera det i Inställningar > Företag.",
+  "Entity IBAN must be a valid Slovenian IBAN for UJP package validation.":
+    "Entitetens IBAN måste vara ett giltigt slovenskt IBAN för UJP-paketvalidering.",
+  "Entity BIC is required for UJP package validation. Update in Settings > Company.":
+    "Entitetens BIC krävs för UJP-paketvalidering. Uppdatera det i Inställningar > Företag.",
+  "Entity BIC must be a valid 8- or 11-character BIC for UJP package validation.":
+    "Entitetens BIC måste vara en giltig BIC med 8 eller 11 tecken för UJP-paketvalidering.",
+  "Customer IBAN must be a valid Slovenian IBAN for UJP package validation.":
+    "Kundens IBAN måste vara ett giltigt slovenskt IBAN för validering av UJP-paketet.",
+  "Customer BIC must be a valid 8- or 11-character BIC for UJP package validation.":
+    "Kundens BIC måste vara en giltig BIC med 8 eller 11 tecken för validering av UJP-paketet.",
   "At least one line item is required for e-SLOG.": "Minst en radartikel krävs för e-SLOG.",
   "Item name is required for e-SLOG.": "Artikelnamn krävs för e-SLOG.",
   "Quantity must be greater than 0.": "Antalet måste vara större än 0.",
@@ -143,7 +180,6 @@ export default {
   "60 days": "60 dagar",
   "90 days": "90 dagar",
   Custom: "Anpassad",
-  // Service date
   "Service Date": "Tjänstedatum",
   "Service Period": "Tjänsteperiod",
   From: "Från",
@@ -176,4 +212,17 @@ export default {
   "Remaining to allocate": "Återstår att fördela",
   "This document must be fully paid on creation": "Det här dokumentet måste vara fullt betalt vid skapande",
   "Record one or more payments on creation": "Registrera en eller flera betalningar vid skapande",
+  "Entity bank account is required for e-SLOG payment instructions. Update in Settings > Company.":
+    "Entitetens bankkonto krävs för e-SLOG-betalningsinstruktioner. Uppdatera det i Inställningar > Företag.",
+  "Customer tax number is required for e-SLOG business recipients.":
+    "Kundens skattenummer krävs för e-SLOG-företagsmottagare.",
+  "Customer address is required for UJP package validation.": "Kundens adress krävs för UJP-paketvalidering.",
+  "Customer postal code is required for UJP package validation.": "Kundens postnummer krävs för UJP-paketvalidering.",
+  "Customer city is required for UJP package validation.": "Kundens ort krävs för UJP-paketvalidering.",
+  "Customer tax number or company number is required for UJP package validation.":
+    "Kundens skattenummer eller företagsnummer krävs för validering av UJP-paketet.",
+  "Customer IBAN and BIC are required for UJP package validation.":
+    "Kundens IBAN och BIC krävs för validering av UJP-paketet.",
+  "Customer IBAN is required for UJP package validation.": "Kundens IBAN krävs för validering av UJP-paketet.",
+  "Customer BIC is required for UJP package validation.": "Kundens BIC krävs för validering av UJP-paketet.",
 } as const;

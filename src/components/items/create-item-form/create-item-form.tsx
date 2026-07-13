@@ -4,8 +4,8 @@ import { Minus, Plus } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { FieldErrors } from "react-hook-form";
 import { useForm, useWatch } from "react-hook-form";
+import { ContentLocaleButton } from "@/ui/components/document-content-translations";
 import { useFinancialCategories } from "@/ui/components/financial-categories/financial-categories.hooks";
-import { FormInput } from "@/ui/components/form";
 import TaxSelectField, { getCurrentRate } from "@/ui/components/taxes/tax-select-field";
 import { useListTaxes } from "@/ui/components/taxes/taxes.hooks";
 import { Button } from "@/ui/components/ui/button";
@@ -20,13 +20,22 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/ui/components/ui/input";
 import { Label } from "@/ui/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui/components/ui/select";
+import { Textarea } from "@/ui/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/ui/components/ui/tooltip";
 import type { CreateItemSchema } from "@/ui/generated/schemas";
 import { createItemSchema } from "@/ui/generated/schemas";
 import { getEntityCountryCapabilities } from "@/ui/lib/country-capabilities";
+import {
+  DEFAULT_CONTENT_LOCALE,
+  DOCUMENT_CONTENT_TRANSLATIONS_FEATURE,
+  type DocumentContentLocaleMode,
+  readLocalizedValue,
+  writeLocalizedValue,
+} from "@/ui/lib/document-content-translations";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
 import { useEntities } from "@/ui/providers/entities-context";
+import { useWhiteLabel } from "@/ui/providers/white-label-provider";
 import { useWLSubscriptionOptional } from "@/ui/providers/wl-subscription-provider";
 
 import { useCreateItem } from "../items.hooks";
@@ -70,6 +79,11 @@ const translations = {
   sv,
 } as const;
 
+function cleanItemEInvoicing(value: CreateItemSchema["e_invoicing"]): CreateItemSchema["e_invoicing"] | undefined {
+  const unitCode = value?.unit_code?.trim();
+  return unitCode ? { unit_code: unitCode.toUpperCase() } : undefined;
+}
+
 type CreateItemFormProps = {
   entityId: string;
   onSuccess?: (item: Item) => void;
@@ -93,7 +107,11 @@ export default function CreateItemForm({
 
   const [isGrossPrice, setIsGrossPrice] = useState(false);
   const { activeEntity } = useEntities();
+  const whiteLabel = useWhiteLabel();
   const subscription = useWLSubscriptionOptional();
+  const translationsFeatureEnabled = whiteLabel.isFeatureVisible(DOCUMENT_CONTENT_TRANSLATIONS_FEATURE);
+  const defaultContentLocale = activeEntity?.locale || "en-US";
+  const [contentLocale, setContentLocale] = useState<DocumentContentLocaleMode>(DEFAULT_CONTENT_LOCALE);
   const isPortugal = getEntityCountryCapabilities(activeEntity).isPortugal;
   const maxTaxesPerItem = activeEntity?.country_rules?.max_taxes_per_item ?? 1;
   const hasFinancialCategoriesFeature = !subscription || subscription.hasFeature("financial_categories");
@@ -116,10 +134,14 @@ export default function CreateItemForm({
       description: "",
       classification: isPortugal ? "product" : undefined,
       financial_category_id: undefined,
+      unit: "",
+      e_invoicing: {},
       price: 0,
       taxes: [],
+      translations: {},
     },
   });
+  const itemTranslations = useWatch({ control: form.control, name: "translations" });
 
   useEffect(() => {
     if (!activeEntity?.is_tax_subject) return;
@@ -188,6 +210,8 @@ export default function CreateItemForm({
         description: "",
         classification: isPortugal ? "product" : undefined,
         financial_category_id: undefined,
+        unit: "",
+        e_invoicing: {},
         price: 0,
         taxes: activeEntity?.is_tax_subject && availableTaxes.length > 0 ? [{}] : [],
       });
@@ -204,11 +228,18 @@ export default function CreateItemForm({
   const onSubmit = async (values: CreateItemSchema) => {
     // Zod validation ensures required fields (name, price) are present before this is called
     // The type cast is safe because React Hook Form's DeepPartial doesn't reflect runtime validation
-    const { price, taxes, ...rest } = values;
+    const { price, taxes, unit, e_invoicing, ...rest } = values;
     const tax_ids = (taxes ?? []).flatMap((tax: any) => (tax?.tax_id ? [tax.tax_id] : []));
+    const commonPayload = {
+      ...rest,
+      ...(unit?.trim() ? { unit: unit.trim() } : {}),
+      ...(cleanItemEInvoicing(e_invoicing) ? { e_invoicing: cleanItemEInvoicing(e_invoicing) } : {}),
+    };
 
     // Transform price based on is_gross_price flag
-    const payload = isGrossPrice ? { ...rest, gross_price: price, tax_ids } : { ...rest, price, tax_ids };
+    const payload = isGrossPrice
+      ? { ...commonPayload, gross_price: price, tax_ids }
+      : { ...commonPayload, price, tax_ids };
 
     createItem(payload as CreateItemRequest);
   };
@@ -229,13 +260,105 @@ export default function CreateItemForm({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-4">
-        <FormInput control={form.control} name="name" label={t("Name")} placeholder={t("Enter name")} />
+        <FormField
+          control={form.control}
+          name="name"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>{t("Name")}</FormLabel>
+              <FormControl>
+                <div className="relative">
+                  <Input
+                    aria-label={t("Name")}
+                    name={field.name}
+                    ref={field.ref}
+                    value={readLocalizedValue(field.value, itemTranslations?.name, contentLocale)}
+                    placeholder={t("Enter name")}
+                    className={translationsFeatureEnabled ? "pr-14" : undefined}
+                    onBlur={field.onBlur}
+                    onChange={(event) => {
+                      if (!translationsFeatureEnabled || contentLocale === DEFAULT_CONTENT_LOCALE) {
+                        field.onChange(event.target.value);
+                        return;
+                      }
 
-        <FormInput
+                      form.setValue(
+                        "translations",
+                        {
+                          ...(form.getValues("translations") ?? {}),
+                          name: writeLocalizedValue(itemTranslations?.name, contentLocale, event.target.value),
+                        },
+                        { shouldDirty: true, shouldTouch: true },
+                      );
+                    }}
+                  />
+                  {translationsFeatureEnabled && (
+                    <div className="absolute inset-y-0 right-1 flex items-center">
+                      <ContentLocaleButton
+                        activeLocale={contentLocale}
+                        defaultLocale={defaultContentLocale}
+                        onChange={setContentLocale}
+                        uiLocale={i18nProps.translationLocale ?? i18nProps.locale}
+                        t={t}
+                      />
+                    </div>
+                  )}
+                </div>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
           control={form.control}
           name="description"
-          label={t("Description")}
-          placeholder={t("Enter description")}
+          render={({ field }) => (
+            <FormItem>
+              <div className="flex items-center justify-between gap-2">
+                <FormLabel>{t("Description")}</FormLabel>
+                {translationsFeatureEnabled && (
+                  <ContentLocaleButton
+                    activeLocale={contentLocale}
+                    defaultLocale={defaultContentLocale}
+                    onChange={setContentLocale}
+                    uiLocale={i18nProps.translationLocale ?? i18nProps.locale}
+                    t={t}
+                  />
+                )}
+              </div>
+              <FormControl>
+                <Textarea
+                  name={field.name}
+                  ref={field.ref}
+                  value={readLocalizedValue(field.value, itemTranslations?.description, contentLocale)}
+                  placeholder={t("Enter description")}
+                  rows={4}
+                  onBlur={field.onBlur}
+                  onChange={(event) => {
+                    if (!translationsFeatureEnabled || contentLocale === DEFAULT_CONTENT_LOCALE) {
+                      field.onChange(event.target.value === "" ? undefined : event.target.value);
+                      return;
+                    }
+
+                    form.setValue(
+                      "translations",
+                      {
+                        ...(form.getValues("translations") ?? {}),
+                        description: writeLocalizedValue(
+                          itemTranslations?.description,
+                          contentLocale,
+                          event.target.value,
+                        ),
+                      },
+                      { shouldDirty: true, shouldTouch: true },
+                    );
+                  }}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
         />
 
         {isPortugal && (
@@ -301,6 +424,41 @@ export default function CreateItemForm({
             </FormItem>
           )}
         />
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <FormField
+            control={form.control}
+            name="unit"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t("Unit")}</FormLabel>
+                <FormControl>
+                  <Input {...field} value={field.value ?? ""} placeholder={t("e.g. hours")} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="e_invoicing.unit_code"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t("E-invoicing unit code")}</FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    value={field.value ?? ""}
+                    placeholder="C62"
+                    onChange={(event) => field.onChange(event.target.value.toUpperCase())}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
         <div className="space-y-2">
           <Label>{t("Tax")}</Label>

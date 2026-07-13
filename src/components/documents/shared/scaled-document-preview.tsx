@@ -11,24 +11,121 @@ interface ScaledDocumentPreviewProps {
 
 /** Extract @font-face rules from CSS so they can be hoisted to the document head */
 const FONT_FACE_RE = /@font-face\s*\{[^}]*\}/g;
+const FONT_FAMILY_RE = /font-family\s*:\s*['"]?([^;'"}]+)['"]?/i;
+const FONT_STYLE_RE = /font-style\s*:\s*([^;"}]+)/i;
+const FONT_WEIGHT_RE = /font-weight\s*:\s*([^;"}]+)/i;
+const FONT_SRC_RE = /src\s*:\s*([^;}]+)/i;
+const FONT_URL_RE = /url\((['"]?)([^'")]+)\1\)/i;
+
+const loadedPreviewFontKeys = new Set<string>();
+const loadingPreviewFonts = new Map<string, Promise<void>>();
+
+type PreviewFontFace = {
+  family: string;
+  source: string;
+  style: string;
+  weight: string;
+  url?: string;
+};
+
+function extractFontFaceBlocks(html: string): string[] {
+  const styleTagRe = /<style>([\s\S]*?)<\/style>/gi;
+  const blocks: string[] = [];
+
+  html.replace(styleTagRe, (_match, cssContent: string) => {
+    const fontFaces = cssContent.match(FONT_FACE_RE);
+    if (fontFaces) {
+      blocks.push(...fontFaces);
+    }
+    return _match;
+  });
+
+  return blocks;
+}
+
+function decodeHtmlEntities(value: string): string {
+  const textarea = document.createElement("textarea");
+  textarea.innerHTML = value;
+  return textarea.value;
+}
+
+function parsePreviewFontFace(block: string): PreviewFontFace | null {
+  const family = block.match(FONT_FAMILY_RE)?.[1]?.trim();
+  const source = block.match(FONT_SRC_RE)?.[1]?.trim();
+
+  if (!family || !source) return null;
+
+  const decodedSource = decodeHtmlEntities(source);
+  return {
+    family,
+    source: decodedSource,
+    style: block.match(FONT_STYLE_RE)?.[1]?.trim() || "normal",
+    weight: block.match(FONT_WEIGHT_RE)?.[1]?.trim() || "400",
+    url: decodedSource.match(FONT_URL_RE)?.[2],
+  };
+}
+
+function ensureFontPreload(url: string): void {
+  const existing = Array.from(
+    document.head.querySelectorAll<HTMLLinkElement>('link[data-document-preview-font="true"]'),
+  );
+  if (existing.some((link) => link.href === url)) return;
+
+  const preload = document.createElement("link");
+  preload.rel = "preload";
+  preload.as = "font";
+  preload.type = "font/ttf";
+  preload.crossOrigin = "anonymous";
+  preload.href = url;
+  preload.dataset.documentPreviewFont = "true";
+  document.head.appendChild(preload);
+}
+
+async function loadPreviewFonts(html: string): Promise<void> {
+  if (typeof FontFace === "undefined" || !document.fonts) return;
+
+  const fontFaces = extractFontFaceBlocks(html)
+    .map(parsePreviewFontFace)
+    .filter((face): face is PreviewFontFace => !!face);
+
+  await Promise.all(
+    fontFaces.map(async ({ family, source, style, weight, url }) => {
+      const key = `${family}:${style}:${weight}:${source}`;
+      if (loadedPreviewFontKeys.has(key)) return;
+
+      const existingLoad = loadingPreviewFonts.get(key);
+      if (existingLoad) {
+        await existingLoad;
+        return;
+      }
+
+      if (url) {
+        ensureFontPreload(url);
+      }
+
+      const load = new FontFace(family, source, { style, weight, display: "block" })
+        .load()
+        .then((fontFace) => {
+          document.fonts.add(fontFace);
+          loadedPreviewFontKeys.add(key);
+        })
+        .finally(() => {
+          loadingPreviewFonts.delete(key);
+        });
+
+      loadingPreviewFonts.set(key, load);
+      await load;
+    }),
+  );
+}
 
 /**
  * Hoist @font-face rules from HTML <style> into the document <head>.
- * Shadow DOM isolates styles, but @font-face must be at the document level to load reliably.
- * Returns the HTML with @font-face rules removed from inline <style>.
+ * Browser support differs on whether @font-face inside Shadow DOM is honored,
+ * so keep the original rules in the preview CSS and also expose them globally.
  */
 function hoistFontFaces(html: string): string {
-  // Find all <style> tags and extract @font-face rules
-  const styleTagRe = /<style>([\s\S]*?)<\/style>/gi;
-  let fontFaceCss = "";
-  const cleanedHtml = html.replace(styleTagRe, (_match, cssContent: string) => {
-    const fontFaces = cssContent.match(FONT_FACE_RE);
-    if (fontFaces) {
-      fontFaceCss += fontFaces.join("\n");
-    }
-    const remaining = cssContent.replace(FONT_FACE_RE, "");
-    return `<style>${remaining}</style>`;
-  });
+  const fontFaceCss = extractFontFaceBlocks(html).join("\n");
 
   if (fontFaceCss) {
     const id = "document-preview-fonts";
@@ -41,7 +138,7 @@ function hoistFontFaces(html: string): string {
     existing.textContent = fontFaceCss;
   }
 
-  return cleanedHtml;
+  return html;
 }
 
 function findPreviewMeasurementTarget(shadowRoot: ShadowRoot): HTMLElement | null {
@@ -119,6 +216,7 @@ export const ScaledDocumentPreview: FC<ScaledDocumentPreviewProps> = ({
 
     const timeoutId = window.setTimeout(measureHeight, 100);
     const rafId = window.requestAnimationFrame(measureHeight);
+    void loadPreviewFonts(htmlContent).then(measureHeight).catch(measureHeight);
     void document.fonts?.ready?.then(measureHeight);
 
     return () => {

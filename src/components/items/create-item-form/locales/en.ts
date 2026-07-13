@@ -5,6 +5,8 @@ export default {
   Description: "Description",
   "Enter description": "Enter description",
   Unit: "Unit",
+  "e.g. hours": "e.g. hours",
+  "E-invoicing unit code": "E-invoicing unit code",
   Price: "Price",
   "There was an error creating the item": "There was an error creating the item",
   // Gross price support

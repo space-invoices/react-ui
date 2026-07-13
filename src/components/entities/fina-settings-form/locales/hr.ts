@@ -175,4 +175,15 @@ export default {
   "Unified document numbering": "Jedinstveno numeriranje dokumenata",
   "Use the same numbering sequence for all documents, including non-fiscalized ones":
     "Koristite isti redoslijed numeriranja za sve dokumente, uključujući nefiskalizirane",
+  "Starting Number": "Početni broj",
+  "First invoice number for this premise sequence": "Prvi broj računa za ovaj slijed poslovnog prostora",
+  "First invoice number for this device sequence": "Prvi broj računa za ovaj slijed uređaja",
+  "Set Starting Number": "Postavi početni broj",
+  "Starting number can no longer be changed after invoices have been issued for this fiscal sequence.":
+    "Početni broj više se ne može promijeniti nakon što su izdani računi za ovaj fiskalni slijed.",
+  "Set this before issuing invoices for the selected fiscal sequence. Leave empty to clear it.":
+    "Postavite prije izdavanja računa za odabrani fiskalni slijed. Ostavite prazno za brisanje.",
+  "Fiscal Sequence": "Fiskalni slijed",
+  "Starting number must be between 1 and 999999999": "Početni broj mora biti između 1 i 999999999",
+  Save: "Spremi",
 } as const;

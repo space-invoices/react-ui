@@ -1,6 +1,7 @@
 import type { DeliveryNote } from "@spaceinvoices/js-sdk";
 import { deliveryNotes } from "@spaceinvoices/js-sdk";
 import { useCallback, useMemo, useState } from "react";
+import { CustomerLinkCell } from "@/ui/components/documents/list/customer-link-cell";
 import { DataTable } from "@/ui/components/table/data-table";
 import { FormattedDate } from "@/ui/components/table/date-cell";
 import { useTableFetch } from "@/ui/components/table/hooks/use-table-fetch";
@@ -48,6 +49,7 @@ type DeliveryNoteListTableProps = {
   namespace?: string;
   locale?: string;
   translationLocale?: string;
+  cacheKey?: string;
   entityId?: string;
   onView?: (deliveryNote: DeliveryNote) => void;
   onDuplicate?: (deliveryNote: DeliveryNote) => void;
@@ -61,14 +63,23 @@ type DeliveryNoteListTableProps = {
   onCreateNew?: () => void;
   onVoid?: (deliveryNote: DeliveryNote) => void;
   isVoiding?: boolean;
+  showSearchToolbar?: boolean;
+  showPagination?: boolean;
+  contentInsetClassName?: string;
+  bottomPaddingClassName?: string;
+  hiddenColumnIds?: string[];
+  getCustomerHref?: (customerId: string, deliveryNote: DeliveryNote) => string;
+  onCustomerClick?: (customerId: string, deliveryNote: DeliveryNote) => void;
 } & ListTableProps<DeliveryNote>;
 
 export default function DeliveryNoteListTable({
   queryParams,
+  cacheKey = "delivery-notes",
   onRowClick,
   onView,
   onDuplicate,
   onChangeParams,
+  disableUrlSync,
   entityId,
   onDownloadStart,
   onDownloadSuccess,
@@ -80,6 +91,13 @@ export default function DeliveryNoteListTable({
   onCreateNew,
   onVoid,
   isVoiding,
+  showSearchToolbar,
+  showPagination,
+  contentInsetClassName,
+  bottomPaddingClassName,
+  hiddenColumnIds,
+  getCustomerHref,
+  onCustomerClick,
   ...i18nProps
 }: DeliveryNoteListTableProps) {
   const t = createTranslation({
@@ -183,21 +201,21 @@ export default function DeliveryNoteListTable({
             <Button variant="link" className="cursor-pointer py-0 underline" onClick={() => onRowClick?.(deliveryNote)}>
               {getDisplayDocumentNumber(deliveryNote as DeliveryNote & { is_draft?: boolean }, t)}
             </Button>
-            {(deliveryNote as any).is_draft && (
-              <Badge
-                variant="outline"
-                className="border-amber-500 bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-400"
-              >
-                {t("Draft")}
-              </Badge>
-            )}
           </div>
         ),
       },
       {
         id: "customer",
         header: t("Customer"),
-        cell: (deliveryNote) => deliveryNote.customer?.name ?? "-",
+        cell: (deliveryNote) => (
+          <CustomerLinkCell
+            item={deliveryNote}
+            customerId={deliveryNote.customer_id}
+            customerName={deliveryNote.customer?.name}
+            getCustomerHref={getCustomerHref}
+            onCustomerClick={onCustomerClick}
+          />
+        ),
       },
       {
         id: "date",
@@ -229,6 +247,16 @@ export default function DeliveryNoteListTable({
         id: "status",
         header: t("Status"),
         cell: (deliveryNote) => {
+          if ((deliveryNote as any).is_draft) {
+            return (
+              <Badge
+                variant="outline"
+                className="border-amber-500 bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-400"
+              >
+                {t("Draft")}
+              </Badge>
+            );
+          }
           if (deliveryNote.voided_at) {
             return (
               <Badge
@@ -273,16 +301,28 @@ export default function DeliveryNoteListTable({
       onVoid,
       isVoiding,
       i18nProps.locale,
+      getCustomerHref,
+      onCustomerClick,
     ],
   );
 
+  const visibleColumns = useMemo(() => {
+    if (!hiddenColumnIds?.length) {
+      return columns;
+    }
+
+    const hidden = new Set(hiddenColumnIds);
+    return columns.filter((column) => !hidden.has(column.id));
+  }, [columns, hiddenColumnIds]);
+
   return (
     <DataTable
-      columns={columns}
+      columns={visibleColumns}
       queryParams={queryParams}
       onChangeParams={onChangeParams}
+      disableUrlSync={disableUrlSync}
       onFetch={handleFetch}
-      cacheKey="delivery-notes"
+      cacheKey={cacheKey}
       resourceName="delivery note"
       createNewLink={entityId ? `/app/${entityId}/documents/add/delivery_note` : undefined}
       onCreateNew={onCreateNew}
@@ -294,6 +334,10 @@ export default function DeliveryNoteListTable({
       selectedIds={selectedIds}
       onSelectionChange={setSelectedIds}
       selectionToolbar={selectionToolbar}
+      showSearchToolbar={showSearchToolbar}
+      showPagination={showPagination}
+      contentInsetClassName={contentInsetClassName}
+      bottomPaddingClassName={bottomPaddingClassName}
     />
   );
 }

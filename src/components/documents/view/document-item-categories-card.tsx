@@ -13,6 +13,7 @@ import {
 import { Button } from "@/ui/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/ui/components/ui/collapsible";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui/components/ui/select";
+import { invalidateRevenueRecognitionQueries } from "@/ui/lib/revenue-recognition-cache";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { useWLSubscriptionOptional } from "@/ui/providers/wl-subscription-provider";
 
@@ -111,6 +112,7 @@ export function DocumentItemCategoriesCard({ document, documentType, entityId, t
         exact: false,
       }),
     ]);
+    invalidateRevenueRecognitionQueries(queryClient);
   };
 
   const applyAssignments = async (

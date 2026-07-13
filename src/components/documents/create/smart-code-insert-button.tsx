@@ -61,8 +61,8 @@ export function SmartCodeInsertButton({ textareaRef, onInsert, value, t }: Smart
         <Tooltip>
           <TooltipTrigger asChild>
             <DropdownMenuTrigger asChild>
-              <Button type="button" variant="ghost" size="sm" className="h-8 w-8 p-0">
-                <Sparkles className="h-4 w-4" />
+              <Button type="button" variant="ghost" size="xs" className="h-7 w-7 p-0 text-muted-foreground">
+                <Sparkles className="size-3.5" />
                 <span className="sr-only">{t("Insert variable")}</span>
               </Button>
             </DropdownMenuTrigger>

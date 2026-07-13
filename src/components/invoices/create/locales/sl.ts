@@ -18,6 +18,15 @@ export default {
   Quantity: "Količina",
   Price: "Cena",
   Unit: "Enota",
+  "E-invoicing unit code": "Koda enote za e-račune",
+  "E-invoicing unit settings": "Nastavitve enote za e-račune",
+  "Only affects e-invoicing XML. The document unit stays unchanged.":
+    "Vpliva samo na XML e-računa. Enota na dokumentu ostane nespremenjena.",
+  "Select XML unit code": "Izberite kodo enote XML",
+  "Enter a supported UN/ECE code": "Vnesite podprto kodo UN/ECE",
+  "Use display unit": "Uporabi prikazano enoto",
+  "Clear unit code": "Počisti kodo enote",
+  "custom code": "koda po meri",
   Discount: "Popust",
   Tax: "DDV",
   "Tax rate": "Davčna stopnja",
@@ -37,21 +46,19 @@ export default {
   Card: "Kartica",
   Check: "Ček",
   Other: "Drugo",
-  // Note field
   Note: "Pripis",
   "Insert variable": "Vstavi spremenljivko",
+  Bold: "Krepko",
+  Italic: "Ležeče",
+  "Bullet list": "Seznam z oznakami",
   "Add payment instructions, terms, or other notes...": "Dodaj navodila za plačilo, pogoje ali druge pripise...",
-  // Signature field
   Signature: "Podpis",
   "Add signature text...": "Dodaj besedilo podpisa...",
-  // Payment terms field
   "Payment Terms": "Plačilni pogoji",
   "Add payment terms...": "Dodaj plačilne pogoje...",
-  // Smart code categories
   Entity: "Podjetje",
   Document: "Dokument",
   Customer: "Stranka",
-  // Smart code variable labels
   "Company name": "Ime podjetja",
   "Email address": "E-poštni naslov",
   "Invoice number": "Številka računa",
@@ -64,7 +71,6 @@ export default {
   "Customer email": "E-pošta stranke",
   "Today's date": "Današnji datum",
   "Current year": "Tekoče leto",
-  // Recipient fields
   "Search or create customer...": "Poiščite ali ustvarite stranko...",
   Clear: "Počisti",
   Address: "Naslov",
@@ -74,12 +80,23 @@ export default {
   State: "Regija",
   Country: "Država",
   "Tax Number": "Davčna številka",
-  // Discount types
+  "Bank Account": "Bančni račun",
+  "Account Type": "Vrsta računa",
+  BIC: "BIC",
+  IBAN: "IBAN",
+  "US domestic": "Ameriški domači",
+  "UK domestic": "Britanski domači",
+  "Account Number": "Številka računa",
+  "Routing Number": "Routing številka",
+  "Sort Code": "Sort code",
+  "Company Number": "Matična številka",
+  "UJP receiver identifier": "Identifikator prejemnika UJP",
+  "UJP receiver agent": "Agent prejemnika UJP",
+  "UJP receiver mailbox": "Poštni predal prejemnika UJP",
   "Percentage discount": "Odstotni popust",
   "Fixed amount discount": "Fiksni popust",
   Percentage: "Odstotek",
   "Fixed amount": "Fiksni znesek",
-  // FURS fields
   "FURS Fiscalization": "FURS davčno potrjevanje",
   "Business Premise": "Poslovni prostor",
   "Electronic Device": "Elektronska naprava",
@@ -98,7 +115,6 @@ export default {
   "Click to skip fiscalization for this invoice": "Kliknite za preskočitev davčnega potrjevanja za ta račun",
   "Business unit": "Poslovna enota",
   "No unit": "Brez enote",
-  // e-SLOG validation
   "e-SLOG": "e-SLOG",
   "Click to skip e-SLOG validation for this invoice": "Kliknite za preskočitev e-SLOG preverjanja za ta račun",
   "Click to enable e-SLOG validation": "Kliknite za omogočanje e-SLOG preverjanja",
@@ -121,21 +137,30 @@ export default {
   "Entity currency must be EUR for e-SLOG when invoice uses a different currency.":
     "Valuta podjetja mora biti EUR za e-SLOG, kadar račun uporablja drugo valuto.",
   "Customer name is required when customer is provided.": "Ime stranke je obvezno, ko je stranka vnesena.",
+  "Entity IBAN is required for UJP package validation. Update in Settings > Company.":
+    "IBAN podjetja je obvezen za validacijo UJP paketa. Posodobite ga v Nastavitve > Podjetje.",
+  "Entity IBAN must be a valid Slovenian IBAN for UJP package validation.":
+    "IBAN podjetja mora biti veljaven slovenski IBAN za validacijo UJP paketa.",
+  "Entity BIC is required for UJP package validation. Update in Settings > Company.":
+    "BIC podjetja je obvezen za validacijo UJP paketa. Posodobite ga v Nastavitve > Podjetje.",
+  "Entity BIC must be a valid 8- or 11-character BIC for UJP package validation.":
+    "BIC podjetja mora biti veljavna BIC koda z 8 ali 11 znaki za validacijo UJP paketa.",
+  "Customer IBAN must be a valid Slovenian IBAN for UJP package validation.":
+    "IBAN stranke mora biti veljaven slovenski IBAN za validacijo UJP paketa.",
+  "Customer BIC must be a valid 8- or 11-character BIC for UJP package validation.":
+    "BIC stranke mora biti veljavna BIC koda z 8 ali 11 znaki za validacijo UJP paketa.",
   "At least one line item is required for e-SLOG.": "Za e-SLOG je potrebna vsaj ena postavka.",
   "Item name is required for e-SLOG.": "Ime postavke je obvezno za e-SLOG.",
   "Quantity must be greater than 0.": "Količina mora biti večja od 0.",
   "Price is required for e-SLOG.": "Cena je obvezna za e-SLOG.",
   "Invalid Slovenian tax rate {{rate}}%. Valid: {{validRates}}":
     "Neveljavna slovenska davčna stopnja {{rate}}%. Veljavne: {{validRates}}",
-  // VIES / Reverse Charge
   "Reverse charge - tax exempt EU B2B sale": "Obrnjena davčna obveznost - davka oproščena EU B2B prodaja",
   "Taxes disabled": "Davki onemogočeni",
-  // Gross price support
   "Gross price": "Bruto cena",
   "Net price": "Neto cena",
   "Gross price (tax included)": "Bruto cena (z davkom)",
   "Net price (before tax)": "Neto cena (brez davka)",
-  // Linked documents
   "Linked documents": "Povezani dokumenti",
   Type: "Vrsta",
   Total: "Skupaj",
@@ -146,7 +171,6 @@ export default {
   "Credit note": "Dobropis",
   "Advance invoice": "Avansni račun",
   "FINA fiscalized invoices always use the current date": "FINA fiskalizirani računi vedno uporabijo trenutni datum",
-  // Due days selector
   "On receipt": "Ob prejemu",
   "7 days": "7 dni",
   "14 days": "14 dni",
@@ -154,8 +178,6 @@ export default {
   "60 days": "60 dni",
   "90 days": "90 dni",
   Custom: "Po meri",
-  // Separator items
-  // Service date
   "Service Date": "Datum storitve",
   "Service Period": "Obdobje storitve",
   From: "Od",
@@ -163,7 +185,6 @@ export default {
   "Add separator": "Dodaj ločilnik",
   "Section header": "Naslov razdelka",
   "Section title...": "Naslov razdelka...",
-  // Transaction type
   "Transaction type": "Vrsta transakcije",
   Domestic: "Domača",
   "EU B2B": "EU B2B",
@@ -177,7 +198,6 @@ export default {
   "Add tax clause...": "Dodaj davčno klavzulo...",
   Footer: "Noga dokumenta",
   "Add document footer...": "Dodaj nogo dokumenta...",
-  // Croatian domestic invoice validation
   "End consumer": "Končni potrošnik",
   "Domestic B2B invoicing in Croatia is not supported":
     "Domače B2B fakturiranje na Hrvaškem ni podprto. Hrvška zahteva skladnost s Fiskalizacijo 2.0 za B2B fakturiranje.",
@@ -191,4 +211,18 @@ export default {
   "Remaining to allocate": "Preostanek za razporeditev",
   "This document must be fully paid on creation": "Ta dokument mora biti ob ustvarjanju v celoti plačan",
   "Record one or more payments on creation": "Ob ustvarjanju zabeleži eno ali več plačil",
+  "Entity bank account is required for e-SLOG payment instructions. Update in Settings > Company.":
+    "Bančni račun organizacije je obvezen za plačilna navodila e-SLOG. Posodobite ga v Nastavitve > Podjetje.",
+  "Customer tax number is required for e-SLOG business recipients.":
+    "Davčna številka stranke je obvezna za poslovne prejemnike e-SLOG.",
+  "Customer address is required for UJP package validation.": "Naslov stranke je obvezen za validacijo UJP paketa.",
+  "Customer postal code is required for UJP package validation.":
+    "Poštna številka stranke je obvezna za validacijo UJP paketa.",
+  "Customer city is required for UJP package validation.": "Kraj stranke je obvezen za validacijo UJP paketa.",
+  "Customer tax number or company number is required for UJP package validation.":
+    "Davčna številka ali matična številka stranke je obvezna za validacijo UJP paketa.",
+  "Customer IBAN and BIC are required for UJP package validation.":
+    "IBAN in BIC stranke sta obvezna za validacijo UJP paketa.",
+  "Customer IBAN is required for UJP package validation.": "IBAN stranke je obvezen za validacijo UJP paketa.",
+  "Customer BIC is required for UJP package validation.": "BIC stranke je obvezen za validacijo UJP paketa.",
 } as const;

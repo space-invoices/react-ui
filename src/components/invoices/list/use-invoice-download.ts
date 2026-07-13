@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
 import { useEntities } from "@/ui/providers/entities-context";
+import { getDocumentPdfFileName } from "../../documents/shared/document-pdf-filename";
 
 type UseInvoiceDownloadProps = {
   onDownloadStart?: () => void;
@@ -31,7 +32,12 @@ export function useInvoiceDownload({
     onDownloadStart?.();
 
     try {
-      const fileName = `${t("Invoice")} ${invoice.number}.pdf`;
+      const filenameLocale = activeEntity.locale ?? i18nProps.locale ?? i18nProps.translationLocale;
+      const fileName = getDocumentPdfFileName("invoice", invoice.number, undefined, {
+        ...i18nProps,
+        locale: filenameLocale,
+        translationLocale: filenameLocale,
+      });
       await invoices.downloadPdf(invoice.id, fileName, {}, { entity_id: activeEntity.id });
 
       onDownloadSuccess?.(fileName);

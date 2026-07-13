@@ -1,10 +1,8 @@
 "use client";
 
+import { getAccountId, initSDK, type SDKConfig, setAccountId } from "@spaceinvoices/js-sdk";
 import type { ReactNode } from "react";
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { setAccountId } from "../../../js-sdk/src/mutator/custom-fetch";
-import { initSDK } from "../../../js-sdk/src/sdk/init";
-import type { SDKConfig } from "../../../js-sdk/src/sdk/types";
 
 export type SpaceInvoicesRuntimeContextType = {
   accessToken: string | null;
@@ -47,25 +45,42 @@ export function SpaceInvoicesProvider({
   const [error, setError] = useState<Error | null>(null);
   const [isResolvingAccessToken, setIsResolvingAccessToken] = useState(true);
   const onUnauthorizedRef = useRef(onUnauthorized);
+  const sdkConfigRef = useRef<
+    | { accessToken: SDKConfig["accessToken"]; accountId: string | null; basePath?: string; clientName?: string }
+    | undefined
+  >(undefined);
+  const sdkAccountIdRef = useRef<string | null | undefined>(undefined);
 
-  useEffect(() => {
-    onUnauthorizedRef.current = onUnauthorized;
-  }, [onUnauthorized]);
+  onUnauthorizedRef.current = onUnauthorized;
+
+  const sdkConfig = sdkConfigRef.current;
+  if (
+    !sdkConfig ||
+    sdkConfig.accessToken !== accessToken ||
+    sdkConfig.accountId !== accountId ||
+    sdkConfig.basePath !== basePath ||
+    sdkConfig.clientName !== clientName
+  ) {
+    sdkConfigRef.current = { accessToken, accountId, basePath, clientName };
+    initSDK({
+      accessToken,
+      accountId,
+      ...(basePath && { basePath }),
+      ...(clientName && { clientName }),
+      onUnauthorized: (response) => onUnauthorizedRef.current?.(response),
+    });
+  }
+
+  if (sdkAccountIdRef.current !== accountId) {
+    sdkAccountIdRef.current = accountId;
+    setAccountId(accountId);
+  }
 
   useEffect(() => {
     let cancelled = false;
 
     setIsResolvingAccessToken(true);
     setError(null);
-
-    initSDK({
-      accessToken,
-      ...(basePath && { basePath }),
-      ...(clientName && { clientName }),
-      ...(onUnauthorizedRef.current && {
-        onUnauthorized: (response) => onUnauthorizedRef.current?.(response),
-      }),
-    });
 
     void resolveAccessToken(accessToken)
       .then((token) => {
@@ -86,10 +101,14 @@ export function SpaceInvoicesProvider({
     return () => {
       cancelled = true;
     };
-  }, [accessToken, basePath, clientName]);
+  }, [accessToken]);
 
   useEffect(() => {
-    setAccountId(accountId);
+    return () => {
+      if (getAccountId() === accountId) {
+        setAccountId(null);
+      }
+    };
   }, [accountId]);
 
   const value = useMemo<SpaceInvoicesRuntimeContextType>(

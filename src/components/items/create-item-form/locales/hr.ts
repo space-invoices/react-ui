@@ -1,10 +1,12 @@
 export default {
   Name: "Naziv",
-  "Name is required": "Name is required",
+  "Name is required": "Naziv je obavezan",
   "Enter name": "Unesite naziv",
   Description: "Opis",
   "Enter description": "Unesite opis",
   Unit: "Jedinica",
+  "e.g. hours": "npr. sati",
+  "E-invoicing unit code": "Šifra jedinice za e-račune",
   Price: "Cijena",
   "There was an error creating the item": "Došlo je do greške pri izradi artikla",
   // Gross price support

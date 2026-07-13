@@ -8,6 +8,7 @@ import { Checkbox } from "../ui/checkbox";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import { buildExportUrl, downloadExportFile } from "./export-download";
 
 export type DocumentType = "invoice" | "estimate" | "credit_note" | "advance_invoice" | "delivery_note";
 type EslogDocumentType = Extract<DocumentType, "invoice" | "estimate" | "credit_note" | "advance_invoice">;
@@ -64,6 +65,10 @@ export type DocumentExportFormProps = {
 const translations = {
   en: {
     "export-page.document-type": "Document type",
+    "export-page.presets.invoices-credit-notes": "Invoices + credit notes",
+    "export-page.presets.all-sales-documents": "All sales documents",
+    "export-page.presets.all-documents": "All documents",
+    "export-page.presets.clear": "Clear",
     "export-page.types.invoice": "Invoice",
     "export-page.types.estimate": "Estimate",
     "export-page.types.credit_note": "Credit note",
@@ -83,6 +88,108 @@ const translations = {
     "export-page.clear-dates": "Clear dates",
     "export-page.exporting": "Exporting...",
     "export-page.export-button": "Export documents",
+  },
+  sl: {
+    "export-page.presets.invoices-credit-notes": "Računi + dobropisi",
+    "export-page.presets.all-sales-documents": "Vsi prodajni dokumenti",
+    "export-page.presets.all-documents": "Vsi dokumenti",
+    "export-page.presets.clear": "Počisti",
+  },
+  de: {
+    "export-page.presets.invoices-credit-notes": "Rechnungen + Gutschriften",
+    "export-page.presets.all-sales-documents": "Alle Verkaufsdokumente",
+    "export-page.presets.all-documents": "Alle Dokumente",
+    "export-page.presets.clear": "Leeren",
+  },
+  it: {
+    "export-page.presets.invoices-credit-notes": "Fatture + note di credito",
+    "export-page.presets.all-sales-documents": "Tutti i documenti di vendita",
+    "export-page.presets.all-documents": "Tutti i documenti",
+    "export-page.presets.clear": "Cancella",
+  },
+  fr: {
+    "export-page.presets.invoices-credit-notes": "Factures + avoirs",
+    "export-page.presets.all-sales-documents": "Tous les documents de vente",
+    "export-page.presets.all-documents": "Tous les documents",
+    "export-page.presets.clear": "Effacer",
+  },
+  es: {
+    "export-page.presets.invoices-credit-notes": "Facturas + notas de crédito",
+    "export-page.presets.all-sales-documents": "Todos los documentos de venta",
+    "export-page.presets.all-documents": "Todos los documentos",
+    "export-page.presets.clear": "Borrar",
+  },
+  pt: {
+    "export-page.presets.invoices-credit-notes": "Faturas + notas de crédito",
+    "export-page.presets.all-sales-documents": "Todos os documentos de venda",
+    "export-page.presets.all-documents": "Todos os documentos",
+    "export-page.presets.clear": "Limpar",
+  },
+  nl: {
+    "export-page.presets.invoices-credit-notes": "Facturen + creditnota's",
+    "export-page.presets.all-sales-documents": "Alle verkoopdocumenten",
+    "export-page.presets.all-documents": "Alle documenten",
+    "export-page.presets.clear": "Wissen",
+  },
+  pl: {
+    "export-page.presets.invoices-credit-notes": "Faktury + korekty",
+    "export-page.presets.all-sales-documents": "Wszystkie dokumenty sprzedaży",
+    "export-page.presets.all-documents": "Wszystkie dokumenty",
+    "export-page.presets.clear": "Wyczyść",
+  },
+  hr: {
+    "export-page.presets.invoices-credit-notes": "Računi + odobrenja",
+    "export-page.presets.all-sales-documents": "Svi prodajni dokumenti",
+    "export-page.presets.all-documents": "Svi dokumenti",
+    "export-page.presets.clear": "Očisti",
+  },
+  sv: {
+    "export-page.presets.invoices-credit-notes": "Fakturor + kreditnotor",
+    "export-page.presets.all-sales-documents": "Alla försäljningsdokument",
+    "export-page.presets.all-documents": "Alla dokument",
+    "export-page.presets.clear": "Rensa",
+  },
+  fi: {
+    "export-page.presets.invoices-credit-notes": "Laskut + hyvityslaskut",
+    "export-page.presets.all-sales-documents": "Kaikki myyntiasiakirjat",
+    "export-page.presets.all-documents": "Kaikki asiakirjat",
+    "export-page.presets.clear": "Tyhjennä",
+  },
+  et: {
+    "export-page.presets.invoices-credit-notes": "Arved + kreeditarved",
+    "export-page.presets.all-sales-documents": "Kõik müügidokumendid",
+    "export-page.presets.all-documents": "Kõik dokumendid",
+    "export-page.presets.clear": "Tühjenda",
+  },
+  bg: {
+    "export-page.presets.invoices-credit-notes": "Фактури + кредитни известия",
+    "export-page.presets.all-sales-documents": "Всички документи за продажби",
+    "export-page.presets.all-documents": "Всички документи",
+    "export-page.presets.clear": "Изчисти",
+  },
+  cs: {
+    "export-page.presets.invoices-credit-notes": "Faktury + dobropisy",
+    "export-page.presets.all-sales-documents": "Všechny prodejní doklady",
+    "export-page.presets.all-documents": "Všechny doklady",
+    "export-page.presets.clear": "Vymazat",
+  },
+  sk: {
+    "export-page.presets.invoices-credit-notes": "Faktúry + dobropisy",
+    "export-page.presets.all-sales-documents": "Všetky predajné doklady",
+    "export-page.presets.all-documents": "Všetky doklady",
+    "export-page.presets.clear": "Vymazať",
+  },
+  nb: {
+    "export-page.presets.invoices-credit-notes": "Fakturaer + kreditnotaer",
+    "export-page.presets.all-sales-documents": "Alle salgsdokumenter",
+    "export-page.presets.all-documents": "Alle dokumenter",
+    "export-page.presets.clear": "Tøm",
+  },
+  is: {
+    "export-page.presets.invoices-credit-notes": "Reikningar + kreditreikningar",
+    "export-page.presets.all-sales-documents": "Öll söluskjöl",
+    "export-page.presets.all-documents": "Öll skjöl",
+    "export-page.presets.clear": "Hreinsa",
   },
 } as const;
 
@@ -108,7 +215,7 @@ export function DocumentExportForm({
   const t = createTranslation({ t: translateFn, namespace, locale, translationLocale, translations });
   const defaultDates = getPreviousMonthRange();
   const [documentType, setDocumentType] = useState<DocumentType>("invoice");
-  const [selectedTypes, setSelectedTypes] = useState<DocumentType[]>(["invoice"]);
+  const [selectedTypes, setSelectedTypes] = useState<DocumentType[]>(["invoice", "credit_note"]);
   const [exportFormat, setExportFormat] = useState<ExportFormat>("xlsx");
   const [dateFrom, setDateFrom] = useState(defaultDates.from);
   const [dateTo, setDateTo] = useState(defaultDates.to);
@@ -117,9 +224,11 @@ export function DocumentExportForm({
 
   const toastIdRef = useRef<string | number | null>(null);
   const isAsyncArchiveFormat = exportFormat === "pdf_zip" || exportFormat === "eslog_zip";
+  const isMultiTypeSelection = exportFormat === "xlsx" || isAsyncArchiveFormat;
   const visibleDocumentTypes = exportFormat === "eslog_zip" ? ESLOG_DOCUMENT_TYPES : ALL_DOCUMENT_TYPES;
   const asyncExportInProgress =
     exportFormat === "pdf_zip" ? pdfExportInProgress : exportFormat === "eslog_zip" ? eslogExportInProgress : false;
+  const hasNoSelectedTypes = isMultiTypeSelection && selectedTypes.length === 0;
 
   useEffect(() => {
     if (!allowEslogZip && exportFormat === "eslog_zip") {
@@ -131,12 +240,20 @@ export function DocumentExportForm({
   const toggleType = (type: DocumentType) => {
     setSelectedTypes((prev) => {
       if (prev.includes(type)) {
-        // Don't allow deselecting the last type
-        if (prev.length === 1) return prev;
-        return prev.filter((t) => t !== type);
+        const next = prev.filter((t) => t !== type);
+        setDocumentType(next[0] ?? "invoice");
+        return next;
       }
-      return [...prev, type];
+      const next = [...prev, type];
+      setDocumentType(next[0] ?? type);
+      return next;
     });
+  };
+
+  const selectTypes = (types: DocumentType[]) => {
+    const allowedTypes = types.filter((type) => visibleDocumentTypes.includes(type));
+    setSelectedTypes(allowedTypes);
+    setDocumentType(allowedTypes[0] ?? "invoice");
   };
 
   const validateDateRange = (from: string, to: string) => {
@@ -147,6 +264,11 @@ export function DocumentExportForm({
 
   const handleExportFormatChange = (value: ExportFormat) => {
     setExportFormat(value);
+
+    if (value === "csv") {
+      setSelectedTypes([documentType]);
+      return;
+    }
 
     if (value === "eslog_zip") {
       setSelectedTypes((prev) => {
@@ -159,12 +281,21 @@ export function DocumentExportForm({
       if (!ESLOG_DOCUMENT_TYPES.includes(documentType as EslogDocumentType)) {
         setDocumentType("invoice");
       }
+      return;
+    }
+
+    if (value === "xlsx" && selectedTypes.length === 0) {
+      setSelectedTypes([documentType]);
     }
   };
 
   const handleExport = async () => {
     if (!validateDateRange(dateFrom, dateTo)) {
       onError?.(new Error(t("export-page.error.date-range-exceeded")));
+      return;
+    }
+
+    if (hasNoSelectedTypes) {
       return;
     }
 
@@ -181,7 +312,7 @@ export function DocumentExportForm({
       const onAsyncExportStarted = exportFormat === "eslog_zip" ? onEslogExportStarted : onPdfExportStarted;
 
       try {
-        const response = await fetch(`${apiBaseUrl}${exportPath}`, {
+        const response = await fetch(buildExportUrl(apiBaseUrl, exportPath), {
           method: "POST",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -217,9 +348,13 @@ export function DocumentExportForm({
     // XLSX/CSV export - synchronous download
     try {
       const queryParams: Record<string, string> = {
-        type: documentType,
         format: exportFormat,
       };
+      if (exportFormat === "xlsx" && selectedTypes.length > 1) {
+        queryParams.types = selectedTypes.join(",");
+      } else {
+        queryParams.type = exportFormat === "xlsx" ? (selectedTypes[0] ?? documentType) : documentType;
+      }
       if (dateFrom) {
         queryParams.date_from = dateFrom;
       }
@@ -227,7 +362,12 @@ export function DocumentExportForm({
         queryParams.date_to = dateTo;
       }
 
-      const response = await fetch(`${apiBaseUrl}/documents/export?${new URLSearchParams(queryParams).toString()}`, {
+      const fileName = await downloadExportFile({
+        apiBaseUrl,
+        path: "/documents/export",
+        query: queryParams,
+        fallbackFileName: `${documentType}s_export.${exportFormat}`,
+        format: exportFormat,
         headers: {
           Authorization: `Bearer ${token}`,
           "x-entity-id": entityId,
@@ -235,31 +375,6 @@ export function DocumentExportForm({
           ...getClientHeaders("ui"),
         },
       });
-
-      if (!response.ok) {
-        throw new Error(`Export failed: ${response.statusText}`);
-      }
-
-      const contentDisposition = response.headers.get("content-disposition");
-      let fileName = `${documentType}s_export.${exportFormat}`;
-      if (contentDisposition) {
-        const match = contentDisposition.match(/filename="?([^";\n]+)"?/);
-        if (match) {
-          fileName = match[1];
-        }
-      }
-
-      const blob = await response.blob();
-      const downloadUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = downloadUrl;
-      link.download = fileName;
-      document.body.appendChild(link);
-      link.click();
-      setTimeout(() => {
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(downloadUrl);
-      }, 1000);
 
       onSuccess?.(fileName);
     } catch (error) {
@@ -273,17 +388,46 @@ export function DocumentExportForm({
 
   return (
     <div className="space-y-6">
-      {/* Document Type + Export Format */}
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="document-type">{t("export-page.document-type")}</Label>
-          {isAsyncArchiveFormat ? (
-            <fieldset className="space-y-2 rounded-md border p-3">
+      {/* Document Types */}
+      <div className="space-y-2">
+        <Label htmlFor="document-type">{t("export-page.document-type")}</Label>
+        {isMultiTypeSelection ? (
+          <fieldset className="space-y-4 rounded-md border p-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              {exportFormat === "xlsx" && (
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => selectTypes(["invoice", "credit_note"])}
+                  >
+                    {t("export-page.presets.invoices-credit-notes")}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => selectTypes(["invoice", "credit_note", "advance_invoice"])}
+                  >
+                    {t("export-page.presets.all-sales-documents")}
+                  </Button>
+                  <Button type="button" variant="outline" size="sm" onClick={() => selectTypes(ALL_DOCUMENT_TYPES)}>
+                    {t("export-page.presets.all-documents")}
+                  </Button>
+                </div>
+              )}
+              <Button type="button" variant="ghost" size="sm" onClick={() => selectTypes([])}>
+                {t("export-page.presets.clear")}
+              </Button>
+            </div>
+            <div className="grid gap-x-6 gap-y-3 sm:grid-cols-2 lg:grid-cols-3">
               {visibleDocumentTypes.map((type) => (
                 <div key={type} className="flex items-center gap-2">
                   <Checkbox
                     id={`type-${type}`}
                     checked={selectedTypes.includes(type)}
+                    className="bg-background dark:bg-background"
                     onCheckedChange={() => toggleType(type)}
                   />
                   <Label htmlFor={`type-${type}`} className="cursor-pointer font-normal">
@@ -291,8 +435,10 @@ export function DocumentExportForm({
                   </Label>
                 </div>
               ))}
-            </fieldset>
-          ) : (
+            </div>
+          </fieldset>
+        ) : (
+          <div className="rounded-md border bg-muted/20 p-4">
             <Select value={documentType} onValueChange={(v) => setDocumentType(v as DocumentType)}>
               <SelectTrigger id="document-type">
                 <SelectValue />
@@ -305,9 +451,12 @@ export function DocumentExportForm({
                 <SelectItem value="delivery_note">{t("export-page.types.delivery_note")}</SelectItem>
               </SelectContent>
             </Select>
-          )}
-        </div>
+          </div>
+        )}
+      </div>
 
+      {/* Export Format + Date Range */}
+      <div className="grid gap-4 md:grid-cols-3">
         <div className="space-y-2">
           <Label htmlFor="export-format">{t("export-page.format")}</Label>
           <Select value={exportFormat} onValueChange={(v) => handleExportFormatChange(v as ExportFormat)}>
@@ -322,15 +471,7 @@ export function DocumentExportForm({
             </SelectContent>
           </Select>
         </div>
-      </div>
-      {isAsyncArchiveFormat && (
-        <p className="text-muted-foreground text-sm">
-          {t(exportFormat === "eslog_zip" ? "export-page.eslog-export-info" : "export-page.pdf-export-info")}
-        </p>
-      )}
 
-      {/* Date Range */}
-      <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="date-from">{t("export-page.date-from")}</Label>
           <div className="relative">
@@ -367,6 +508,11 @@ export function DocumentExportForm({
           </div>
         </div>
       </div>
+      {isAsyncArchiveFormat && (
+        <p className="text-muted-foreground text-sm">
+          {t(exportFormat === "eslog_zip" ? "export-page.eslog-export-info" : "export-page.pdf-export-info")}
+        </p>
+      )}
 
       {/* Date range error message */}
       {dateRangeError && <p className="text-destructive text-sm">{t("export-page.error.date-range-exceeded")}</p>}
@@ -389,7 +535,7 @@ export function DocumentExportForm({
       {/* Export Button */}
       <Button
         onClick={handleExport}
-        disabled={isExporting || dateRangeError || asyncExportInProgress}
+        disabled={isExporting || dateRangeError || asyncExportInProgress || hasNoSelectedTypes}
         className="w-full"
         size="lg"
       >

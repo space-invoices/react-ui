@@ -1,6 +1,6 @@
 export default {
-  Revenue: "Revenue",
-  "Revenue Trend": "Revenue Trend",
-  "Monthly revenue over the last 6 months": "Monthly revenue over the last 6 months",
-  "No data available": "No data available",
+  Revenue: "Liikevaihto",
+  "Revenue Trend": "Liikevaihdon kehitys",
+  "Monthly revenue over the last 6 months": "Viimeisten 6 kuukauden kuukausittainen liikevaihto",
+  "No data available": "Tietoja ei ole saatavilla",
 } as const;

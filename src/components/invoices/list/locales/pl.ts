@@ -15,6 +15,7 @@ export default {
   "Downloading...": "Pobieranie...",
   Duplicate: "Duplikuj",
   "Send Email": "Wyślij e-mail",
+  "Send reminder": "Wyślij przypomnienie",
   Invoice: "Faktura",
   "Failed to download PDF": "Nie udało się pobrać PDF",
   // Filter translations
@@ -45,8 +46,9 @@ export default {
   "Deselect all": "Odznacz wszystko",
   Void: "Anuluj",
   "Partially Paid": "Częściowo opłacona",
-  "FURS fiscalization failed": "FURS fiscalization failed",
-  "FINA fiscalization failed": "FINA fiscalization failed",
-  "Retry Fiscalization": "Retry Fiscalization",
-  "Some selected documents don't have failed fiscalization": "Some selected documents don't have failed fiscalization",
+  "FURS fiscalization failed": "Fiskalizacja FURS nie powiodła się",
+  "FINA fiscalization failed": "Fiskalizacja FINA nie powiodła się",
+  "Retry Fiscalization": "Spróbuj fiskalizacji ponownie",
+  "Some selected documents don't have failed fiscalization":
+    "Niektóre wybrane dokumenty nie mają nieudanej fiskalizacji",
 } as const;

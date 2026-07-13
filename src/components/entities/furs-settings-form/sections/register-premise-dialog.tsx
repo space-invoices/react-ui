@@ -25,12 +25,22 @@ import {
 import { Input } from "@/ui/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui/components/ui/select";
 import { registerFursMovablePremiseSchema, registerFursRealEstatePremiseSchema } from "@/ui/generated/schemas";
+import {
+  fiscalStartingNumberZodSchema,
+  isFiscalStartingNumberValueValid,
+  optionalFiscalStartingNumber,
+} from "../../fiscal-starting-number";
+import { StartingNumberInput } from "../../starting-number-dialog";
 import { useRegisterMovablePremise, useRegisterRealEstatePremise } from "../furs-settings.hooks";
 
-// Use auto-generated schemas from OpenAPI spec
-// These are automatically kept in sync with the API
-const realEstatePremiseSchema = registerFursRealEstatePremiseSchema;
-const movablePremiseSchema = registerFursMovablePremiseSchema;
+// Use auto-generated schemas from OpenAPI spec (kept in sync with the API), extended with
+// the shared fiscal starting-number bound.
+const realEstatePremiseSchema = registerFursRealEstatePremiseSchema.extend({
+  starting_number: fiscalStartingNumberZodSchema,
+});
+const movablePremiseSchema = registerFursMovablePremiseSchema.extend({
+  starting_number: fiscalStartingNumberZodSchema,
+});
 
 type RealEstatePremiseForm = z.infer<typeof realEstatePremiseSchema>;
 type MovablePremiseForm = z.infer<typeof movablePremiseSchema>;
@@ -94,6 +104,7 @@ export const RegisterPremiseDialog: FC<RegisterPremiseDialogProps> = ({
   const isRealEstate = type === "real-estate";
   const existingPremiseNames = premises.map((premise) => premise.business_premise_name);
   const hasRealEstatePremise = premises.some((premise) => premise.type === "real_estate");
+  const isPremiseStartingNumberEnabled = (entity.settings?.furs?.numbering_strategy ?? "C") === "C";
 
   const buildRealEstateDefaults = useCallback((): RealEstatePremiseForm => {
     const shouldPrefillEntityAddress = !hasRealEstatePremise;
@@ -101,6 +112,7 @@ export const RegisterPremiseDialog: FC<RegisterPremiseDialogProps> = ({
 
     return {
       business_premise_name: getNextSuggestedName("P", premises.length),
+      starting_number: isPremiseStartingNumberEnabled ? 1 : undefined,
       real_estate: {
         cadastral_number: "",
         building_number: "",
@@ -113,16 +125,24 @@ export const RegisterPremiseDialog: FC<RegisterPremiseDialogProps> = ({
         postal_code: shouldPrefillEntityAddress ? entity.post_code || "" : "",
       },
     };
-  }, [entity.address, entity.city, entity.post_code, hasRealEstatePremise, premises.length]);
+  }, [
+    entity.address,
+    entity.city,
+    entity.post_code,
+    hasRealEstatePremise,
+    isPremiseStartingNumberEnabled,
+    premises.length,
+  ]);
 
   const buildMovableDefaults = useCallback(
     (): MovablePremiseForm => ({
       business_premise_name: getNextSuggestedName("P", premises.length),
+      starting_number: isPremiseStartingNumberEnabled ? 1 : undefined,
       movable_premise: {
         premise_type: "A",
       },
     }),
-    [premises.length],
+    [isPremiseStartingNumberEnabled, premises.length],
   );
 
   // Real Estate Form
@@ -202,6 +222,16 @@ export const RegisterPremiseDialog: FC<RegisterPremiseDialogProps> = ({
   };
 
   const isPending = isRealEstatePending || isMovablePending;
+  const realEstateStartingNumberValue = realEstateForm.watch("starting_number");
+  const movableStartingNumberValue = movableForm.watch("starting_number");
+  const isRealEstateStartingNumberValid =
+    !isPremiseStartingNumberEnabled ||
+    isFiscalStartingNumberValueValid(
+      realEstateStartingNumberValue == null ? "" : String(realEstateStartingNumberValue),
+    );
+  const isMovableStartingNumberValid =
+    !isPremiseStartingNumberEnabled ||
+    isFiscalStartingNumberValueValid(movableStartingNumberValue == null ? "" : String(movableStartingNumberValue));
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -402,11 +432,37 @@ export const RegisterPremiseDialog: FC<RegisterPremiseDialogProps> = ({
                 />
               </div>
 
+              {isPremiseStartingNumberEnabled && (
+                <FormField
+                  control={realEstateForm.control as any}
+                  name="starting_number"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t("Starting Number")}</FormLabel>
+                      <FormControl>
+                        <StartingNumberInput
+                          id="furs-real-estate-starting-number"
+                          value={field.value == null ? "" : String(field.value)}
+                          onChange={(value) => field.onChange(optionalFiscalStartingNumber(value))}
+                          t={t}
+                          data-testid="furs-real-estate-starting-number"
+                        />
+                      </FormControl>
+                      <FormDescription>{t("First invoice number for this premise sequence")}</FormDescription>
+                    </FormItem>
+                  )}
+                />
+              )}
+
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>
                   {t("Cancel")}
                 </Button>
-                <Button type="submit" disabled={isPending} data-testid="furs-register-premise-submit">
+                <Button
+                  type="submit"
+                  disabled={isPending || !isRealEstateStartingNumberValid}
+                  data-testid="furs-register-premise-submit"
+                >
                   {isPending ? t("Registering...") : t("Register Premise")}
                 </Button>
               </DialogFooter>
@@ -462,11 +518,37 @@ export const RegisterPremiseDialog: FC<RegisterPremiseDialogProps> = ({
                 )}
               />
 
+              {isPremiseStartingNumberEnabled && (
+                <FormField
+                  control={movableForm.control as any}
+                  name="starting_number"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t("Starting Number")}</FormLabel>
+                      <FormControl>
+                        <StartingNumberInput
+                          id="furs-movable-starting-number"
+                          value={field.value == null ? "" : String(field.value)}
+                          onChange={(value) => field.onChange(optionalFiscalStartingNumber(value))}
+                          t={t}
+                          data-testid="furs-movable-starting-number"
+                        />
+                      </FormControl>
+                      <FormDescription>{t("First invoice number for this premise sequence")}</FormDescription>
+                    </FormItem>
+                  )}
+                />
+              )}
+
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>
                   {t("Cancel")}
                 </Button>
-                <Button type="submit" disabled={isPending} data-testid="furs-register-premise-submit">
+                <Button
+                  type="submit"
+                  disabled={isPending || !isMovableStartingNumberValid}
+                  data-testid="furs-register-premise-submit"
+                >
                   {isPending ? t("Registering...") : t("Register Premise")}
                 </Button>
               </DialogFooter>

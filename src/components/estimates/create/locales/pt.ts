@@ -32,6 +32,9 @@ export default {
   "Add new tax...": "Adicionar novo imposto...",
   Note: "Nota",
   "Insert variable": "Inserir variável",
+  Bold: "Negrito",
+  Italic: "Itálico",
+  "Bullet list": "Lista com marcadores",
   "Add payment instructions, terms, or other notes...":
     "Adicione instruções de pagamento, condições ou outras notas...",
   // Signature field
@@ -42,6 +45,15 @@ export default {
   Quantity: "Quantidade",
   Price: "Preço",
   Unit: "Unidade",
+  "E-invoicing unit code": "Código da unidade para faturação eletrónica",
+  "E-invoicing unit settings": "Definições de unidade para faturação eletrónica",
+  "Only affects e-invoicing XML. The document unit stays unchanged.":
+    "Afeta apenas o XML de faturação eletrónica. A unidade do documento permanece inalterada.",
+  "Select XML unit code": "Selecionar código de unidade XML",
+  "Enter a supported UN/ECE code": "Introduza um código UN/ECE suportado",
+  "Use display unit": "Usar unidade apresentada",
+  "Clear unit code": "Limpar código de unidade",
+  "custom code": "código personalizado",
   Discount: "Desconto",
   Description: "Descrição",
   Save: "Guardar",

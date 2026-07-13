@@ -12,6 +12,7 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { useMemo } from "react";
+import { ENTITIES_CACHE_KEY } from "../entities.hooks";
 
 /**
  * Query Keys
@@ -55,6 +56,9 @@ export function useUpdateFinaSettings(options?: UseMutationOptions<any, Error, {
       queryClient.invalidateQueries({
         queryKey: finaQueryKeys.settings(variables.entityId),
       });
+      // FINA settings live in entity.settings.fina — refresh cached entities
+      // so other consumers of entity.settings don't act on a stale copy
+      queryClient.invalidateQueries({ queryKey: [ENTITIES_CACHE_KEY] });
       if (options?.onSuccess) {
         (options.onSuccess as (d: any, v: any, c: any) => void)(data, variables, context);
       }
@@ -146,17 +150,52 @@ export function useDeleteFinaPremise(
 }
 
 /**
- * Hook: Register electronic device
+ * Hook: Update premise
  */
-export function useRegisterFinaElectronicDevice(
-  options?: UseMutationOptions<any, Error, { entityId: string; premiseId: string; deviceId: string }>,
+export function useUpdateFinaPremise(
+  options?: UseMutationOptions<any, Error, { entityId: string; premiseId: string; data: any }>,
 ) {
   const queryClient = useQueryClient();
 
   return useMutation({
     ...options,
-    mutationFn: async ({ entityId, premiseId, deviceId }) => {
-      return finaDevices.registerFinaDevice(premiseId, { electronic_device_name: deviceId }, { entity_id: entityId });
+    mutationFn: async ({ entityId, premiseId, data }) => {
+      return finaPremises.update(premiseId, data, { entity_id: entityId });
+    },
+    onSuccess: (data, variables, context) => {
+      queryClient.invalidateQueries({
+        queryKey: finaQueryKeys.premises(variables.entityId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: finaQueryKeys.premise(variables.premiseId),
+      });
+      if (options?.onSuccess) {
+        (options.onSuccess as (d: any, v: any, c: any) => void)(data, variables, context);
+      }
+    },
+  });
+}
+
+/**
+ * Hook: Register electronic device
+ */
+export function useRegisterFinaElectronicDevice(
+  options?: UseMutationOptions<
+    any,
+    Error,
+    { entityId: string; premiseId: string; deviceId: string; startingNumber?: number }
+  >,
+) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    ...options,
+    mutationFn: async ({ entityId, premiseId, deviceId, startingNumber }) => {
+      return finaDevices.registerFinaDevice(
+        premiseId,
+        { electronic_device_name: deviceId, starting_number: startingNumber },
+        { entity_id: entityId },
+      );
     },
     onSuccess: (data, variables, context) => {
       queryClient.invalidateQueries({
@@ -165,6 +204,35 @@ export function useRegisterFinaElectronicDevice(
       queryClient.invalidateQueries({
         queryKey: finaQueryKeys.devices(variables.premiseId),
       });
+      if (options?.onSuccess) {
+        (options.onSuccess as (d: any, v: any, c: any) => void)(data, variables, context);
+      }
+    },
+  });
+}
+
+/**
+ * Hook: Update device
+ */
+export function useUpdateFinaDevice(
+  options?: UseMutationOptions<any, Error, { entityId: string; premiseId?: string; deviceId: string; data: any }>,
+) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    ...options,
+    mutationFn: async ({ entityId, deviceId, data }) => {
+      return finaDevices.update(deviceId, data, { entity_id: entityId });
+    },
+    onSuccess: (data, variables, context) => {
+      queryClient.invalidateQueries({
+        queryKey: finaQueryKeys.premises(variables.entityId),
+      });
+      if (variables.premiseId) {
+        queryClient.invalidateQueries({
+          queryKey: finaQueryKeys.devices(variables.premiseId),
+        });
+      }
       if (options?.onSuccess) {
         (options.onSuccess as (d: any, v: any, c: any) => void)(data, variables, context);
       }

@@ -42,10 +42,11 @@ export default {
   selected: "selecionados",
   "Export PDFs": "Exportar PDFs",
   "Deselect all": "Desselecionar tudo",
-  "FURS fiscalization failed": "FURS fiscalization failed",
-  "FINA fiscalization failed": "FINA fiscalization failed",
-  "Retry Fiscalization": "Retry Fiscalization",
-  "Some selected documents don't have failed fiscalization": "Some selected documents don't have failed fiscalization",
+  "FURS fiscalization failed": "A fiscalização FURS falhou",
+  "FINA fiscalization failed": "A fiscalização FINA falhou",
+  "Retry Fiscalization": "Tentar novamente a fiscalização",
+  "Some selected documents don't have failed fiscalization":
+    "Alguns documentos selecionados não têm fiscalização falhada",
   Void: "Anular",
   "Cannot void a fiscalized credit note": "Não é possível anular uma nota de crédito fiscalizada",
 } as const;

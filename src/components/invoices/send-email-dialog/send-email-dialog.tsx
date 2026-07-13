@@ -1,11 +1,12 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { customers, email } from "@spaceinvoices/js-sdk";
-import { AlertCircle, Mail } from "lucide-react";
-import { useEffect, useState } from "react";
+import { customers, email, type SendEmailBodyLanguage } from "@spaceinvoices/js-sdk";
+import { AlertCircle, Mail, Minus, Plus } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import type { Resolver } from "react-hook-form";
-import { useForm } from "react-hook-form";
+import { useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { InputWithPreview } from "@/ui/components/entities/entity-settings-form/input-with-preview";
+import { z } from "zod";
+import { InputWithPreview } from "@/ui/components/entities/settings/shared/input-with-preview";
 import { Alert, AlertDescription } from "@/ui/components/ui/alert";
 import { Button } from "@/ui/components/ui/button";
 import {
@@ -16,38 +17,43 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/ui/components/ui/dialog";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/ui/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/ui/components/ui/form";
 import { Input } from "@/ui/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui/components/ui/select";
 import { Spinner } from "@/ui/components/ui/spinner";
-import { type SendEmailSchema, sendEmailSchema } from "@/ui/generated/schemas";
+import { sendEmailSchema } from "@/ui/generated/schemas";
+import {
+  DEFAULT_CONTENT_LOCALE,
+  DOCUMENT_CONTENT_TRANSLATIONS_FEATURE,
+  type DocumentContentLocaleMode,
+} from "@/ui/lib/document-content-translations";
 import { getDisplayDocumentNumber } from "@/ui/lib/document-display";
 import { getFullLocale } from "@/ui/lib/locale";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
 import { useEntities } from "@/ui/providers/entities-context";
-import type { SendEmailBodyLanguage } from "../../../../../js-sdk/src/generated/model/sendEmailBodyLanguage";
+import { useWhiteLabel } from "@/ui/providers/white-label-provider";
 import { getSendEmailErrorMessage, isEmailVerificationRequiredError } from "./error-utils";
+import bg from "./locales/bg";
+import cs from "./locales/cs";
 import de from "./locales/de";
 import en from "./locales/en";
 import es from "./locales/es";
+import et from "./locales/et";
+import fi from "./locales/fi";
 import fr from "./locales/fr";
 import hr from "./locales/hr";
+import is from "./locales/is";
 import it from "./locales/it";
+import nb from "./locales/nb";
 import nl from "./locales/nl";
 import pl from "./locales/pl";
 import pt from "./locales/pt";
+import sk from "./locales/sk";
 import sl from "./locales/sl";
+import sv from "./locales/sv";
 
-const translations = { en, de, sl, it, fr, es, pt, nl, pl, hr } as const;
+const translations = { en, de, sl, it, fr, es, pt, nl, pl, hr, sv, fi, et, bg, cs, sk, nb, is } as const;
 
 const LOCALE_OPTIONS = [
   "en-US",
@@ -70,7 +76,34 @@ const LOCALE_OPTIONS = [
   "is-IS",
 ] as const;
 
-const DEFAULT_LANGUAGE_VALUE = "__default__";
+const DEFAULT_LANGUAGE_VALUE = DEFAULT_CONTENT_LOCALE;
+const MAX_RECIPIENTS = 4;
+
+type EmailContentDraft = {
+  subject: string;
+  bodyText: string;
+};
+
+type RecipientFormValue = {
+  email: string;
+};
+
+function parseRecipientInputs(value: string): RecipientFormValue[] {
+  const recipients = value
+    .split(",")
+    .map((recipient) => recipient.trim())
+    .filter((recipient) => recipient.length > 0)
+    .map((email) => ({ email }));
+
+  return recipients.length > 0 ? recipients : [{ email: "" }];
+}
+
+function capitalizeFirstLabelCharacter(value: string, locale: string): string {
+  if (!value) return value;
+
+  const [firstCharacter, ...rest] = Array.from(value);
+  return `${firstCharacter.toLocaleUpperCase(locale)}${rest.join("")}`;
+}
 
 function getLocalizedLocaleLabel(localeCode: string, displayLocale: string): string {
   const resolvedDisplayLocale = getFullLocale(displayLocale);
@@ -78,7 +111,10 @@ function getLocalizedLocaleLabel(localeCode: string, displayLocale: string): str
   const languageNames = new Intl.DisplayNames([resolvedDisplayLocale], { type: "language" });
   const regionNames = new Intl.DisplayNames([resolvedDisplayLocale], { type: "region" });
 
-  const languageLabel = languageNames.of(languageCode) ?? localeCode;
+  const languageLabel = capitalizeFirstLabelCharacter(
+    languageNames.of(languageCode) ?? localeCode,
+    resolvedDisplayLocale,
+  );
   if (!regionCode) return languageLabel;
 
   const regionLabel = regionNames.of(regionCode) ?? regionCode;
@@ -193,8 +229,11 @@ export function SendEmailDialog({
   // biome-ignore lint/suspicious/noEmptyBlockStatements: noop fallback for controlled mode
   const setOpen = isControlled ? onOpenChange || (() => {}) : setInternalOpen;
   const [isLoading, setIsLoading] = useState(false);
-  const [language, setLanguage] = useState<string>(DEFAULT_LANGUAGE_VALUE);
+  const [language, setLanguage] = useState<DocumentContentLocaleMode>(DEFAULT_CONTENT_LOCALE);
+  const [drafts, setDrafts] = useState<Record<string, EmailContentDraft>>({});
   const { activeEntity } = useEntities();
+  const whiteLabel = useWhiteLabel();
+  const translationsFeatureEnabled = whiteLabel.isFeatureVisible(DOCUMENT_CONTENT_TRANSLATIONS_FEATURE);
   const documentConfig = getDocumentEmailConfig(document?.id ?? "inv_missing");
   const documentNumber = document?.number ?? "";
   const customerId = document?.customer_id ?? null;
@@ -202,6 +241,7 @@ export function SendEmailDialog({
   // Get entity email defaults if not provided
   const entitySettings = (activeEntity?.settings as Record<string, any>) || {};
   const emailDefaults = entitySettings.email_defaults || {};
+  const emailDefaultTranslations = entitySettings.translations?.email_defaults || {};
   const entityLocale = (activeEntity as any)?.locale || "en-US";
 
   const finalSubject =
@@ -211,18 +251,115 @@ export function SendEmailDialog({
     emailDefaults[documentConfig.bodyKey] ||
     `Please find your ${documentConfig.label.toLowerCase()} #${documentNumber} attached.`;
 
-  const form = useForm<SendEmailSchema>({
-    resolver: zodResolver(sendEmailSchema) as Resolver<SendEmailSchema>,
+  const sendEmailDialogSchema = useMemo(
+    () =>
+      sendEmailSchema.omit({ to: true }).extend({
+        recipients: z
+          .array(
+            z.object({
+              email: z.string().trim(),
+            }),
+          )
+          .min(1)
+          .superRefine((recipients, ctx) => {
+            const hasAnyRecipient = recipients.some((recipient) => recipient.email.length > 0);
+
+            if (!hasAnyRecipient) {
+              ctx.addIssue({
+                code: "custom",
+                path: [0, "email"],
+                message: t("Recipient email is required"),
+              });
+            }
+
+            if (recipients.length > MAX_RECIPIENTS) {
+              ctx.addIssue({
+                code: "custom",
+                path: [MAX_RECIPIENTS, "email"],
+                message: t("You can add up to 4 recipients"),
+              });
+            }
+
+            recipients.forEach((recipient, index) => {
+              if (!recipient.email) {
+                return;
+              }
+
+              const parsedEmail = z.string().email(t("Invalid email address")).safeParse(recipient.email);
+              if (!parsedEmail.success) {
+                ctx.addIssue({
+                  code: "custom",
+                  path: [index, "email"],
+                  message: t("Invalid email address"),
+                });
+              }
+            });
+          }),
+        subject: z.string().trim().min(1, t("Subject is required")).max(255),
+        body_text: z.string().trim().min(1, t("Message is required")),
+      }),
+    [t],
+  );
+
+  type SendEmailDialogSchema = z.infer<typeof sendEmailDialogSchema>;
+
+  const form = useForm<SendEmailDialogSchema>({
+    resolver: zodResolver(sendEmailDialogSchema) as Resolver<SendEmailDialogSchema>,
     defaultValues: {
-      to: defaultEmail,
+      recipients: parseRecipientInputs(defaultEmail),
       subject: finalSubject,
       body_text: finalBody,
       attach_pdf: false,
     },
   });
-  const { control, handleSubmit, reset, setValue } = form;
+  const { control, handleSubmit, register, reset, setValue, formState } = form;
+  const {
+    fields: recipientFields,
+    append,
+    remove,
+  } = useFieldArray({
+    control,
+    name: "recipients",
+  });
+  const resolveDraftForLanguage = (nextLanguage: DocumentContentLocaleMode): EmailContentDraft => {
+    if (!translationsFeatureEnabled || nextLanguage === DEFAULT_CONTENT_LOCALE) {
+      return {
+        subject: finalSubject,
+        bodyText: finalBody,
+      };
+    }
+
+    return {
+      subject: emailDefaultTranslations[documentConfig.subjectKey]?.[nextLanguage] ?? "",
+      bodyText: emailDefaultTranslations[documentConfig.bodyKey]?.[nextLanguage] ?? "",
+    };
+  };
+
+  const syncDraftField = (field: keyof EmailContentDraft, value: string) => {
+    setDrafts((prev) => ({
+      ...prev,
+      [language]: {
+        ...(prev[language] ?? resolveDraftForLanguage(language)),
+        [field]: value,
+      },
+    }));
+  };
+
   const handleLanguageChange = (value: string | null) => {
-    setLanguage(value ?? DEFAULT_LANGUAGE_VALUE);
+    const nextLanguage = (value ?? DEFAULT_LANGUAGE_VALUE) as DocumentContentLocaleMode;
+    const nextDrafts = {
+      ...drafts,
+      [language]: {
+        subject: form.getValues("subject") || "",
+        bodyText: form.getValues("body_text") || "",
+      },
+    };
+    const nextDraft = nextDrafts[nextLanguage] ?? resolveDraftForLanguage(nextLanguage);
+
+    setDrafts(nextDrafts);
+    setLanguage(nextLanguage);
+    setValue("subject", nextDraft.subject, { shouldValidate: false, shouldDirty: false, shouldTouch: false });
+    setValue("body_text", nextDraft.bodyText, { shouldValidate: false, shouldDirty: false, shouldTouch: false });
   };
 
   const displayLocale = translationLocale || locale;
@@ -239,12 +376,18 @@ export function SendEmailDialog({
 
     // Reset form to defaults when dialog opens
     reset({
-      to: defaultEmail,
+      recipients: parseRecipientInputs(defaultEmail),
       subject: finalSubject,
       body_text: finalBody,
       attach_pdf: false,
     });
     setLanguage(DEFAULT_LANGUAGE_VALUE);
+    setDrafts({
+      [DEFAULT_CONTENT_LOCALE]: {
+        subject: finalSubject,
+        bodyText: finalBody,
+      },
+    });
 
     // Fetch customer email from linked customer if not in invoice snapshot
     const fetchCustomerEmail = async () => {
@@ -261,7 +404,11 @@ export function SendEmailDialog({
 
         const customer = response.data[0];
         if (customer?.email) {
-          setValue("to", customer.email);
+          setValue("recipients", parseRecipientInputs(customer.email), {
+            shouldValidate: false,
+            shouldDirty: false,
+            shouldTouch: false,
+          });
         }
       } catch {
         // Silently fail - customer might not exist or not have email
@@ -275,7 +422,7 @@ export function SendEmailDialog({
     return null;
   }
 
-  const onSubmit = async (values: SendEmailSchema) => {
+  const onSubmit = async (values: SendEmailDialogSchema) => {
     setIsLoading(true);
     try {
       // Ensure we have an active entity
@@ -283,11 +430,15 @@ export function SendEmailDialog({
 
       const languageOverride =
         language && language !== DEFAULT_LANGUAGE_VALUE ? (language as SendEmailBodyLanguage) : undefined;
+      const recipientEmails = values.recipients
+        .map((recipient) => recipient.email.trim())
+        .filter((recipient) => recipient.length > 0);
+      const joinedRecipients = recipientEmails.join(", ");
 
       // Call the email API endpoint using SDK
       await email.sendEmail(
         {
-          to: values.to,
+          to: joinedRecipients,
           subject: values.subject,
           body_text: values.body_text,
           document_id: document.id,
@@ -297,7 +448,7 @@ export function SendEmailDialog({
       );
 
       toast.success(t("Email sent"), {
-        description: `${t(documentConfig.successPrefix)} ${values.to}`,
+        description: `${t(documentConfig.successPrefix)} ${joinedRecipients}`,
       });
 
       setOpen(false);
@@ -339,7 +490,7 @@ export function SendEmailDialog({
           </Button>
         </DialogTrigger>
       )}
-      <DialogContent className="sm:max-w-lg" data-demo="marketing-demo-send-dialog">
+      <DialogContent className="sm:max-w-xl" data-demo="marketing-demo-send-dialog">
         <DialogHeader>
           <DialogTitle>{t(documentConfig.dialogTitle)}</DialogTitle>
           <DialogDescription>
@@ -361,82 +512,69 @@ export function SendEmailDialog({
 
         <Form {...form}>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={control}
-              name="to"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t("Recipient Email")}</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="email"
-                      placeholder="customer@example.com"
-                      {...field}
-                      disabled={isLoading}
-                      data-demo="marketing-demo-send-email-input"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="flex flex-col gap-2">
+              <label className="font-medium text-sm" htmlFor="send-email-recipient-0">
+                {t("Recipient Email")}
+              </label>
+              <div className="space-y-2">
+                {recipientFields.map((recipientField, index) => {
+                  const recipientError = formState.errors.recipients?.[index]?.email?.message;
 
-            <FormField
-              control={control}
-              name="subject"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t("Subject (Optional)")}</FormLabel>
-                  <FormControl>
-                    <InputWithPreview
-                      value={field.value || ""}
-                      onChange={field.onChange}
-                      placeholder={t(`${documentConfig.label} Subject`)}
-                      entity={activeEntity!}
-                      document={document}
-                      translatePreviewLabel={t}
-                      disabled={isLoading}
-                      className="h-10"
-                    />
-                  </FormControl>
-                  <FormDescription>{t("Leave empty to use default")}</FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                  return (
+                    <div key={recipientField.id} className="flex items-start gap-2">
+                      <div className="flex-1">
+                        <Input
+                          id={`send-email-recipient-${index}`}
+                          type="email"
+                          placeholder="customer@example.com"
+                          disabled={isLoading}
+                          data-demo={index === 0 ? "marketing-demo-send-email-input" : undefined}
+                          {...register(`recipients.${index}.email`)}
+                        />
+                        {recipientError ? (
+                          <p className="font-normal text-destructive text-xs">{recipientError}</p>
+                        ) : null}
+                      </div>
+                      {index === 0 ? (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          className="cursor-pointer"
+                          onClick={() => append({ email: "" })}
+                          disabled={isLoading || recipientFields.length >= MAX_RECIPIENTS}
+                        >
+                          <Plus className="h-4 w-4" />
+                          <span className="sr-only">{t("Add recipient")}</span>
+                        </Button>
+                      ) : (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          className="cursor-pointer"
+                          onClick={() => remove(index)}
+                          disabled={isLoading}
+                        >
+                          <Minus className="h-4 w-4" />
+                          <span className="sr-only">{t("Remove recipient")}</span>
+                        </Button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
 
-            <FormField
-              control={control}
-              name="body_text"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t("Message (Optional)")}</FormLabel>
-                  <FormControl>
-                    <InputWithPreview
-                      value={field.value || ""}
-                      onChange={field.onChange}
-                      placeholder={t("Email message placeholder")}
-                      entity={activeEntity!}
-                      document={document}
-                      translatePreviewLabel={t}
-                      disabled={isLoading}
-                      multiline
-                      rows={8}
-                    />
-                  </FormControl>
-                  <FormDescription>{t("Leave empty to use default")}</FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-              <div className="space-y-2 sm:w-64">
-                <label htmlFor="pdf-language" className="font-medium text-sm leading-none">
-                  {t("PDF Language")}
-                </label>
+            <div className="rounded-lg border bg-muted/20 px-3 py-3">
+              <div className="flex flex-col gap-3 sm:grid sm:grid-cols-[minmax(0,1fr)_minmax(280px,1fr)] sm:items-center sm:gap-4">
+                <div className="space-y-1">
+                  <p className="font-medium text-sm">
+                    {translationsFeatureEnabled ? t("Email and attachment language") : t("PDF Language")}
+                  </p>
+                </div>
                 <Select value={language} onValueChange={handleLanguageChange}>
-                  <SelectTrigger id="pdf-language" className="w-full">
+                  <SelectTrigger id="document-language" className="w-full sm:justify-self-end">
                     <SelectValue>{selectedLanguageLabel}</SelectValue>
                   </SelectTrigger>
                   <SelectContent>
@@ -449,26 +587,79 @@ export function SendEmailDialog({
                   </SelectContent>
                 </Select>
               </div>
+            </div>
 
-              <div className="flex justify-end gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="cursor-pointer"
-                  onClick={() => setOpen(false)}
-                  disabled={isLoading}
-                >
-                  {t("Cancel")}
-                </Button>
-                <Button
-                  type="submit"
-                  className="min-w-[100px] cursor-pointer"
-                  disabled={isLoading}
-                  data-demo="marketing-demo-send-email-submit"
-                >
-                  {isLoading ? ButtonLoader ? <ButtonLoader /> : <Spinner /> : t("Send Email")}
-                </Button>
-              </div>
+            <FormField
+              control={control}
+              name="subject"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t("Subject")}</FormLabel>
+                  <FormControl>
+                    <InputWithPreview
+                      value={field.value || ""}
+                      onChange={(nextValue) => {
+                        field.onChange(nextValue);
+                        syncDraftField("subject", nextValue);
+                      }}
+                      placeholder={t(`${documentConfig.label} Subject`)}
+                      entity={activeEntity!}
+                      document={document}
+                      translatePreviewLabel={t}
+                      disabled={isLoading}
+                      className="h-10"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={control}
+              name="body_text"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t("Message")}</FormLabel>
+                  <FormControl>
+                    <InputWithPreview
+                      value={field.value || ""}
+                      onChange={(nextValue) => {
+                        field.onChange(nextValue);
+                        syncDraftField("bodyText", nextValue);
+                      }}
+                      placeholder={t("Email message placeholder")}
+                      entity={activeEntity!}
+                      document={document}
+                      translatePreviewLabel={t}
+                      disabled={isLoading}
+                      multiline
+                      rows={8}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="flex justify-end gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                className="cursor-pointer"
+                onClick={() => setOpen(false)}
+                disabled={isLoading}
+              >
+                {t("Cancel")}
+              </Button>
+              <Button
+                type="submit"
+                className="min-w-[100px] cursor-pointer"
+                disabled={isLoading}
+                data-demo="marketing-demo-send-email-submit"
+              >
+                {isLoading ? ButtonLoader ? <ButtonLoader /> : <Spinner /> : t("Send Email")}
+              </Button>
             </div>
           </form>
         </Form>

@@ -18,10 +18,14 @@ type SourceDocumentItem = {
   financial_category_id?: string | null;
   name?: string | null;
   description?: string | null;
+  translations?: Record<string, unknown> | null;
   quantity?: number | null;
   price?: number | null;
   gross_price?: number | null;
   unit?: string | null;
+  e_invoicing?: {
+    unit_code?: string | null;
+  } | null;
   classification?: string | null;
   taxes?: SourceDocumentTax[] | null;
   discounts?: SourceDocumentDiscount[] | null;
@@ -51,6 +55,7 @@ export function toDocumentFormItem(item: SourceDocumentItem) {
     type: item.type ?? undefined,
     name: item.name ?? "",
     description: item.description ?? undefined,
+    translations: item.translations ?? undefined,
     ...(item.type !== "separator"
       ? {
           item_id: item.item_id ?? undefined,
@@ -59,6 +64,7 @@ export function toDocumentFormItem(item: SourceDocumentItem) {
           price: item.gross_price ?? item.price ?? undefined,
           gross_price: item.gross_price ?? undefined,
           unit: item.unit ?? undefined,
+          e_invoicing: item.e_invoicing ?? undefined,
           classification: item.classification ?? undefined,
           taxes: toDocumentFormTaxes(item.taxes),
           discounts: toDocumentFormDiscounts(item.discounts),

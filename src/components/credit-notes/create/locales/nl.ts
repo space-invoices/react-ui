@@ -17,6 +17,15 @@ export default {
   Quantity: "Aantal",
   Price: "Prijs",
   Unit: "Eenheid",
+  "E-invoicing unit code": "Eenheidscode voor e-facturatie",
+  "E-invoicing unit settings": "Instellingen voor e-facturatie-eenheid",
+  "Only affects e-invoicing XML. The document unit stays unchanged.":
+    "Heeft alleen invloed op de XML voor e-facturatie. De documenteenheid blijft ongewijzigd.",
+  "Select XML unit code": "XML-eenheidscode selecteren",
+  "Enter a supported UN/ECE code": "Voer een ondersteunde UN/ECE-code in",
+  "Use display unit": "Weergegeven eenheid gebruiken",
+  "Clear unit code": "Eenheidscode wissen",
+  "custom code": "aangepaste code",
   Discount: "Korting",
   Tax: "Belasting",
   "Tax rate": "Belastingtarief",
@@ -40,6 +49,9 @@ export default {
   // Note field
   Note: "Opmerking",
   "Insert variable": "Variabele invoegen",
+  Bold: "Vet",
+  Italic: "Cursief",
+  "Bullet list": "Opsommingstekens",
   "Add payment instructions, terms, or other notes...":
     "Voeg betalingsinstructies, voorwaarden of andere opmerkingen toe...",
   // Signature field

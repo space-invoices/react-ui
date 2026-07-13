@@ -2,7 +2,7 @@ import { Button } from "@/ui/components/ui/button";
 import ButtonLoader from "../button-loader";
 import { cn } from "@/ui/lib/utils";
 
-type SecondaryAction = {
+type FooterAction = {
   label: string;
   onClick: () => void;
   isPending?: boolean;
@@ -14,7 +14,8 @@ type StickyFormFooterProps = {
   isDirty: boolean;
   label: string;
   onSubmit?: () => void;
-  secondaryAction?: SecondaryAction;
+  secondaryAction?: FooterAction;
+  tertiaryAction?: FooterAction;
   className?: string;
 };
 
@@ -25,6 +26,7 @@ export function StickyFormFooter({
   label,
   onSubmit,
   secondaryAction,
+  tertiaryAction,
   className,
 }: StickyFormFooterProps) {
   // If onSubmit is provided, use onClick, otherwise use form attribute for native form submission
@@ -37,7 +39,7 @@ export function StickyFormFooter({
       className={cn("sticky bottom-0 z-10 border-t bg-sidebar px-4 py-3", className)}
       data-demo={formId === "create-invoice-form" ? "marketing-demo-sticky-footer" : undefined}
     >
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         <Button
           {...buttonProps}
           className="cursor-pointer px-8"
@@ -58,6 +60,18 @@ export function StickyFormFooter({
             data-demo={formId === "create-invoice-form" ? "marketing-demo-save-draft" : undefined}
           >
             {secondaryAction.isPending ? <ButtonLoader /> : secondaryAction.label}
+          </Button>
+        )}
+        {tertiaryAction && (
+          <Button
+            type="button"
+            variant="ghost"
+            className="cursor-pointer px-4 sm:px-8"
+            disabled={tertiaryAction.isPending || !isDirty}
+            onClick={tertiaryAction.onClick}
+            data-testid={`${formId}-tertiary-submit`}
+          >
+            {tertiaryAction.isPending ? <ButtonLoader /> : tertiaryAction.label}
           </Button>
         )}
       </div>

@@ -18,6 +18,15 @@ export default {
   Quantity: "Količina",
   Price: "Cijena",
   Unit: "Jedinica",
+  "E-invoicing unit code": "Šifra jedinice za e-račune",
+  "E-invoicing unit settings": "Postavke jedinice za e-račun",
+  "Only affects e-invoicing XML. The document unit stays unchanged.":
+    "Utječe samo na XML e-računa. Jedinica na dokumentu ostaje nepromijenjena.",
+  "Select XML unit code": "Odaberite XML šifru jedinice",
+  "Enter a supported UN/ECE code": "Unesite podržanu UN/ECE šifru",
+  "Use display unit": "Koristi prikazanu jedinicu",
+  "Clear unit code": "Očisti šifru jedinice",
+  "custom code": "prilagođena šifra",
   Discount: "Popust",
   Tax: "Porez",
   "Tax rate": "Porezna stopa",
@@ -39,8 +48,10 @@ export default {
   Other: "Ostalo",
   Note: "Napomena",
   "Insert variable": "Umetni varijablu",
+  Bold: "Podebljano",
+  Italic: "Kurziv",
+  "Bullet list": "Popis s oznakama",
   "Add payment instructions, terms, or other notes...": "Dodaj upute za plaćanje, uvjete ili druge napomene...",
-  // Signature field
   Signature: "Potpis",
   "Add signature text...": "Dodaj tekst potpisa...",
   "Payment Terms": "Uvjeti plaćanja",
@@ -68,6 +79,19 @@ export default {
   City: "Grad",
   State: "Županija",
   Country: "Država",
+  "Bank Account": "Bankovni račun",
+  "Account Type": "Vrsta računa",
+  BIC: "BIC",
+  IBAN: "IBAN",
+  "US domestic": "Američki domaći",
+  "UK domestic": "Britanski domaći",
+  "Account Number": "Broj računa",
+  "Routing Number": "Routing broj",
+  "Sort Code": "Sort kod",
+  "Company Number": "Matični broj tvrtke",
+  "UJP receiver identifier": "Identifikator UJP primatelja",
+  "UJP receiver agent": "Agent UJP primatelja",
+  "UJP receiver mailbox": "Sanducic UJP primatelja",
   "Tax Number": "OIB",
   "Percentage discount": "Postotni popust",
   "Fixed amount discount": "Fiksni popust",
@@ -89,8 +113,8 @@ export default {
   "Click to enable fiscalization": "Kliknite za omogućavanje fiskalizacije",
   "Fiscally verify": "Fiskalno potvrdi",
   "Click to skip fiscalization for this invoice": "Kliknite za preskakanje fiskalizacije za ovaj račun",
-  "Business unit": "Business unit",
-  "No unit": "No unit",
+  "Business unit": "Poslovna jedinica",
+  "No unit": "Bez jedinice",
   "e-SLOG": "e-SLOG",
   "Click to skip e-SLOG validation for this invoice": "Kliknite za preskakanje e-SLOG provjere za ovaj račun",
   "Click to enable e-SLOG validation": "Kliknite za omogućavanje e-SLOG provjere",
@@ -113,6 +137,18 @@ export default {
   "Entity currency must be EUR for e-SLOG when invoice uses a different currency.":
     "Valuta subjekta mora biti EUR za e-SLOG kada račun koristi drugu valutu.",
   "Customer name is required when customer is provided.": "Naziv kupca je obavezan kada je kupac unesen.",
+  "Entity IBAN is required for UJP package validation. Update in Settings > Company.":
+    "IBAN organizacije obvezan je za provjeru UJP paketa. Ažurirajte ga u Postavke > Tvrtka.",
+  "Entity IBAN must be a valid Slovenian IBAN for UJP package validation.":
+    "IBAN organizacije mora biti valjani slovenski IBAN za provjeru UJP paketa.",
+  "Entity BIC is required for UJP package validation. Update in Settings > Company.":
+    "BIC organizacije obvezan je za provjeru UJP paketa. Ažurirajte ga u Postavke > Tvrtka.",
+  "Entity BIC must be a valid 8- or 11-character BIC for UJP package validation.":
+    "BIC organizacije mora biti valjani BIC s 8 ili 11 znakova za validaciju UJP paketa.",
+  "Customer IBAN must be a valid Slovenian IBAN for UJP package validation.":
+    "IBAN kupca mora biti valjani slovenski IBAN za validaciju UJP paketa.",
+  "Customer BIC must be a valid 8- or 11-character BIC for UJP package validation.":
+    "BIC kupca mora biti valjani BIC s 8 ili 11 znakova za validaciju UJP paketa.",
   "At least one line item is required for e-SLOG.": "Za e-SLOG je potrebna barem jedna stavka.",
   "Item name is required for e-SLOG.": "Naziv stavke je obavezan za e-SLOG.",
   "Quantity must be greater than 0.": "Količina mora biti veća od 0.",
@@ -125,7 +161,6 @@ export default {
   "Net price": "Neto cijena",
   "Gross price (tax included)": "Bruto cijena (s porezom)",
   "Net price (before tax)": "Neto cijena (prije poreza)",
-  // Linked documents
   "Linked documents": "Povezani dokumenti",
   Type: "Vrsta",
   Total: "Ukupno",
@@ -136,7 +171,6 @@ export default {
   "Credit note": "Odobrenje",
   "Advance invoice": "Avansni račun",
   "FINA fiscalized invoices always use the current date": "FINA fiskalizirani računi uvijek koriste trenutni datum",
-  // Due days selector
   "On receipt": "Po primitku",
   "7 days": "7 dana",
   "14 days": "14 dana",
@@ -144,8 +178,6 @@ export default {
   "60 days": "60 dana",
   "90 days": "90 dana",
   Custom: "Prilagođeno",
-  // Separator items
-  // Service date
   "Service Date": "Datum usluge",
   "Service Period": "Razdoblje usluge",
   From: "Od",
@@ -153,7 +185,6 @@ export default {
   "Add separator": "Dodaj separator",
   "Section header": "Naslov odjeljka",
   "Section title...": "Naslov odjeljka...",
-  // Transaction type
   "Transaction type": "Vrsta transakcije",
   Domestic: "Domaća",
   "EU B2B": "EU B2B",
@@ -167,7 +198,6 @@ export default {
   "Add tax clause...": "Dodaj poreznu klauzulu...",
   Footer: "Podnožje",
   "Add document footer...": "Dodaj podnožje dokumenta...",
-  // Croatian domestic invoice validation
   "End consumer": "Krajnji potrošač",
   "Domestic B2B invoicing in Croatia is not supported":
     "Domaće B2B fakturiranje u Hrvatskoj nije podržano. Hrvatska zahtijeva usklađenost s Fiskalizacijom 2.0 za B2B fakturiranje.",
@@ -181,4 +211,18 @@ export default {
   "Remaining to allocate": "Preostalo za raspodjelu",
   "This document must be fully paid on creation": "Ovaj dokument mora biti u potpunosti plaćen pri izradi",
   "Record one or more payments on creation": "Evidentiraj jedno ili više plaćanja pri izradi",
+  "Entity bank account is required for e-SLOG payment instructions. Update in Settings > Company.":
+    "Bankovni račun subjekta obvezan je za e-SLOG upute za plaćanje. Ažurirajte ga u Postavke > Tvrtka.",
+  "Customer tax number is required for e-SLOG business recipients.":
+    "Porezni broj kupca obvezan je za poslovne primatelje e-SLOG.",
+  "Customer address is required for UJP package validation.": "Adresa kupca obvezna je za provjeru UJP paketa.",
+  "Customer postal code is required for UJP package validation.":
+    "Poštanski broj kupca obvezan je za provjeru UJP paketa.",
+  "Customer city is required for UJP package validation.": "Grad kupca obvezan je za provjeru UJP paketa.",
+  "Customer tax number or company number is required for UJP package validation.":
+    "Porezni broj ili matični broj kupca obavezan je za validaciju UJP paketa.",
+  "Customer IBAN and BIC are required for UJP package validation.":
+    "IBAN i BIC kupca obavezni su za validaciju UJP paketa.",
+  "Customer IBAN is required for UJP package validation.": "IBAN kupca obavezan je za validaciju UJP paketa.",
+  "Customer BIC is required for UJP package validation.": "BIC kupca obavezan je za validaciju UJP paketa.",
 } as const;

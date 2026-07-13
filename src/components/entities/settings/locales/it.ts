@@ -1,0 +1,311 @@
+export default {
+  // Company settings
+  "Tax subject": "Soggetto fiscale",
+  "Tax ID 2": "ID fiscale 2",
+  "Secondary tax identification number (optional)": "Numero di identificazione fiscale secondario (opzionale)",
+  "Company Information": "Informazioni aziendali",
+  "Basic information about your company": "Informazioni di base sulla tua azienda",
+  // Branding settings
+  Branding: "Marchio",
+  "Primary Color": "Colore primario",
+  Logo: "Logo",
+  "Logo URL": "URL del logo",
+  "Enter the URL of your company logo": "Inserisci l'URL del logo della tua azienda",
+  "Upload your company logo for invoices": "Carica il logo della tua azienda per le fatture",
+  "Upload Logo": "Carica logo",
+  "Change Logo": "Cambia logo",
+  "Current logo (displayed on invoices)": "Logo attuale (mostrato sulle fatture)",
+  "Logo preview": "Anteprima logo",
+  "Crop Your Logo": "Ritaglia il tuo logo",
+  Signature: "Firma",
+  "Upload a signature image for PDFs (optional)": "Carica un'immagine della firma per i PDF (opzionale)",
+  "Upload Signature": "Carica firma",
+  "Change Signature": "Cambia firma",
+  "Current signature (for PDF documents)": "Firma attuale (per documenti PDF)",
+  "Signature preview": "Anteprima firma",
+  "Crop Your Signature": "Ritaglia la tua firma",
+  "Adjust the crop area or upload the full image": "Regola l'area di ritaglio o carica l'immagine completa",
+  "Upload failed. Please try again.": "Caricamento fallito. Riprova.",
+  "Uploading...": "Caricamento...",
+  "Upload & Save": "Carica e salva",
+  Cancel: "Annulla",
+  Localization: "Localizzazione",
+  "Currency Code": "Codice valuta",
+  "ISO 4217 currency code (e.g., USD, EUR, GBP)": "Codice valuta ISO 4217 (es. USD, EUR, GBP)",
+  Locale: "Localizzazione",
+  "BCP 47 language tag (e.g., en-US, de-DE, sl-SI)": "Tag lingua BCP 47 (es. en-US, de-DE, sl-SI)",
+  "Select currency": "Seleziona valuta",
+  "Select locale": "Seleziona localizzazione",
+  "Configure entity localization": "Configura la localizzazione dell'entità",
+  "English (US)": "Inglese (US)",
+  "German (DE)": "Tedesco (DE)",
+  "Italian (IT)": "Italiano (IT)",
+  "French (FR)": "Francese (FR)",
+  "Spanish (ES)": "Spagnolo (ES)",
+  "Portuguese (Portugal)": "Portoghese (Portogallo)",
+  Dutch: "Olandese",
+  Polish: "Polacco",
+  Croatian: "Croato",
+  "Slovenian (SI)": "Sloveno (SI)",
+  "Email Settings": "Impostazioni email",
+  "Configure email settings for invoices": "Configura le impostazioni email per le fatture",
+  "Email Address": "Indirizzo email",
+  "Email address to send invoices to": "Indirizzo email per l'invio delle fatture",
+  "Email Subject": "Oggetto email",
+  "Subject line for email invoices": "Riga dell'oggetto per le fatture via email",
+  "Email Body": "Corpo email",
+  "Body content for email invoices": "Contenuto del testo per le fatture via email",
+  "Subject line for invoice emails": "Oggetto per le email delle fatture",
+  "Subject line for estimate emails": "Oggetto per le email dei preventivi",
+  "Subject line for credit note emails": "Oggetto per le email delle note di credito",
+  "Subject line for advance invoice emails": "Oggetto per le email delle fatture anticipate",
+  "Subject line for delivery note emails": "Oggetto per le email delle bolle di consegna",
+  "Body content for invoice emails": "Contenuto del testo per le email delle fatture",
+  "Body content for estimate emails": "Contenuto del testo per le email dei preventivi",
+  "Body content for credit note emails": "Contenuto del testo per le email delle note di credito",
+  "Body content for advance invoice emails": "Contenuto del testo per le email delle fatture anticipate",
+  "Body content for delivery note emails": "Contenuto del testo per le email delle bolle di consegna",
+  Reminder: "Sollecito",
+  "Payment reminders": "Solleciti di pagamento",
+  "Reminder subject": "Oggetto del sollecito",
+  "Subject line for payment reminder emails": "Oggetto delle email di sollecito di pagamento",
+  "Reminder body": "Testo del sollecito",
+  "Body content for payment reminder emails": "Contenuto delle email di sollecito di pagamento",
+  "Payment instructions": "Istruzioni di pagamento",
+  "Payment instructions appended to reminder emails when not included in the body":
+    "Istruzioni di pagamento aggiunte ai solleciti quando non incluse nel testo",
+  "Payment reminder from {entity_name}": "Sollecito di pagamento da {entity_name}",
+  "Hello {customer_name},\n\nThe following invoices are overdue:\n{invoice_list}\n\n{payment_instructions}":
+    "Buongiorno {customer_name},\n\nLe seguenti fatture sono scadute:\n{invoice_list}\n\n{payment_instructions}",
+  "Please remit payment to IBAN {iban}.": "Effettuare il pagamento all'IBAN {iban}.",
+  "Save Settings": "Salva impostazioni",
+  "Account Number": "Numero di conto",
+  "Routing Number": "Routing number",
+  "Sort Code": "Sort code",
+  "Account Name": "Nome del conto",
+  "Main Business Account": "Conto aziendale principale",
+  "Bank Account": "Conto bancario",
+  "Bank Name": "Nome della banca",
+  "BIC/SWIFT": "BIC/SWIFT",
+  // Document Defaults section
+  "Document Defaults": "Valori predefiniti documenti",
+  "Default values for new documents": "Valori predefiniti per i nuovi documenti",
+  "Default Note": "Nota predefinita",
+  "Default Invoice Note": "Nota predefinita fattura",
+  "This note will be pre-filled when creating new invoices":
+    "Questa nota verrà precompilata durante la creazione di nuove fatture",
+  "This note will be pre-filled when creating new estimates":
+    "Questa nota verrà precompilata durante la creazione di nuovi preventivi",
+  "This note will be pre-filled when creating new credit notes":
+    "Questa nota verrà precompilata durante la creazione di nuove note di credito",
+  "Payment terms pre-filled when creating new invoices":
+    "Termini di pagamento precompilati durante la creazione di nuove fatture",
+  "Payment terms pre-filled when creating new estimates":
+    "Termini di pagamento precompilati durante la creazione di nuovi preventivi",
+  "Payment terms pre-filled when creating new credit notes":
+    "Termini di pagamento precompilati durante la creazione di nuove note di credito",
+  "Optional note for the document.": "Nota facoltativa per il documento.",
+  "Please remit payment using the bank details shown on the document.":
+    "Effettui il pagamento utilizzando le coordinate bancarie indicate nel documento.",
+  "This estimate is valid until {document_valid_until}.": "Questo preventivo è valido fino al {document_valid_until}.",
+  "Payment due upon acceptance.": "Pagamento dovuto all'accettazione.",
+  "Credit note for invoice {document_number}.": "Nota di credito per la fattura {document_number}.",
+  "Credit will be applied to your account.": "Il credito verrà applicato al tuo conto.",
+  "Invoice Notes": "Note fattura",
+  "Smart Template Variables": "Variabili modello intelligenti",
+  "Use variables to personalize your notes automatically":
+    "Usa le variabili per personalizzare automaticamente le tue note",
+  "Set a default note that will appear on all new invoices. Use template variables to personalize the note automatically.":
+    "Imposta una nota predefinita che apparirà su tutte le nuove fatture. Usa le variabili modello per personalizzare automaticamente la nota.",
+  // Smart code insert button
+  "Insert variable": "Inserisci variabile",
+  Bold: "Grassetto",
+  Italic: "Corsivo",
+  "Bullet list": "Elenco puntato",
+  Entity: "Azienda",
+  Document: "Documento",
+  Customer: "Cliente",
+  Other: "Altro",
+  "Company name": "Nome azienda",
+  "Email address": "Indirizzo email",
+  "Invoice number": "Numero fattura",
+  "Invoice date": "Data fattura",
+  "Due date": "Data di scadenza",
+  "Total amount": "Importo totale",
+  Currency: "Valuta",
+  "Customer name": "Nome cliente",
+  "Customer email": "Email cliente",
+  "Today's date": "Data odierna",
+  "Current year": "Anno corrente",
+  // Payment terms defaults
+  "Default Payment Terms": "Termini di pagamento predefiniti",
+  "This payment terms will be pre-filled when creating new documents":
+    "Questi termini di pagamento verranno precompilati durante la creazione di nuovi documenti",
+  "Payment Terms": "Termini di pagamento",
+  "Add payment terms...": "Aggiungi termini di pagamento...",
+  // Document footer
+  "Document Footer": "Piè di pagina documento",
+  "Footer text displayed at the bottom of PDF documents": "Testo del piè di pagina mostrato in fondo ai documenti PDF",
+  "Footer text displayed at the bottom of all PDF documents":
+    "Testo del piè di pagina mostrato in fondo a tutti i documenti PDF",
+  "{entity_name} | Due Date: {document_due_date} | Invoice #{document_number}":
+    "{entity_name} | Scadenza: {document_due_date} | Fattura #{document_number}",
+  // Document signature
+  "Document Signature": "Firma del documento",
+  "Signature text displayed on all PDF documents": "Testo della firma visualizzato su tutti i documenti PDF",
+  "Add signature text...": "Aggiungi testo della firma...",
+  "Delivery Note": "Bolla di consegna",
+  "Default note for advance invoices": "Nota predefinita per le fatture di acconto",
+  "Default note for all new advance invoices": "Nota predefinita per tutte le nuove fatture di acconto",
+  "Default note for delivery notes": "Nota predefinita per le bolle di consegna",
+  "Default note for all new delivery notes": "Nota predefinita per tutte le nuove bolle di consegna",
+  // Overdue Notifications section
+  "Overdue Notifications": "Notifiche di scadenza",
+  "Automatically remind customers about overdue invoices": "Ricorda automaticamente ai clienti le fatture scadute",
+  "Enable Notifications": "Attiva notifiche",
+  "Send automatic payment reminder emails to customers with overdue invoices":
+    "Invia email di promemoria di pagamento automatiche ai clienti con fatture scadute",
+  "Reminder Days": "Giorni di promemoria",
+  "Days after due date to send reminders (comma-separated). E.g., '7, 14, 30' sends reminders at 7, 14, and 30 days overdue.":
+    "Giorni dopo la scadenza per inviare promemoria (separati da virgola). Es. '7, 14, 30' invia promemoria a 7, 14 e 30 giorni dalla scadenza.",
+  "Custom Reminder Templates": "Modelli di promemoria personalizzati",
+  "Subject line for overdue notification emails": "Riga dell'oggetto per le email di notifica scadenza",
+  "Body content for overdue emails. Use {invoice_list} to include the invoice table, or it will be auto-appended.":
+    "Contenuto del testo per le email di scadenza. Usa {invoice_list} per includere la tabella fatture, altrimenti verrà aggiunta automaticamente.",
+  "Dear {customer_name},\n\nThis is a reminder about your overdue invoices...":
+    "Gentile {customer_name},\n\nQuesto è un promemoria riguardo alle tue fatture scadute...",
+  "Payment Reminders": "Promemoria di pagamento",
+  "When enabled, customers will automatically receive email reminders when their invoices become overdue. Emails are sent on the exact day each threshold is reached.":
+    "Quando attivato, i clienti riceveranno automaticamente promemoria via email quando le loro fatture scadono. Le email vengono inviate esattamente il giorno in cui viene raggiunta ogni soglia.",
+  "Available Variables": "Variabili disponibili",
+  "{customer_name}, {entity_name}, {entity_email}, {invoice_list}, {total_amount}, {overdue_count}":
+    "{customer_name}, {entity_name}, {entity_email}, {invoice_list}, {total_amount}, {overdue_count}",
+  // UPN QR Payment section
+  "UPN QR Payment": "Pagamento UPN QR",
+  "Configure UPN QR payment slip for invoices": "Configura il bollettino di pagamento UPN QR per le fatture",
+  IBAN: "IBAN",
+  "Bank account IBAN for receiving payments": "IBAN del conto bancario per ricevere pagamenti",
+  "Enable UPN QR on invoices": "Attiva UPN QR sulle fatture",
+  "Show payment QR code on PDF invoices for easy mobile banking payments":
+    "Mostra il codice QR per il pagamento sulle fatture PDF per pagamenti bancari mobili semplici",
+  "Display Mode": "Modalità di visualizzazione",
+  "QR code only": "Solo codice QR",
+  "Shows compact QR code inline with invoice content":
+    "Mostra il codice QR compatto in linea con il contenuto della fattura",
+  "Full UPN payment slip": "Bollettino di pagamento UPN completo",
+  "Shows complete payment slip at bottom of page": "Mostra il bollettino di pagamento completo in fondo alla pagina",
+  "Purpose Code": "Codice scopo",
+  "OTHR - Other": "OTHR - Altro",
+  "GDSV - Goods and Services": "GDSV - Beni e servizi",
+  "SUPP - Supplier Payment": "SUPP - Pagamento fornitore",
+  "Payment purpose code (ISO 20022)": "Codice scopo pagamento (ISO 20022)",
+  "UPN QR Payments": "Pagamenti UPN QR",
+  "UPN QR is a Slovenian standard for payment slips. When enabled, your invoices will include a QR code that customers can scan with their mobile banking app to pay instantly.":
+    "UPN QR è uno standard sloveno per i bollettini di pagamento. Quando attivato, le tue fatture includeranno un codice QR che i clienti possono scansionare con l'app di mobile banking per pagare istantaneamente.",
+  // Number format settings
+  Invoice: "Fattura",
+  Estimate: "Preventivo",
+  "Credit Note": "Nota di credito",
+  "Advance Invoice": "Fattura di acconto",
+  "Number Format": "Formato numero",
+  Preview: "Anteprima",
+  // Tax rules settings
+  "Main documents": "Documenti principali",
+  "Used when no business unit is selected.": "Usato quando non è selezionata alcuna unità aziendale.",
+  "Business-unit documents": "Documenti dell’unità aziendale",
+  "Used when a business unit is selected. Default formats should include {u} to stay distinct.":
+    "Usato quando è selezionata un’unità aziendale. I formati predefiniti dovrebbero includere {u} per restare distinti.",
+  "If this format matches the main document format, saving is blocked.":
+    "Se questo formato coincide con quello principale, il salvataggio viene bloccato.",
+  "Business-unit numbering must differ from the main document format.":
+    "La numerazione dell’unità aziendale deve differire dal formato principale.",
+  "First number to use": "Primo numero da usare",
+  "First number to use for this unit": "Primo numero da usare per questa unità",
+  "first number to use": "primo numero da usare",
+  "Only affects this business unit for this document type. Existing documents are not renumbered.":
+    "Si applica solo a questa unità aziendale per questo tipo di documento. I documenti esistenti non vengono rinumerati.",
+  "Set the first number for this unit by document type. The unit number format is shared in Numbering settings.":
+    "Imposta il primo numero per questa unità per tipo di documento. Il formato del numero dell’unità è condiviso nelle impostazioni di numerazione.",
+  "Edit shared unit format": "Modifica il formato unità condiviso",
+  "first number": "primo numero",
+  "Unit numbering": "Numerazione dell’unità",
+  Numbering: "Numerazione",
+  "Only affects this business unit for the selected document type. Existing documents are not renumbered.":
+    "Si applica solo a questa unità aziendale per il tipo di documento selezionato. I documenti esistenti non vengono rinumerati.",
+  "Can only move future numbering forward. Existing documents are not renumbered.":
+    "Può solo far avanzare la numerazione futura. I documenti esistenti non vengono rinumerati.",
+  "Insert token": "Inserisci token",
+  "Number tokens": "Token numerazione",
+  "Full year": "Anno completo",
+  "Short year": "Anno breve",
+  "Sequence number": "Numero progressivo",
+  "Business unit index": "Indice unità aziendale",
+  "EU Tax Rules": "Regole fiscali UE",
+  "Automatic tax handling for cross-border transactions":
+    "Gestione automatica delle imposte per le transazioni transfrontaliere",
+  "Manual taxes": "Imposte manuali",
+  "Create tax rates on the Taxes page and apply them to document lines.":
+    "Crea aliquote fiscali nella pagina Imposte e applicale alle righe del documento.",
+  "tax-rules.vies_validate_vat.label": "Validazione IVA VIES",
+  "tax-rules.vies_validate_vat.description":
+    "Verifica i numeri IVA UE tramite l'API VIES. I numeri IVA dei clienti vengono verificati prima della creazione delle fatture.",
+  "tax-rules.auto_reverse_charge.label": "Inversione contabile automatica",
+  "tax-rules.auto_reverse_charge.description":
+    "Applica automaticamente l'aliquota 0% (inversione contabile) per le transazioni B2B intra-UE con numeri IVA validi.",
+  "tax-rules.auto_remove_tax_export.label": "Rimozione automatica imposta per esportazione",
+  "tax-rules.auto_remove_tax_export.description":
+    "Rimuovi automaticamente tutte le imposte per le esportazioni verso paesi extra-UE.",
+  "tax-rules.require_gross_prices.label": "Richiedi prezzi lordi",
+  "tax-rules.require_gross_prices.description":
+    "Richiedi prezzi lordi quando si applica l'inversione contabile. Previene variazioni inattese degli importi totali delle fatture.",
+  "tax-rules.calculation_mode.label": "Modalità di calcolo",
+  "tax-rules.calculation_mode.description": "Scegli come applicare sconti e IVA nel calcolo dei totali del documento.",
+  "tax-rules.calculation_mode.b2b_standard.label": "Standard B2B",
+  "tax-rules.calculation_mode.b2b_standard.description":
+    "Gli sconti riducono prima l'importo netto della riga, poi viene calcolata l'IVA.",
+  "tax-rules.calculation_mode.b2c_gross_discount.label": "Sconto lordo B2C",
+  "tax-rules.calculation_mode.b2c_gross_discount.description":
+    "Gli sconti riducono l'importo lordo finale da pagare, poi da quel risultato vengono ricavati imponibile e IVA.",
+  // Tax clauses settings
+  "Default Tax Clauses": "Clausole fiscali predefinite",
+  "Set default tax clauses that are automatically added to documents based on transaction type":
+    "Imposta le clausole fiscali predefinite che vengono aggiunte automaticamente ai documenti in base al tipo di transazione.",
+  "tax-clauses.other-title": "Clausole fiscali transfrontaliere",
+  "tax-clauses.other-description":
+    "Clausole fiscali per transazioni UE e internazionali (inversione contabile, esportazione).",
+  "tax-clauses.intra_eu_b2b.label": "Intra-UE B2B (inversione contabile)",
+  "tax-clauses.intra_eu_b2b.description":
+    "Per vendite a imprese UE con numeri IVA validi. Di solito include una dichiarazione di inversione contabile.",
+  "Enter reverse charge clause...": "Inserisci la clausola di inversione contabile...",
+  "tax-clauses.3w_b2b.label": "Extra-UE B2B (esportazione)",
+  "tax-clauses.3w_b2b.description":
+    "Per vendite a imprese extra-UE. Di solito indica l'esenzione IVA per esportazione.",
+  "tax-clauses.3w_b2c.label": "Extra-UE B2C (esportazione)",
+  "tax-clauses.3w_b2c.description":
+    "Per vendite a consumatori extra-UE. Di solito indica l'esenzione IVA per esportazione.",
+  "Enter export exemption clause...": "Inserisci la clausola di esenzione per esportazione...",
+  "tax-clauses.domestic.label": "Predefinito / Nazionale",
+  "tax-clauses.domestic.description":
+    "Clausola predefinita per transazioni nazionali. Per soggetti non registrati IVA, appare su tutti i documenti.",
+  "Enter default tax clause...": "Inserisci la clausola fiscale predefinita...",
+  "tax-clauses.intra_eu_b2c.label": "Intra-UE B2C",
+  "Enter EU consumer sales clause...": "Inserisci la clausola per vendite ai consumatori UE...",
+  "tax-clauses.other.description":
+    "Questi tipi di transazioni di solito non richiedono clausole fiscali specifiche, ma puoi configurarle secondo necessità.",
+  // EPC QR Payment section
+  "EPC QR Payment": "Pagamento EPC QR",
+  "SEPA credit transfer QR code for invoices": "Codice QR per bonifico SEPA sulle fatture",
+  "Enable EPC QR on invoices": "Attiva EPC QR sulle fatture",
+  "Show SEPA QR code on EUR invoices for easy bank payments":
+    "Mostra il codice QR SEPA sulle fatture in EUR per pagamenti bancari facili",
+  "EPC QR Payments": "Pagamenti EPC QR",
+  "EPC QR is a European standard for SEPA credit transfers. When enabled, EUR invoices include a QR code that customers can scan with their banking app to pay instantly.":
+    "EPC QR è uno standard europeo per i bonifici SEPA. Quando attivato, le fatture in EUR includono un codice QR che i clienti possono scansionare con la loro app bancaria per pagare istantaneamente.",
+  // Document date defaults
+  "Default due days": "Giorni di scadenza predefiniti",
+  "Default valid days": "Giorni di validità predefiniti",
+  "Number of days added to the document date for new invoice due dates":
+    "Numero di giorni aggiunti alla data del documento per le nuove scadenze delle fatture.",
+  "Number of days added to the document date for new estimate valid-till dates":
+    "Numero di giorni aggiunti alla data del documento per le nuove date di validità dei preventivi.",
+} as const;

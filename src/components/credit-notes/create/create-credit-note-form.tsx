@@ -1,32 +1,49 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import type { CreateCreditNoteRequest, CreditNote, UpdateCreditNote } from "@spaceinvoices/js-sdk";
+import type { CreateCreditNoteRequest, CreditNote, Tax, UpdateCreditNote } from "@spaceinvoices/js-sdk";
 import { useQueryClient } from "@tanstack/react-query";
-import { Check, X } from "lucide-react";
+import { AlertCircle, Check, X } from "lucide-react";
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Resolver } from "react-hook-form";
 import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
+import { Alert, AlertDescription, AlertTitle } from "@/ui/components/ui/alert";
 import { Button } from "@/ui/components/ui/button";
 import { Form } from "@/ui/components/ui/form";
 import { Skeleton } from "@/ui/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/ui/components/ui/tooltip";
 import { createCreditNoteSchema } from "@/ui/generated/schemas";
+import { getInitialEslogValidationEnabled, useEslogValidation } from "@/ui/hooks/use-eslog-validation";
 import { useNextDocumentNumber } from "@/ui/hooks/use-next-document-number";
 import { usePremiseSelection } from "@/ui/hooks/use-premise-selection";
 import { useTransactionTypeCheck } from "@/ui/hooks/use-transaction-type-check";
-import { buildFinaOptions, buildFursOptions, type FiscalizationOperatorOverride } from "@/ui/lib/fiscalization-options";
+import { getEntityCountryCapabilities } from "@/ui/lib/country-capabilities";
+import {
+  DEFAULT_CONTENT_LOCALE,
+  DOCUMENT_CONTENT_TRANSLATIONS_FEATURE,
+  type DocumentContentLocaleMode,
+} from "@/ui/lib/document-content-translations";
+import {
+  buildEslogOptions,
+  buildFinaOptions,
+  buildFursOptions,
+  buildGermanEInvoicingOptions,
+  buildUjpOptions,
+  type FiscalizationOperatorOverride,
+} from "@/ui/lib/fiscalization-options";
 import {
   normalizePtDocumentInput,
   type PtDocumentInputForm,
   ptDocumentInputFormSchema,
 } from "@/ui/lib/pt-document-input";
+import { invalidateRevenueRecognitionQueries } from "@/ui/lib/revenue-recognition-cache";
 import { normalizeLineItemDiscountsForForm } from "@/ui/lib/schemas/shared";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
 import { cn } from "@/ui/lib/utils";
 import { useEntities } from "@/ui/providers/entities-context";
 import { useFormFooterRegistration } from "@/ui/providers/form-footer-context";
+import { useWhiteLabel } from "@/ui/providers/white-label-provider";
 import { CUSTOMERS_CACHE_KEY } from "../../customers/customers.hooks";
 import { BusinessUnitSelectField } from "../../documents/create/business-unit-select-field";
 import {
@@ -47,7 +64,10 @@ import {
   DocumentSignatureField,
   DocumentTaxClauseField,
 } from "../../documents/create/document-details-section";
-import { withRequiredDocumentItemFields } from "../../documents/create/document-item-validation";
+import {
+  documentItemValidationMessages,
+  withRequiredDocumentItemFields,
+} from "../../documents/create/document-item-validation";
 import { DocumentItemsSection, type PriceModesMap } from "../../documents/create/document-items-section";
 import { DocumentRecipientSection } from "../../documents/create/document-recipient-section";
 import { MarkAsPaidSection } from "../../documents/create/mark-as-paid-section";
@@ -67,6 +87,16 @@ import {
 } from "../../documents/create/preserved-expected-total";
 import { useDocumentCustomerForm } from "../../documents/create/use-document-customer-form";
 import type { DocumentTypes } from "../../documents/types";
+import { EslogSetupErrorsDialog } from "../../invoices/create/eslog-setup-errors-dialog";
+import {
+  buildEslogFieldErrors,
+  getEntityErrors,
+  getFormFieldErrors,
+  hasCustomerFieldErrors,
+  mergeFieldErrors,
+  translateEslogValidationError,
+  validateEslogForm,
+} from "../../invoices/create/eslog-validation";
 import invoiceDe from "../../invoices/create/locales/de";
 import invoiceEs from "../../invoices/create/locales/es";
 import invoiceFr from "../../invoices/create/locales/fr";
@@ -108,6 +138,9 @@ const createCreditNoteFormSchema = withCreditNoteIssueDateValidation(
   ),
 );
 
+const CREDIT_NOTE_POSITIVE_ITEM_FIELDS = ["quantity", "price", "gross_price"] as const;
+const HEADER_ACTION_CLEARED_SIGNATURE = "__cleared__";
+
 function isSameCalendarDate(left: string | Date | undefined, right: string | Date): boolean {
   if (!left) return false;
 
@@ -140,6 +173,7 @@ type CreateCreditNoteFormProps = {
   onError?: (error: unknown) => void;
   onChange?: (data: CreditNotePreviewPayload) => void;
   onAddNewTax?: () => void;
+  onFindEstimatedTax?: () => Promise<Tax | null | undefined> | Tax | null | undefined;
   onHeaderActionChange?: (action: ReactNode | null) => void;
   /** Initial values for form fields (used for document duplication) */
   initialValues?: Partial<CreateCreditNoteRequest> & { business_unit_id?: string | null };
@@ -164,6 +198,7 @@ export default function CreateCreditNoteForm({
   onError,
   onChange,
   onAddNewTax,
+  onFindEstimatedTax,
   onHeaderActionChange,
   initialValues,
   businessUnits = [],
@@ -188,8 +223,16 @@ export default function CreateCreditNoteForm({
   });
 
   const { activeEntity } = useEntities();
+  const countryCapabilities = useMemo(() => getEntityCountryCapabilities(activeEntity), [activeEntity]);
+  const whiteLabel = useWhiteLabel();
   const queryClient = useQueryClient();
+  const invalidateRevenueRecognitionReports = useCallback(() => {
+    invalidateRevenueRecognitionQueries(queryClient);
+  }, [queryClient]);
   const isEditMode = mode === "edit";
+  const translationsFeatureEnabled = whiteLabel.isFeatureVisible(DOCUMENT_CONTENT_TRANSLATIONS_FEATURE);
+  const defaultContentLocale = activeEntity?.locale || "en-US";
+  const [contentLocale, setContentLocale] = useState<DocumentContentLocaleMode>(DEFAULT_CONTENT_LOCALE);
   const initialBusinessUnit = useMemo(
     () => businessUnits.find((unit) => unit.id === ((initialValues as any)?.business_unit_id ?? null)) ?? null,
     [businessUnits, initialValues],
@@ -204,6 +247,28 @@ export default function CreateCreditNoteForm({
   // ============================================================================
   const furs = usePremiseSelection({ entityId, type: "furs" });
   const fina = usePremiseSelection({ entityId, type: "fina" });
+  const initialEslogEnabled = getInitialEslogValidationEnabled(isEditMode, (initialValues as any)?.eslog);
+  const eslog = useEslogValidation(activeEntity, initialEslogEnabled);
+  const eslogEntityErrorsRef = useRef(eslog.entityErrors);
+  eslogEntityErrorsRef.current = eslog.entityErrors;
+  const [eslogSetupDialogOpen, setEslogSetupDialogOpen] = useState(false);
+  const isDraftSubmitRef = useRef(false);
+  const eslogResolverStateRef = useRef({
+    activeEntity,
+    isEnabled: eslog.isEnabled === true,
+    requiresUjpValidation: eslog.requiresUjpValidation,
+    isEditMode,
+    translate: t,
+    setEntityErrors: eslog.setEntityErrors,
+  });
+  eslogResolverStateRef.current = {
+    activeEntity,
+    isEnabled: eslog.isEnabled === true,
+    requiresUjpValidation: eslog.requiresUjpValidation,
+    isEditMode,
+    translate: t,
+    setEntityErrors: eslog.setEntityErrors,
+  };
   const [skipFiscalization, setSkipFiscalization] = useState(false);
 
   // UI-only state (not part of API schema)
@@ -263,9 +328,47 @@ export default function CreateCreditNoteForm({
   const defaultFooter = initialDocumentDefaults.footer;
   const defaultSignature = initialDocumentDefaults.signature;
 
+  const baseResolver = useMemo(
+    () => zodResolver(createCreditNoteFormSchema) as Resolver<CreateCreditNoteFormValues>,
+    [],
+  );
+  const resolver = useMemo<Resolver<CreateCreditNoteFormValues>>(
+    () => async (values, context, options) => {
+      const result = await baseResolver(values, context, options);
+      const resolverState = eslogResolverStateRef.current;
+      const shouldValidateEslog = !isDraftSubmitRef.current && resolverState.isEnabled;
+
+      if (!shouldValidateEslog) {
+        eslogEntityErrorsRef.current = [];
+        resolverState.setEntityErrors([]);
+        return result;
+      }
+
+      const validationErrors = validateEslogForm(values as any, resolverState.activeEntity, {
+        requireUjpRecipientRouting: resolverState.requiresUjpValidation,
+      });
+      const entityErrors = getEntityErrors(validationErrors);
+      eslogEntityErrorsRef.current = entityErrors;
+      resolverState.setEntityErrors(entityErrors);
+
+      const fieldErrors = getFormFieldErrors(validationErrors);
+      if (fieldErrors.length === 0) {
+        return result;
+      }
+
+      return {
+        values: {},
+        errors: mergeFieldErrors(
+          result.errors,
+          buildEslogFieldErrors<CreateCreditNoteFormValues>(fieldErrors, resolverState.translate),
+        ),
+      };
+    },
+    [baseResolver],
+  );
+
   const form = useForm<CreateCreditNoteFormValues>({
-    // Cast resolver to accept extended form type (includes UI-only fields)
-    resolver: zodResolver(createCreditNoteFormSchema) as Resolver<CreateCreditNoteFormValues>,
+    resolver,
     defaultValues: {
       number: (initialValues as any)?.number ?? "",
       business_unit_id: (initialValues as any)?.business_unit_id ?? null,
@@ -279,6 +382,7 @@ export default function CreateCreditNoteForm({
             type: item.type ?? undefined,
             name: item.name || "",
             description: item.description || "",
+            translations: item.translations ?? {},
             ...(item.type !== "separator"
               ? {
                   item_id: item.item_id ?? undefined,
@@ -286,6 +390,8 @@ export default function CreateCreditNoteForm({
                   price: item.gross_price ?? item.price,
                   gross_price: item.gross_price ?? undefined,
                   unit: item.unit ?? undefined,
+                  financial_category_id: item.financial_category_id ?? undefined,
+                  e_invoicing: item.e_invoicing ?? undefined,
                   classification: item.classification ?? undefined,
                   taxes: item.taxes || [],
                   discounts: normalizeLineItemDiscountsForForm(item.discounts),
@@ -297,6 +403,7 @@ export default function CreateCreditNoteForm({
             {
               name: "",
               description: "",
+              translations: {},
               quantity: 1,
               price: undefined,
               taxes: [],
@@ -313,9 +420,20 @@ export default function CreateCreditNoteForm({
       payment_terms: initialValues?.payment_terms ?? (isEditMode ? "" : defaultPaymentTerms),
       footer: (initialValues as any)?.footer ?? (isEditMode ? "" : defaultFooter),
       signature: (initialValues as any)?.signature ?? (isEditMode ? "" : defaultSignature),
+      translations:
+        (initialValues as any)?.translations ??
+        (isEditMode
+          ? {}
+          : {
+              note: initialDocumentDefaults.translations.note,
+              payment_terms: initialDocumentDefaults.translations.payment_terms,
+              footer: initialDocumentDefaults.translations.footer,
+              signature: initialDocumentDefaults.translations.signature,
+            }),
       pt: ((initialValues as any)?.pt as PtDocumentInputForm | undefined) ?? undefined,
     },
   });
+  const documentTranslations = useWatch({ control: form.control, name: "translations" });
   const selectedBusinessUnitId = useWatch({ control: form.control, name: "business_unit_id" as any });
   const selectedBusinessUnit = useMemo(
     () => businessUnits.find((unit) => unit.id === selectedBusinessUnitId) ?? null,
@@ -448,25 +566,42 @@ export default function CreateCreditNoteForm({
     ? false
     : furs.isLoading || !furs.isSelectionReady || fina.isLoading || !fina.isSelectionReady || isNextNumberLoading;
 
+  const headerActionSignatureRef = useRef<string | null>(null);
   useEffect(() => {
     if (!onHeaderActionChange) return;
     if (isEditMode) {
+      if (headerActionSignatureRef.current === HEADER_ACTION_CLEARED_SIGNATURE) return;
+      headerActionSignatureRef.current = HEADER_ACTION_CLEARED_SIGNATURE;
       onHeaderActionChange(null);
       return;
     }
 
     if (furs.isLoading || fina.isLoading) {
+      if (headerActionSignatureRef.current === HEADER_ACTION_CLEARED_SIGNATURE) return;
+      headerActionSignatureRef.current = HEADER_ACTION_CLEARED_SIGNATURE;
       onHeaderActionChange(null);
       return;
     }
 
     const showFursToggle = furs.isEnabled && furs.hasPremises;
     if (!showFursToggle) {
+      if (headerActionSignatureRef.current === HEADER_ACTION_CLEARED_SIGNATURE) return;
+      headerActionSignatureRef.current = HEADER_ACTION_CLEARED_SIGNATURE;
       onHeaderActionChange(null);
       return;
     }
 
     const isFursChecked = !skipFiscalization;
+    const headerActionSignature = JSON.stringify({
+      showFursToggle,
+      isFursChecked,
+      fiscalizationLabel: t("Fiscally verify"),
+      fiscalizationEnabledDescription: t("Click to skip fiscalization for this credit note"),
+      fiscalizationDisabledDescription: t("Click to enable fiscalization"),
+    });
+
+    if (headerActionSignatureRef.current === headerActionSignature) return;
+    headerActionSignatureRef.current = headerActionSignature;
 
     onHeaderActionChange(
       <TooltipProvider>
@@ -535,12 +670,24 @@ export default function CreateCreditNoteForm({
   const {
     originalCustomer,
     showCustomerForm,
+    setShowCustomerForm,
     shouldFocusName,
     selectedCustomerId,
     initialCustomerName,
     handleCustomerSelect,
     handleCustomerClear,
+    handleCustomerEdit,
   } = useDocumentCustomerForm(form);
+
+  useEffect(() => {
+    if (!eslog.requiresUjpValidation || showCustomerForm) {
+      return;
+    }
+
+    if (hasCustomerFieldErrors(form.formState.errors as any)) {
+      setShowCustomerForm(true);
+    }
+  }, [eslog.requiresUjpValidation, form.formState.errors, setShowCustomerForm, showCustomerForm]);
 
   // Pre-fill credit note number from preview
   useEffect(() => {
@@ -574,6 +721,7 @@ export default function CreateCreditNoteForm({
       if (data.customer_id) {
         queryClient.invalidateQueries({ queryKey: [CUSTOMERS_CACHE_KEY] });
       }
+      invalidateRevenueRecognitionReports();
       onSuccess?.(data);
     },
     onError,
@@ -586,33 +734,89 @@ export default function CreateCreditNoteForm({
       if (data.customer_id) {
         queryClient.invalidateQueries({ queryKey: [CUSTOMERS_CACHE_KEY] });
       }
+      invalidateRevenueRecognitionReports();
       onSuccess?.(data);
     },
     onError,
   });
   const { mutate: updateCreditNote, isPending: isUpdatePending } = useUpdateCreditNote({
     entityId,
-    onSuccess,
+    onSuccess: (data) => {
+      invalidateRevenueRecognitionReports();
+      onSuccess?.(data);
+    },
     onError,
   });
+
+  const setPositiveCreditNoteItemErrors = useCallback(
+    (values: CreateCreditNoteFormValues) => {
+      let isValid = true;
+
+      values.items?.forEach((item: any, index: number) => {
+        if (item?.type === "separator") return;
+
+        for (const field of CREDIT_NOTE_POSITIVE_ITEM_FIELDS) {
+          const amount = item?.[field];
+          if (typeof amount === "number" && !Number.isNaN(amount) && amount < 0) {
+            isValid = false;
+            form.setError(`items.${index}.${field}` as any, {
+              type: "validate",
+              message: documentItemValidationMessages.positiveCreditNoteValues,
+            });
+          }
+        }
+      });
+
+      return isValid;
+    },
+    [form],
+  );
 
   // Shared submit logic for both regular save and save as draft
   const submitCreditNote = useCallback(
     (values: CreateCreditNoteFormValues, isDraft: boolean) => {
+      if (!isDraft && eslog.isEnabled && eslogEntityErrorsRef.current.length > 0) {
+        setEslogSetupDialogOpen(true);
+        return;
+      }
+
+      const submissionValues: CreateCreditNoteFormValues = eslog.isEnabled
+        ? { ...values, calculation_mode: "b2b_standard" as const }
+        : values;
+      const eslogOptions = buildEslogOptions({
+        isDraft,
+        isAvailable: eslog.isAvailable,
+        isEnabled: eslog.isEnabled,
+      });
+      const ujpOptions = buildUjpOptions({
+        isAvailable: eslog.isAvailable,
+        isEnabled: eslog.isEnabled,
+        requiresUjpValidation: eslog.requiresUjpValidation,
+      });
+
       if (isEditMode) {
         if (!documentId) {
           throw new Error("Credit note edit mode requires a documentId");
         }
 
-        const updatePayload = prepareCreditNoteUpdateSubmission(values as any, {
+        const updatePayload = prepareCreditNoteUpdateSubmission(submissionValues as any, {
           originalCustomer,
           wasCustomerFormShown: showCustomerForm,
           priceModes: priceModesRef.current,
+          eslog: eslogOptions,
+          ujp: ujpOptions,
         }) as UpdateCreditNote;
 
         updateCreditNote({ id: documentId, data: updatePayload });
         return;
       }
+
+      const germanEInvoicingOptions = buildGermanEInvoicingOptions({
+        isEditMode,
+        isAvailable: countryCapabilities.showGermanEInvoicingExports,
+        xrechnungEnabled: countryCapabilities.showXRechnungExport,
+        zugferdEnabled: countryCapabilities.showZugferdExport,
+      });
 
       // Build FURS options (skip for drafts; user can also skip fiscalization explicitly)
       const fursOptions = buildFursOptions({
@@ -645,19 +849,27 @@ export default function CreateCreditNoteForm({
         }
       }
 
-      const payload = prepareCreditNoteSubmission(values, {
+      const payload = prepareCreditNoteSubmission(submissionValues, {
         originalCustomer,
         wasCustomerFormShown: showCustomerForm,
         markAsPaid: isDraft ? false : markAsPaid,
         payments: serializePaymentRows(paymentRows, paymentDocumentTotal),
         priceModes: priceModesRef.current,
         isDraft,
+        eslog: eslogOptions,
+        ujp: ujpOptions,
+        germanEInvoicing: germanEInvoicingOptions,
       });
-      const preservedExpectedTotalWithTax = getPreservedExpectedTotalWithTax(values);
+      const preservedExpectedTotalWithTax = getPreservedExpectedTotalWithTax(submissionValues);
       if (preservedExpectedTotalWithTax !== undefined) {
         (payload as any).expected_total_with_tax = preservedExpectedTotalWithTax;
       } else {
         delete (payload as any).expected_total_with_tax;
+      }
+
+      const shouldUseCustomCreate = Boolean(customCreateTemplate && financialInputsMatchSource(values));
+      if (!shouldUseCustomCreate && !setPositiveCreditNoteItemErrors(values)) {
+        return;
       }
 
       // Add FURS data to payload
@@ -670,7 +882,7 @@ export default function CreateCreditNoteForm({
         (payload as any).fina = finaOptions;
       }
 
-      if (customCreateTemplate && financialInputsMatchSource(values)) {
+      if (shouldUseCustomCreate) {
         delete (payload as any).expected_total_with_tax;
         createCustomCreditNote(applyCustomCreateTemplate(payload as any, customCreateTemplate));
       } else {
@@ -680,7 +892,11 @@ export default function CreateCreditNoteForm({
     [
       createCreditNote,
       createCustomCreditNote,
+      countryCapabilities.showGermanEInvoicingExports,
+      countryCapabilities.showXRechnungExport,
+      countryCapabilities.showZugferdExport,
       documentId,
+      eslog,
       fina,
       furs,
       isEditMode,
@@ -688,6 +904,7 @@ export default function CreateCreditNoteForm({
       originalCustomer,
       paymentDocumentTotal,
       paymentRows,
+      setPositiveCreditNoteItemErrors,
       showCustomerForm,
       skipFiscalization,
       operatorPrefill,
@@ -702,6 +919,7 @@ export default function CreateCreditNoteForm({
   // Handle save as draft
   const handleSaveAsDraft = useCallback(async () => {
     setIsDraftPending(true);
+    isDraftSubmitRef.current = true;
     try {
       const isValid = await form.trigger();
       if (isValid) {
@@ -709,6 +927,7 @@ export default function CreateCreditNoteForm({
         submitCreditNote(values, true);
       }
     } finally {
+      isDraftSubmitRef.current = false;
       setIsDraftPending(false);
     }
   }, [form, submitCreditNote]);
@@ -745,6 +964,21 @@ export default function CreateCreditNoteForm({
           shouldValidate: false,
         });
       }
+
+      const currentTranslations = (form.getValues("translations") as any)?.[field] ?? {};
+      const previousTranslations = previousDefaults.translations[field] ?? {};
+      const nextTranslations = derivedDocumentDefaults.translations[field] ?? {};
+      const matchesPreviousTranslations = JSON.stringify(currentTranslations) === JSON.stringify(previousTranslations);
+      const isEmptyTranslations = Object.keys(currentTranslations).length === 0;
+
+      if (matchesPreviousTranslations || isEmptyTranslations) {
+        form.setValue(`translations.${field}` as any, nextTranslations, {
+          shouldDirty:
+            matchesPreviousTranslations && JSON.stringify(previousTranslations) !== JSON.stringify(nextTranslations),
+          shouldTouch: false,
+          shouldValidate: false,
+        });
+      }
     }
 
     appliedDerivedDefaultsRef.current = derivedDocumentDefaults;
@@ -763,8 +997,10 @@ export default function CreateCreditNoteForm({
         customer: values.customer,
         items: prepareDocumentItems(values.items, priceModesRef.current),
         currency_code: values.currency_code,
+        calculation_mode: eslog.isEnabled ? "b2b_standard" : values.calculation_mode,
         reference: values.reference,
         note: values.note,
+        translations: values.translations,
         tax_clause: values.tax_clause,
         payment_terms: values.payment_terms,
         signature: values.signature,
@@ -784,7 +1020,7 @@ export default function CreateCreditNoteForm({
 
       return previewPayload;
     },
-    [customCreateTemplate, financialInputsMatchSource, getPreservedExpectedTotalWithTax],
+    [customCreateTemplate, eslog.isEnabled, financialInputsMatchSource, getPreservedExpectedTotalWithTax],
   );
 
   const emitPreviewPayload = useCallback((payload: CreditNotePreviewPayload) => {
@@ -808,6 +1044,11 @@ export default function CreateCreditNoteForm({
 
   const onSubmit = (values: CreateCreditNoteFormValues) => {
     submitCreditNote(values, false);
+  };
+  const onInvalidSubmit = (errors: any) => {
+    if (eslog.requiresUjpValidation && hasCustomerFieldErrors(errors)) {
+      setShowCustomerForm(true);
+    }
   };
 
   // Show skeleton while loading
@@ -862,17 +1103,46 @@ export default function CreateCreditNoteForm({
 
   return (
     <Form {...form}>
-      <form id="create-credit-note-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+      <form id="create-credit-note-form" onSubmit={form.handleSubmit(onSubmit, onInvalidSubmit)} className="space-y-8">
+        <EslogSetupErrorsDialog
+          open={eslogSetupDialogOpen}
+          onOpenChange={setEslogSetupDialogOpen}
+          errors={eslog.entityErrors}
+          t={t}
+        />
+
+        {eslog.entityErrors.length > 0 && (
+          <Alert variant="destructive" data-form-error-summary="true">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>{t("Missing required details")}</AlertTitle>
+            <AlertDescription>
+              <p className="mb-2">{t("The following e-SLOG details need to be updated:")}</p>
+              <ul className="list-disc space-y-1 pl-4">
+                {eslog.entityErrors.map((error) => (
+                  <li key={error.field} className="text-sm">
+                    {translateEslogValidationError(error, t)}
+                  </li>
+                ))}
+              </ul>
+            </AlertDescription>
+          </Alert>
+        )}
+
         <div className="flex w-full flex-col md:flex-row md:gap-6">
           <DocumentRecipientSection
             control={form.control}
             entityId={entityId}
             onCustomerSelect={handleCustomerSelect}
             onCustomerClear={handleCustomerClear}
+            onCustomerEdit={handleCustomerEdit}
             showCustomerForm={showCustomerForm}
             shouldFocusName={shouldFocusName}
             selectedCustomerId={selectedCustomerId}
+            entityCountryCode={activeEntity?.country_code}
             initialCustomerName={initialCustomerName}
+            showBusinessRecipientFields={eslog.isEnabled === true && eslog.requiresUjpValidation}
+            showUjpRoutingFields={eslog.isEnabled === true && eslog.requiresUjpValidation}
+            showEInvoicingBuyerReference={countryCapabilities.showGermanEInvoicingExports}
             t={t}
             locale={locale}
           />
@@ -970,6 +1240,7 @@ export default function CreateCreditNoteForm({
           entityId={entityId}
           currencyCode={activeEntity?.currency_code ?? undefined}
           onAddNewTax={onAddNewTax}
+          onFindEstimatedTax={onFindEstimatedTax}
           t={t}
           locale={locale}
           isTaxSubject={activeEntity?.is_tax_subject ?? false}
@@ -977,6 +1248,10 @@ export default function CreateCreditNoteForm({
           priceModesRef={priceModesRef}
           initialPriceModes={initialPriceModes}
           onItemsStateChange={emitCurrentPreviewPayload}
+          translationsEnabled={translationsFeatureEnabled}
+          contentLocale={contentLocale}
+          defaultContentLocale={defaultContentLocale}
+          onContentLocaleChange={setContentLocale}
           taxesDisabled={reverseChargeApplies}
           taxesDisabledMessage={
             reverseChargeApplies ? t("Reverse charge - tax exempt EU B2B sale") : viesWarning ? viesWarning : undefined
@@ -986,6 +1261,7 @@ export default function CreateCreditNoteForm({
         <DocumentNoteField
           control={form.control}
           t={t}
+          uiLocale={locale}
           entity={activeEntity}
           document={{
             number: formValues.number,
@@ -993,11 +1269,20 @@ export default function CreateCreditNoteForm({
             currency_code: formValues.currency_code,
             customer: formValues.customer as any,
           }}
+          translationsEnabled={translationsFeatureEnabled}
+          activeContentLocale={contentLocale}
+          defaultContentLocale={defaultContentLocale}
+          fieldTranslations={(documentTranslations as any)?.note}
+          onContentLocaleChange={setContentLocale}
+          onFieldTranslationsChange={(next) =>
+            form.setValue("translations", { ...(form.getValues("translations") ?? {}), note: next })
+          }
         />
 
         <DocumentTaxClauseField
           control={form.control}
           t={t}
+          uiLocale={locale}
           entity={activeEntity}
           document={{
             number: formValues.number,
@@ -1008,11 +1293,20 @@ export default function CreateCreditNoteForm({
           transactionType={transactionType}
           isTransactionTypeFetching={isViesFetching}
           isFinaNonDomestic={isFinaNonDomestic}
+          translationsEnabled={translationsFeatureEnabled}
+          activeContentLocale={contentLocale}
+          defaultContentLocale={defaultContentLocale}
+          fieldTranslations={(documentTranslations as any)?.tax_clause}
+          onContentLocaleChange={setContentLocale}
+          onFieldTranslationsChange={(next) =>
+            form.setValue("translations", { ...(form.getValues("translations") ?? {}), tax_clause: next })
+          }
         />
 
         <DocumentPaymentTermsField
           control={form.control}
           t={t}
+          uiLocale={locale}
           entity={activeEntity}
           document={{
             number: formValues.number,
@@ -1020,11 +1314,20 @@ export default function CreateCreditNoteForm({
             currency_code: formValues.currency_code,
             customer: formValues.customer as any,
           }}
+          translationsEnabled={translationsFeatureEnabled}
+          activeContentLocale={contentLocale}
+          defaultContentLocale={defaultContentLocale}
+          fieldTranslations={(documentTranslations as any)?.payment_terms}
+          onContentLocaleChange={setContentLocale}
+          onFieldTranslationsChange={(next) =>
+            form.setValue("translations", { ...(form.getValues("translations") ?? {}), payment_terms: next })
+          }
         />
 
         <DocumentSignatureField
           control={form.control}
           t={t}
+          uiLocale={locale}
           entity={activeEntity}
           document={{
             number: formValues.number,
@@ -1032,11 +1335,20 @@ export default function CreateCreditNoteForm({
             currency_code: formValues.currency_code,
             customer: formValues.customer as any,
           }}
+          translationsEnabled={translationsFeatureEnabled}
+          activeContentLocale={contentLocale}
+          defaultContentLocale={defaultContentLocale}
+          fieldTranslations={(documentTranslations as any)?.signature}
+          onContentLocaleChange={setContentLocale}
+          onFieldTranslationsChange={(next) =>
+            form.setValue("translations", { ...(form.getValues("translations") ?? {}), signature: next })
+          }
         />
 
         <DocumentFooterField
           control={form.control}
           t={t}
+          uiLocale={locale}
           entity={activeEntity}
           document={{
             number: formValues.number,
@@ -1044,6 +1356,14 @@ export default function CreateCreditNoteForm({
             currency_code: formValues.currency_code,
             customer: formValues.customer as any,
           }}
+          translationsEnabled={translationsFeatureEnabled}
+          activeContentLocale={contentLocale}
+          defaultContentLocale={defaultContentLocale}
+          fieldTranslations={(documentTranslations as any)?.footer}
+          onContentLocaleChange={setContentLocale}
+          onFieldTranslationsChange={(next) =>
+            form.setValue("translations", { ...(form.getValues("translations") ?? {}), footer: next })
+          }
         />
       </form>
     </Form>

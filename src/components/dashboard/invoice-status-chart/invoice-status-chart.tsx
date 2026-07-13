@@ -141,7 +141,7 @@ export function InvoiceStatusChart(props: InvoiceStatusChartProps) {
         <CardTitle>{t("Invoice Status")}</CardTitle>
         <CardDescription>{t("Breakdown of invoices by payment status")}</CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="overflow-hidden">
         {hasData ? chartContent : <ChartEmptyState label={t("No data available")}>{chartContent}</ChartEmptyState>}
       </CardContent>
     </Card>

@@ -15,6 +15,7 @@ export default {
   "Downloading...": "Preuzimanje...",
   Duplicate: "Dupliciraj",
   "Send Email": "Pošalji e-mail",
+  "Send reminder": "Pošalji podsjetnik",
   Invoice: "Račun",
   "Failed to download PDF": "Preuzimanje PDF-a nije uspjelo",
   // Filter translations

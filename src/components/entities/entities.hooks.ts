@@ -24,7 +24,19 @@ const { useCreateResource: useCreateEntity, useDeleteResource: useDeleteEntity }
   ENTITIES_CACHE_KEY,
 );
 
-// Custom update hook because entities API uses "patchEntity" with different param naming
+/**
+ * Custom update hook because entities API uses "patchEntity" with different param naming.
+ *
+ * Settings contract: the server merges `data.settings` per TOP-LEVEL key —
+ * omitted keys keep their current value, so callers must send only the keys
+ * they own, never a spread of the cached `entity.settings` (a stale echo can
+ * revert keys owned by other surfaces). Two keys merge one level deeper on
+ * the server: `translations` (per namespace) and `unit_number_sequence_starts`
+ * (per document type and business unit). Protected keys (furs, fina, slovenia,
+ * e_invoicing, revenue_recognition) are managed by dedicated endpoints and are
+ * ignored by the API if sent here — the generated PatchEntityBody type
+ * excludes them.
+ */
 type UpdateEntityOptions = {
   entityId?: string | null;
   accountId?: string | null;

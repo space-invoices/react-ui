@@ -76,6 +76,7 @@ export function toCustomCreateItem(item: any): any {
     gross_price: item?.gross_price ?? undefined,
     quantity: item?.quantity ?? undefined,
     unit: item?.unit ?? undefined,
+    e_invoicing: item?.e_invoicing ?? undefined,
     taxes: sanitizeItemTaxes(item?.taxes),
     discounts: sanitizeDiscounts(item?.discounts),
     total: item?.total ?? undefined,
@@ -139,15 +140,38 @@ export function buildCustomCreateTemplateFromDocument(document: any): CustomCrea
   };
 }
 
+function applyCustomCreateItemTotals(payloadItems: any[] | undefined, templateItems: any[]): any[] {
+  if (!payloadItems) return templateItems;
+
+  return payloadItems.map((item, index) => {
+    const templateItem = templateItems[index];
+    if (!templateItem) return item;
+
+    if (item?.type === "separator" || templateItem?.type === "separator") {
+      return {
+        ...templateItem,
+        ...item,
+        type: item?.type ?? templateItem?.type,
+      };
+    }
+
+    return {
+      ...item,
+      total: templateItem.total ?? item?.total,
+      total_with_tax: templateItem.total_with_tax ?? item?.total_with_tax,
+    };
+  });
+}
+
 export function applyCustomCreateTemplate<T extends Record<string, any>>(
   payload: T,
   template: CustomCreateTemplate,
 ): T {
-  const { calculation_mode: _calculationMode, ...restPayload } = payload;
+  const { calculation_mode: _calculationMode, items, ...restPayload } = payload;
 
   return {
     ...restPayload,
-    items: template.items,
+    items: applyCustomCreateItemTotals(items, template.items),
     total: template.total,
     total_with_tax: template.total_with_tax,
     total_discount: template.total_discount ?? 0,

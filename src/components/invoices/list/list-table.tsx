@@ -3,6 +3,7 @@ import { invoices } from "@spaceinvoices/js-sdk";
 import { AlertTriangle } from "lucide-react";
 import type { ReactNode } from "react";
 import { useCallback, useMemo, useState } from "react";
+import { CustomerLinkCell } from "@/ui/components/documents/list/customer-link-cell";
 import { DataTable } from "@/ui/components/table/data-table";
 import { FormattedDate } from "@/ui/components/table/date-cell";
 import { useTableFetch } from "@/ui/components/table/hooks/use-table-fetch";
@@ -18,22 +19,31 @@ import type {
 import { Badge } from "@/ui/components/ui/badge";
 import { Button } from "@/ui/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/ui/components/ui/tooltip";
+import { isApiDateOnlyBefore } from "@/ui/lib/date-only";
 import { getDisplayDocumentNumber } from "@/ui/lib/document-display";
 import { getEslogSelectionState } from "@/ui/lib/eslog-export";
 import { getFiscalizationFailureType } from "@/ui/lib/fiscalization";
 import { createTranslation } from "@/ui/lib/translation";
 
 import InvoiceListRowActions from "./list-row-actions";
+import bg from "./locales/bg";
+import cs from "./locales/cs";
 import de from "./locales/de";
 import en from "./locales/en";
 import es from "./locales/es";
+import et from "./locales/et";
+import fi from "./locales/fi";
 import fr from "./locales/fr";
 import hr from "./locales/hr";
+import is from "./locales/is";
 import it from "./locales/it";
+import nb from "./locales/nb";
 import nl from "./locales/nl";
 import pl from "./locales/pl";
 import pt from "./locales/pt";
+import sk from "./locales/sk";
 import sl from "./locales/sl";
+import sv from "./locales/sv";
 
 export const invoiceListTranslations = withTableTranslations({
   en,
@@ -46,6 +56,14 @@ export const invoiceListTranslations = withTableTranslations({
   nl,
   pl,
   hr,
+  sv,
+  fi,
+  et,
+  bg,
+  cs,
+  sk,
+  nb,
+  is,
 } as const);
 
 type InvoiceListTableProps = {
@@ -73,6 +91,7 @@ type InvoiceListTableProps = {
   isVoiding?: boolean;
   onCreateNew?: () => void;
   allowSendEmail?: boolean;
+  allowSendPaymentReminder?: boolean;
   onEmailVerificationRequired?: () => void | Promise<void>;
   showSearchToolbar?: boolean;
   showPagination?: boolean;
@@ -80,6 +99,8 @@ type InvoiceListTableProps = {
   bottomPaddingClassName?: string;
   emptyState?: ReactNode;
   hiddenColumnIds?: string[];
+  getCustomerHref?: (customerId: string, invoice: Invoice) => string;
+  onCustomerClick?: (customerId: string, invoice: Invoice) => void;
 } & ListTableProps<Invoice>;
 
 export default function InvoiceListTable({
@@ -107,6 +128,7 @@ export default function InvoiceListTable({
   isVoiding,
   onCreateNew,
   allowSendEmail = true,
+  allowSendPaymentReminder = true,
   onEmailVerificationRequired,
   showSearchToolbar,
   showPagination,
@@ -114,6 +136,8 @@ export default function InvoiceListTable({
   bottomPaddingClassName,
   emptyState,
   hiddenColumnIds,
+  getCustomerHref,
+  onCustomerClick,
   ...i18nProps
 }: InvoiceListTableProps) {
   const t = createTranslation({
@@ -247,14 +271,6 @@ export default function InvoiceListTable({
               <Button variant="link" className="cursor-pointer py-0 underline" onClick={() => onRowClick?.(invoice)}>
                 {getDisplayDocumentNumber(invoice as Invoice & { is_draft?: boolean }, t)}
               </Button>
-              {(invoice as any).is_draft && (
-                <Badge
-                  variant="outline"
-                  className="border-amber-500 bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-400"
-                >
-                  {t("Draft")}
-                </Badge>
-              )}
               {showWarning && (
                 <Tooltip>
                   <TooltipTrigger>
@@ -272,7 +288,15 @@ export default function InvoiceListTable({
       {
         id: "customer",
         header: t("Customer"),
-        cell: (invoice) => invoice.customer?.name ?? "-",
+        cell: (invoice) => (
+          <CustomerLinkCell
+            item={invoice}
+            customerId={invoice.customer_id}
+            customerName={invoice.customer?.name}
+            getCustomerHref={getCustomerHref}
+            onCustomerClick={onCustomerClick}
+          />
+        ),
       },
       {
         id: "date",
@@ -323,6 +347,7 @@ export default function InvoiceListTable({
             onVoid={onVoid}
             isVoiding={isVoiding}
             allowSendEmail={allowSendEmail}
+            allowSendPaymentReminder={allowSendPaymentReminder}
             onEmailVerificationRequired={onEmailVerificationRequired}
             t={t}
             locale={i18nProps.locale}
@@ -342,9 +367,12 @@ export default function InvoiceListTable({
       onVoid,
       isVoiding,
       allowSendEmail,
+      allowSendPaymentReminder,
       onEmailVerificationRequired,
       i18nProps.locale,
       fiscalizationFeatures,
+      getCustomerHref,
+      onCustomerClick,
     ],
   );
 
@@ -387,15 +415,23 @@ export default function InvoiceListTable({
 
 /** Status badge for invoices */
 export function InvoiceStatusBadge({ invoice, t }: { invoice: Invoice; t: (key: string) => string }) {
+  if ((invoice as any).is_draft) {
+    return (
+      <Badge
+        variant="outline"
+        className="border-amber-500 bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-400"
+      >
+        {t("Draft")}
+      </Badge>
+    );
+  }
+
   if ((invoice as any).voided_at) {
     return (
       <Badge variant="outline" className="border-red-500 bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-400">
         {t("Voided")}
       </Badge>
     );
-  }
-  if ((invoice as any).is_draft) {
-    return null;
   }
   if (invoice.paid_in_full) {
     return (
@@ -407,7 +443,7 @@ export function InvoiceStatusBadge({ invoice, t }: { invoice: Invoice; t: (key: 
       </Badge>
     );
   }
-  if (invoice.date_due && new Date(invoice.date_due) < new Date()) {
+  if (isApiDateOnlyBefore(invoice.date_due)) {
     return (
       <Badge
         variant="outline"

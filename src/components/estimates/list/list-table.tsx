@@ -1,6 +1,7 @@
 import type { Estimate } from "@spaceinvoices/js-sdk";
 import { estimates } from "@spaceinvoices/js-sdk";
 import { useCallback, useMemo, useState } from "react";
+import { CustomerLinkCell } from "@/ui/components/documents/list/customer-link-cell";
 import { DataTable } from "@/ui/components/table/data-table";
 import { FormattedDate } from "@/ui/components/table/date-cell";
 import { useTableFetch } from "@/ui/components/table/hooks/use-table-fetch";
@@ -49,6 +50,7 @@ type EstimateListTableProps = {
   namespace?: string;
   locale?: string;
   translationLocale?: string;
+  cacheKey?: string;
   entityId?: string;
   onView?: (estimate: Estimate) => void;
   onDuplicate?: (estimate: Estimate) => void;
@@ -63,14 +65,23 @@ type EstimateListTableProps = {
   eslogExportDisabledTooltip?: string;
   onCopyToInvoice?: (documentIds: string[]) => void;
   onCreateNew?: () => void;
+  showSearchToolbar?: boolean;
+  showPagination?: boolean;
+  contentInsetClassName?: string;
+  bottomPaddingClassName?: string;
+  hiddenColumnIds?: string[];
+  getCustomerHref?: (customerId: string, estimate: Estimate) => string;
+  onCustomerClick?: (customerId: string, estimate: Estimate) => void;
 } & ListTableProps<Estimate>;
 
 export default function EstimateListTable({
   queryParams,
+  cacheKey = "estimates",
   onRowClick,
   onView,
   onDuplicate,
   onChangeParams,
+  disableUrlSync,
   entityId,
   onDownloadStart,
   onDownloadSuccess,
@@ -83,6 +94,13 @@ export default function EstimateListTable({
   eslogExportDisabledTooltip,
   onCopyToInvoice,
   onCreateNew,
+  showSearchToolbar,
+  showPagination,
+  contentInsetClassName,
+  bottomPaddingClassName,
+  hiddenColumnIds,
+  getCustomerHref,
+  onCustomerClick,
   ...i18nProps
 }: EstimateListTableProps) {
   const t = createTranslation({
@@ -222,21 +240,21 @@ export default function EstimateListTable({
             <Button variant="link" className="cursor-pointer py-0 underline" onClick={() => onRowClick?.(estimate)}>
               {getDisplayDocumentNumber(estimate as Estimate & { is_draft?: boolean }, t)}
             </Button>
-            {(estimate as any).is_draft && (
-              <Badge
-                variant="outline"
-                className="border-amber-500 bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-400"
-              >
-                {t("Draft")}
-              </Badge>
-            )}
           </div>
         ),
       },
       {
         id: "customer",
         header: t("Customer"),
-        cell: (estimate) => estimate.customer?.name ?? "-",
+        cell: (estimate) => (
+          <CustomerLinkCell
+            item={estimate}
+            customerId={estimate.customer_id}
+            customerName={estimate.customer?.name}
+            getCustomerHref={getCustomerHref}
+            onCustomerClick={onCustomerClick}
+          />
+        ),
       },
       {
         id: "date",
@@ -288,16 +306,37 @@ export default function EstimateListTable({
         ),
       },
     ],
-    [t, onRowClick, onView, onDuplicate, onDownloadStart, onDownloadSuccess, onDownloadError, i18nProps.locale],
+    [
+      t,
+      onRowClick,
+      onView,
+      onDuplicate,
+      onDownloadStart,
+      onDownloadSuccess,
+      onDownloadError,
+      i18nProps.locale,
+      getCustomerHref,
+      onCustomerClick,
+    ],
   );
+
+  const visibleColumns = useMemo(() => {
+    if (!hiddenColumnIds?.length) {
+      return columns;
+    }
+
+    const hidden = new Set(hiddenColumnIds);
+    return columns.filter((column) => !hidden.has(column.id));
+  }, [columns, hiddenColumnIds]);
 
   return (
     <DataTable
-      columns={columns}
+      columns={visibleColumns}
       queryParams={queryParams}
       onChangeParams={onChangeParams}
+      disableUrlSync={disableUrlSync}
       onFetch={handleFetch}
-      cacheKey="estimates"
+      cacheKey={cacheKey}
       resourceName="estimate"
       createNewLink={entityId ? `/app/${entityId}/documents/add/estimate` : undefined}
       onCreateNew={onCreateNew}
@@ -309,6 +348,10 @@ export default function EstimateListTable({
       selectedIds={selectedIds}
       onSelectionChange={setSelectedIds}
       selectionToolbar={selectionToolbar}
+      showSearchToolbar={showSearchToolbar}
+      showPagination={showPagination}
+      contentInsetClassName={contentInsetClassName}
+      bottomPaddingClassName={bottomPaddingClassName}
     />
   );
 }

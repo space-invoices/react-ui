@@ -1,5 +1,6 @@
 import type { CreateAdvanceInvoiceRequest } from "@spaceinvoices/js-sdk";
 import type { CreateAdvanceInvoiceSchema } from "@/ui/generated/schemas";
+import { assignDocumentValidationPayload, type DocumentValidationOptions } from "@/ui/lib/document-validation-payload";
 import { normalizePtDocumentInput, type PtDocumentInputForm } from "@/ui/lib/pt-document-input";
 import {
   buildDocumentBasePayload,
@@ -25,10 +26,6 @@ type FinaData = {
   operator_label?: string;
 };
 
-type EslogData = {
-  validation_enabled?: boolean;
-};
-
 /** Map of item index to gross price mode */
 type PriceModesMap = Record<number, boolean>;
 
@@ -43,7 +40,7 @@ type PrepareOptions = {
   /** FINA fiscalization data (for Croatia) */
   fina?: FinaData;
   /** e-SLOG validation data (for Slovenia) */
-  eslog?: EslogData;
+  eslog?: DocumentValidationOptions;
   /** Map of item index to gross price mode (collected from component state) */
   priceModes?: PriceModesMap;
   /** Whether to save as draft (skips numbering and fiscalization) */
@@ -96,12 +93,7 @@ export function prepareAdvanceInvoiceSubmission(
     };
   }
 
-  // Add e-SLOG data if provided
-  if (options.eslog !== undefined) {
-    (payload as any).eslog = {
-      validation_enabled: options.eslog.validation_enabled,
-    };
-  }
+  assignDocumentValidationPayload(payload, "eslog", options.eslog);
   const pt = normalizePtDocumentInput(values.pt);
   if (pt) {
     (payload as any).pt = pt;
@@ -127,6 +119,7 @@ export function prepareAdvanceInvoiceUpdateSubmission(
 
   const payload = buildDocumentBasePayload(nextValues, {
     documentType: "advance_invoice",
+    includeCalculationMode: false,
   });
 
   if (Array.isArray(nextValues.linked_documents)) {
@@ -135,11 +128,7 @@ export function prepareAdvanceInvoiceUpdateSubmission(
     payload.linked_documents = [];
   }
 
-  if (options.eslog !== undefined) {
-    payload.eslog = {
-      validation_enabled: options.eslog.validation_enabled,
-    };
-  }
+  assignDocumentValidationPayload(payload, "eslog", options.eslog);
 
   const pt = normalizePtDocumentInput(values.pt);
   if (pt) {

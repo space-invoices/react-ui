@@ -92,6 +92,20 @@ function parseFilterStateFromParams(params: TableQueryParams): FilterState | nul
  */
 function buildStatusQuery(status: StatusFilter, preset: StatusQueryPreset | undefined, today: string) {
   switch (preset) {
+    case "expense":
+      switch (status) {
+        case "draft":
+          return { is_draft: true, voided_at: null };
+        case "open":
+        case "unpaid":
+          return { is_draft: false, paid_in_full: false, total_paid: { equals: 0 }, voided_at: null };
+        case "paid":
+          return { is_draft: false, paid_in_full: true, voided_at: null };
+        case "voided":
+          return { voided_at: { not: null } };
+        default:
+          return undefined;
+      }
     case "credit_note":
     case "advance_invoice":
       switch (status) {

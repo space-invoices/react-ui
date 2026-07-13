@@ -1,7 +1,10 @@
-import type { TransactionTypeCheckRequest, TransactionTypeCheckResponse } from "@spaceinvoices/js-sdk";
+import {
+  type TransactionTypeCheckRequest,
+  type TransactionTypeCheckResponse,
+  transactionType,
+} from "@spaceinvoices/js-sdk";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
-import { transactionType } from "../../../js-sdk/src/sdk/transaction-type";
 import { useDebounce } from "./use-debounce";
 
 export const TRANSACTION_TYPE_CHECK_CACHE_KEY = "transaction-type-check";

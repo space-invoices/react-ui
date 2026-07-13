@@ -13,10 +13,8 @@ const createPaymentSchemaDefinition = z.object({
   invoice_id: z.union([z.string(), z.null()]).optional(),
   credit_note_id: z.union([z.string(), z.null()]).optional(),
   advance_invoice_id: z.union([z.string(), z.null()]).optional(),
-  incoming_purchase_document_id: z.union([z.string(), z.null()]).optional(),
-  applied_to_incoming_purchase_document_id: z
-    .union([z.string(), z.null()])
-    .optional(),
+  expense_id: z.union([z.string(), z.null()]).optional(),
+  applied_to_expense_id: z.union([z.string(), z.null()]).optional(),
   amount: z.number().gt(0),
   type: z.enum([
     "cash",

@@ -1,17 +1,25 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import type { CreateEstimateRequest, Estimate, UpdateEstimate } from "@spaceinvoices/js-sdk";
+import type { CreateEstimateRequest, Estimate, Tax, UpdateEstimate } from "@spaceinvoices/js-sdk";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowUpDown } from "lucide-react";
+import { AlertCircle, ArrowUpDown } from "lucide-react";
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Resolver } from "react-hook-form";
 import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
+import { Alert, AlertDescription, AlertTitle } from "@/ui/components/ui/alert";
 import { Form } from "@/ui/components/ui/form";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/ui/components/ui/tooltip";
 import { createEstimateSchema } from "@/ui/generated/schemas";
+import { getInitialEslogValidationEnabled, useEslogValidation } from "@/ui/hooks/use-eslog-validation";
 import { useNextDocumentNumber } from "@/ui/hooks/use-next-document-number";
 import { useTransactionTypeCheck } from "@/ui/hooks/use-transaction-type-check";
+import {
+  DEFAULT_CONTENT_LOCALE,
+  DOCUMENT_CONTENT_TRANSLATIONS_FEATURE,
+  type DocumentContentLocaleMode,
+} from "@/ui/lib/document-content-translations";
+import { buildEslogOptions } from "@/ui/lib/fiscalization-options";
 import {
   normalizePtDocumentInput,
   type PtDocumentInputForm,
@@ -22,6 +30,7 @@ import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
 import { useEntities } from "@/ui/providers/entities-context";
 import { useFormFooterRegistration } from "@/ui/providers/form-footer-context";
+import { useWhiteLabel } from "@/ui/providers/white-label-provider";
 import { CUSTOMERS_CACHE_KEY } from "../../customers/customers.hooks";
 import { BusinessUnitSelectField } from "../../documents/create/business-unit-select-field";
 import {
@@ -51,6 +60,15 @@ import {
   resolvePreservedExpectedTotal,
 } from "../../documents/create/preserved-expected-total";
 import type { DocumentTypes } from "../../documents/types";
+import { EslogSetupErrorsDialog } from "../../invoices/create/eslog-setup-errors-dialog";
+import {
+  buildEslogFieldErrors,
+  getEntityErrors,
+  getFormFieldErrors,
+  mergeFieldErrors,
+  translateEslogValidationError,
+  validateEslogForm,
+} from "../../invoices/create/eslog-validation";
 import { useCreateCustomEstimate, useCreateEstimate, useUpdateEstimate } from "../estimates.hooks";
 import de from "./locales/de";
 import es from "./locales/es";
@@ -109,6 +127,7 @@ type CreateEstimateFormProps = {
   onError?: (error: unknown) => void;
   onChange?: (data: EstimatePreviewPayload) => void;
   onAddNewTax?: () => void;
+  onFindEstimatedTax?: () => Promise<Tax | null | undefined> | Tax | null | undefined;
   /** Callback to update header action (title toggle) */
   onHeaderActionChange?: (action: ReactNode) => void;
   /** Initial values for form fields (used for document duplication) */
@@ -136,6 +155,7 @@ export default function CreateEstimateForm({
   onError,
   onChange,
   onAddNewTax,
+  onFindEstimatedTax,
   onHeaderActionChange,
   initialValues,
   businessUnits = [],
@@ -159,8 +179,12 @@ export default function CreateEstimateForm({
   });
 
   const { activeEntity } = useEntities();
+  const whiteLabel = useWhiteLabel();
   const queryClient = useQueryClient();
   const isEditMode = mode === "edit";
+  const translationsFeatureEnabled = whiteLabel.isFeatureVisible(DOCUMENT_CONTENT_TRANSLATIONS_FEATURE);
+  const defaultContentLocale = activeEntity?.locale || "en-US";
+  const [contentLocale, setContentLocale] = useState<DocumentContentLocaleMode>(DEFAULT_CONTENT_LOCALE);
   const initialBusinessUnit = useMemo(
     () => businessUnits.find((unit) => unit.id === ((initialValues as any)?.business_unit_id ?? null)) ?? null,
     [businessUnits, initialValues],
@@ -177,18 +201,66 @@ export default function CreateEstimateForm({
 
   // Draft submission state
   const [isDraftPending, setIsDraftPending] = useState(false);
+  const initialEslogEnabled = getInitialEslogValidationEnabled(isEditMode, (initialValues as any)?.eslog);
+  const eslog = useEslogValidation(activeEntity, initialEslogEnabled);
+  const eslogEntityErrorsRef = useRef(eslog.entityErrors);
+  eslogEntityErrorsRef.current = eslog.entityErrors;
+  const [eslogSetupDialogOpen, setEslogSetupDialogOpen] = useState(false);
+  const eslogResolverStateRef = useRef({
+    activeEntity,
+    isEnabled: eslog.isEnabled === true,
+    isEditMode,
+    translate: t,
+    setEntityErrors: eslog.setEntityErrors,
+  });
+  eslogResolverStateRef.current = {
+    activeEntity,
+    isEnabled: eslog.isEnabled === true,
+    isEditMode,
+    translate: t,
+    setEntityErrors: eslog.setEntityErrors,
+  };
 
   // Get default estimate note from entity settings
   const initialDocumentDefaults = getDocumentDefaultFields("estimate", initialMergedSettings);
-  const defaultEstimateNote = initialDocumentDefaults.note;
-  const defaultEstimateValidDays = (activeEntity?.settings as any)?.default_estimate_valid_days ?? 30;
+  const defaultEstimateValidDays = (initialMergedSettings as any)?.default_estimate_valid_days ?? 30;
 
-  // Get default payment terms and footer from entity settings
-  const defaultPaymentTerms = initialDocumentDefaults.payment_terms;
-  const defaultFooter = initialDocumentDefaults.footer;
+  const baseResolver = useMemo(() => zodResolver(createEstimateFormSchema) as Resolver<CreateEstimateFormValues>, []);
+  const resolver = useMemo<Resolver<CreateEstimateFormValues>>(
+    () => async (values, context, options) => {
+      const result = await baseResolver(values, context, options);
+      const resolverState = eslogResolverStateRef.current;
+      const shouldValidateEslog = resolverState.isEnabled;
+
+      if (!shouldValidateEslog) {
+        eslogEntityErrorsRef.current = [];
+        resolverState.setEntityErrors([]);
+        return result;
+      }
+
+      const validationErrors = validateEslogForm(values as any, resolverState.activeEntity);
+      const entityErrors = getEntityErrors(validationErrors);
+      eslogEntityErrorsRef.current = entityErrors;
+      resolverState.setEntityErrors(entityErrors);
+
+      const fieldErrors = getFormFieldErrors(validationErrors);
+      if (fieldErrors.length === 0) {
+        return result;
+      }
+
+      return {
+        values: {},
+        errors: mergeFieldErrors(
+          result.errors,
+          buildEslogFieldErrors<CreateEstimateFormValues>(fieldErrors, resolverState.translate),
+        ),
+      };
+    },
+    [baseResolver],
+  );
 
   const form = useForm<CreateEstimateFormValues>({
-    resolver: zodResolver(createEstimateFormSchema) as Resolver<CreateEstimateFormValues>,
+    resolver,
     defaultValues: {
       number: initialValues?.number ?? "",
       business_unit_id: (initialValues as any)?.business_unit_id ?? null,
@@ -202,11 +274,14 @@ export default function CreateEstimateForm({
             type: item.type ?? undefined,
             name: item.name || "",
             description: item.description || "",
+            translations: item.translations ?? {},
             ...(item.type !== "separator"
               ? {
                   item_id: item.item_id ?? undefined,
                   classification: item.classification ?? undefined,
                   unit: item.unit ?? undefined,
+                  financial_category_id: item.financial_category_id ?? undefined,
+                  e_invoicing: item.e_invoicing ?? undefined,
                   quantity: item.quantity ?? 1,
                   // Use gross_price if set, otherwise use price
                   price: item.gross_price ?? item.price,
@@ -221,6 +296,7 @@ export default function CreateEstimateForm({
             {
               name: "",
               description: "",
+              translations: {},
               quantity: 1,
               price: undefined,
               taxes: [],
@@ -228,11 +304,21 @@ export default function CreateEstimateForm({
           ],
       currency_code: initialValues?.currency_code || activeEntity?.currency_code || "EUR",
       reference: (initialValues as any)?.reference ?? "",
-      note: initialValues?.note ?? (isEditMode ? "" : defaultEstimateNote),
+      note: initialValues?.note ?? (isEditMode ? "" : initialDocumentDefaults.note),
       tax_clause: (initialValues as any)?.tax_clause ?? "",
-      payment_terms: initialValues?.payment_terms ?? (isEditMode ? "" : defaultPaymentTerms),
+      payment_terms: initialValues?.payment_terms ?? (isEditMode ? "" : initialDocumentDefaults.payment_terms),
       signature: (initialValues as any)?.signature ?? (isEditMode ? "" : initialDocumentDefaults.signature),
-      footer: (initialValues as any)?.footer ?? (isEditMode ? "" : defaultFooter),
+      footer: (initialValues as any)?.footer ?? (isEditMode ? "" : initialDocumentDefaults.footer),
+      translations:
+        (initialValues as any)?.translations ??
+        (isEditMode
+          ? {}
+          : {
+              note: initialDocumentDefaults.translations.note,
+              payment_terms: initialDocumentDefaults.translations.payment_terms,
+              footer: initialDocumentDefaults.translations.footer,
+              signature: initialDocumentDefaults.translations.signature,
+            }),
       date_valid_till:
         initialValues?.date_valid_till ||
         (isEditMode
@@ -241,6 +327,10 @@ export default function CreateEstimateForm({
       pt: ((initialValues as any)?.pt as PtDocumentInputForm | undefined) ?? undefined,
     },
   });
+  const autoDateValidTillRef = useRef<string | undefined>(
+    !isEditMode && !initialValues?.date_valid_till ? form.getValues("date_valid_till") : undefined,
+  );
+  const documentTranslations = useWatch({ control: form.control, name: "translations" });
   const selectedBusinessUnitId = useWatch({ control: form.control, name: "business_unit_id" as any });
   const selectedBusinessUnit = useMemo(
     () => businessUnits.find((unit) => unit.id === selectedBusinessUnitId) ?? null,
@@ -250,6 +340,7 @@ export default function CreateEstimateForm({
     () => mergeEntityAndBusinessUnitSettings((activeEntity?.settings as any) ?? {}, selectedBusinessUnit),
     [activeEntity?.settings, selectedBusinessUnit],
   );
+  const effectiveDefaultEstimateValidDays = (mergedSettings as any)?.default_estimate_valid_days ?? 30;
   const derivedDocumentDefaults = useMemo(() => getDocumentDefaultFields("estimate", mergedSettings), [mergedSettings]);
   const appliedDerivedDefaultsRef = useRef(derivedDocumentDefaults);
 
@@ -331,22 +422,47 @@ export default function CreateEstimateForm({
           shouldValidate: false,
         });
       }
+
+      const currentTranslations = (form.getValues("translations") as any)?.[field] ?? {};
+      const previousTranslations = previousDefaults.translations[field] ?? {};
+      const nextTranslations = derivedDocumentDefaults.translations[field] ?? {};
+      const matchesPreviousTranslations = JSON.stringify(currentTranslations) === JSON.stringify(previousTranslations);
+      const isEmptyTranslations = Object.keys(currentTranslations).length === 0;
+
+      if (matchesPreviousTranslations || isEmptyTranslations) {
+        form.setValue(`translations.${field}` as any, nextTranslations, {
+          shouldDirty:
+            matchesPreviousTranslations && JSON.stringify(previousTranslations) !== JSON.stringify(nextTranslations),
+          shouldTouch: false,
+          shouldValidate: false,
+        });
+      }
     }
 
     appliedDerivedDefaultsRef.current = derivedDocumentDefaults;
   }, [derivedDocumentDefaults, form, isEditMode]);
 
-  // Update valid-till date when entity loads
+  // Update valid-till date when entity or business-unit defaults change, unless the user changed it manually.
   useEffect(() => {
     if (isEditMode) return;
     if (!initialValues?.date_valid_till) {
-      const validDays = (activeEntity?.settings as any)?.default_estimate_valid_days ?? 30;
       const currentDate = form.getValues("date");
       if (currentDate) {
-        form.setValue("date_valid_till", calculateDueDate(currentDate, validDays));
+        const currentValidTill = form.getValues("date_valid_till");
+        if (currentValidTill && autoDateValidTillRef.current && currentValidTill !== autoDateValidTillRef.current) {
+          return;
+        }
+
+        const nextValidTill = calculateDueDate(currentDate, effectiveDefaultEstimateValidDays);
+        form.setValue("date_valid_till", nextValidTill, {
+          shouldDirty: false,
+          shouldTouch: false,
+          shouldValidate: false,
+        });
+        autoDateValidTillRef.current = nextValidTill;
       }
     }
-  }, [activeEntity, form, initialValues?.date_valid_till, isEditMode]);
+  }, [effectiveDefaultEstimateValidDays, form, initialValues?.date_valid_till, isEditMode]);
 
   // Update header with clickable title toggle
   useEffect(() => {
@@ -459,6 +575,7 @@ export default function CreateEstimateForm({
     initialCustomerName,
     handleCustomerSelect,
     handleCustomerClear,
+    handleCustomerEdit,
   } = useEstimateCustomerForm(form as any);
 
   const { mutate: createEstimate, isPending } = useCreateEstimate({
@@ -492,34 +609,50 @@ export default function CreateEstimateForm({
   const submitEstimate = useCallback(
     (values: CreateEstimateFormValues, isDraft: boolean) => {
       try {
+        const submissionValues: CreateEstimateFormValues = eslog.isEnabled
+          ? { ...values, calculation_mode: "b2b_standard" as const }
+          : values;
+        const eslogOptions = buildEslogOptions({
+          isDraft,
+          isAvailable: eslog.isAvailable,
+          isEnabled: eslog.isEnabled,
+        });
+
+        if (eslog.isEnabled && eslogEntityErrorsRef.current.length > 0) {
+          setEslogSetupDialogOpen(true);
+          return;
+        }
+
         if (isEditMode) {
           if (!documentId) {
             throw new Error("Estimate edit mode requires a documentId");
           }
 
-          const submission = prepareEstimateUpdateSubmission(values as any, {
+          const submission = prepareEstimateUpdateSubmission(submissionValues as any, {
             originalCustomer,
             priceModes: priceModesRef.current,
             titleType,
+            eslog: eslogOptions,
           }) as UpdateEstimate;
 
           updateEstimate({ id: documentId, data: submission });
           return;
         }
 
-        const submission = prepareEstimateSubmission(values, {
+        const submission = prepareEstimateSubmission(submissionValues, {
           originalCustomer,
           priceModes: priceModesRef.current,
           titleType,
           isDraft,
+          eslog: eslogOptions,
         });
-        const preservedExpectedTotalWithTax = getPreservedExpectedTotalWithTax(values);
+        const preservedExpectedTotalWithTax = getPreservedExpectedTotalWithTax(submissionValues);
         if (preservedExpectedTotalWithTax !== undefined) {
           (submission as any).expected_total_with_tax = preservedExpectedTotalWithTax;
         } else {
           delete (submission as any).expected_total_with_tax;
         }
-        if (customCreateTemplate && financialInputsMatchSource(values)) {
+        if (customCreateTemplate && financialInputsMatchSource(submissionValues)) {
           delete (submission as any).expected_total_with_tax;
           createCustomEstimate(applyCustomCreateTemplate(submission as any, customCreateTemplate));
         } else {
@@ -537,6 +670,7 @@ export default function CreateEstimateForm({
       createCustomEstimate,
       customCreateTemplate,
       documentId,
+      eslog,
       financialInputsMatchSource,
       getPreservedExpectedTotalWithTax,
       isEditMode,
@@ -601,9 +735,15 @@ export default function CreateEstimateForm({
     const currentDate = formValues.date;
     if (!currentDate || currentDate === prevDateRef.current) return;
     prevDateRef.current = currentDate;
-    const validDays = (activeEntity?.settings as any)?.default_estimate_valid_days ?? 30;
-    form.setValue("date_valid_till", calculateDueDate(currentDate, validDays));
-  }, [formValues.date, activeEntity, form, isEditMode]);
+    const currentValidTill = form.getValues("date_valid_till");
+    if (currentValidTill && autoDateValidTillRef.current && currentValidTill !== autoDateValidTillRef.current) {
+      return;
+    }
+
+    const nextValidTill = calculateDueDate(currentDate, effectiveDefaultEstimateValidDays);
+    form.setValue("date_valid_till", nextValidTill);
+    autoDateValidTillRef.current = nextValidTill;
+  }, [formValues.date, effectiveDefaultEstimateValidDays, form, isEditMode]);
 
   const buildPreviewPayload = useCallback(
     (values: CreateEstimateFormValues): EstimatePreviewPayload => {
@@ -616,6 +756,7 @@ export default function CreateEstimateForm({
         customer: values.customer,
         items: prepareDocumentItems(values.items, priceModesRef.current),
         currency_code: values.currency_code,
+        calculation_mode: eslog.isEnabled ? "b2b_standard" : values.calculation_mode,
         reference: values.reference,
         note: values.note,
         tax_clause: values.tax_clause,
@@ -636,7 +777,7 @@ export default function CreateEstimateForm({
 
       return previewPayload;
     },
-    [customCreateTemplate, financialInputsMatchSource, getPreservedExpectedTotalWithTax, titleType],
+    [customCreateTemplate, eslog.isEnabled, financialInputsMatchSource, getPreservedExpectedTotalWithTax, titleType],
   );
 
   const emitPreviewPayload = useCallback((payload: EstimatePreviewPayload) => {
@@ -665,15 +806,41 @@ export default function CreateEstimateForm({
   return (
     <Form {...form}>
       <form id="create-estimate-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        <EslogSetupErrorsDialog
+          open={eslogSetupDialogOpen}
+          onOpenChange={setEslogSetupDialogOpen}
+          errors={eslog.entityErrors}
+          t={t}
+        />
+
+        {eslog.entityErrors.length > 0 && (
+          <Alert variant="destructive" data-form-error-summary="true">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>{t("Missing required details")}</AlertTitle>
+            <AlertDescription>
+              <p className="mb-2">{t("The following e-SLOG details need to be updated:")}</p>
+              <ul className="list-disc space-y-1 pl-4">
+                {eslog.entityErrors.map((error) => (
+                  <li key={error.field} className="text-sm">
+                    {translateEslogValidationError(error, t)}
+                  </li>
+                ))}
+              </ul>
+            </AlertDescription>
+          </Alert>
+        )}
+
         <div className="flex w-full flex-col gap-8 md:flex-row md:gap-6">
           <DocumentRecipientSection
             control={form.control}
             entityId={entityId}
             onCustomerSelect={handleCustomerSelect}
             onCustomerClear={handleCustomerClear}
+            onCustomerEdit={handleCustomerEdit}
             showCustomerForm={showCustomerForm}
             shouldFocusName={shouldFocusName}
             selectedCustomerId={selectedCustomerId}
+            entityCountryCode={activeEntity?.country_code}
             initialCustomerName={initialCustomerName}
             t={t}
             locale={locale}
@@ -704,6 +871,7 @@ export default function CreateEstimateForm({
           entityId={entityId}
           currencyCode={activeEntity?.currency_code ?? undefined}
           onAddNewTax={onAddNewTax}
+          onFindEstimatedTax={onFindEstimatedTax}
           t={t}
           locale={locale}
           isTaxSubject={activeEntity?.is_tax_subject ?? false}
@@ -715,11 +883,16 @@ export default function CreateEstimateForm({
           taxesDisabledMessage={
             reverseChargeApplies ? t("Reverse charge - tax exempt EU B2B sale") : viesWarning ? viesWarning : undefined
           }
+          translationsEnabled={translationsFeatureEnabled}
+          contentLocale={contentLocale}
+          defaultContentLocale={defaultContentLocale}
+          onContentLocaleChange={setContentLocale}
         />
 
         <DocumentNoteField
           control={form.control}
           t={t}
+          uiLocale={locale}
           entity={activeEntity}
           document={{
             number: formValues.number,
@@ -728,11 +901,20 @@ export default function CreateEstimateForm({
             currency_code: formValues.currency_code,
             customer: formValues.customer as any,
           }}
+          translationsEnabled={translationsFeatureEnabled}
+          activeContentLocale={contentLocale}
+          defaultContentLocale={defaultContentLocale}
+          fieldTranslations={(documentTranslations as any)?.note}
+          onContentLocaleChange={setContentLocale}
+          onFieldTranslationsChange={(next) =>
+            form.setValue("translations", { ...(form.getValues("translations") ?? {}), note: next })
+          }
         />
 
         <DocumentTaxClauseField
           control={form.control}
           t={t}
+          uiLocale={locale}
           entity={activeEntity}
           document={{
             number: formValues.number,
@@ -743,11 +925,20 @@ export default function CreateEstimateForm({
           }}
           transactionType={transactionType}
           isTransactionTypeFetching={isViesFetching}
+          translationsEnabled={translationsFeatureEnabled}
+          activeContentLocale={contentLocale}
+          defaultContentLocale={defaultContentLocale}
+          fieldTranslations={(documentTranslations as any)?.tax_clause}
+          onContentLocaleChange={setContentLocale}
+          onFieldTranslationsChange={(next) =>
+            form.setValue("translations", { ...(form.getValues("translations") ?? {}), tax_clause: next })
+          }
         />
 
         <DocumentPaymentTermsField
           control={form.control}
           t={t}
+          uiLocale={locale}
           entity={activeEntity}
           document={{
             number: formValues.number,
@@ -756,11 +947,20 @@ export default function CreateEstimateForm({
             currency_code: formValues.currency_code,
             customer: formValues.customer as any,
           }}
+          translationsEnabled={translationsFeatureEnabled}
+          activeContentLocale={contentLocale}
+          defaultContentLocale={defaultContentLocale}
+          fieldTranslations={(documentTranslations as any)?.payment_terms}
+          onContentLocaleChange={setContentLocale}
+          onFieldTranslationsChange={(next) =>
+            form.setValue("translations", { ...(form.getValues("translations") ?? {}), payment_terms: next })
+          }
         />
 
         <DocumentSignatureField
           control={form.control}
           t={t}
+          uiLocale={locale}
           entity={activeEntity}
           document={{
             number: formValues.number,
@@ -769,11 +969,20 @@ export default function CreateEstimateForm({
             currency_code: formValues.currency_code,
             customer: formValues.customer as any,
           }}
+          translationsEnabled={translationsFeatureEnabled}
+          activeContentLocale={contentLocale}
+          defaultContentLocale={defaultContentLocale}
+          fieldTranslations={(documentTranslations as any)?.signature}
+          onContentLocaleChange={setContentLocale}
+          onFieldTranslationsChange={(next) =>
+            form.setValue("translations", { ...(form.getValues("translations") ?? {}), signature: next })
+          }
         />
 
         <DocumentFooterField
           control={form.control}
           t={t}
+          uiLocale={locale}
           entity={activeEntity}
           document={{
             number: formValues.number,
@@ -782,6 +991,14 @@ export default function CreateEstimateForm({
             currency_code: formValues.currency_code,
             customer: formValues.customer as any,
           }}
+          translationsEnabled={translationsFeatureEnabled}
+          activeContentLocale={contentLocale}
+          defaultContentLocale={defaultContentLocale}
+          fieldTranslations={(documentTranslations as any)?.footer}
+          onContentLocaleChange={setContentLocale}
+          onFieldTranslationsChange={(next) =>
+            form.setValue("translations", { ...(form.getValues("translations") ?? {}), footer: next })
+          }
         />
       </form>
     </Form>

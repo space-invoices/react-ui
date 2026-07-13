@@ -65,6 +65,7 @@ export function prepareDeliveryNoteUpdateSubmission(
   return {
     ...buildDocumentBasePayload(nextValues, {
       documentType: "delivery_note",
+      includeCalculationMode: false,
     }),
     ...(options.hidePrices !== undefined ? { hide_prices: options.hidePrices } : {}),
   };

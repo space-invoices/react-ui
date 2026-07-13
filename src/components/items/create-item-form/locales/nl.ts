@@ -1,10 +1,12 @@
 export default {
   Name: "Naam",
-  "Name is required": "Name is required",
+  "Name is required": "Naam is verplicht",
   "Enter name": "Naam invoeren",
   Description: "Beschrijving",
   "Enter description": "Beschrijving invoeren",
   Unit: "Eenheid",
+  "e.g. hours": "bijv. uren",
+  "E-invoicing unit code": "Eenheidscode voor e-facturatie",
   Price: "Prijs",
   "There was an error creating the item": "Er is een fout opgetreden bij het aanmaken van het artikel",
   // Gross price support

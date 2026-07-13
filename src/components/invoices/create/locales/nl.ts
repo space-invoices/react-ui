@@ -18,6 +18,15 @@ export default {
   Quantity: "Aantal",
   Price: "Prijs",
   Unit: "Eenheid",
+  "E-invoicing unit code": "Eenheidscode voor e-facturatie",
+  "E-invoicing unit settings": "Instellingen voor e-facturatie-eenheid",
+  "Only affects e-invoicing XML. The document unit stays unchanged.":
+    "Heeft alleen invloed op de XML voor e-facturatie. De documenteenheid blijft ongewijzigd.",
+  "Select XML unit code": "XML-eenheidscode selecteren",
+  "Enter a supported UN/ECE code": "Voer een ondersteunde UN/ECE-code in",
+  "Use display unit": "Weergegeven eenheid gebruiken",
+  "Clear unit code": "Eenheidscode wissen",
+  "custom code": "aangepaste code",
   Discount: "Korting",
   Tax: "Belasting",
   "Tax rate": "Belastingtarief",
@@ -40,9 +49,11 @@ export default {
   Other: "Overig",
   Note: "Notitie",
   "Insert variable": "Variabele invoegen",
+  Bold: "Vet",
+  Italic: "Cursief",
+  "Bullet list": "Opsommingstekens",
   "Add payment instructions, terms, or other notes...":
     "Voeg betalingsinstructies, voorwaarden of andere notities toe...",
-  // Signature field
   Signature: "Handtekening",
   "Add signature text...": "Handtekeningtekst toevoegen...",
   "Payment Terms": "Betalingsvoorwaarden",
@@ -70,6 +81,19 @@ export default {
   City: "Stad",
   State: "Provincie",
   Country: "Land",
+  "Bank Account": "Bankrekening",
+  "Account Type": "Rekeningtype",
+  BIC: "BIC",
+  IBAN: "IBAN",
+  "US domestic": "Binnenlands VS",
+  "UK domestic": "Binnenlands VK",
+  "Account Number": "Rekeningnummer",
+  "Routing Number": "Routingnummer",
+  "Sort Code": "Sort code",
+  "Company Number": "Bedrijfsnummer",
+  "UJP receiver identifier": "UJP-ontvangeridentificatie",
+  "UJP receiver agent": "UJP-ontvangeragent",
+  "UJP receiver mailbox": "UJP-ontvangermailbox",
   "Tax Number": "BTW-nummer",
   "Percentage discount": "Percentuele korting",
   "Fixed amount discount": "Vaste korting",
@@ -91,8 +115,8 @@ export default {
   "Click to enable fiscalization": "Klik om fiscalisatie in te schakelen",
   "Fiscally verify": "Fiscaal verifiëren",
   "Click to skip fiscalization for this invoice": "Klik om fiscalisatie over te slaan voor deze factuur",
-  "Business unit": "Business unit",
-  "No unit": "No unit",
+  "Business unit": "Bedrijfseenheid",
+  "No unit": "Geen eenheid",
   "e-SLOG": "e-SLOG",
   "Click to skip e-SLOG validation for this invoice": "Klik om e-SLOG-validatie over te slaan voor deze factuur",
   "Click to enable e-SLOG validation": "Klik om e-SLOG-validatie in te schakelen",
@@ -115,6 +139,18 @@ export default {
   "Entity currency must be EUR for e-SLOG when invoice uses a different currency.":
     "De valuta van de entiteit moet EUR zijn voor e-SLOG wanneer de factuur een andere valuta gebruikt.",
   "Customer name is required when customer is provided.": "De klantnaam is verplicht wanneer een klant is opgegeven.",
+  "Entity IBAN is required for UJP package validation. Update in Settings > Company.":
+    "IBAN van de entiteit is vereist voor UJP-pakketvalidatie. Werk dit bij in Instellingen > Bedrijf.",
+  "Entity IBAN must be a valid Slovenian IBAN for UJP package validation.":
+    "IBAN van de entiteit moet een geldige Sloveense IBAN zijn voor UJP-pakketvalidatie.",
+  "Entity BIC is required for UJP package validation. Update in Settings > Company.":
+    "BIC van de entiteit is vereist voor UJP-pakketvalidatie. Werk dit bij in Instellingen > Bedrijf.",
+  "Entity BIC must be a valid 8- or 11-character BIC for UJP package validation.":
+    "BIC van de entiteit moet een geldige BIC van 8 of 11 tekens zijn voor UJP-pakketvalidatie.",
+  "Customer IBAN must be a valid Slovenian IBAN for UJP package validation.":
+    "De IBAN van de klant moet een geldige Sloveense IBAN zijn voor validatie van het UJP-pakket.",
+  "Customer BIC must be a valid 8- or 11-character BIC for UJP package validation.":
+    "De BIC van de klant moet een geldige BIC van 8 of 11 tekens zijn voor validatie van het UJP-pakket.",
   "At least one line item is required for e-SLOG.": "Er is minstens één regel vereist voor e-SLOG.",
   "Item name is required for e-SLOG.": "De artikelnaam is verplicht voor e-SLOG.",
   "Quantity must be greater than 0.": "De hoeveelheid moet groter zijn dan 0.",
@@ -127,7 +163,6 @@ export default {
   "Net price": "Nettoprijs",
   "Gross price (tax included)": "Brutoprijs (inclusief belasting)",
   "Net price (before tax)": "Nettoprijs (exclusief belasting)",
-  // Linked documents
   "Linked documents": "Gekoppelde documenten",
   Type: "Type",
   Total: "Totaal",
@@ -139,7 +174,6 @@ export default {
   "Advance invoice": "Voorschotfactuur",
   "FINA fiscalized invoices always use the current date":
     "FINA-gefiscaliseerde facturen gebruiken altijd de huidige datum",
-  // Due days selector
   "On receipt": "Bij ontvangst",
   "7 days": "7 dagen",
   "14 days": "14 dagen",
@@ -147,8 +181,6 @@ export default {
   "60 days": "60 dagen",
   "90 days": "90 dagen",
   Custom: "Aangepast",
-  // Separator items
-  // Service date
   "Service Date": "Servicedatum",
   "Service Period": "Serviceperiode",
   From: "Van",
@@ -156,7 +188,6 @@ export default {
   "Add separator": "Scheidingslijn toevoegen",
   "Section header": "Sectiekop",
   "Section title...": "Sectietitel...",
-  // Transaction type
   "Transaction type": "Transactietype",
   Domestic: "Binnenland",
   "EU B2B": "EU B2B",
@@ -170,7 +201,6 @@ export default {
   "Add tax clause...": "Belastingclausule toevoegen...",
   Footer: "Voettekst",
   "Add document footer...": "Documentvoettekst toevoegen...",
-  // Croatian domestic invoice validation
   "End consumer": "Eindconsument",
   "Domestic B2B invoicing in Croatia is not supported":
     "Binnenlandse B2B-facturering in Kroatië wordt niet ondersteund. Kroatië vereist naleving van Fiskalizacija 2.0 voor B2B-facturering.",
@@ -184,4 +214,22 @@ export default {
   "Remaining to allocate": "Nog toe te wijzen",
   "This document must be fully paid on creation": "Dit document moet volledig betaald zijn bij het aanmaken",
   "Record one or more payments on creation": "Registreer een of meer betalingen bij het aanmaken",
+  "Entity bank account is required for e-SLOG payment instructions. Update in Settings > Company.":
+    "De bankrekening van de entiteit is verplicht voor e-SLOG-betaalinstructies. Werk deze bij via Instellingen > Bedrijf.",
+  "Customer tax number is required for e-SLOG business recipients.":
+    "Het fiscale nummer van de klant is verplicht voor zakelijke e-SLOG-ontvangers.",
+  "Customer address is required for UJP package validation.":
+    "Het adres van de klant is verplicht voor UJP-pakketvalidatie.",
+  "Customer postal code is required for UJP package validation.":
+    "De postcode van de klant is verplicht voor UJP-pakketvalidatie.",
+  "Customer city is required for UJP package validation.":
+    "De plaats van de klant is verplicht voor UJP-pakketvalidatie.",
+  "Customer tax number or company number is required for UJP package validation.":
+    "Het belastingnummer of bedrijfsnummer van de klant is vereist voor validatie van het UJP-pakket.",
+  "Customer IBAN and BIC are required for UJP package validation.":
+    "IBAN en BIC van de klant zijn vereist voor validatie van het UJP-pakket.",
+  "Customer IBAN is required for UJP package validation.":
+    "De IBAN van de klant is vereist voor validatie van het UJP-pakket.",
+  "Customer BIC is required for UJP package validation.":
+    "De BIC van de klant is vereist voor validatie van het UJP-pakket.",
 } as const;

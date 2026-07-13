@@ -18,9 +18,9 @@ import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
 import { useFormFooterRegistration } from "@/ui/providers/form-footer-context";
 import { useUpdateEntity } from "../entities.hooks";
-import { ImageUploadWithCrop } from "../entity-settings-form/image-upload-with-crop";
-import de from "../entity-settings-form/locales/de";
-import sl from "../entity-settings-form/locales/sl";
+import de from "./locales/de";
+import sl from "./locales/sl";
+import { ImageUploadWithCrop } from "./shared/image-upload-with-crop";
 
 const translations = { sl, de } as const;
 
@@ -159,8 +159,8 @@ export function BrandingSettingsForm({
     updateEntity({
       id: entity.id,
       data: {
+        // Send only keys this surface owns — see useUpdateEntity's settings contract
         settings: {
-          ...currentSettings,
           primary_color: values.primary_color || undefined,
           has_logo: values.has_logo || undefined,
           has_signature: values.has_signature || undefined,

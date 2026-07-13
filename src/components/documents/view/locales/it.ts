@@ -13,6 +13,20 @@ export default {
   "Unshare failed": "Rimozione condivisione fallita",
   "Download failed": "Download fallito",
   "e-SLOG download failed": "Download e-SLOG fallito",
+  "UJP package": "Pacchetto UJP",
+  "UJP package download failed": "Download del pacchetto UJP fallito",
+  XRechnung: "XRechnung",
+  ZUGFeRD: "ZUGFeRD",
+  "XRechnung download failed": "Download XRechnung fallito",
+  "ZUGFeRD download failed": "Download ZUGFeRD fallito",
+  "e-SLOG validation must be valid before downloading.": "La validazione e-SLOG deve essere valida prima del download.",
+  "UJP validation must be valid before downloading.": "La validazione UJP deve essere valida prima del download.",
+  "German e-invoice validation must be valid before downloading.":
+    "La validazione della fattura elettronica tedesca deve essere valida prima del download.",
+  "XRechnung validation must be valid before downloading.":
+    "La validazione XRechnung deve essere valida prima del download.",
+  "ZUGFeRD validation must be valid before downloading.":
+    "La validazione ZUGFeRD deve essere valida prima del download.",
   Recurring: "Ricorrente",
   Duplicate: "Duplica",
   "Duplicate invoice": "Duplica fattura",
@@ -122,6 +136,8 @@ export default {
   Failed: "Fallito",
   Skipped: "Saltato",
   "Skipped by user": "Saltato dall'utente",
+  "Not fiscalized": "Non fiscalizzato",
+  Fiscalize: "Fiscalizza",
   "Retry fiscalization": "Riprova fiscalizzazione",
 
   // PDF language names

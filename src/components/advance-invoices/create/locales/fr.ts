@@ -31,6 +31,9 @@ export default {
   "FINA fiscalized invoices always use the current date":
     "Les documents fiscalisés FINA utilisent toujours la date actuelle",
   // Signature field
+  Bold: "Gras",
+  Italic: "Italique",
+  "Bullet list": "Liste à puces",
   Signature: "Signature",
   "Add signature text...": "Ajouter un texte de signature...",
   Reference: "Référence",
@@ -61,4 +64,12 @@ export default {
   "Remaining to allocate": "Reste à affecter",
   "This document must be fully paid on creation": "Ce document doit être entièrement payé à la création",
   "Record one or more payments on creation": "Enregistrer un ou plusieurs paiements à la création",
+  "E-invoicing unit settings": "Paramètres d'unité pour l'e-facturation",
+  "Only affects e-invoicing XML. The document unit stays unchanged.":
+    "Affecte uniquement le XML d'e-facturation. L'unité du document reste inchangée.",
+  "Select XML unit code": "Sélectionner le code d'unité XML",
+  "Enter a supported UN/ECE code": "Saisissez un code UN/ECE pris en charge",
+  "Use display unit": "Utiliser l'unité affichée",
+  "Clear unit code": "Effacer le code d'unité",
+  "custom code": "code personnalisé",
 } as const;

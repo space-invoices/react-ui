@@ -77,6 +77,7 @@ function StatusBadge({ status, t }: { status: string; t: (key: string) => string
 
 type WebhookDeliveryListTableProps = ListTableProps<WebhookDeliveryResponse> & {
   environment?: "live" | "sandbox";
+  accountId?: string;
   showEntityColumn?: boolean;
   selectedDelivery?: WebhookDeliveryResponse | null;
   onSelectDelivery?: (delivery: WebhookDeliveryResponse | null) => void;
@@ -93,6 +94,7 @@ export function WebhookDeliveryListTable({
   onChangeParams,
   entityId,
   environment,
+  accountId,
   showEntityColumn = false,
   selectedDelivery,
   onSelectDelivery,
@@ -158,6 +160,7 @@ export function WebhookDeliveryListTable({
           Authorization: `Bearer ${token}`,
           ...getClientHeaders("ui"),
           "Content-Type": "application/json",
+          ...(accountId && !entityId ? { "x-account-id": accountId } : {}),
         },
       });
 
@@ -167,7 +170,7 @@ export function WebhookDeliveryListTable({
 
       return (await response.json()) as TableQueryResponse<WebhookDeliveryResponse>;
     },
-    [entityId, environment],
+    [accountId, entityId, environment],
   );
 
   const columns: Column<WebhookDeliveryResponse>[] = useMemo(() => {
@@ -258,7 +261,7 @@ export function WebhookDeliveryListTable({
 
   const cacheKey = entityId
     ? `${WEBHOOK_LOGS_CACHE_KEY}-${entityId}`
-    : `${WEBHOOK_LOGS_CACHE_KEY}-account-${environment || "live"}`;
+    : `${WEBHOOK_LOGS_CACHE_KEY}-account-${accountId || "default"}-${environment || "live"}`;
 
   const detailContent = selectedDelivery ? (
     <WebhookDeliveryDetail delivery={selectedDelivery} t={translate} locale={locale} />

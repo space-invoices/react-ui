@@ -33,6 +33,9 @@ export default {
   // Note field
   Note: "Notiz",
   "Insert variable": "Variable einfügen",
+  Bold: "Fett",
+  Italic: "Kursiv",
+  "Bullet list": "Aufzählung",
   "Add payment instructions, terms, or other notes...":
     "Zahlungsanweisungen, Bedingungen oder andere Notizen hinzufügen...",
   // Signature field
@@ -45,6 +48,15 @@ export default {
   Quantity: "Menge",
   Price: "Preis",
   Unit: "Einheit",
+  "E-invoicing unit code": "E-Rechnung-Einheitencode",
+  "E-invoicing unit settings": "E-Rechnungs-Einheitseinstellungen",
+  "Only affects e-invoicing XML. The document unit stays unchanged.":
+    "Betrifft nur das XML der E-Rechnung. Die Dokumenteinheit bleibt unverändert.",
+  "Select XML unit code": "XML-Einheitencode auswählen",
+  "Enter a supported UN/ECE code": "Geben Sie einen unterstützten UN/ECE-Code ein",
+  "Use display unit": "Anzeigeeinheit verwenden",
+  "Clear unit code": "Einheitencode löschen",
+  "custom code": "benutzerdefinierter Code",
   Discount: "Rabatt",
   Description: "Beschreibung",
   Save: "Speichern",

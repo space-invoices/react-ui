@@ -14,6 +14,7 @@ const translations = {
   en: {
     Tax: "Tax",
     "Add...": "Add...",
+    "Find estimated US rate": "Find estimated US rate",
   },
 } as const;
 
@@ -40,6 +41,7 @@ type TaxSelectFieldProps = {
   entityId: string;
   onRemove?: () => void;
   onAddNewTax?: () => void;
+  onFindEstimatedTax?: () => Promise<Tax | null | undefined> | Tax | null | undefined;
   showLabel?: boolean;
   disabled?: boolean;
 } & ComponentTranslationProps;
@@ -50,6 +52,7 @@ export default function TaxSelectField({
   entityId,
   onRemove,
   onAddNewTax,
+  onFindEstimatedTax,
   showLabel = true,
   disabled = false,
   t: translateFn,
@@ -82,6 +85,15 @@ export default function TaxSelectField({
       return;
     }
 
+    if (value === "__find_estimated__") {
+      void Promise.resolve(onFindEstimatedTax?.()).then((tax) => {
+        if (tax?.id) {
+          setValue(name, tax.id, { shouldDirty: true, shouldTouch: true, shouldValidate: true });
+        }
+      });
+      return;
+    }
+
     setValue(name, value, { shouldDirty: true, shouldTouch: true, shouldValidate: true });
   };
 
@@ -110,6 +122,12 @@ export default function TaxSelectField({
                     <SelectItem value="__create__">
                       <Plus className="size-4" />
                       {translate("Add...")}
+                    </SelectItem>
+                  )}
+                  {onFindEstimatedTax && (
+                    <SelectItem value="__find_estimated__">
+                      <Plus className="size-4" />
+                      {translate("Find estimated US rate")}
                     </SelectItem>
                   )}
                 </SelectContent>

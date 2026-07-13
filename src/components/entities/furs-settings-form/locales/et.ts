@@ -250,4 +250,15 @@ export default {
   "A premise with this name already exists": "Selle nimega tegevuskoht on juba olemas",
   "Exactly 4 digits": "Täpselt 4 numbrit",
   "Your Name": "Teie nimi",
+  "Starting Number": "Algusnumber",
+  "First invoice number for this premise sequence": "Esimene arvenumber selle tegevuskoha jada jaoks",
+  "First invoice number for this device sequence": "Esimene arvenumber selle seadme jada jaoks",
+  "Set Starting Number": "Määra algusnumber",
+  "Starting number can no longer be changed after invoices have been issued for this fiscal sequence.":
+    "Algusnumbrit ei saa enam muuta pärast arvete väljastamist selle maksujada jaoks.",
+  "Set this before issuing invoices for the selected fiscal sequence. Leave empty to clear it.":
+    "Määra see enne valitud fiskaaljada arvete väljastamist. Kustutamiseks jäta tühjaks.",
+  "Fiscal Sequence": "Fiskaaljada",
+  "Starting number must be between 1 and 999999999": "Algusnumber peab olema vahemikus 1 kuni 999999999",
+  Save: "Salvesta",
 } as const;

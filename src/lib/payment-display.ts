@@ -1,22 +1,17 @@
 import { getDisplayDocumentNumber } from "@/ui/lib/document-display";
-import {
-  getDocumentPaymentTypeFallbackLabel,
-  getDocumentPaymentTypeTranslationKey,
-} from "@/ui/lib/payment-types";
+import { getDocumentPaymentTypeFallbackLabel, getDocumentPaymentTypeTranslationKey } from "@/ui/lib/payment-types";
 
 type TranslateFn = (key: string) => string;
 
-const AUTO_APPLIED_CREDIT_NOTE_TEMPLATE =
-  "Auto-applied credit note for voided invoice {number}";
+const AUTO_APPLIED_CREDIT_NOTE_TEMPLATE = "Auto-applied credit note for voided invoice {number}";
 const AUTO_BILLING_STRIPE_NOTE = "Automatic billing payment via Stripe";
-const AUTO_APPLIED_CREDIT_NOTE_REGEX =
-  /^Auto-applied credit note for voided invoice (.+)$/;
+const AUTO_APPLIED_CREDIT_NOTE_REGEX = /^Auto-applied credit note for voided invoice (.+)$/;
 
 type PaymentDocumentLike = {
   Invoice?: { id: string; number: string } | null;
   CreditNote?: { id: string; number: string } | null;
   AdvanceInvoice?: { id: string; number: string } | null;
-  IncomingPurchaseDocument?: {
+  Expense?: {
     id: string;
     supplier_document_number?: string | null;
   } | null;
@@ -39,10 +34,7 @@ export function getPaymentTypeLabel(type: string, t: TranslateFn): string {
   return getDocumentPaymentTypeFallbackLabel(type);
 }
 
-export function localizePaymentNote(
-  note: string | null | undefined,
-  t: TranslateFn,
-): string | null | undefined {
+export function localizePaymentNote(note: string | null | undefined, t: TranslateFn): string | null | undefined {
   if (!note) {
     return note;
   }
@@ -53,18 +45,13 @@ export function localizePaymentNote(
 
   const autoAppliedMatch = note.match(AUTO_APPLIED_CREDIT_NOTE_REGEX);
   if (autoAppliedMatch) {
-    return t(AUTO_APPLIED_CREDIT_NOTE_TEMPLATE).replace(
-      "{number}",
-      autoAppliedMatch[1] ?? "",
-    );
+    return t(AUTO_APPLIED_CREDIT_NOTE_TEMPLATE).replace("{number}", autoAppliedMatch[1] ?? "");
   }
 
   return note;
 }
 
-export function getPaymentDocumentDisplay(
-  payment: PaymentDocumentLike,
-): PaymentDocumentDisplay | null {
+export function getPaymentDocumentDisplay(payment: PaymentDocumentLike): PaymentDocumentDisplay | null {
   if (payment.Invoice) {
     return {
       id: payment.Invoice.id,
@@ -89,12 +76,10 @@ export function getPaymentDocumentDisplay(
     };
   }
 
-  if (payment.IncomingPurchaseDocument) {
+  if (payment.Expense) {
     return {
-      id: payment.IncomingPurchaseDocument.id,
-      label:
-        payment.IncomingPurchaseDocument.supplier_document_number ||
-        payment.IncomingPurchaseDocument.id,
+      id: payment.Expense.id,
+      label: payment.Expense.supplier_document_number || payment.Expense.id,
       isNavigable: false,
     };
   }

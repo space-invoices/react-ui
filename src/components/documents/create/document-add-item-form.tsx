@@ -1,8 +1,11 @@
-import type { Item } from "@spaceinvoices/js-sdk";
-import { ChevronDown, ChevronUp, DollarSign, Minus, Percent, Plus, PlusIcon, Trash2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { normalizeEInvoicingUnitCodeOverride } from "@space-invoices/e-invoicing/unit-codes";
+import type { Item, Tax } from "@spaceinvoices/js-sdk";
+import { ChevronDown, ChevronUp, DollarSign, FileCode2, Minus, Percent, Plus, PlusIcon, Trash2 } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useWatch } from "react-hook-form";
 
+import { Combobox, type ComboboxOption } from "@/ui/components/combobox";
+import { ContentLocaleButton } from "@/ui/components/document-content-translations";
 import { ItemCombobox } from "@/ui/components/items/item-combobox";
 import TaxSelectField from "@/ui/components/taxes/tax-select-field";
 import { Button } from "@/ui/components/ui/button";
@@ -16,10 +19,21 @@ import {
 } from "@/ui/components/ui/dropdown-menu";
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/ui/components/ui/form";
 import { Input } from "@/ui/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/ui/components/ui/popover";
 import { Textarea } from "@/ui/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/ui/components/ui/tooltip";
 import { getEntityCountryCapabilities } from "@/ui/lib/country-capabilities";
+import {
+  DEFAULT_CONTENT_LOCALE,
+  type DocumentContentLocaleMode,
+  readLocalizedValue,
+  writeLocalizedValue,
+} from "@/ui/lib/document-content-translations";
+import { NumericInput } from "@/ui/lib/numeric-input";
+import { cn } from "@/ui/lib/utils";
 import { useEntities } from "@/ui/providers/entities-context";
+import { buildCustomItemNameUpdate, buildSelectedItemState } from "./document-item-state";
+import { MarkdownTextareaToolbar } from "./markdown-textarea-toolbar";
 
 type DocumentAddItemFormProps = {
   index: number;
@@ -31,6 +45,7 @@ type DocumentAddItemFormProps = {
   onMoveUp: () => void;
   onMoveDown: () => void;
   onAddNewTax?: () => void;
+  onFindEstimatedTax?: () => Promise<Tax | null | undefined> | Tax | null | undefined;
   showRemove: boolean;
   showMoveUp: boolean;
   showMoveDown: boolean;
@@ -47,7 +62,166 @@ type DocumentAddItemFormProps = {
   /** Called when price mode changes - used to collect state at submit */
   onPriceModeChange?: (isGross: boolean) => void;
   locale?: string;
+  translationsEnabled?: boolean;
+  contentLocale?: DocumentContentLocaleMode;
+  defaultContentLocale?: string | null;
+  onContentLocaleChange?: (locale: DocumentContentLocaleMode) => void;
 };
+
+const E_INVOICING_UNIT_CODE_OPTIONS: ComboboxOption[] = [
+  { value: "E48", label: "E48 - service" },
+  { value: "C62", label: "C62 - unit/piece" },
+  { value: "DAY", label: "DAY - day" },
+  { value: "HUR", label: "HUR - hour" },
+  { value: "MON", label: "MON - month" },
+  { value: "MIN", label: "MIN - minute" },
+  { value: "KGM", label: "KGM - kilogram" },
+  { value: "GRM", label: "GRM - gram" },
+  { value: "MGM", label: "MGM - milligram" },
+  { value: "LTR", label: "LTR - litre" },
+  { value: "MLT", label: "MLT - millilitre" },
+  { value: "MTR", label: "MTR - metre" },
+  { value: "MTK", label: "MTK - square metre" },
+  { value: "MTQ", label: "MTQ - cubic metre" },
+  { value: "SET", label: "SET - set" },
+];
+
+const CLEAR_E_INVOICING_UNIT_CODE_OPTION: ComboboxOption = {
+  value: "__clear__",
+  label: "Clear unit code",
+};
+
+function getEInvoicingUnitCodeLabel(value: string | null | undefined): string | undefined {
+  const normalizedValue = normalizeEInvoicingUnitCodeOverride(value, "peppol");
+  if (!normalizedValue) return undefined;
+  return E_INVOICING_UNIT_CODE_OPTIONS.find((option) => option.value === normalizedValue)?.label ?? normalizedValue;
+}
+
+type EInvoicingUnitCodeComboboxProps = {
+  value?: string | null;
+  onValueChange: (value: string | null) => void;
+  t: (key: string) => string;
+  disabled?: boolean;
+};
+
+function EInvoicingUnitCodeCombobox({ value, onValueChange, t, disabled }: EInvoicingUnitCodeComboboxProps) {
+  const [search, setSearch] = useState("");
+  const normalizedValue = normalizeEInvoicingUnitCodeOverride(value, "peppol");
+
+  const options = useMemo(() => {
+    const query = search.trim().toUpperCase();
+    const normalizedCustomCode = normalizeEInvoicingUnitCodeOverride(query, "peppol");
+    const matchingOptions = E_INVOICING_UNIT_CODE_OPTIONS.filter((option) =>
+      `${option.value} ${option.label}`.toUpperCase().includes(query),
+    );
+    const nextOptions = normalizedValue
+      ? [{ ...CLEAR_E_INVOICING_UNIT_CODE_OPTION, label: t("Clear unit code") }, ...matchingOptions]
+      : matchingOptions;
+
+    if (
+      normalizedCustomCode &&
+      !nextOptions.some((option) => option.value === normalizedCustomCode) &&
+      (!query || normalizedCustomCode.includes(query))
+    ) {
+      nextOptions.unshift({ value: normalizedCustomCode, label: `${normalizedCustomCode} - ${t("custom code")}` });
+    }
+
+    if (normalizedValue && !nextOptions.some((option) => option.value === normalizedValue)) {
+      nextOptions.unshift({
+        value: normalizedValue,
+        label: getEInvoicingUnitCodeLabel(normalizedValue) ?? normalizedValue,
+      });
+    }
+
+    return nextOptions;
+  }, [normalizedValue, search, t]);
+
+  return (
+    <Combobox
+      options={options}
+      value={normalizedValue ?? ""}
+      selectedLabel={getEInvoicingUnitCodeLabel(normalizedValue)}
+      placeholder={t("Select XML unit code")}
+      emptyText={t("Enter a supported UN/ECE code")}
+      disabled={disabled}
+      onSearch={setSearch}
+      onValueChange={(nextValue) => {
+        onValueChange(nextValue === CLEAR_E_INVOICING_UNIT_CODE_OPTION.value ? null : nextValue);
+        setSearch("");
+      }}
+    />
+  );
+}
+
+type EInvoicingUnitCodeControlProps = {
+  value?: string | null;
+  onValueChange: (value: string | null) => void;
+  hasError?: boolean;
+  errorMessage?: string;
+  disabled?: boolean;
+  t: (key: string) => string;
+};
+
+function EInvoicingUnitCodeControl({
+  value,
+  onValueChange,
+  hasError,
+  errorMessage,
+  disabled,
+  t,
+}: EInvoicingUnitCodeControlProps) {
+  const [open, setOpen] = useState(false);
+  const normalizedValue = normalizeEInvoicingUnitCodeOverride(value, "peppol");
+  const tooltip = normalizedValue
+    ? `${t("E-invoicing unit settings")}: ${normalizedValue}`
+    : t("E-invoicing unit settings");
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <PopoverTrigger asChild>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-xs"
+              className={cn(
+                "ml-1",
+                normalizedValue && "text-primary-readable",
+                hasError && "text-destructive hover:text-destructive",
+              )}
+              aria-label={tooltip}
+              aria-invalid={hasError || undefined}
+            >
+              <FileCode2 className="size-3.5" />
+            </Button>
+          </PopoverTrigger>
+        </TooltipTrigger>
+        <TooltipContent side="top">{tooltip}</TooltipContent>
+      </Tooltip>
+      <PopoverContent className="w-80 gap-3 p-3" align="end">
+        <div className="space-y-1">
+          <FormLabel>{t("E-invoicing unit code")}</FormLabel>
+          <p className="text-muted-foreground text-xs">
+            {t("Only affects e-invoicing XML. The document unit stays unchanged.")}
+          </p>
+        </div>
+        <EInvoicingUnitCodeCombobox
+          value={value}
+          disabled={disabled}
+          onValueChange={(nextValue) => {
+            onValueChange(nextValue);
+            setOpen(false);
+          }}
+          t={t}
+        />
+        {errorMessage && <p className="text-destructive text-xs">{errorMessage}</p>}
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+// NumericInput / parseNumericFormValue moved to the shared @/ui/lib/numeric-input module.
 
 export default function DocumentAddItemForm({
   index,
@@ -59,6 +233,7 @@ export default function DocumentAddItemForm({
   onMoveUp,
   onMoveDown,
   onAddNewTax,
+  onFindEstimatedTax,
   showRemove,
   showMoveUp,
   showMoveDown,
@@ -70,8 +245,13 @@ export default function DocumentAddItemForm({
   initialIsGrossPrice = false,
   onPriceModeChange,
   locale = "en",
+  translationsEnabled = false,
+  contentLocale = DEFAULT_CONTENT_LOCALE,
+  defaultContentLocale,
+  onContentLocaleChange,
 }: DocumentAddItemFormProps) {
   const { activeEntity } = useEntities();
+  const descriptionTextareaRef = useRef<HTMLTextAreaElement>(null);
   const countryCapabilities = getEntityCountryCapabilities(activeEntity);
   const itemType = useWatch({
     control,
@@ -86,11 +266,27 @@ export default function DocumentAddItemForm({
     control,
     name: `items.${index}.classification`,
   });
+  const unitCodeFieldName = `items.${index}.e_invoicing.unit_code`;
+  const itemEInvoicingUnitCode = useWatch({
+    control,
+    name: unitCodeFieldName,
+  });
   const lockPortugalSavedItemFields = countryCapabilities.isPortugal && !!selectedSavedItemId;
+  const unitCodeFieldState = form?.getFieldState?.(unitCodeFieldName, form.formState);
+  const hasEInvoicingUnitCodeError = !!unitCodeFieldState?.error;
+  const showEInvoicingUnitCodeControl =
+    countryCapabilities.hasEInvoicing ||
+    countryCapabilities.hasEslog ||
+    !!itemEInvoicingUnitCode ||
+    hasEInvoicingUnitCodeError;
 
   const taxes = useWatch({
     control,
     name: `items.${index}.taxes`,
+  });
+  const itemTranslations = useWatch({
+    control,
+    name: `items.${index}.translations`,
   });
   // Component-local state for gross/net price mode (not in form schema)
   const [isGrossPrice, setIsGrossPrice] = useState(initialIsGrossPrice);
@@ -137,69 +333,72 @@ export default function DocumentAddItemForm({
   };
 
   const setInlineItemName = (nextName: string) => {
-    form.setValue(`items.${index}.name`, nextName, { shouldDirty: true, shouldTouch: true, shouldValidate: true });
+    if (!translationsEnabled || contentLocale === DEFAULT_CONTENT_LOCALE) {
+      form.setValue(`items.${index}.name`, nextName, { shouldDirty: true, shouldTouch: true, shouldValidate: true });
+      return;
+    }
+
+    form.setValue(
+      `items.${index}.translations`,
+      {
+        ...(form.getValues(`items.${index}.translations`) ?? {}),
+        name: writeLocalizedValue(itemTranslations?.name, contentLocale, nextName),
+      },
+      { shouldDirty: true, shouldTouch: true },
+    );
   };
 
   // Handle item selection from combobox
   const handleItemSelect = (item: Item | null, customName?: string) => {
     const itemIdPath = `items.${index}.item_id`;
     const itemNamePath = `items.${index}.name`;
-    const itemQuantityPath = `items.${index}.quantity`;
-    const itemPricePath = `items.${index}.price`;
-    const itemDescriptionPath = `items.${index}.description`;
-    const itemClassificationPath = `items.${index}.classification`;
-    const itemFinancialCategoryPath = `items.${index}.financial_category_id`;
+    const itemTranslationsPath = `items.${index}.translations`;
     const itemTaxesPath = `items.${index}.taxes`;
-    const rowValidationPaths = [itemNamePath, itemQuantityPath, itemPricePath, itemTaxesPath] as const;
+    const rowValidationPaths = [
+      itemNamePath,
+      `items.${index}.quantity`,
+      `items.${index}.price`,
+      itemTaxesPath,
+    ] as const;
     if (item) {
-      // Selected a saved item - set item_id and prefill fields for visual feedback
-      form.setValue(itemIdPath, item.id, { shouldDirty: true, shouldTouch: true });
-      form.setValue(itemNamePath, item.name, { shouldDirty: true, shouldTouch: true, shouldValidate: true });
-
-      // Prefill price (use gross_price if available, otherwise price)
-      if (item.gross_price !== null && item.gross_price !== undefined) {
-        form.setValue(itemPricePath, item.gross_price, { shouldDirty: true, shouldTouch: true, shouldValidate: true });
-        setIsGrossPrice(true);
-        onPriceModeChange?.(true);
-      } else if (item.price !== null && item.price !== undefined) {
-        form.setValue(itemPricePath, item.price, { shouldDirty: true, shouldTouch: true, shouldValidate: true });
-        setIsGrossPrice(false);
-        onPriceModeChange?.(false);
-      }
-
-      // Prefill description
-      if (item.description) {
-        form.setValue(itemDescriptionPath, item.description, { shouldDirty: true, shouldTouch: true });
-      }
-
-      if (item.classification) {
-        form.setValue(itemClassificationPath, item.classification, { shouldDirty: true, shouldTouch: true });
-      }
-
-      form.setValue(itemFinancialCategoryPath, item.financial_category_id ?? undefined, {
-        shouldDirty: true,
-        shouldTouch: true,
+      const nextItemState = buildSelectedItemState(item);
+      Object.entries(nextItemState.values).forEach(([fieldName, fieldValue]) => {
+        form.setValue(`items.${index}.${fieldName}`, fieldValue, {
+          shouldDirty: true,
+          shouldTouch: true,
+          shouldValidate: fieldName === "name" || fieldName === "price",
+        });
       });
 
-      // Prefill taxes from item's tax_ids (or clear if item has no taxes)
-      if (item.tax_ids && item.tax_ids.length > 0) {
-        form.setValue(
-          itemTaxesPath,
-          item.tax_ids.map((tax_id) => ({ tax_id })),
-          { shouldDirty: true, shouldTouch: true },
-        );
-      } else {
-        form.setValue(itemTaxesPath, [], { shouldDirty: true, shouldTouch: true });
+      if (!("description" in nextItemState.values)) {
+        form.setValue(`items.${index}.description`, undefined, { shouldDirty: true, shouldTouch: true });
       }
+      setIsGrossPrice(nextItemState.isGrossPrice);
+      onPriceModeChange?.(nextItemState.isGrossPrice);
 
       form.clearErrors(rowValidationPaths as any);
       if (form.formState.isSubmitted) {
         void form.trigger();
       }
     } else if (customName) {
-      // Custom name entered - clear item_id, just use the name
-      form.setValue(itemIdPath, undefined, { shouldDirty: true, shouldTouch: true });
-      form.setValue(itemNamePath, customName, { shouldDirty: true, shouldTouch: true, shouldValidate: true });
+      const customItemState = buildCustomItemNameUpdate({
+        customName,
+        translationsEnabled,
+        contentLocale,
+        currentTranslations: form.getValues(itemTranslationsPath) ?? {},
+        itemTranslations,
+      });
+      form.setValue(itemIdPath, customItemState.item_id, { shouldDirty: true, shouldTouch: true });
+      if ("name" in customItemState) {
+        form.setValue(itemNamePath, customItemState.name, {
+          shouldDirty: true,
+          shouldTouch: true,
+          shouldValidate: true,
+        });
+      }
+      if ("translations" in customItemState) {
+        form.setValue(itemTranslationsPath, customItemState.translations, { shouldDirty: true, shouldTouch: true });
+      }
       form.clearErrors(itemNamePath);
       if (form.formState.isSubmitted) {
         void form.trigger();
@@ -218,9 +417,40 @@ export default function DocumentAddItemForm({
               name={`items.${index}.name`}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-muted-foreground text-xs">{t("Section header")}</FormLabel>
+                  <div className="flex items-center justify-between">
+                    <FormLabel className="text-muted-foreground text-xs">{t("Section header")}</FormLabel>
+                    {translationsEnabled && onContentLocaleChange && (
+                      <ContentLocaleButton
+                        activeLocale={contentLocale}
+                        defaultLocale={defaultContentLocale}
+                        onChange={onContentLocaleChange}
+                        uiLocale={locale}
+                        t={t}
+                      />
+                    )}
+                  </div>
                   <FormControl>
-                    <Input placeholder={t("Section title...")} {...field} value={field.value ?? ""} />
+                    <Input
+                      placeholder={t("Section title...")}
+                      name={field.name}
+                      ref={field.ref}
+                      value={readLocalizedValue(field.value, itemTranslations?.name, contentLocale)}
+                      onBlur={field.onBlur}
+                      onChange={(event) => {
+                        if (!translationsEnabled || contentLocale === DEFAULT_CONTENT_LOCALE) {
+                          field.onChange(event.target.value);
+                          return;
+                        }
+                        form.setValue(
+                          `items.${index}.translations`,
+                          {
+                            ...(form.getValues(`items.${index}.translations`) ?? {}),
+                            name: writeLocalizedValue(itemTranslations?.name, contentLocale, event.target.value),
+                          },
+                          { shouldDirty: true, shouldTouch: true },
+                        );
+                      }}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -241,14 +471,65 @@ export default function DocumentAddItemForm({
             <FormField
               control={control}
               name={`items.${index}.description`}
-              render={({ field }) => (
-                <FormItem>
-                  <FormControl>
-                    <Textarea placeholder={t("Description")} {...field} value={field.value ?? ""} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+              render={({ field }) => {
+                const visibleDescription = readLocalizedValue(
+                  field.value,
+                  itemTranslations?.description,
+                  contentLocale,
+                );
+                const setDescription = (nextDescription: string) => {
+                  if (!translationsEnabled || contentLocale === DEFAULT_CONTENT_LOCALE) {
+                    field.onChange(nextDescription);
+                    return;
+                  }
+                  form.setValue(
+                    `items.${index}.translations`,
+                    {
+                      ...(form.getValues(`items.${index}.translations`) ?? {}),
+                      description: writeLocalizedValue(itemTranslations?.description, contentLocale, nextDescription),
+                    },
+                    { shouldDirty: true, shouldTouch: true },
+                  );
+                };
+
+                return (
+                  <FormItem>
+                    <div className="mb-1 flex justify-end gap-2">
+                      <MarkdownTextareaToolbar
+                        textareaRef={descriptionTextareaRef}
+                        value={visibleDescription || ""}
+                        onChange={setDescription}
+                        t={t}
+                      />
+                      {translationsEnabled && onContentLocaleChange && (
+                        <ContentLocaleButton
+                          activeLocale={contentLocale}
+                          defaultLocale={defaultContentLocale}
+                          onChange={onContentLocaleChange}
+                          uiLocale={locale}
+                          t={t}
+                        />
+                      )}
+                    </div>
+                    <FormControl>
+                      <Textarea
+                        placeholder={t("Description")}
+                        name={field.name}
+                        ref={(element) => {
+                          if (typeof field.ref === "function") {
+                            field.ref(element);
+                          }
+                          descriptionTextareaRef.current = element;
+                        }}
+                        value={visibleDescription}
+                        onBlur={field.onBlur}
+                        onChange={(event) => setDescription(event.target.value)}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                );
+              }}
             />
           </div>
 
@@ -281,14 +562,30 @@ export default function DocumentAddItemForm({
             name={`items.${index}.name`}
             render={({ field, fieldState }) => (
               <FormItem>
+                <div className="mb-1 flex justify-end">
+                  {translationsEnabled && onContentLocaleChange && (
+                    <ContentLocaleButton
+                      activeLocale={contentLocale}
+                      defaultLocale={defaultContentLocale}
+                      onChange={onContentLocaleChange}
+                      disabled={lockPortugalSavedItemFields}
+                      uiLocale={locale}
+                      t={t}
+                    />
+                  )}
+                </div>
                 <FormControl>
                   <ItemCombobox
                     entityId={entityId}
-                    value={field.value ?? ""}
+                    value={readLocalizedValue(field.value, itemTranslations?.name, contentLocale)}
                     onSelect={handleItemSelect}
                     onCommitInlineName={setInlineItemName}
                     onInlineInputChange={setInlineItemName}
-                    commitOnBlurMode={field.value ? "update-inline" : "create"}
+                    commitOnBlurMode={
+                      readLocalizedValue(field.value, itemTranslations?.name, contentLocale)
+                        ? "update-inline"
+                        : "create"
+                    }
                     placeholder="Search or enter item name..."
                     inputTestId={`document-item-input-${index}`}
                     inputDataDemo={`marketing-demo-item-name-${index}`}
@@ -357,8 +654,7 @@ export default function DocumentAddItemForm({
                   {t("Quantity")} <span className="text-red-500">*</span>
                 </FormLabel>
                 <FormControl>
-                  <Input
-                    type="number"
+                  <NumericInput
                     data-demo={
                       index === 0
                         ? "marketing-demo-item-quantity-0"
@@ -368,7 +664,8 @@ export default function DocumentAddItemForm({
                     }
                     {...field}
                     value={field.value ?? ""}
-                    onChange={(e) => field.onChange(e.target.value === "" ? undefined : Number(e.target.value))}
+                    onValueChange={field.onChange}
+                    inputLocale={locale}
                   />
                 </FormControl>
                 <FormMessage />
@@ -386,8 +683,7 @@ export default function DocumentAddItemForm({
                 </FormLabel>
                 <div className="flex">
                   <FormControl>
-                    <Input
-                      type="number"
+                    <NumericInput
                       className="rounded-r-none"
                       data-demo={
                         index === 0
@@ -398,7 +694,8 @@ export default function DocumentAddItemForm({
                       }
                       {...field}
                       value={field.value ?? ""}
-                      onChange={(e) => field.onChange(e.target.value === "" ? undefined : Number(e.target.value))}
+                      onValueChange={field.onChange}
+                      inputLocale={locale}
                     />
                   </FormControl>
                   <DropdownMenu>
@@ -431,8 +728,26 @@ export default function DocumentAddItemForm({
             control={control}
             name={`items.${index}.unit`}
             render={({ field }) => (
-              <FormItem className="col-span-1 lg:col-span-2">
-                <FormLabel>{t("Unit")}</FormLabel>
+              <FormItem className="col-span-1 gap-1 lg:col-span-2">
+                <div className="flex items-center justify-between gap-2">
+                  <FormLabel>{t("Unit")}</FormLabel>
+                  {showEInvoicingUnitCodeControl && (
+                    <FormField
+                      control={control}
+                      name={unitCodeFieldName}
+                      render={({ field: unitCodeField }) => (
+                        <EInvoicingUnitCodeControl
+                          value={unitCodeField.value}
+                          disabled={lockPortugalSavedItemFields}
+                          hasError={hasEInvoicingUnitCodeError}
+                          errorMessage={unitCodeFieldState?.error?.message}
+                          onValueChange={unitCodeField.onChange}
+                          t={t}
+                        />
+                      )}
+                    />
+                  )}
+                </div>
                 <FormControl>
                   <Input {...field} value={field.value ?? ""} disabled={lockPortugalSavedItemFields} />
                 </FormControl>
@@ -461,14 +776,14 @@ export default function DocumentAddItemForm({
                   <FormLabel>{t("Discount")}</FormLabel>
                   <div className="flex">
                     <FormControl>
-                      <Input
-                        type="number"
+                      <NumericInput
                         placeholder="0"
                         className="rounded-r-none"
                         value={discount.value || ""}
-                        onChange={(e) =>
-                          setDiscount(e.target.value ? Number(e.target.value) : undefined, discount.type || "percent")
+                        onValueChange={(nextValue) =>
+                          setDiscount(typeof nextValue === "number" ? nextValue : undefined, discount.type || "percent")
                         }
+                        inputLocale={locale}
                       />
                     </FormControl>
                     <DropdownMenu>
@@ -519,6 +834,7 @@ export default function DocumentAddItemForm({
                     entityId={entityId}
                     onRemove={() => removeTax(taxIndex)}
                     onAddNewTax={onAddNewTax}
+                    onFindEstimatedTax={onFindEstimatedTax}
                     showLabel={false}
                     t={t}
                   />
@@ -542,19 +858,65 @@ export default function DocumentAddItemForm({
           <FormField
             control={control}
             name={`items.${index}.description`}
-            render={({ field }) => (
-              <FormItem>
-                <FormControl>
-                  <Textarea
-                    placeholder={t("Description")}
-                    {...field}
-                    value={field.value ?? ""}
-                    disabled={lockPortugalSavedItemFields}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+            render={({ field }) => {
+              const visibleDescription = readLocalizedValue(field.value, itemTranslations?.description, contentLocale);
+              const setDescription = (nextDescription: string) => {
+                if (lockPortugalSavedItemFields) return;
+                if (!translationsEnabled || contentLocale === DEFAULT_CONTENT_LOCALE) {
+                  field.onChange(nextDescription);
+                  return;
+                }
+                form.setValue(
+                  `items.${index}.translations`,
+                  {
+                    ...(form.getValues(`items.${index}.translations`) ?? {}),
+                    description: writeLocalizedValue(itemTranslations?.description, contentLocale, nextDescription),
+                  },
+                  { shouldDirty: true, shouldTouch: true },
+                );
+              };
+
+              return (
+                <FormItem>
+                  <div className="mb-1 flex justify-end gap-2">
+                    <MarkdownTextareaToolbar
+                      textareaRef={descriptionTextareaRef}
+                      value={visibleDescription || ""}
+                      onChange={setDescription}
+                      t={t}
+                      disabled={lockPortugalSavedItemFields}
+                    />
+                    {translationsEnabled && onContentLocaleChange && (
+                      <ContentLocaleButton
+                        activeLocale={contentLocale}
+                        defaultLocale={defaultContentLocale}
+                        onChange={onContentLocaleChange}
+                        disabled={lockPortugalSavedItemFields}
+                        uiLocale={locale}
+                        t={t}
+                      />
+                    )}
+                  </div>
+                  <FormControl>
+                    <Textarea
+                      placeholder={t("Description")}
+                      name={field.name}
+                      ref={(element) => {
+                        if (typeof field.ref === "function") {
+                          field.ref(element);
+                        }
+                        descriptionTextareaRef.current = element;
+                      }}
+                      value={visibleDescription}
+                      disabled={lockPortugalSavedItemFields}
+                      onBlur={field.onBlur}
+                      onChange={(event) => setDescription(event.target.value)}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              );
+            }}
           />
         </div>
 

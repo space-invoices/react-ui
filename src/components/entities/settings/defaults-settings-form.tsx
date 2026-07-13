@@ -2,9 +2,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import type { Entity } from "@spaceinvoices/js-sdk";
 import { Sparkles } from "lucide-react";
 import type { ReactNode } from "react";
-import { useRef } from "react";
-import { useForm } from "react-hook-form";
+import { useRef, useState } from "react";
+import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
+import { ContentLocaleButton } from "@/ui/components/document-content-translations";
+import { MarkdownTextareaToolbar } from "@/ui/components/documents/create/markdown-textarea-toolbar";
 import { SmartCodeInsertButton } from "@/ui/components/documents/create/smart-code-insert-button";
 import {
   Form,
@@ -15,18 +17,43 @@ import {
   FormLabel,
   FormMessage,
 } from "@/ui/components/ui/form";
+import { Input } from "@/ui/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/ui/components/ui/tabs";
 import { CURRENCY_CODES } from "@/ui/lib/constants";
+import {
+  DEFAULT_CONTENT_LOCALE,
+  DOCUMENT_CONTENT_TRANSLATIONS_FEATURE,
+  type DocumentContentLocaleMode,
+  readLocalizedValue,
+  writeLocalizedValue,
+} from "@/ui/lib/document-content-translations";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
 import { useFormFooterRegistration } from "@/ui/providers/form-footer-context";
+import { useWhiteLabel } from "@/ui/providers/white-label-provider";
 import { useUpdateEntity } from "../entities.hooks";
-import { InputWithPreview } from "../entity-settings-form/input-with-preview";
-import de from "../entity-settings-form/locales/de";
-import sl from "../entity-settings-form/locales/sl";
+import bg from "./locales/bg";
+import cs from "./locales/cs";
+import de from "./locales/de";
+import en from "./locales/en";
+import es from "./locales/es";
+import et from "./locales/et";
+import fi from "./locales/fi";
+import fr from "./locales/fr";
+import hr from "./locales/hr";
+import is from "./locales/is";
+import it from "./locales/it";
+import nb from "./locales/nb";
+import nl from "./locales/nl";
+import pl from "./locales/pl";
+import pt from "./locales/pt";
+import sk from "./locales/sk";
+import sl from "./locales/sl";
+import sv from "./locales/sv";
+import { InputWithPreview } from "./shared/input-with-preview";
 
-const translations = { sl, de } as const;
+const translations = { bg, cs, de, en, es, et, fi, fr, hr, is, it, nb, nl, pl, pt, sk, sl, sv } as const;
 
 const SUPPORTED_LOCALES = [
   { value: "en-US", label: "English (US)" },
@@ -37,13 +64,31 @@ const SUPPORTED_LOCALES = [
   { value: "sl-SI", label: "Slovenian (SI)" },
 ] as const;
 
+const localizedContentSchema = z.record(z.string(), z.string()).optional();
+const defaultsSettingsTranslationsSchema = z
+  .object({
+    default_invoice_note: localizedContentSchema,
+    default_invoice_payment_terms: localizedContentSchema,
+    default_estimate_note: localizedContentSchema,
+    default_estimate_payment_terms: localizedContentSchema,
+    default_credit_note_note: localizedContentSchema,
+    default_credit_note_payment_terms: localizedContentSchema,
+    default_advance_invoice_note: localizedContentSchema,
+    default_delivery_note_note: localizedContentSchema,
+    document_footer: localizedContentSchema,
+    default_document_signature: localizedContentSchema,
+  })
+  .optional();
+
 const defaultsSettingsSchema = z.object({
   currency_code: z.union([z.string(), z.null()]).optional(),
   locale: z.union([z.string(), z.null()]).optional(),
   // Invoice defaults
+  default_invoice_due_days: z.union([z.number().int().positive(), z.null()]).optional(),
   default_invoice_note: z.union([z.string(), z.null()]).optional(),
   default_invoice_payment_terms: z.union([z.string(), z.null()]).optional(),
   // Estimate defaults
+  default_estimate_valid_days: z.union([z.number().int().positive(), z.null()]).optional(),
   default_estimate_note: z.union([z.string(), z.null()]).optional(),
   default_estimate_payment_terms: z.union([z.string(), z.null()]).optional(),
   // Credit note defaults
@@ -56,6 +101,7 @@ const defaultsSettingsSchema = z.object({
   // Shared
   document_footer: z.union([z.string(), z.null()]).optional(),
   default_document_signature: z.union([z.string(), z.null()]).optional(),
+  translations: defaultsSettingsTranslationsSchema,
 });
 
 type DefaultsSettingsSchema = z.infer<typeof defaultsSettingsSchema>;
@@ -81,6 +127,9 @@ export function DefaultsSettingsForm({
   renderSection,
 }: DefaultsSettingsFormProps) {
   const t = createTranslation({ t: translateProp, namespace, locale, translationLocale, translations });
+  const whiteLabel = useWhiteLabel();
+  const translationsFeatureEnabled = whiteLabel.isFeatureVisible(DOCUMENT_CONTENT_TRANSLATIONS_FEATURE);
+  const [contentLocale, setContentLocale] = useState<DocumentContentLocaleMode>(DEFAULT_CONTENT_LOCALE);
 
   const currentSettings = (entity.settings as any) || {};
 
@@ -108,9 +157,11 @@ export function DefaultsSettingsForm({
       currency_code: entity.currency_code || null,
       locale: entity.locale || "en-US",
       // Invoice
+      default_invoice_due_days: currentSettings.default_invoice_due_days ?? null,
       default_invoice_note: currentSettings.default_invoice_note || null,
       default_invoice_payment_terms: currentSettings.default_invoice_payment_terms || null,
       // Estimate
+      default_estimate_valid_days: currentSettings.default_estimate_valid_days ?? null,
       default_estimate_note: currentSettings.default_estimate_note || null,
       default_estimate_payment_terms: currentSettings.default_estimate_payment_terms || null,
       // Credit Note
@@ -123,8 +174,13 @@ export function DefaultsSettingsForm({
       // Shared
       document_footer: currentSettings.document_footer || null,
       default_document_signature: currentSettings.default_document_signature || null,
+      translations: currentSettings.translations || {},
     },
   });
+  const settingsTranslations = useWatch({ control: form.control, name: "translations" as any }) as
+    | Record<string, Record<string, string> | undefined>
+    | undefined;
+  const defaultContentLocale = useWatch({ control: form.control, name: "locale" }) ?? entity.locale ?? "en-US";
 
   const { mutate: updateEntity, isPending } = useUpdateEntity({
     entityId: entity.id,
@@ -144,12 +200,14 @@ export function DefaultsSettingsForm({
 
   const onSubmit = (values: DefaultsSettingsSchema) => {
     const updatePayload: any = {
+      // Send only keys this surface owns — see useUpdateEntity's settings contract
       settings: {
-        ...currentSettings,
         // Invoice
+        default_invoice_due_days: values.default_invoice_due_days ?? null,
         default_invoice_note: values.default_invoice_note || null,
         default_invoice_payment_terms: values.default_invoice_payment_terms || null,
         // Estimate
+        default_estimate_valid_days: values.default_estimate_valid_days ?? null,
         default_estimate_note: values.default_estimate_note || null,
         default_estimate_payment_terms: values.default_estimate_payment_terms || null,
         // Credit Note
@@ -162,6 +220,9 @@ export function DefaultsSettingsForm({
         // Shared
         document_footer: values.document_footer || null,
         default_document_signature: values.default_document_signature || null,
+        // Only this form's namespaces (schema strips the rest); the server
+        // merges translations per namespace, preserving other forms' entries
+        translations: values.translations ?? {},
       },
     };
 
@@ -179,6 +240,123 @@ export function DefaultsSettingsForm({
   const wrapSection = (section: SectionType, content: ReactNode) => {
     return renderSection ? renderSection(section, content) : content;
   };
+
+  const renderLocalizedTextareaField = ({
+    name,
+    label,
+    description,
+    placeholder,
+    textareaRef,
+    rows,
+    className,
+  }: {
+    name: keyof DefaultsSettingsSchema & string;
+    label: string;
+    description: string;
+    placeholder: string;
+    textareaRef: React.RefObject<HTMLTextAreaElement | null>;
+    rows: number;
+    className?: string;
+  }) => (
+    <FormField
+      control={form.control}
+      name={name as any}
+      render={({ field }) => {
+        const fieldTranslations = settingsTranslations?.[name];
+        const value =
+          translationsFeatureEnabled && contentLocale !== DEFAULT_CONTENT_LOCALE
+            ? readLocalizedValue(field.value || "", fieldTranslations, contentLocale)
+            : (field.value ?? "");
+        const updateValue = (nextValue: string) => {
+          if (!translationsFeatureEnabled || contentLocale === DEFAULT_CONTENT_LOCALE) {
+            field.onChange(nextValue);
+            return;
+          }
+
+          form.setValue(
+            "translations",
+            {
+              ...(form.getValues("translations") ?? {}),
+              [name]: writeLocalizedValue(fieldTranslations, contentLocale, nextValue),
+            } as any,
+            { shouldDirty: true, shouldTouch: true, shouldValidate: false },
+          );
+        };
+
+        return (
+          <FormItem>
+            <div className="flex items-center justify-between">
+              <FormLabel className="font-medium text-sm">{label}</FormLabel>
+              <div className="flex items-center gap-1">
+                <MarkdownTextareaToolbar textareaRef={textareaRef} value={value} onChange={updateValue} t={t} />
+                <SmartCodeInsertButton textareaRef={textareaRef} value={value} onInsert={updateValue} t={t} />
+                {translationsFeatureEnabled ? (
+                  <ContentLocaleButton
+                    activeLocale={contentLocale}
+                    defaultLocale={defaultContentLocale}
+                    onChange={setContentLocale}
+                    uiLocale={translationLocale ?? locale}
+                    t={t}
+                  />
+                ) : null}
+              </div>
+            </div>
+            <FormControl>
+              <InputWithPreview
+                ref={textareaRef}
+                value={value}
+                onChange={updateValue}
+                placeholder={placeholder}
+                entity={entity}
+                translatePreviewLabel={t}
+                markdownPreview
+                multiline
+                rows={rows}
+                className={className}
+              />
+            </FormControl>
+            <FormDescription className="text-xs">{description}</FormDescription>
+            <FormMessage />
+          </FormItem>
+        );
+      }}
+    />
+  );
+
+  const renderDayCountField = ({
+    name,
+    label,
+    description,
+  }: {
+    name: "default_invoice_due_days" | "default_estimate_valid_days";
+    label: string;
+    description: string;
+  }) => (
+    <FormField
+      control={form.control}
+      name={name}
+      render={({ field }) => (
+        <FormItem>
+          <FormLabel className="font-medium text-sm">{label}</FormLabel>
+          <FormControl>
+            <Input
+              className="w-24 max-w-full"
+              type="number"
+              min={1}
+              step={1}
+              value={typeof field.value === "number" ? field.value : ""}
+              onChange={(event) => field.onChange(event.target.value ? Number(event.target.value) : null)}
+              onBlur={field.onBlur}
+              name={field.name}
+              ref={field.ref}
+            />
+          </FormControl>
+          <FormDescription className="text-xs">{description}</FormDescription>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+  );
 
   // Localization section content
   const localizationContent = (
@@ -264,293 +442,109 @@ export function DefaultsSettingsForm({
 
         {/* Invoice Tab */}
         <TabsContent value="invoice" className="mt-4 space-y-4">
-          <FormField
-            control={form.control}
-            name="default_invoice_note"
-            render={({ field }) => (
-              <FormItem>
-                <div className="flex items-center justify-between">
-                  <FormLabel className="font-medium text-sm">{t("Default Note")}</FormLabel>
-                  <SmartCodeInsertButton
-                    textareaRef={invoiceNoteRef}
-                    value={field.value || ""}
-                    onInsert={(newValue) => field.onChange(newValue)}
-                    t={t}
-                  />
-                </div>
-                <FormControl>
-                  <InputWithPreview
-                    ref={invoiceNoteRef}
-                    value={field.value || ""}
-                    onChange={field.onChange}
-                    placeholder={t("Optional note for the document.")}
-                    entity={entity}
-                    translatePreviewLabel={t}
-                    multiline
-                    rows={3}
-                    className="resize-y"
-                  />
-                </FormControl>
-                <FormDescription className="text-xs">
-                  {t("This note will be pre-filled when creating new invoices")}
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          {renderDayCountField({
+            name: "default_invoice_due_days",
+            label: t("Default due days"),
+            description: t("Number of days added to the document date for new invoice due dates"),
+          })}
 
-          <FormField
-            control={form.control}
-            name="default_invoice_payment_terms"
-            render={({ field }) => (
-              <FormItem>
-                <div className="flex items-center justify-between">
-                  <FormLabel className="font-medium text-sm">{t("Default Payment Terms")}</FormLabel>
-                  <SmartCodeInsertButton
-                    textareaRef={invoicePaymentTermsRef}
-                    value={field.value || ""}
-                    onInsert={(newValue) => field.onChange(newValue)}
-                    t={t}
-                  />
-                </div>
-                <FormControl>
-                  <InputWithPreview
-                    ref={invoicePaymentTermsRef}
-                    value={field.value || ""}
-                    onChange={field.onChange}
-                    placeholder={t("Please remit payment using the bank details shown on the document.")}
-                    entity={entity}
-                    translatePreviewLabel={t}
-                    multiline
-                    rows={3}
-                    className="resize-y"
-                  />
-                </FormControl>
-                <FormDescription className="text-xs">
-                  {t("Payment terms pre-filled when creating new invoices")}
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          {renderLocalizedTextareaField({
+            name: "default_invoice_note",
+            label: t("Default Note"),
+            description: t("This note will be pre-filled when creating new invoices"),
+            placeholder: t("Optional note for the document."),
+            textareaRef: invoiceNoteRef,
+            rows: 3,
+            className: "resize-y",
+          })}
+
+          {renderLocalizedTextareaField({
+            name: "default_invoice_payment_terms",
+            label: t("Default Payment Terms"),
+            description: t("Payment terms pre-filled when creating new invoices"),
+            placeholder: t("Please remit payment using the bank details shown on the document."),
+            textareaRef: invoicePaymentTermsRef,
+            rows: 3,
+            className: "resize-y",
+          })}
         </TabsContent>
 
         {/* Estimate Tab */}
         <TabsContent value="estimate" className="mt-4 space-y-4">
-          <FormField
-            control={form.control}
-            name="default_estimate_note"
-            render={({ field }) => (
-              <FormItem>
-                <div className="flex items-center justify-between">
-                  <FormLabel className="font-medium text-sm">{t("Default Note")}</FormLabel>
-                  <SmartCodeInsertButton
-                    textareaRef={estimateNoteRef}
-                    value={field.value || ""}
-                    onInsert={(newValue) => field.onChange(newValue)}
-                    t={t}
-                  />
-                </div>
-                <FormControl>
-                  <InputWithPreview
-                    ref={estimateNoteRef}
-                    value={field.value || ""}
-                    onChange={field.onChange}
-                    placeholder={t("This estimate is valid until {document_valid_until}.")}
-                    entity={entity}
-                    translatePreviewLabel={t}
-                    multiline
-                    rows={3}
-                    className="resize-y"
-                  />
-                </FormControl>
-                <FormDescription className="text-xs">
-                  {t("This note will be pre-filled when creating new estimates")}
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          {renderDayCountField({
+            name: "default_estimate_valid_days",
+            label: t("Default valid days"),
+            description: t("Number of days added to the document date for new estimate valid-till dates"),
+          })}
 
-          <FormField
-            control={form.control}
-            name="default_estimate_payment_terms"
-            render={({ field }) => (
-              <FormItem>
-                <div className="flex items-center justify-between">
-                  <FormLabel className="font-medium text-sm">{t("Default Payment Terms")}</FormLabel>
-                  <SmartCodeInsertButton
-                    textareaRef={estimatePaymentTermsRef}
-                    value={field.value || ""}
-                    onInsert={(newValue) => field.onChange(newValue)}
-                    t={t}
-                  />
-                </div>
-                <FormControl>
-                  <InputWithPreview
-                    ref={estimatePaymentTermsRef}
-                    value={field.value || ""}
-                    onChange={field.onChange}
-                    placeholder={t("Payment due upon acceptance.")}
-                    entity={entity}
-                    translatePreviewLabel={t}
-                    multiline
-                    rows={3}
-                    className="resize-y"
-                  />
-                </FormControl>
-                <FormDescription className="text-xs">
-                  {t("Payment terms pre-filled when creating new estimates")}
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          {renderLocalizedTextareaField({
+            name: "default_estimate_note",
+            label: t("Default Note"),
+            description: t("This note will be pre-filled when creating new estimates"),
+            placeholder: t("This estimate is valid until {document_valid_until}."),
+            textareaRef: estimateNoteRef,
+            rows: 3,
+            className: "resize-y",
+          })}
+
+          {renderLocalizedTextareaField({
+            name: "default_estimate_payment_terms",
+            label: t("Default Payment Terms"),
+            description: t("Payment terms pre-filled when creating new estimates"),
+            placeholder: t("Payment due upon acceptance."),
+            textareaRef: estimatePaymentTermsRef,
+            rows: 3,
+            className: "resize-y",
+          })}
         </TabsContent>
 
         {/* Credit Note Tab */}
         <TabsContent value="credit_note" className="mt-4 space-y-4">
-          <FormField
-            control={form.control}
-            name="default_credit_note_note"
-            render={({ field }) => (
-              <FormItem>
-                <div className="flex items-center justify-between">
-                  <FormLabel className="font-medium text-sm">{t("Default Note")}</FormLabel>
-                  <SmartCodeInsertButton
-                    textareaRef={creditNoteNoteRef}
-                    value={field.value || ""}
-                    onInsert={(newValue) => field.onChange(newValue)}
-                    t={t}
-                  />
-                </div>
-                <FormControl>
-                  <InputWithPreview
-                    ref={creditNoteNoteRef}
-                    value={field.value || ""}
-                    onChange={field.onChange}
-                    placeholder={t("Credit note for invoice {document_number}.")}
-                    entity={entity}
-                    translatePreviewLabel={t}
-                    multiline
-                    rows={3}
-                    className="resize-y"
-                  />
-                </FormControl>
-                <FormDescription className="text-xs">
-                  {t("This note will be pre-filled when creating new credit notes")}
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          {renderLocalizedTextareaField({
+            name: "default_credit_note_note",
+            label: t("Default Note"),
+            description: t("This note will be pre-filled when creating new credit notes"),
+            placeholder: t("Credit note for invoice {document_number}."),
+            textareaRef: creditNoteNoteRef,
+            rows: 3,
+            className: "resize-y",
+          })}
 
-          <FormField
-            control={form.control}
-            name="default_credit_note_payment_terms"
-            render={({ field }) => (
-              <FormItem>
-                <div className="flex items-center justify-between">
-                  <FormLabel className="font-medium text-sm">{t("Default Payment Terms")}</FormLabel>
-                  <SmartCodeInsertButton
-                    textareaRef={creditNotePaymentTermsRef}
-                    value={field.value || ""}
-                    onInsert={(newValue) => field.onChange(newValue)}
-                    t={t}
-                  />
-                </div>
-                <FormControl>
-                  <InputWithPreview
-                    ref={creditNotePaymentTermsRef}
-                    value={field.value || ""}
-                    onChange={field.onChange}
-                    placeholder={t("Credit will be applied to your account.")}
-                    entity={entity}
-                    translatePreviewLabel={t}
-                    multiline
-                    rows={3}
-                    className="resize-y"
-                  />
-                </FormControl>
-                <FormDescription className="text-xs">
-                  {t("Payment terms pre-filled when creating new credit notes")}
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          {renderLocalizedTextareaField({
+            name: "default_credit_note_payment_terms",
+            label: t("Default Payment Terms"),
+            description: t("Payment terms pre-filled when creating new credit notes"),
+            placeholder: t("Credit will be applied to your account."),
+            textareaRef: creditNotePaymentTermsRef,
+            rows: 3,
+            className: "resize-y",
+          })}
         </TabsContent>
 
         {/* Advance Invoice Tab */}
         <TabsContent value="advance_invoice" className="mt-4 space-y-4">
-          <FormField
-            control={form.control}
-            name="default_advance_invoice_note"
-            render={({ field }) => (
-              <FormItem>
-                <div className="flex items-center justify-between">
-                  <FormLabel className="font-medium text-sm">{t("Default Note")}</FormLabel>
-                  <SmartCodeInsertButton
-                    textareaRef={advanceInvoiceNoteRef}
-                    value={field.value || ""}
-                    onInsert={(newValue) => field.onChange(newValue)}
-                    t={t}
-                  />
-                </div>
-                <FormControl>
-                  <InputWithPreview
-                    ref={advanceInvoiceNoteRef}
-                    value={field.value || ""}
-                    onChange={field.onChange}
-                    placeholder={t("Default note for advance invoices")}
-                    entity={entity}
-                    translatePreviewLabel={t}
-                    multiline
-                    className="min-h-[100px] resize-none"
-                    rows={4}
-                  />
-                </FormControl>
-                <FormDescription className="text-xs">{t("Default note for all new advance invoices")}</FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          {renderLocalizedTextareaField({
+            name: "default_advance_invoice_note",
+            label: t("Default Note"),
+            description: t("Default note for all new advance invoices"),
+            placeholder: t("Default note for advance invoices"),
+            textareaRef: advanceInvoiceNoteRef,
+            rows: 4,
+            className: "min-h-[100px] resize-none",
+          })}
         </TabsContent>
 
         {/* Delivery Note Tab */}
         <TabsContent value="delivery_note" className="mt-4 space-y-4">
-          <FormField
-            control={form.control}
-            name="default_delivery_note_note"
-            render={({ field }) => (
-              <FormItem>
-                <div className="flex items-center justify-between">
-                  <FormLabel className="font-medium text-sm">{t("Default Note")}</FormLabel>
-                  <SmartCodeInsertButton
-                    textareaRef={deliveryNoteNoteRef}
-                    value={field.value || ""}
-                    onInsert={(newValue) => field.onChange(newValue)}
-                    t={t}
-                  />
-                </div>
-                <FormControl>
-                  <InputWithPreview
-                    ref={deliveryNoteNoteRef}
-                    value={field.value || ""}
-                    onChange={field.onChange}
-                    placeholder={t("Default note for delivery notes")}
-                    entity={entity}
-                    translatePreviewLabel={t}
-                    multiline
-                    className="min-h-[100px] resize-none"
-                    rows={4}
-                  />
-                </FormControl>
-                <FormDescription className="text-xs">{t("Default note for all new delivery notes")}</FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          {renderLocalizedTextareaField({
+            name: "default_delivery_note_note",
+            label: t("Default Note"),
+            description: t("Default note for all new delivery notes"),
+            placeholder: t("Default note for delivery notes"),
+            textareaRef: deliveryNoteNoteRef,
+            rows: 4,
+            className: "min-h-[100px] resize-none",
+          })}
         </TabsContent>
       </Tabs>
     </div>
@@ -559,73 +553,25 @@ export function DefaultsSettingsForm({
   // Footer section content
   const footerContent = (
     <div className="space-y-6 border-t pt-6">
-      <FormField
-        control={form.control}
-        name="default_document_signature"
-        render={({ field }) => (
-          <FormItem>
-            <div className="flex items-center justify-between">
-              <FormLabel className="font-medium text-sm">{t("Document Signature")}</FormLabel>
-              <SmartCodeInsertButton
-                textareaRef={documentSignatureRef}
-                value={field.value || ""}
-                onInsert={(newValue) => field.onChange(newValue)}
-                t={t}
-              />
-            </div>
-            <FormControl>
-              <InputWithPreview
-                ref={documentSignatureRef}
-                value={field.value || ""}
-                onChange={field.onChange}
-                placeholder={t("{entity_name}")}
-                entity={entity}
-                translatePreviewLabel={t}
-                multiline
-                rows={2}
-                className="resize-y"
-              />
-            </FormControl>
-            <FormDescription className="text-xs">{t("Signature text displayed on all PDF documents")}</FormDescription>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+      {renderLocalizedTextareaField({
+        name: "default_document_signature",
+        label: t("Document Signature"),
+        description: t("Signature text displayed on all PDF documents"),
+        placeholder: t("{entity_name}"),
+        textareaRef: documentSignatureRef,
+        rows: 2,
+        className: "resize-y",
+      })}
 
-      <FormField
-        control={form.control}
-        name="document_footer"
-        render={({ field }) => (
-          <FormItem>
-            <div className="flex items-center justify-between">
-              <FormLabel className="font-medium text-sm">{t("Document Footer")}</FormLabel>
-              <SmartCodeInsertButton
-                textareaRef={documentFooterRef}
-                value={field.value || ""}
-                onInsert={(newValue) => field.onChange(newValue)}
-                t={t}
-              />
-            </div>
-            <FormControl>
-              <InputWithPreview
-                ref={documentFooterRef}
-                value={field.value || ""}
-                onChange={field.onChange}
-                placeholder={t("{entity_name} | Due Date: {document_due_date} | Invoice #{document_number}")}
-                entity={entity}
-                translatePreviewLabel={t}
-                multiline
-                rows={2}
-                className="resize-y"
-              />
-            </FormControl>
-            <FormDescription className="text-xs">
-              {t("Footer text displayed at the bottom of all PDF documents")}
-            </FormDescription>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+      {renderLocalizedTextareaField({
+        name: "document_footer",
+        label: t("Document Footer"),
+        description: t("Footer text displayed at the bottom of all PDF documents"),
+        placeholder: t("{entity_name} | Due Date: {document_due_date} | Invoice #{document_number}"),
+        textareaRef: documentFooterRef,
+        rows: 2,
+        className: "resize-y",
+      })}
     </div>
   );
 

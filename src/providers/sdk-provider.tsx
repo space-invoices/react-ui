@@ -36,6 +36,8 @@ SDKContext.displayName = "SDKContext";
 
 type SDKProviderProps = {
   children: ReactNode;
+  /** Explicit account context for user-token requests. API-key and embed usage should leave this unset. */
+  accountId?: string | null;
   onUnauthorized?: (response: Response) => void;
   fallbackLoading?: ReactNode;
   fallbackError?: (error: Error) => ReactNode;
@@ -50,6 +52,7 @@ type LegacySDKContextBridgeProps = SDKProviderProps;
  */
 export function SDKProvider({
   children,
+  accountId = null,
   onUnauthorized,
   fallbackLoading = (
     <div className="fixed inset-0 flex items-center justify-center bg-background/50">
@@ -85,6 +88,7 @@ export function SDKProvider({
       const { default: SDKConstructor } = await import("@spaceinvoices/js-sdk");
       const newSDK = new SDKConstructor({
         accessToken: token,
+        accountId,
         ...(basePath && { basePath }),
         onUnauthorized: (response: Response) => {
           flushCookies();
@@ -101,7 +105,7 @@ export function SDKProvider({
     } finally {
       setIsLoading(false);
     }
-  }, [onUnauthorized]);
+  }, [accountId, onUnauthorized]);
 
   // Initialize SDK on component mount
   useEffect(() => {
@@ -139,6 +143,7 @@ export function SDKProvider({
   return (
     <SpaceInvoicesProvider
       accessToken={value.accessToken ?? ""}
+      accountId={accountId}
       basePath={import.meta.env?.VITE_API_URL || import.meta.env?.BUN_PUBLIC_API_URL || undefined}
       onUnauthorized={(response) => {
         flushCookies();
@@ -183,6 +188,7 @@ export function LegacySDKContextBridge({
       const { default: SDKConstructor } = await import("@spaceinvoices/js-sdk");
       const newSDK = new SDKConstructor({
         accessToken: runtime.accessToken,
+        accountId: runtime.accountId,
         ...(runtime.basePath && { basePath: runtime.basePath }),
         ...(runtime.clientName && { clientName: runtime.clientName }),
         ...(onUnauthorized && { onUnauthorized }),
@@ -195,7 +201,14 @@ export function LegacySDKContextBridge({
     } finally {
       setIsLoading(false);
     }
-  }, [onUnauthorized, runtime.accessToken, runtime.basePath, runtime.clientName, runtime.isResolvingAccessToken]);
+  }, [
+    onUnauthorized,
+    runtime.accessToken,
+    runtime.accountId,
+    runtime.basePath,
+    runtime.clientName,
+    runtime.isResolvingAccessToken,
+  ]);
 
   useEffect(() => {
     void initializeSDK();

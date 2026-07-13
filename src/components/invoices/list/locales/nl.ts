@@ -15,6 +15,7 @@ export default {
   "Downloading...": "Downloaden...",
   Duplicate: "Dupliceren",
   "Send Email": "E-mail verzenden",
+  "Send reminder": "Herinnering verzenden",
   Invoice: "Factuur",
   "Failed to download PDF": "PDF-download mislukt",
   // Filter translations
@@ -45,8 +46,9 @@ export default {
   "Deselect all": "Alles deselecteren",
   Void: "Nietig verklaren",
   "Partially Paid": "Gedeeltelijk betaald",
-  "FURS fiscalization failed": "FURS fiscalization failed",
-  "FINA fiscalization failed": "FINA fiscalization failed",
-  "Retry Fiscalization": "Retry Fiscalization",
-  "Some selected documents don't have failed fiscalization": "Some selected documents don't have failed fiscalization",
+  "FURS fiscalization failed": "FURS-fiscalisatie mislukt",
+  "FINA fiscalization failed": "FINA-fiscalisatie mislukt",
+  "Retry Fiscalization": "Fiscalisatie opnieuw proberen",
+  "Some selected documents don't have failed fiscalization":
+    "Sommige geselecteerde documenten hebben geen mislukte fiscalisatie",
 } as const;

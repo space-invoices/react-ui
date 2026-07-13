@@ -1,20 +1,39 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Entity } from "@spaceinvoices/js-sdk";
 import { files } from "@spaceinvoices/js-sdk";
-import { Building2, Filter, Mail, MoreHorizontal, Palette, Plus, Settings2, Wallet } from "lucide-react";
+import { Building2, Filter, Hash, Mail, MoreHorizontal, Palette, Plus, Settings2, Wallet } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+import { MarkdownTextareaToolbar } from "@/ui/components/documents/create/markdown-textarea-toolbar";
 import { SmartCodeInsertButton } from "@/ui/components/documents/create/smart-code-insert-button";
-import { ImageUploadWithCrop } from "@/ui/components/entities/entity-settings-form/image-upload-with-crop";
-import { InputWithPreview } from "@/ui/components/entities/entity-settings-form/input-with-preview";
+import settingsBgTranslations from "@/ui/components/entities/settings/locales/bg";
+import settingsCsTranslations from "@/ui/components/entities/settings/locales/cs";
+import settingsDeTranslations from "@/ui/components/entities/settings/locales/de";
+import settingsEnTranslations from "@/ui/components/entities/settings/locales/en";
+import settingsEsTranslations from "@/ui/components/entities/settings/locales/es";
+import settingsEtTranslations from "@/ui/components/entities/settings/locales/et";
+import settingsFiTranslations from "@/ui/components/entities/settings/locales/fi";
+import settingsFrTranslations from "@/ui/components/entities/settings/locales/fr";
+import settingsHrTranslations from "@/ui/components/entities/settings/locales/hr";
+import settingsIsTranslations from "@/ui/components/entities/settings/locales/is";
+import settingsItTranslations from "@/ui/components/entities/settings/locales/it";
+import settingsNbTranslations from "@/ui/components/entities/settings/locales/nb";
+import settingsNlTranslations from "@/ui/components/entities/settings/locales/nl";
+import settingsPlTranslations from "@/ui/components/entities/settings/locales/pl";
+import settingsPtTranslations from "@/ui/components/entities/settings/locales/pt";
+import settingsSkTranslations from "@/ui/components/entities/settings/locales/sk";
+import settingsSlTranslations from "@/ui/components/entities/settings/locales/sl";
+import settingsSvTranslations from "@/ui/components/entities/settings/locales/sv";
 import {
   getPdfTemplateOption,
   PDF_TEMPLATE_IDS,
   PDF_TEMPLATE_OPTIONS,
 } from "@/ui/components/entities/settings/pdf-template-selector";
 import pdfTemplateSelectorSlTranslations from "@/ui/components/entities/settings/pdf-template-selector/locales/sl";
+import { ImageUploadWithCrop } from "@/ui/components/entities/settings/shared/image-upload-with-crop";
+import { InputWithPreview } from "@/ui/components/entities/settings/shared/input-with-preview";
 import {
   SettingsResourceListCard,
   SettingsResourceListEmptyState,
@@ -71,7 +90,25 @@ import { createTranslation } from "@/ui/lib/translation";
 import { BusinessUnitEmptyState } from "./business-unit-empty-state";
 
 const translations = {
+  bg: settingsBgTranslations,
+  cs: settingsCsTranslations,
+  de: settingsDeTranslations,
+  en: settingsEnTranslations,
+  es: settingsEsTranslations,
+  et: settingsEtTranslations,
+  fi: settingsFiTranslations,
+  fr: settingsFrTranslations,
+  hr: settingsHrTranslations,
+  is: settingsIsTranslations,
+  it: settingsItTranslations,
+  nb: settingsNbTranslations,
+  nl: settingsNlTranslations,
+  pl: settingsPlTranslations,
+  pt: settingsPtTranslations,
+  sk: settingsSkTranslations,
+  sv: settingsSvTranslations,
   sl: {
+    ...settingsSlTranslations,
     ...pdfTemplateSelectorSlTranslations,
     "Account name": "Naziv računa",
     "Add unit / brand": "Dodaj enoto / blagovno znamko",
@@ -85,9 +122,11 @@ const translations = {
     "Archive this business unit?": "Arhiviram to poslovno enoto?",
     Archived: "Arhivirano",
     "Advance invoice note": "Opomba za avansni račun",
+    Bold: "Krepko",
     "Bank name": "Naziv banke",
     "Brand assets uploaded": "Naloženi grafični elementi",
     Branding: "Celostna podoba",
+    "Bullet list": "Seznam z oznakami",
     "Unit / brand archived": "Enota / blagovna znamka je arhivirana",
     "BIC / SWIFT": "BIC / SWIFT",
     "Unit / Brand": "Enota / blagovna znamka",
@@ -124,11 +163,17 @@ const translations = {
     "Email defaults": "Privzete e-poštne nastavitve",
     "Entity default": "Privzeto za podjetje",
     "Entity default template": "Privzeta predloga podjetja",
-    Estimate: "Predračun",
-    "Estimate email body": "Besedilo e-pošte za predračun",
-    "Estimate email subject": "Zadeva e-pošte za predračun",
-    "Estimate note": "Opomba za predračun",
-    "Estimate payment terms": "Plačilni pogoji za predračun",
+    Estimate: "Ponudba",
+    "Estimate email body": "Besedilo e-pošte za ponudbo",
+    "Estimate email subject": "Zadeva e-pošte za ponudbo",
+    "Estimate note": "Opomba za ponudbo",
+    "Estimate payment terms": "Plačilni pogoji za ponudbo",
+    "Default due days": "Privzeti dnevi zapadlosti",
+    "Default valid days": "Privzeti dnevi veljavnosti",
+    "Number of days added to the document date for new invoice due dates":
+      "Število dni, dodanih datumu dokumenta za nove datume zapadlosti računov.",
+    "Number of days added to the document date for new estimate valid-till dates":
+      "Število dni, dodanih datumu dokumenta za nove datume veljavnosti ponudb.",
     General: "Splošno",
     "Hide delivery note prices": "Skrij cene na dobavnici",
     IBAN: "IBAN",
@@ -138,6 +183,7 @@ const translations = {
     "Invoice email subject": "Zadeva e-pošte za račun",
     "Invoice note": "Opomba za račun",
     "Invoice payment terms": "Plačilni pogoji za račun",
+    Italic: "Ležeče",
     "Loading...": "Nalaganje ...",
     Logo: "Logotip",
     "Logo scale %": "Velikost logotipa %",
@@ -213,6 +259,8 @@ const settingsSchema = z.object({
   pdf_template: z.enum(PDF_TEMPLATE_IDS).nullish(),
   primary_color: z.string().nullish(),
   logo_scale_percent: z.coerce.number().int().min(30).max(100).nullish(),
+  default_invoice_due_days: z.coerce.number().int().positive().nullish(),
+  default_estimate_valid_days: z.coerce.number().int().positive().nullish(),
   default_invoice_note: z.string().nullish(),
   default_invoice_payment_terms: z.string().nullish(),
   default_estimate_note: z.string().nullish(),
@@ -223,6 +271,11 @@ const settingsSchema = z.object({
   default_delivery_note_note: z.string().nullish(),
   document_footer: z.string().nullish(),
   default_document_signature: z.string().nullish(),
+  invoice_number_start: z.coerce.number().int().positive().nullish(),
+  estimate_number_start: z.coerce.number().int().positive().nullish(),
+  credit_note_number_start: z.coerce.number().int().positive().nullish(),
+  advance_invoice_number_start: z.coerce.number().int().positive().nullish(),
+  delivery_note_number_start: z.coerce.number().int().positive().nullish(),
   invoice_email_subject: z.string().nullish(),
   invoice_email_body: z.string().nullish(),
   estimate_email_subject: z.string().nullish(),
@@ -238,6 +291,12 @@ const settingsSchema = z.object({
 
 type CreateUnitValues = z.infer<typeof createUnitSchema>;
 type BusinessUnitFormValues = z.input<typeof settingsSchema>;
+type UnitNumberStartField =
+  | "invoice_number_start"
+  | "estimate_number_start"
+  | "credit_note_number_start"
+  | "advance_invoice_number_start"
+  | "delivery_note_number_start";
 
 type ManagedBusinessUnit = {
   id: string;
@@ -269,6 +328,8 @@ type BusinessUnitsManagerProps = {
   onIncludeArchivedChange: (value: boolean) => void;
   onCreate: (data: Record<string, unknown>) => Promise<ManagedBusinessUnit>;
   onUpdate: (args: { id: string; data: Record<string, unknown> }) => Promise<unknown>;
+  onUpdateEntitySettings: (settings: Record<string, unknown>) => Promise<unknown>;
+  onOpenNumberingSettings?: () => void;
   onArchive: (id: string) => Promise<unknown>;
   isCreatePending?: boolean;
   isUpdatePending?: boolean;
@@ -279,6 +340,7 @@ const sectionTabs = [
   { value: "general", label: "General", icon: Settings2 },
   { value: "branding", label: "Branding", icon: Palette },
   { value: "defaults", label: "Defaults", icon: Building2 },
+  { value: "numbering", label: "Numbering", icon: Hash },
   { value: "email", label: "Email defaults", icon: Mail },
   { value: "payments", label: "Payment accounts", icon: Wallet },
 ] as const;
@@ -344,6 +406,18 @@ const documentDefaultsTabs = [
   },
 ] as const;
 
+const documentNumberingTabs: ReadonlyArray<{
+  value: "invoice" | "estimate" | "credit_note" | "advance_invoice" | "delivery_note";
+  label: string;
+  field: UnitNumberStartField;
+}> = [
+  { value: "invoice", label: "Invoice", field: "invoice_number_start" },
+  { value: "estimate", label: "Estimate", field: "estimate_number_start" },
+  { value: "credit_note", label: "Credit Note", field: "credit_note_number_start" },
+  { value: "advance_invoice", label: "Advance Invoice", field: "advance_invoice_number_start" },
+  { value: "delivery_note", label: "Delivery Note", field: "delivery_note_number_start" },
+] as const;
+
 const sharedDefaultsFields = [
   ["document_footer", "Document footer"],
   ["default_document_signature", "Document signature"],
@@ -374,9 +448,14 @@ function formatUnitSummary(unit: ManagedBusinessUnit, t: (key: string) => string
   return parts.join(" • ");
 }
 
-function toFormValues(unit?: ManagedBusinessUnit | null): BusinessUnitFormValues {
+function getUnitNumberStart(entity: Entity, unitId: string, type: (typeof documentNumberingTabs)[number]["value"]) {
+  return ((entity.settings as any)?.unit_number_sequence_starts as any)?.[type]?.[unitId] ?? 1;
+}
+
+function toFormValues(unit?: ManagedBusinessUnit | null, entity?: Entity): BusinessUnitFormValues {
   const settings = (unit?.settings as Record<string, any> | undefined) ?? {};
   const bankAccount = settings.bank_accounts?.[0] ?? {};
+  const unitId = unit?.id ?? "";
 
   return {
     name: unit?.name ?? "",
@@ -393,6 +472,8 @@ function toFormValues(unit?: ManagedBusinessUnit | null): BusinessUnitFormValues
     pdf_template: settings.pdf_template ?? null,
     primary_color: settings.primary_color ?? "",
     logo_scale_percent: settings.logo_scale_percent ?? 100,
+    default_invoice_due_days: settings.default_invoice_due_days ?? null,
+    default_estimate_valid_days: settings.default_estimate_valid_days ?? null,
     default_invoice_note: settings.default_invoice_note ?? "",
     default_invoice_payment_terms: settings.default_invoice_payment_terms ?? "",
     default_estimate_note: settings.default_estimate_note ?? "",
@@ -403,6 +484,11 @@ function toFormValues(unit?: ManagedBusinessUnit | null): BusinessUnitFormValues
     default_delivery_note_note: settings.default_delivery_note_note ?? "",
     document_footer: settings.document_footer ?? "",
     default_document_signature: settings.default_document_signature ?? "",
+    invoice_number_start: entity && unitId ? getUnitNumberStart(entity, unitId, "invoice") : 1,
+    estimate_number_start: entity && unitId ? getUnitNumberStart(entity, unitId, "estimate") : 1,
+    credit_note_number_start: entity && unitId ? getUnitNumberStart(entity, unitId, "credit_note") : 1,
+    advance_invoice_number_start: entity && unitId ? getUnitNumberStart(entity, unitId, "advance_invoice") : 1,
+    delivery_note_number_start: entity && unitId ? getUnitNumberStart(entity, unitId, "delivery_note") : 1,
     invoice_email_subject: settings.email_defaults?.invoice_subject ?? "",
     invoice_email_body: settings.email_defaults?.invoice_body ?? "",
     estimate_email_subject: settings.email_defaults?.estimate_subject ?? "",
@@ -414,6 +500,23 @@ function toFormValues(unit?: ManagedBusinessUnit | null): BusinessUnitFormValues
     delivery_note_hide_prices: settings.delivery_note_hide_prices ?? false,
     credit_note_negative_values: settings.credit_note_negative_values ?? false,
     show_payment_amounts: settings.show_payment_amounts ?? false,
+  };
+}
+
+function toEntitySettingsPayload(unitId: string, values: BusinessUnitFormValues) {
+  // Only the edited unit's starts; the server merges this key per document
+  // type and business unit, so other units' entries are preserved
+  const nextStarts: Record<string, Record<string, number>> = {};
+
+  for (const tab of documentNumberingTabs) {
+    const startValue = values[tab.field];
+    nextStarts[tab.value] = {
+      [unitId]: typeof startValue === "number" ? startValue : 1,
+    };
+  }
+
+  return {
+    unit_number_sequence_starts: nextStarts,
   };
 }
 
@@ -436,6 +539,8 @@ function toPayload(values: BusinessUnitFormValues) {
       pdf_template: values.pdf_template || undefined,
       primary_color: values.primary_color?.trim() || undefined,
       logo_scale_percent: values.logo_scale_percent ?? undefined,
+      default_invoice_due_days: values.default_invoice_due_days ?? undefined,
+      default_estimate_valid_days: values.default_estimate_valid_days ?? undefined,
       default_invoice_note: values.default_invoice_note?.trim() || undefined,
       default_invoice_payment_terms: values.default_invoice_payment_terms?.trim() || undefined,
       default_estimate_note: values.default_estimate_note?.trim() || undefined,
@@ -563,6 +668,8 @@ function BusinessUnitSettingsEditor({
   onOpenChange,
   unit,
   onUpdate,
+  onUpdateEntitySettings,
+  onOpenNumberingSettings,
   onRequestArchive,
   isUpdatePending,
   isArchivePending,
@@ -577,6 +684,8 @@ function BusinessUnitSettingsEditor({
   onOpenChange: (open: boolean) => void;
   unit: ManagedBusinessUnit;
   onUpdate: (args: { id: string; data: Record<string, unknown> }) => Promise<unknown>;
+  onUpdateEntitySettings: (settings: Record<string, unknown>) => Promise<unknown>;
+  onOpenNumberingSettings?: () => void;
   onRequestArchive: (unit: ManagedBusinessUnit) => void;
   isUpdatePending?: boolean;
   isArchivePending?: boolean;
@@ -590,7 +699,7 @@ function BusinessUnitSettingsEditor({
 
   const form = useForm<BusinessUnitFormValues>({
     resolver: zodResolver(settingsSchema),
-    defaultValues: toFormValues(unit),
+    defaultValues: toFormValues(unit, entity),
   });
   const watchedValues = form.watch();
   const invoiceNoteRef = useRef<HTMLTextAreaElement>(null);
@@ -609,9 +718,9 @@ function BusinessUnitSettingsEditor({
   const estimateEmailBodyRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    form.reset(toFormValues(unit));
+    form.reset(toFormValues(unit, entity));
     setActiveTab("general");
-  }, [form, unit]);
+  }, [entity, form, unit]);
 
   useEffect(() => {
     async function loadFiles() {
@@ -654,9 +763,16 @@ function BusinessUnitSettingsEditor({
   };
 
   const onSubmit = async (values: BusinessUnitFormValues) => {
-    await onUpdate({ id: unit.id, data: toPayload(values) });
-    toast.success(t("Saved successfully"));
-    onOpenChange(false);
+    try {
+      await onUpdateEntitySettings(toEntitySettingsPayload(unit.id, values));
+      await onUpdate({ id: unit.id, data: toPayload(values) });
+      toast.success(t("Saved successfully"));
+      onOpenChange(false);
+    } catch (error) {
+      if (error instanceof Error && error.message) {
+        toast.error(error.message);
+      }
+    }
   };
 
   const previewBankAccounts = useMemo(
@@ -920,6 +1036,58 @@ function BusinessUnitSettingsEditor({
                         </TabsList>
                         {documentDefaultsTabs.map((tab) => (
                           <TabsContent key={tab.value} value={tab.value} className="mt-4 space-y-4">
+                            {tab.value === "invoice" ? (
+                              <FormField
+                                control={form.control}
+                                name="default_invoice_due_days"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel className="font-medium text-sm">{t("Default due days")}</FormLabel>
+                                    <FormControl>
+                                      <Input
+                                        className="w-24 max-w-full"
+                                        type="number"
+                                        min={1}
+                                        step={1}
+                                        value={typeof field.value === "number" ? field.value : ""}
+                                        onChange={(event) =>
+                                          field.onChange(event.target.value ? Number(event.target.value) : null)
+                                        }
+                                      />
+                                    </FormControl>
+                                    <FormDescription className="text-xs">
+                                      {t("Number of days added to the document date for new invoice due dates")}
+                                    </FormDescription>
+                                  </FormItem>
+                                )}
+                              />
+                            ) : null}
+                            {tab.value === "estimate" ? (
+                              <FormField
+                                control={form.control}
+                                name="default_estimate_valid_days"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel className="font-medium text-sm">{t("Default valid days")}</FormLabel>
+                                    <FormControl>
+                                      <Input
+                                        className="w-24 max-w-full"
+                                        type="number"
+                                        min={1}
+                                        step={1}
+                                        value={typeof field.value === "number" ? field.value : ""}
+                                        onChange={(event) =>
+                                          field.onChange(event.target.value ? Number(event.target.value) : null)
+                                        }
+                                      />
+                                    </FormControl>
+                                    <FormDescription className="text-xs">
+                                      {t("Number of days added to the document date for new estimate valid-till dates")}
+                                    </FormDescription>
+                                  </FormItem>
+                                )}
+                              />
+                            ) : null}
                             <div className="grid gap-4 md:grid-cols-2">
                               {tab.fields.map(([name, label]) => (
                                 <FormField
@@ -930,28 +1098,52 @@ function BusinessUnitSettingsEditor({
                                     <FormItem className={tab.fields.length === 1 ? "md:col-span-2" : ""}>
                                       <div className="flex items-center justify-between">
                                         <FormLabel className="font-medium text-sm">{t(label)}</FormLabel>
-                                        <SmartCodeInsertButton
-                                          textareaRef={
-                                            (name === "default_invoice_note"
-                                              ? invoiceNoteRef
-                                              : name === "default_invoice_payment_terms"
-                                                ? invoicePaymentTermsRef
-                                                : name === "default_estimate_note"
-                                                  ? estimateNoteRef
-                                                  : name === "default_estimate_payment_terms"
-                                                    ? estimatePaymentTermsRef
-                                                    : name === "default_credit_note_note"
-                                                      ? creditNoteNoteRef
-                                                      : name === "default_credit_note_payment_terms"
-                                                        ? creditNotePaymentTermsRef
-                                                        : name === "default_advance_invoice_note"
-                                                          ? advanceInvoiceNoteRef
-                                                          : deliveryNoteNoteRef) as React.RefObject<HTMLTextAreaElement | null>
-                                          }
-                                          value={field.value ?? ""}
-                                          onInsert={field.onChange}
-                                          t={t}
-                                        />
+                                        <div className="flex items-center gap-1">
+                                          <MarkdownTextareaToolbar
+                                            textareaRef={
+                                              (name === "default_invoice_note"
+                                                ? invoiceNoteRef
+                                                : name === "default_invoice_payment_terms"
+                                                  ? invoicePaymentTermsRef
+                                                  : name === "default_estimate_note"
+                                                    ? estimateNoteRef
+                                                    : name === "default_estimate_payment_terms"
+                                                      ? estimatePaymentTermsRef
+                                                      : name === "default_credit_note_note"
+                                                        ? creditNoteNoteRef
+                                                        : name === "default_credit_note_payment_terms"
+                                                          ? creditNotePaymentTermsRef
+                                                          : name === "default_advance_invoice_note"
+                                                            ? advanceInvoiceNoteRef
+                                                            : deliveryNoteNoteRef) as React.RefObject<HTMLTextAreaElement | null>
+                                            }
+                                            value={field.value ?? ""}
+                                            onChange={field.onChange}
+                                            t={t}
+                                          />
+                                          <SmartCodeInsertButton
+                                            textareaRef={
+                                              (name === "default_invoice_note"
+                                                ? invoiceNoteRef
+                                                : name === "default_invoice_payment_terms"
+                                                  ? invoicePaymentTermsRef
+                                                  : name === "default_estimate_note"
+                                                    ? estimateNoteRef
+                                                    : name === "default_estimate_payment_terms"
+                                                      ? estimatePaymentTermsRef
+                                                      : name === "default_credit_note_note"
+                                                        ? creditNoteNoteRef
+                                                        : name === "default_credit_note_payment_terms"
+                                                          ? creditNotePaymentTermsRef
+                                                          : name === "default_advance_invoice_note"
+                                                            ? advanceInvoiceNoteRef
+                                                            : deliveryNoteNoteRef) as React.RefObject<HTMLTextAreaElement | null>
+                                            }
+                                            value={field.value ?? ""}
+                                            onInsert={field.onChange}
+                                            t={t}
+                                          />
+                                        </div>
                                       </div>
                                       <FormControl>
                                         <InputWithPreview
@@ -979,6 +1171,7 @@ function BusinessUnitSettingsEditor({
                                           entity={entity}
                                           document={previewDocument}
                                           translatePreviewLabel={t}
+                                          markdownPreview
                                           multiline
                                           rows={4}
                                         />
@@ -1004,16 +1197,28 @@ function BusinessUnitSettingsEditor({
                               <FormItem>
                                 <div className="flex items-center justify-between">
                                   <FormLabel className="font-medium text-sm">{t(label)}</FormLabel>
-                                  <SmartCodeInsertButton
-                                    textareaRef={
-                                      (name === "document_footer"
-                                        ? documentFooterRef
-                                        : documentSignatureRef) as React.RefObject<HTMLTextAreaElement | null>
-                                    }
-                                    value={field.value ?? ""}
-                                    onInsert={field.onChange}
-                                    t={t}
-                                  />
+                                  <div className="flex items-center gap-1">
+                                    <MarkdownTextareaToolbar
+                                      textareaRef={
+                                        (name === "document_footer"
+                                          ? documentFooterRef
+                                          : documentSignatureRef) as React.RefObject<HTMLTextAreaElement | null>
+                                      }
+                                      value={field.value ?? ""}
+                                      onChange={field.onChange}
+                                      t={t}
+                                    />
+                                    <SmartCodeInsertButton
+                                      textareaRef={
+                                        (name === "document_footer"
+                                          ? documentFooterRef
+                                          : documentSignatureRef) as React.RefObject<HTMLTextAreaElement | null>
+                                      }
+                                      value={field.value ?? ""}
+                                      onInsert={field.onChange}
+                                      t={t}
+                                    />
+                                  </div>
                                 </div>
                                 <FormControl>
                                   <InputWithPreview
@@ -1029,6 +1234,7 @@ function BusinessUnitSettingsEditor({
                                     entity={entity}
                                     document={previewDocument}
                                     translatePreviewLabel={t}
+                                    markdownPreview
                                     multiline
                                     rows={4}
                                   />
@@ -1063,6 +1269,66 @@ function BusinessUnitSettingsEditor({
                         )}
                       />
                     ))}
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="numbering" className="mt-0 space-y-6">
+                  <div className="space-y-4 border-t pt-6">
+                    <div>
+                      <h3 className="font-medium text-sm">{t("Unit numbering")}</h3>
+                      <p className="text-muted-foreground text-sm">
+                        {t(
+                          "Set the first number for this unit by document type. The unit number format is shared in Numbering settings.",
+                        )}
+                      </p>
+                      {onOpenNumberingSettings ? (
+                        <Button
+                          type="button"
+                          variant="link"
+                          className="mt-1 h-auto p-0 text-sm"
+                          onClick={onOpenNumberingSettings}
+                        >
+                          {t("Edit shared unit format")}
+                        </Button>
+                      ) : null}
+                    </div>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      {documentNumberingTabs.map((tab) => (
+                        <FormField
+                          key={tab.value}
+                          control={form.control}
+                          name={tab.field}
+                          render={({ field }) => {
+                            const value = typeof field.value === "number" ? field.value : "";
+
+                            return (
+                              <FormItem>
+                                <FormLabel className="font-medium text-sm">
+                                  {t(tab.label)} · {t("first number")}
+                                </FormLabel>
+                                <FormControl>
+                                  <Input
+                                    type="number"
+                                    min={1}
+                                    step={1}
+                                    value={value}
+                                    onChange={(event) =>
+                                      field.onChange(event.target.value ? Number(event.target.value) : null)
+                                    }
+                                  />
+                                </FormControl>
+                                <FormDescription className="text-xs">
+                                  {t(
+                                    "Only affects this business unit for this document type. Existing documents are not renumbered.",
+                                  )}
+                                </FormDescription>
+                                <FormMessage />
+                              </FormItem>
+                            );
+                          }}
+                        />
+                      ))}
+                    </div>
                   </div>
                 </TabsContent>
 
@@ -1229,6 +1495,8 @@ export function BusinessUnitsManager({
   onIncludeArchivedChange,
   onCreate,
   onUpdate,
+  onUpdateEntitySettings,
+  onOpenNumberingSettings,
   onArchive,
   isCreatePending,
   isUpdatePending,
@@ -1423,6 +1691,8 @@ export function BusinessUnitsManager({
           }}
           unit={editingUnit}
           onUpdate={onUpdate}
+          onUpdateEntitySettings={onUpdateEntitySettings}
+          onOpenNumberingSettings={onOpenNumberingSettings}
           onRequestArchive={setArchiveTargetUnit}
           isUpdatePending={isUpdatePending}
           isArchivePending={isArchivePending}

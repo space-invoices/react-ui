@@ -42,10 +42,11 @@ export default {
   selected: "geselecteerd",
   "Export PDFs": "PDFs exporteren",
   "Deselect all": "Alles deselecteren",
-  "FURS fiscalization failed": "FURS fiscalization failed",
-  "FINA fiscalization failed": "FINA fiscalization failed",
-  "Retry Fiscalization": "Retry Fiscalization",
-  "Some selected documents don't have failed fiscalization": "Some selected documents don't have failed fiscalization",
+  "FURS fiscalization failed": "FURS-fiscalisatie mislukt",
+  "FINA fiscalization failed": "FINA-fiscalisatie mislukt",
+  "Retry Fiscalization": "Fiscalisatie opnieuw proberen",
+  "Some selected documents don't have failed fiscalization":
+    "Sommige geselecteerde documenten hebben geen mislukte fiscalisatie",
   Void: "Nietig verklaren",
   "Cannot void a fiscalized credit note": "Kan een gefiscaliseerde creditnota niet ongeldig maken",
 } as const;

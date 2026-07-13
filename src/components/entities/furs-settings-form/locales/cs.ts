@@ -249,4 +249,15 @@ export default {
   "A premise with this name already exists": "Provozovna s tímto názvem již existuje",
   "Exactly 4 digits": "Přesně 4 číslice",
   "Your Name": "Vaše jméno",
+  "Starting Number": "Počáteční číslo",
+  "First invoice number for this premise sequence": "První číslo faktury pro tuto řadu provozovny",
+  "First invoice number for this device sequence": "První číslo faktury pro tuto řadu zařízení",
+  "Set Starting Number": "Nastavit počáteční číslo",
+  "Starting number can no longer be changed after invoices have been issued for this fiscal sequence.":
+    "Počáteční číslo již nelze změnit po vystavení faktur pro tuto fiskální řadu.",
+  "Set this before issuing invoices for the selected fiscal sequence. Leave empty to clear it.":
+    "Nastavte před vystavením faktur pro vybranou fiskální řadu. Pro vymazání ponechte prázdné.",
+  "Fiscal Sequence": "Fiskální řada",
+  "Starting number must be between 1 and 999999999": "Počáteční číslo musí být mezi 1 a 999999999",
+  Save: "Uložit",
 } as const;

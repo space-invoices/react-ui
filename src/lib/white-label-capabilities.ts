@@ -6,10 +6,13 @@ export type WhiteLabelControlKind = "capability" | "action";
 export type WhiteLabelCapabilityId =
   | "developer_tools"
   | "multi_entity"
+  | "documents.content_translations"
   | "documents.estimates"
   | "documents.credit_notes"
   | "documents.advance_invoices"
   | "documents.delivery_notes"
+  | "documents.expenses"
+  | "documents.expenses.itemized"
   | "documents.recurring_invoices"
   | "compliance.furs"
   | "compliance.fina"
@@ -28,6 +31,10 @@ export type WhiteLabelActionControlId =
   | "actions.documents.advance_invoice.save_draft"
   | "actions.documents.delivery_note.create"
   | "actions.documents.delivery_note.save_draft"
+  | "actions.documents.expense.create"
+  | "actions.documents.expense.save_draft"
+  | "actions.documents.expense.void"
+  | "actions.documents.expense.payments.manage"
   | "actions.documents.recurring_invoices.create"
   | "actions.documents.invoice.void"
   | "actions.documents.credit_note.void"
@@ -44,15 +51,21 @@ export type WhiteLabelActionControlId =
 
 export type WhiteLabelHiddenFeatureId = WhiteLabelCapabilityId | WhiteLabelActionControlId;
 
-export type WhiteLabelDocumentType = "invoice" | "estimate" | "credit_note" | "advance_invoice" | "delivery_note";
+export type WhiteLabelDocumentType =
+  | "invoice"
+  | "estimate"
+  | "credit_note"
+  | "advance_invoice"
+  | "delivery_note"
+  | "expense";
 export type WhiteLabelCreatableResourceType = WhiteLabelDocumentType | "recurring_invoice";
 export type WhiteLabelVoidableDocumentType = Extract<
   WhiteLabelDocumentType,
-  "invoice" | "credit_note" | "advance_invoice" | "delivery_note"
+  "invoice" | "credit_note" | "advance_invoice" | "delivery_note" | "expense"
 >;
 export type WhiteLabelPayableDocumentType = Extract<
   WhiteLabelDocumentType,
-  "invoice" | "credit_note" | "advance_invoice"
+  "invoice" | "credit_note" | "advance_invoice" | "expense"
 >;
 
 type CountryFeatureDependency = "furs" | "fina" | "eslog" | "e_invoicing";
@@ -64,6 +77,7 @@ export type WhiteLabelCapabilityDefinition = {
   description: string;
   group: WhiteLabelCapabilityGroup;
   affectedSurfaces: string[];
+  parentCapability?: WhiteLabelCapabilityId;
   countryFeatureDependency?: CountryFeatureDependency;
   subscriptionFeatureDependency?: string;
 };
@@ -103,6 +117,14 @@ export const WHITE_LABEL_CAPABILITIES: WhiteLabelCapabilityDefinition[] = [
   },
   {
     kind: "capability",
+    id: "documents.content_translations",
+    label: "Document content translations",
+    description: "Hide translated-content editing controls for items, documents, and document default settings.",
+    group: "documents",
+    affectedSurfaces: ["item forms", "document create/edit forms", "document default settings"],
+  },
+  {
+    kind: "capability",
     id: "documents.estimates",
     label: "Estimates",
     description: "Hide estimate list, create, view, and conversion entry points.",
@@ -132,6 +154,23 @@ export const WHITE_LABEL_CAPABILITIES: WhiteLabelCapabilityDefinition[] = [
     description: "Hide delivery note list, create, view, and conversion entry points.",
     group: "documents",
     affectedSurfaces: ["sidebar", "documents routes", "document duplicate menu"],
+  },
+  {
+    kind: "capability",
+    id: "documents.expenses",
+    label: "Expenses",
+    description: "Hide expense list, create, view, edit, attachment, and payment surfaces.",
+    group: "documents",
+    affectedSurfaces: ["sidebar", "expenses routes", "payments routes"],
+  },
+  {
+    kind: "capability",
+    id: "documents.expenses.itemized",
+    label: "Itemized expenses",
+    description: "Hide line-by-line expense entry while keeping quick expense entry available.",
+    group: "documents",
+    affectedSurfaces: ["expense create form", "expense edit form"],
+    parentCapability: "documents.expenses",
   },
   {
     kind: "capability",
@@ -280,6 +319,24 @@ export const WHITE_LABEL_ACTION_CONTROLS: WhiteLabelActionControlDefinition[] = 
   },
   {
     kind: "action",
+    id: "actions.documents.expense.create",
+    label: "Show Create expense",
+    description: "Keep expense create entry points and add routes visible.",
+    group: "documents",
+    affectedSurfaces: ["expense list", "expense add route", "expense empty state"],
+    parentCapability: "documents.expenses",
+  },
+  {
+    kind: "action",
+    id: "actions.documents.expense.save_draft",
+    label: "Show expense draft saving",
+    description: "Keep expense draft save actions visible on create and edit forms.",
+    group: "documents",
+    affectedSurfaces: ["expense create form", "expense edit form"],
+    parentCapability: "documents.expenses",
+  },
+  {
+    kind: "action",
     id: "actions.documents.recurring_invoices.create",
     label: "Show Create recurring invoice",
     description: "Keep recurring invoice create entry points visible where available.",
@@ -325,6 +382,15 @@ export const WHITE_LABEL_ACTION_CONTROLS: WhiteLabelActionControlDefinition[] = 
   },
   {
     kind: "action",
+    id: "actions.documents.expense.void",
+    label: "Show Void expense",
+    description: "Keep expense void actions visible on view pages.",
+    group: "documents",
+    affectedSurfaces: ["expense view"],
+    parentCapability: "documents.expenses",
+  },
+  {
+    kind: "action",
     id: "actions.documents.invoice.payments.manage",
     label: "Show invoice payments",
     description: "Keep invoice payment add, edit, and delete UI visible.",
@@ -348,6 +414,15 @@ export const WHITE_LABEL_ACTION_CONTROLS: WhiteLabelActionControlDefinition[] = 
     group: "documents",
     affectedSurfaces: ["advance invoice action bar", "advance invoice sidebar payments"],
     parentCapability: "documents.advance_invoices",
+  },
+  {
+    kind: "action",
+    id: "actions.documents.expense.payments.manage",
+    label: "Show expense payments",
+    description: "Keep expense payment add, edit, and delete UI visible.",
+    group: "documents",
+    affectedSurfaces: ["expense view", "payments list"],
+    parentCapability: "documents.expenses",
   },
   {
     kind: "action",
@@ -413,6 +488,7 @@ const DOCUMENT_CAPABILITY_MAP: Partial<Record<WhiteLabelDocumentType, WhiteLabel
   credit_note: "documents.credit_notes",
   advance_invoice: "documents.advance_invoices",
   delivery_note: "documents.delivery_notes",
+  expense: "documents.expenses",
 };
 
 const DOCUMENT_TRANSITION_ACTION_CONTROL_MAP: Partial<
@@ -430,6 +506,7 @@ const DOCUMENT_CREATE_ACTION_CONTROL_MAP: Record<WhiteLabelCreatableResourceType
   credit_note: "actions.documents.credit_note.create",
   advance_invoice: "actions.documents.advance_invoice.create",
   delivery_note: "actions.documents.delivery_note.create",
+  expense: "actions.documents.expense.create",
   recurring_invoice: "actions.documents.recurring_invoices.create",
 };
 
@@ -439,6 +516,7 @@ const DOCUMENT_DRAFT_ACTION_CONTROL_MAP: Record<WhiteLabelDocumentType, WhiteLab
   credit_note: "actions.documents.credit_note.save_draft",
   advance_invoice: "actions.documents.advance_invoice.save_draft",
   delivery_note: "actions.documents.delivery_note.save_draft",
+  expense: "actions.documents.expense.save_draft",
 };
 
 const DOCUMENT_VOID_ACTION_CONTROL_MAP: Record<WhiteLabelVoidableDocumentType, WhiteLabelActionControlId> = {
@@ -446,12 +524,14 @@ const DOCUMENT_VOID_ACTION_CONTROL_MAP: Record<WhiteLabelVoidableDocumentType, W
   credit_note: "actions.documents.credit_note.void",
   advance_invoice: "actions.documents.advance_invoice.void",
   delivery_note: "actions.documents.delivery_note.void",
+  expense: "actions.documents.expense.void",
 };
 
 const DOCUMENT_PAYMENTS_ACTION_CONTROL_MAP: Record<WhiteLabelPayableDocumentType, WhiteLabelActionControlId> = {
   invoice: "actions.documents.invoice.payments.manage",
   credit_note: "actions.documents.credit_note.payments.manage",
   advance_invoice: "actions.documents.advance_invoice.payments.manage",
+  expense: "actions.documents.expense.payments.manage",
 };
 
 export function getWhiteLabelCapability(id: string): WhiteLabelCapabilityDefinition | undefined {

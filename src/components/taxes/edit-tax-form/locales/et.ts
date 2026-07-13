@@ -1,6 +1,6 @@
 export default {
-  "Rate (%)": "Rate (%)",
-  "Enter rate": "Enter rate",
-  "Set as default tax": "Set as default tax",
-  "There was an error updating the tax": "There was an error updating the tax",
+  "Rate (%)": "Määr (%)",
+  "Enter rate": "Sisesta määr",
+  "Set as default tax": "Määra vaikimisi maksuks",
+  "There was an error updating the tax": "Maksu uuendamisel ilmnes viga",
 } as const;

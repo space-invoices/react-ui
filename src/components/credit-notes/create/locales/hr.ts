@@ -17,6 +17,15 @@ export default {
   Quantity: "Količina",
   Price: "Cijena",
   Unit: "Jedinica",
+  "E-invoicing unit code": "Šifra jedinice za e-račune",
+  "E-invoicing unit settings": "Postavke jedinice za e-račun",
+  "Only affects e-invoicing XML. The document unit stays unchanged.":
+    "Utječe samo na XML e-računa. Jedinica na dokumentu ostaje nepromijenjena.",
+  "Select XML unit code": "Odaberite XML šifru jedinice",
+  "Enter a supported UN/ECE code": "Unesite podržanu UN/ECE šifru",
+  "Use display unit": "Koristi prikazanu jedinicu",
+  "Clear unit code": "Očisti šifru jedinice",
+  "custom code": "prilagođena šifra",
   Discount: "Popust",
   Tax: "Porez",
   "Tax rate": "Porezna stopa",
@@ -40,6 +49,9 @@ export default {
   // Note field
   Note: "Napomena",
   "Insert variable": "Umetni varijablu",
+  Bold: "Podebljano",
+  Italic: "Kurziv",
+  "Bullet list": "Popis s oznakama",
   "Add payment instructions, terms, or other notes...": "Dodaj upute za plaćanje, uvjete ili druge napomene...",
   // Signature field
   Signature: "Potpis",

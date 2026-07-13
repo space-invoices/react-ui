@@ -1,8 +1,8 @@
 export default {
   Name: "Jméno",
   "Enter name": "Zadejte jméno",
-  "Rate (%)": "Rate (%)",
-  "Enter rate": "Enter rate",
-  "Set as default tax": "Set as default tax",
-  "There was an error creating the tax": "There was an error creating the tax",
+  "Rate (%)": "Sazba (%)",
+  "Enter rate": "Zadejte sazbu",
+  "Set as default tax": "Nastavit jako výchozí daň",
+  "There was an error creating the tax": "Při vytváření daně došlo k chybě",
 } as const;

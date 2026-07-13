@@ -6,6 +6,7 @@ import type { Entity, Estimate, Invoice, TransactionTypeCheckResponse } from "@s
 import { CalendarIcon, ChevronDown, Globe, Info, Loader2 } from "lucide-react";
 import { useRef, useState } from "react";
 import { useWatch } from "react-hook-form";
+import { ContentLocaleButton } from "@/ui/components/document-content-translations";
 import { Badge } from "@/ui/components/ui/badge";
 import { Button } from "@/ui/components/ui/button";
 import { Calendar } from "@/ui/components/ui/calendar";
@@ -17,11 +18,24 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/ui/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/ui/components/ui/tooltip";
 import { CURRENCY_CODES } from "@/ui/lib/constants";
-import { normalizeDateOnlyInput, toLocalDateOnlyString } from "@/ui/lib/date-only";
-import { replaceTemplateVariablesForPreview } from "@/ui/lib/template-variables";
+import {
+  formatDateOnlyForDisplay,
+  normalizeDateOnlyInput,
+  toLocalCalendarDate,
+  toLocalDateOnlyString,
+} from "@/ui/lib/date-only";
+import {
+  DEFAULT_CONTENT_LOCALE,
+  type DocumentContentLocaleMode,
+  type LocalizedContentMap,
+  readLocalizedValue,
+  writeLocalizedValue,
+} from "@/ui/lib/document-content-translations";
+import { replaceTemplateVariablesForMarkdownPreview } from "@/ui/lib/template-variables";
 import { cn } from "@/ui/lib/utils";
 import { type DocumentTypes, getDocumentConfig } from "../types";
 import type { AnyControl } from "./form-types";
+import { MarkdownPreview, MarkdownTextareaToolbar } from "./markdown-textarea-toolbar";
 import { SmartCodeInsertButton } from "./smart-code-insert-button";
 
 type FursPremise = {
@@ -70,6 +84,16 @@ type ServiceDateProps = {
 
 const DUE_DAYS_PRESETS = [0, 7, 14, 30, 60, 90] as const;
 
+type LocalizedFieldProps = {
+  translationsEnabled?: boolean;
+  activeContentLocale?: DocumentContentLocaleMode;
+  defaultContentLocale?: string | null;
+  uiLocale?: string | null;
+  fieldTranslations?: LocalizedContentMap | null | undefined;
+  onContentLocaleChange?: (locale: DocumentContentLocaleMode) => void;
+  onFieldTranslationsChange?: (next: LocalizedContentMap) => void;
+};
+
 type DueDaysProps = {
   dueDaysType: number | "custom";
   onDueDaysTypeChange: (type: number | "custom") => void;
@@ -83,12 +107,16 @@ type DateLockProps = {
 const LABEL_WIDTH = "w-[6.5rem] shrink-0";
 const MIN_DOCUMENT_DATE = new Date("1900-01-01");
 
-function isAfterDateOnly(date: Date, maxDateOnly: string | undefined): boolean {
-  return !!maxDateOnly && toLocalDateOnlyString(date) > maxDateOnly;
-}
-
 function isBeforeDateOnly(date: Date, minDateOnly: string | undefined): boolean {
   return !!minDateOnly && toLocalDateOnlyString(date) < minDateOnly;
+}
+
+function formatCalendarButtonDate(value: Date | string | null | undefined, locale: string): string {
+  return formatDateOnlyForDisplay(value, locale, {
+    year: "numeric",
+    month: "numeric",
+    day: "numeric",
+  });
 }
 
 function extractSequenceNumber(fullNumber: string, premise?: string, device?: string): string {
@@ -286,8 +314,8 @@ export function DocumentDetailsSection({
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <FormControl>
-                      <Button variant="outline" disabled className="flex-1 pl-3 text-left font-normal">
-                        {new Date(field.value || new Date()).toLocaleDateString(locale)}
+                      <Button type="button" variant="outline" disabled className="flex-1 pl-3 text-left font-normal">
+                        {formatCalendarButtonDate(field.value || new Date(), locale)}
                         <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                       </Button>
                     </FormControl>
@@ -305,11 +333,7 @@ export function DocumentDetailsSection({
                         variant="outline"
                         className={cn("flex-1 pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
                       >
-                        {field.value ? (
-                          new Date(field.value).toLocaleDateString(locale)
-                        ) : (
-                          <span>{t("Pick a date")}</span>
-                        )}
+                        {field.value ? formatCalendarButtonDate(field.value, locale) : <span>{t("Pick a date")}</span>}
                         <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                       </Button>
                     </FormControl>
@@ -317,8 +341,9 @@ export function DocumentDetailsSection({
                   <PopoverContent className="w-auto p-0" align="start">
                     <Calendar
                       mode="single"
-                      selected={field.value ? new Date(field.value) : undefined}
-                      onSelect={(date) => field.onChange(date?.toISOString())}
+                      selected={toLocalCalendarDate(field.value)}
+                      defaultMonth={toLocalCalendarDate(field.value)}
+                      onSelect={(date) => field.onChange(date ? toLocalDateOnlyString(date) : undefined)}
                       disabled={(date) => date > new Date() || date < MIN_DOCUMENT_DATE}
                       initialFocus
                     />
@@ -368,7 +393,7 @@ export function DocumentDetailsSection({
                           className={cn("flex-1 pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
                         >
                           {field.value ? (
-                            new Date(field.value).toLocaleDateString(locale)
+                            formatCalendarButtonDate(field.value, locale)
                           ) : (
                             <span>{t("Pick a date")}</span>
                           )}
@@ -379,11 +404,10 @@ export function DocumentDetailsSection({
                     <PopoverContent className="w-auto p-0" align="start">
                       <Calendar
                         mode="single"
-                        selected={field.value ? new Date(field.value) : undefined}
-                        onSelect={(date) => field.onChange(date?.toISOString())}
-                        disabled={(date) =>
-                          date > new Date() || date < MIN_DOCUMENT_DATE || isAfterDateOnly(date, issueDateOnly)
-                        }
+                        selected={toLocalCalendarDate(field.value)}
+                        defaultMonth={toLocalCalendarDate(field.value)}
+                        onSelect={(date) => field.onChange(date ? toLocalDateOnlyString(date) : undefined)}
+                        disabled={(date) => date < MIN_DOCUMENT_DATE}
                         initialFocus
                       />
                     </PopoverContent>
@@ -398,7 +422,7 @@ export function DocumentDetailsSection({
                             variant="outline"
                             className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
                           >
-                            {field.value ? new Date(field.value).toLocaleDateString(locale) : <span>{t("From")}</span>}
+                            {field.value ? formatCalendarButtonDate(field.value, locale) : <span>{t("From")}</span>}
                             <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                           </Button>
                         </FormControl>
@@ -406,11 +430,10 @@ export function DocumentDetailsSection({
                       <PopoverContent className="w-auto p-0" align="start">
                         <Calendar
                           mode="single"
-                          selected={field.value ? new Date(field.value) : undefined}
-                          onSelect={(date) => field.onChange(date?.toISOString())}
-                          disabled={(date) =>
-                            date > new Date() || date < MIN_DOCUMENT_DATE || isAfterDateOnly(date, issueDateOnly)
-                          }
+                          selected={toLocalCalendarDate(field.value)}
+                          defaultMonth={toLocalCalendarDate(field.value)}
+                          onSelect={(date) => field.onChange(date ? toLocalDateOnlyString(date) : undefined)}
+                          disabled={(date) => date < MIN_DOCUMENT_DATE}
                           initialFocus
                         />
                       </PopoverContent>
@@ -433,7 +456,7 @@ export function DocumentDetailsSection({
                                   )}
                                 >
                                   {toField.value ? (
-                                    new Date(toField.value).toLocaleDateString(locale)
+                                    formatCalendarButtonDate(toField.value, locale)
                                   ) : (
                                     <span>{t("To")}</span>
                                   )}
@@ -444,13 +467,11 @@ export function DocumentDetailsSection({
                             <PopoverContent className="w-auto p-0" align="start">
                               <Calendar
                                 mode="single"
-                                selected={toField.value ? new Date(toField.value) : undefined}
-                                onSelect={(date) => toField.onChange(date?.toISOString())}
+                                selected={toLocalCalendarDate(toField.value)}
+                                defaultMonth={toLocalCalendarDate(toField.value) ?? toLocalCalendarDate(field.value)}
+                                onSelect={(date) => toField.onChange(date ? toLocalDateOnlyString(date) : undefined)}
                                 disabled={(date) =>
-                                  date > new Date() ||
-                                  date < MIN_DOCUMENT_DATE ||
-                                  isAfterDateOnly(date, issueDateOnly) ||
-                                  isBeforeDateOnly(date, serviceStartDateOnly)
+                                  date < MIN_DOCUMENT_DATE || isBeforeDateOnly(date, serviceStartDateOnly)
                                 }
                                 initialFocus
                               />
@@ -509,11 +530,7 @@ export function DocumentDetailsSection({
                         variant="outline"
                         className={cn("flex-1 pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
                       >
-                        {field.value ? (
-                          new Date(field.value).toLocaleDateString(locale)
-                        ) : (
-                          <span>{t("Pick a date")}</span>
-                        )}
+                        {field.value ? formatCalendarButtonDate(field.value, locale) : <span>{t("Pick a date")}</span>}
                         <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                       </Button>
                     </FormControl>
@@ -521,9 +538,10 @@ export function DocumentDetailsSection({
                   <PopoverContent className="w-auto p-0" align="start">
                     <Calendar
                       mode="single"
-                      selected={field.value ? new Date(field.value) : undefined}
+                      selected={toLocalCalendarDate(field.value)}
+                      defaultMonth={toLocalCalendarDate(field.value) ?? toLocalCalendarDate(watchedIssueDate)}
                       onSelect={(date) => {
-                        field.onChange(date?.toISOString());
+                        field.onChange(date ? toLocalDateOnlyString(date) : undefined);
                         if (dueDays && dueDays.dueDaysType !== "custom") {
                           dueDays.onDueDaysTypeChange("custom");
                         }
@@ -598,12 +616,19 @@ export function DocumentNoteField({
   t,
   entity,
   document,
+  translationsEnabled = false,
+  activeContentLocale = DEFAULT_CONTENT_LOCALE,
+  defaultContentLocale,
+  uiLocale,
+  fieldTranslations,
+  onContentLocaleChange,
+  onFieldTranslationsChange,
 }: {
   control: AnyControl;
   t: (key: string) => string;
   entity?: Entity | null;
   document?: Partial<Invoice | Estimate> | null;
-}) {
+} & LocalizedFieldProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [isFocused, setIsFocused] = useState(false);
 
@@ -612,39 +637,72 @@ export function DocumentNoteField({
       control={control}
       name="note"
       render={({ field }) => {
-        const hasContent = field.value;
+        const visibleValue = readLocalizedValue(field.value, fieldTranslations, activeContentLocale);
+        const hasContent = visibleValue;
         const showPreview = !isFocused && hasContent && entity;
-        const preview = showPreview ? replaceTemplateVariablesForPreview(field.value || "", entity, document, t) : null;
+        const preview = showPreview
+          ? replaceTemplateVariablesForMarkdownPreview(visibleValue || "", entity, document, t)
+          : null;
+        const setVisibleValue = (newValue: string) => {
+          if (!translationsEnabled || activeContentLocale === DEFAULT_CONTENT_LOCALE) {
+            field.onChange(newValue);
+            return;
+          }
+          onFieldTranslationsChange?.(writeLocalizedValue(fieldTranslations, activeContentLocale, newValue));
+        };
 
         return (
           <FormItem>
             <div className="flex items-center justify-between">
               <FormLabel>{t("Note")}</FormLabel>
-              <SmartCodeInsertButton
-                textareaRef={textareaRef}
-                value={field.value || ""}
-                onInsert={(newValue) => field.onChange(newValue)}
-                t={t}
-              />
+              <div className="flex items-center gap-2">
+                <MarkdownTextareaToolbar
+                  textareaRef={textareaRef}
+                  value={visibleValue || ""}
+                  onChange={setVisibleValue}
+                  t={t}
+                />
+                <SmartCodeInsertButton
+                  textareaRef={textareaRef}
+                  value={visibleValue || ""}
+                  onInsert={setVisibleValue}
+                  t={t}
+                />
+                {translationsEnabled && onContentLocaleChange && (
+                  <ContentLocaleButton
+                    activeLocale={activeContentLocale}
+                    defaultLocale={defaultContentLocale}
+                    onChange={onContentLocaleChange}
+                    uiLocale={uiLocale}
+                    t={t}
+                  />
+                )}
+              </div>
             </div>
             <FormControl>
               <div className="relative">
                 <Textarea
-                  {...field}
+                  name={field.name}
                   ref={(e) => {
                     field.ref(e);
                     (textareaRef as React.MutableRefObject<HTMLTextAreaElement | null>).current = e;
                   }}
-                  value={field.value || ""}
+                  value={visibleValue || ""}
                   placeholder={showPreview ? "" : t("Add payment instructions, terms, or other notes...")}
                   rows={5}
                   className={cn("resize-y", showPreview && "text-transparent caret-transparent")}
+                  onChange={(event) => {
+                    setVisibleValue(event.target.value);
+                  }}
                   onFocus={() => setIsFocused(true)}
-                  onBlur={() => setIsFocused(false)}
+                  onBlur={(_event) => {
+                    field.onBlur();
+                    setIsFocused(false);
+                  }}
                 />
                 {showPreview && (
                   <div className="pointer-events-none absolute inset-0 z-10 flex items-start overflow-hidden rounded-md border border-input bg-background px-3 py-2 shadow-xs">
-                    <div className="w-full whitespace-pre-wrap text-base md:text-sm">{preview}</div>
+                    <MarkdownPreview value={preview ?? ""} className="w-full text-base md:text-sm" />
                   </div>
                 )}
               </div>
@@ -687,6 +745,13 @@ export function DocumentTaxClauseField({
   transactionType,
   isTransactionTypeFetching,
   isFinaNonDomestic,
+  translationsEnabled = false,
+  activeContentLocale = DEFAULT_CONTENT_LOCALE,
+  defaultContentLocale,
+  uiLocale,
+  fieldTranslations,
+  onContentLocaleChange,
+  onFieldTranslationsChange,
 }: {
   control: AnyControl;
   t: (key: string) => string;
@@ -695,7 +760,7 @@ export function DocumentTaxClauseField({
   transactionType?: TransactionType;
   isTransactionTypeFetching?: boolean;
   isFinaNonDomestic?: boolean;
-}) {
+} & LocalizedFieldProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [isFocused, setIsFocused] = useState(false);
 
@@ -707,20 +772,47 @@ export function DocumentTaxClauseField({
       control={control}
       name="tax_clause"
       render={({ field }) => {
-        const hasContent = field.value;
+        const visibleValue = readLocalizedValue(field.value, fieldTranslations, activeContentLocale);
+        const hasContent = visibleValue;
         const showPreview = !isFocused && hasContent && entity;
-        const preview = showPreview ? replaceTemplateVariablesForPreview(field.value || "", entity, document, t) : null;
+        const preview = showPreview
+          ? replaceTemplateVariablesForMarkdownPreview(visibleValue || "", entity, document, t)
+          : null;
+        const setVisibleValue = (newValue: string) => {
+          if (!translationsEnabled || activeContentLocale === DEFAULT_CONTENT_LOCALE) {
+            field.onChange(newValue);
+            return;
+          }
+          onFieldTranslationsChange?.(writeLocalizedValue(fieldTranslations, activeContentLocale, newValue));
+        };
 
         return (
           <FormItem>
             <div className="flex items-center justify-between">
               <FormLabel>{t("Tax Clause")}</FormLabel>
-              <SmartCodeInsertButton
-                textareaRef={textareaRef}
-                value={field.value || ""}
-                onInsert={(newValue) => field.onChange(newValue)}
-                t={t}
-              />
+              <div className="flex items-center gap-2">
+                <MarkdownTextareaToolbar
+                  textareaRef={textareaRef}
+                  value={visibleValue || ""}
+                  onChange={setVisibleValue}
+                  t={t}
+                />
+                <SmartCodeInsertButton
+                  textareaRef={textareaRef}
+                  value={visibleValue || ""}
+                  onInsert={setVisibleValue}
+                  t={t}
+                />
+                {translationsEnabled && onContentLocaleChange && (
+                  <ContentLocaleButton
+                    activeLocale={activeContentLocale}
+                    defaultLocale={defaultContentLocale}
+                    onChange={onContentLocaleChange}
+                    uiLocale={uiLocale}
+                    t={t}
+                  />
+                )}
+              </div>
             </div>
             {showTransactionInfo && (
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-md border border-border/50 bg-muted/30 px-2.5 py-1.5 text-sm">
@@ -751,21 +843,27 @@ export function DocumentTaxClauseField({
             <FormControl>
               <div className="relative">
                 <Textarea
-                  {...field}
+                  name={field.name}
                   ref={(e) => {
                     field.ref(e);
                     (textareaRef as React.MutableRefObject<HTMLTextAreaElement | null>).current = e;
                   }}
-                  value={field.value || ""}
+                  value={visibleValue || ""}
                   placeholder={showPreview ? "" : t("Add tax clause...")}
                   rows={3}
                   className={cn("resize-y", showPreview && "text-transparent caret-transparent")}
+                  onChange={(event) => {
+                    setVisibleValue(event.target.value);
+                  }}
                   onFocus={() => setIsFocused(true)}
-                  onBlur={() => setIsFocused(false)}
+                  onBlur={() => {
+                    field.onBlur();
+                    setIsFocused(false);
+                  }}
                 />
                 {showPreview && (
                   <div className="pointer-events-none absolute inset-0 z-10 flex items-start overflow-hidden rounded-md border border-input bg-background px-3 py-2 shadow-xs">
-                    <div className="w-full whitespace-pre-wrap text-base md:text-sm">{preview}</div>
+                    <MarkdownPreview value={preview ?? ""} className="w-full text-base md:text-sm" />
                   </div>
                 )}
               </div>
@@ -787,12 +885,19 @@ export function DocumentSignatureField({
   t,
   entity,
   document,
+  translationsEnabled = false,
+  activeContentLocale = DEFAULT_CONTENT_LOCALE,
+  defaultContentLocale,
+  uiLocale,
+  fieldTranslations,
+  onContentLocaleChange,
+  onFieldTranslationsChange,
 }: {
   control: AnyControl;
   t: (key: string) => string;
   entity?: Entity | null;
   document?: Partial<Invoice | Estimate> | null;
-}) {
+} & LocalizedFieldProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [isFocused, setIsFocused] = useState(false);
 
@@ -801,39 +906,72 @@ export function DocumentSignatureField({
       control={control}
       name="signature"
       render={({ field }) => {
-        const hasContent = field.value;
+        const visibleValue = readLocalizedValue(field.value, fieldTranslations, activeContentLocale);
+        const hasContent = visibleValue;
         const showPreview = !isFocused && hasContent && entity;
-        const preview = showPreview ? replaceTemplateVariablesForPreview(field.value || "", entity, document, t) : null;
+        const preview = showPreview
+          ? replaceTemplateVariablesForMarkdownPreview(visibleValue || "", entity, document, t)
+          : null;
+        const setVisibleValue = (newValue: string) => {
+          if (!translationsEnabled || activeContentLocale === DEFAULT_CONTENT_LOCALE) {
+            field.onChange(newValue);
+            return;
+          }
+          onFieldTranslationsChange?.(writeLocalizedValue(fieldTranslations, activeContentLocale, newValue));
+        };
 
         return (
           <FormItem>
             <div className="flex items-center justify-between">
               <FormLabel>{t("Signature")}</FormLabel>
-              <SmartCodeInsertButton
-                textareaRef={textareaRef}
-                value={field.value || ""}
-                onInsert={(newValue) => field.onChange(newValue)}
-                t={t}
-              />
+              <div className="flex items-center gap-2">
+                <MarkdownTextareaToolbar
+                  textareaRef={textareaRef}
+                  value={visibleValue || ""}
+                  onChange={setVisibleValue}
+                  t={t}
+                />
+                <SmartCodeInsertButton
+                  textareaRef={textareaRef}
+                  value={visibleValue || ""}
+                  onInsert={setVisibleValue}
+                  t={t}
+                />
+                {translationsEnabled && onContentLocaleChange && (
+                  <ContentLocaleButton
+                    activeLocale={activeContentLocale}
+                    defaultLocale={defaultContentLocale}
+                    onChange={onContentLocaleChange}
+                    uiLocale={uiLocale}
+                    t={t}
+                  />
+                )}
+              </div>
             </div>
             <FormControl>
               <div className="relative">
                 <Textarea
-                  {...field}
+                  name={field.name}
                   ref={(e) => {
                     field.ref(e);
                     (textareaRef as React.MutableRefObject<HTMLTextAreaElement | null>).current = e;
                   }}
-                  value={field.value || ""}
+                  value={visibleValue || ""}
                   placeholder={showPreview ? "" : t("Add signature text...")}
                   rows={2}
                   className={cn("resize-y", showPreview && "text-transparent caret-transparent")}
+                  onChange={(event) => {
+                    setVisibleValue(event.target.value);
+                  }}
                   onFocus={() => setIsFocused(true)}
-                  onBlur={() => setIsFocused(false)}
+                  onBlur={() => {
+                    field.onBlur();
+                    setIsFocused(false);
+                  }}
                 />
                 {showPreview && (
                   <div className="pointer-events-none absolute inset-0 z-10 flex items-start overflow-hidden rounded-md border border-input bg-background px-3 py-2 shadow-xs">
-                    <div className="w-full whitespace-pre-wrap text-base md:text-sm">{preview}</div>
+                    <MarkdownPreview value={preview ?? ""} className="w-full text-base md:text-sm" />
                   </div>
                 )}
               </div>
@@ -855,12 +993,19 @@ export function DocumentPaymentTermsField({
   t,
   entity,
   document,
+  translationsEnabled = false,
+  activeContentLocale = DEFAULT_CONTENT_LOCALE,
+  defaultContentLocale,
+  uiLocale,
+  fieldTranslations,
+  onContentLocaleChange,
+  onFieldTranslationsChange,
 }: {
   control: AnyControl;
   t: (key: string) => string;
   entity?: Entity | null;
   document?: Partial<Invoice | Estimate> | null;
-}) {
+} & LocalizedFieldProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [isFocused, setIsFocused] = useState(false);
 
@@ -869,39 +1014,72 @@ export function DocumentPaymentTermsField({
       control={control}
       name="payment_terms"
       render={({ field }) => {
-        const hasContent = field.value;
+        const visibleValue = readLocalizedValue(field.value, fieldTranslations, activeContentLocale);
+        const hasContent = visibleValue;
         const showPreview = !isFocused && hasContent && entity;
-        const preview = showPreview ? replaceTemplateVariablesForPreview(field.value || "", entity, document, t) : null;
+        const preview = showPreview
+          ? replaceTemplateVariablesForMarkdownPreview(visibleValue || "", entity, document, t)
+          : null;
+        const setVisibleValue = (newValue: string) => {
+          if (!translationsEnabled || activeContentLocale === DEFAULT_CONTENT_LOCALE) {
+            field.onChange(newValue);
+            return;
+          }
+          onFieldTranslationsChange?.(writeLocalizedValue(fieldTranslations, activeContentLocale, newValue));
+        };
 
         return (
           <FormItem>
             <div className="flex items-center justify-between">
               <FormLabel>{t("Payment Terms")}</FormLabel>
-              <SmartCodeInsertButton
-                textareaRef={textareaRef}
-                value={field.value || ""}
-                onInsert={(newValue) => field.onChange(newValue)}
-                t={t}
-              />
+              <div className="flex items-center gap-2">
+                <MarkdownTextareaToolbar
+                  textareaRef={textareaRef}
+                  value={visibleValue || ""}
+                  onChange={setVisibleValue}
+                  t={t}
+                />
+                <SmartCodeInsertButton
+                  textareaRef={textareaRef}
+                  value={visibleValue || ""}
+                  onInsert={setVisibleValue}
+                  t={t}
+                />
+                {translationsEnabled && onContentLocaleChange && (
+                  <ContentLocaleButton
+                    activeLocale={activeContentLocale}
+                    defaultLocale={defaultContentLocale}
+                    onChange={onContentLocaleChange}
+                    uiLocale={uiLocale}
+                    t={t}
+                  />
+                )}
+              </div>
             </div>
             <FormControl>
               <div className="relative">
                 <Textarea
-                  {...field}
+                  name={field.name}
                   ref={(e) => {
                     field.ref(e);
                     (textareaRef as React.MutableRefObject<HTMLTextAreaElement | null>).current = e;
                   }}
-                  value={field.value || ""}
+                  value={visibleValue || ""}
                   placeholder={showPreview ? "" : t("Add payment terms...")}
                   rows={3}
                   className={cn("resize-y", showPreview && "text-transparent caret-transparent")}
+                  onChange={(event) => {
+                    setVisibleValue(event.target.value);
+                  }}
                   onFocus={() => setIsFocused(true)}
-                  onBlur={() => setIsFocused(false)}
+                  onBlur={() => {
+                    field.onBlur();
+                    setIsFocused(false);
+                  }}
                 />
                 {showPreview && (
                   <div className="pointer-events-none absolute inset-0 z-10 flex items-start overflow-hidden rounded-md border border-input bg-background px-3 py-2 shadow-xs">
-                    <div className="w-full whitespace-pre-wrap text-base md:text-sm">{preview}</div>
+                    <MarkdownPreview value={preview ?? ""} className="w-full text-base md:text-sm" />
                   </div>
                 )}
               </div>
@@ -923,12 +1101,19 @@ export function DocumentFooterField({
   t,
   entity,
   document,
+  translationsEnabled = false,
+  activeContentLocale = DEFAULT_CONTENT_LOCALE,
+  defaultContentLocale,
+  uiLocale,
+  fieldTranslations,
+  onContentLocaleChange,
+  onFieldTranslationsChange,
 }: {
   control: AnyControl;
   t: (key: string) => string;
   entity?: Entity | null;
   document?: Partial<Invoice | Estimate> | null;
-}) {
+} & LocalizedFieldProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [isFocused, setIsFocused] = useState(false);
 
@@ -937,9 +1122,19 @@ export function DocumentFooterField({
       control={control}
       name="footer"
       render={({ field }) => {
-        const hasContent = field.value;
+        const visibleValue = readLocalizedValue(field.value, fieldTranslations, activeContentLocale);
+        const hasContent = visibleValue;
         const showPreview = !isFocused && hasContent && entity;
-        const preview = showPreview ? replaceTemplateVariablesForPreview(field.value || "", entity, document, t) : null;
+        const preview = showPreview
+          ? replaceTemplateVariablesForMarkdownPreview(visibleValue || "", entity, document, t)
+          : null;
+        const setVisibleValue = (newValue: string) => {
+          if (!translationsEnabled || activeContentLocale === DEFAULT_CONTENT_LOCALE) {
+            field.onChange(newValue);
+            return;
+          }
+          onFieldTranslationsChange?.(writeLocalizedValue(fieldTranslations, activeContentLocale, newValue));
+        };
 
         return (
           <FormItem>
@@ -951,34 +1146,55 @@ export function DocumentFooterField({
                     {t("Footer")}
                   </button>
                 </CollapsibleTrigger>
-                <div className="[[data-panel-hidden]_&]:hidden">
-                  <SmartCodeInsertButton
+                <div className="flex items-center gap-2 [[data-panel-hidden]_&]:hidden">
+                  <MarkdownTextareaToolbar
                     textareaRef={textareaRef}
-                    value={field.value || ""}
-                    onInsert={(newValue) => field.onChange(newValue)}
+                    value={visibleValue || ""}
+                    onChange={setVisibleValue}
                     t={t}
                   />
+                  <SmartCodeInsertButton
+                    textareaRef={textareaRef}
+                    value={visibleValue || ""}
+                    onInsert={setVisibleValue}
+                    t={t}
+                  />
+                  {translationsEnabled && onContentLocaleChange && (
+                    <ContentLocaleButton
+                      activeLocale={activeContentLocale}
+                      defaultLocale={defaultContentLocale}
+                      onChange={onContentLocaleChange}
+                      uiLocale={uiLocale}
+                      t={t}
+                    />
+                  )}
                 </div>
               </div>
               <CollapsibleContent className="mt-2">
                 <FormControl>
                   <div className="relative">
                     <Textarea
-                      {...field}
+                      name={field.name}
                       ref={(e) => {
                         field.ref(e);
                         (textareaRef as React.MutableRefObject<HTMLTextAreaElement | null>).current = e;
                       }}
-                      value={field.value || ""}
+                      value={visibleValue || ""}
                       placeholder={showPreview ? "" : t("Add document footer...")}
                       rows={2}
                       className={cn("resize-y", showPreview && "text-transparent caret-transparent")}
+                      onChange={(event) => {
+                        setVisibleValue(event.target.value);
+                      }}
                       onFocus={() => setIsFocused(true)}
-                      onBlur={() => setIsFocused(false)}
+                      onBlur={() => {
+                        field.onBlur();
+                        setIsFocused(false);
+                      }}
                     />
                     {showPreview && (
                       <div className="pointer-events-none absolute inset-0 z-10 flex items-start overflow-hidden rounded-md border border-input bg-background px-3 py-2 shadow-xs">
-                        <div className="w-full whitespace-pre-wrap text-base md:text-sm">{preview}</div>
+                        <MarkdownPreview value={preview ?? ""} className="w-full text-base md:text-sm" />
                       </div>
                     )}
                   </div>

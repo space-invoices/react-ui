@@ -161,7 +161,7 @@ export function PaymentMethodsChart(props: PaymentMethodsChartProps) {
         <CardTitle>{t("Payment Methods")}</CardTitle>
         <CardDescription>{t("Breakdown of payments by method")}</CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="overflow-hidden">
         {hasData ? chartContent : <ChartEmptyState label={t("No data available")}>{chartContent}</ChartEmptyState>}
       </CardContent>
     </Card>

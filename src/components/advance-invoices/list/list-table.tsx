@@ -2,6 +2,7 @@ import type { AdvanceInvoice } from "@spaceinvoices/js-sdk";
 import { advanceInvoices } from "@spaceinvoices/js-sdk";
 import { AlertTriangle } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
+import { CustomerLinkCell } from "@/ui/components/documents/list/customer-link-cell";
 import { DataTable } from "@/ui/components/table/data-table";
 import { FormattedDate } from "@/ui/components/table/date-cell";
 import { useTableFetch } from "@/ui/components/table/hooks/use-table-fetch";
@@ -51,6 +52,7 @@ type AdvanceInvoiceListTableProps = {
   namespace?: string;
   locale?: string;
   translationLocale?: string;
+  cacheKey?: string;
   entityId?: string;
   onView?: (advanceInvoice: AdvanceInvoice) => void;
   onAddPayment?: (advanceInvoice: AdvanceInvoice) => void;
@@ -67,15 +69,24 @@ type AdvanceInvoiceListTableProps = {
   onCreateNew?: () => void;
   onVoid?: (advanceInvoice: AdvanceInvoice) => void;
   isVoiding?: boolean;
+  showSearchToolbar?: boolean;
+  showPagination?: boolean;
+  contentInsetClassName?: string;
+  bottomPaddingClassName?: string;
+  hiddenColumnIds?: string[];
+  getCustomerHref?: (customerId: string, advanceInvoice: AdvanceInvoice) => string;
+  onCustomerClick?: (customerId: string, advanceInvoice: AdvanceInvoice) => void;
 } & ListTableProps<AdvanceInvoice>;
 
 export default function AdvanceInvoiceListTable({
   queryParams,
+  cacheKey = "advance-invoices",
   onRowClick,
   onView,
   onAddPayment,
   onDuplicate,
   onChangeParams,
+  disableUrlSync,
   entityId,
   onDownloadStart,
   onDownloadSuccess,
@@ -89,6 +100,13 @@ export default function AdvanceInvoiceListTable({
   onCreateNew,
   onVoid,
   isVoiding,
+  showSearchToolbar,
+  showPagination,
+  contentInsetClassName,
+  bottomPaddingClassName,
+  hiddenColumnIds,
+  getCustomerHref,
+  onCustomerClick,
   ...i18nProps
 }: AdvanceInvoiceListTableProps) {
   const t = createTranslation({
@@ -245,7 +263,15 @@ export default function AdvanceInvoiceListTable({
       {
         id: "customer",
         header: t("Customer"),
-        cell: (advanceInvoice) => advanceInvoice.customer?.name ?? "-",
+        cell: (advanceInvoice) => (
+          <CustomerLinkCell
+            item={advanceInvoice}
+            customerId={advanceInvoice.customer_id}
+            customerName={advanceInvoice.customer?.name}
+            getCustomerHref={getCustomerHref}
+            onCustomerClick={onCustomerClick}
+          />
+        ),
       },
       {
         id: "date",
@@ -312,19 +338,31 @@ export default function AdvanceInvoiceListTable({
       isVoiding,
       i18nProps.locale,
       fiscalizationFeatures,
+      getCustomerHref,
+      onCustomerClick,
     ],
   );
 
+  const visibleColumns = useMemo(() => {
+    if (!hiddenColumnIds?.length) {
+      return columns;
+    }
+
+    const hidden = new Set(hiddenColumnIds);
+    return columns.filter((column) => !hidden.has(column.id));
+  }, [columns, hiddenColumnIds]);
+
   return (
     <DataTable
-      columns={columns}
+      columns={visibleColumns}
       queryParams={queryParams}
       resourceName="advance_invoice"
-      cacheKey="advance-invoices"
+      cacheKey={cacheKey}
       createNewLink={entityId ? `/app/${entityId}/documents/add/advance_invoice` : undefined}
       onCreateNew={onCreateNew}
       onFetch={handleFetch}
       onChangeParams={onChangeParams}
+      disableUrlSync={disableUrlSync}
       entityId={entityId}
       filterConfig={filterConfig}
       t={t}
@@ -333,6 +371,10 @@ export default function AdvanceInvoiceListTable({
       selectedIds={selectedIds}
       onSelectionChange={setSelectedIds}
       selectionToolbar={selectionToolbar}
+      showSearchToolbar={showSearchToolbar}
+      showPagination={showPagination}
+      contentInsetClassName={contentInsetClassName}
+      bottomPaddingClassName={bottomPaddingClassName}
     />
   );
 }

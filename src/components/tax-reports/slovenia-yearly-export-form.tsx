@@ -1,6 +1,9 @@
 import { taxReports } from "@spaceinvoices/js-sdk";
+import { useQueryClient } from "@tanstack/react-query";
 import { Download, Loader2, RefreshCcw, Save } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { ENTITIES_CACHE_KEY } from "@/ui/components/entities/entities.hooks";
+import { triggerBlobDownload } from "@/ui/lib/browser-download";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
 import { Button } from "../ui/button";
@@ -374,6 +377,8 @@ export function SloveniaYearlyExportForm({
   const unsupportedReason = unsupportedReasonKey ? t(unsupportedReasonKey) : null;
   const yearOptions = Array.from({ length: 4 }, (_, index) => getDefaultYear() + 1 - index);
 
+  const queryClient = useQueryClient();
+
   const saveProfile = async (): Promise<ProfileResponse> => {
     setIsSavingProfile(true);
 
@@ -393,6 +398,10 @@ export function SloveniaYearlyExportForm({
       const profile = await taxReports.updateSloveniaTaxProfile(payload, {
         entity_id: entityId,
       });
+
+      // The profile is stored in entity.settings.slovenia — refresh cached
+      // entities so other consumers of entity.settings don't act on a stale copy
+      void queryClient.invalidateQueries({ queryKey: [ENTITIES_CACHE_KEY] });
 
       setProfileForm(profileToForm(profile));
       return profile;
@@ -442,16 +451,7 @@ export function SloveniaYearlyExportForm({
       );
 
       const fileName = `DDD-DDD_${year}.xml`;
-      const downloadUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = downloadUrl;
-      link.download = fileName;
-      document.body.appendChild(link);
-      link.click();
-      setTimeout(() => {
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(downloadUrl);
-      }, 1000);
+      triggerBlobDownload(blob, fileName);
 
       onSuccess?.(fileName);
     } catch (error) {

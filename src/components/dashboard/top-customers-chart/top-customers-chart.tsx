@@ -142,7 +142,7 @@ export function TopCustomersChart(props: TopCustomersChartProps) {
         <CardTitle>{t("Top Customers")}</CardTitle>
         <CardDescription>{t("Top 5 customers by revenue")}</CardDescription>
       </CardHeader>
-      <CardContent className="flex-1">
+      <CardContent className="flex-1 overflow-hidden">
         {hasData ? chartContent : <ChartEmptyState label={t("No data available")}>{chartContent}</ChartEmptyState>}
       </CardContent>
     </Card>

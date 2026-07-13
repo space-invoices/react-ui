@@ -1,10 +1,12 @@
 export default {
   Name: "Nome",
-  "Name is required": "Name is required",
+  "Name is required": "O nome é obrigatório",
   "Enter name": "Introduzir nome",
   Description: "Descrição",
   "Enter description": "Introduzir descrição",
   Unit: "Unidade",
+  "e.g. hours": "ex.: horas",
+  "E-invoicing unit code": "Código da unidade para faturação eletrónica",
   Price: "Preço",
   "There was an error creating the item": "Ocorreu um erro ao criar o artigo",
   // Gross price support

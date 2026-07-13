@@ -161,15 +161,27 @@ export default {
     "Les valeurs par défaut de l'opérateur ont été enregistrées, mais les intégrations n'ont pas été entièrement mises à jour",
   "Select business premise": "Sélectionner l'établissement",
   "Select electronic device": "Sélectionner l'appareil électronique",
-  "Set operator OIB and label in General Settings first": "Set operator OIB and label in General Settings first",
-  "Complete General Settings first": "Complete General Settings first",
+  "Set operator OIB and label in General Settings first":
+    "Définissez d'abord l'OIB et le libellé de l'opérateur dans les paramètres généraux",
+  "Complete General Settings first": "Complétez d'abord les paramètres généraux",
   "Operator OIB and label are required for FINA fiscalization":
-    "Operator OIB and label are required for FINA fiscalization",
-  "FINA Operator Settings Required": "FINA Operator Settings Required",
+    "L'OIB et le libellé de l'opérateur sont requis pour la fiscalisation FINA",
+  "FINA Operator Settings Required": "Paramètres de l'opérateur FINA requis",
   "Your FINA operator information is needed to fiscalize this document. Please enter your operator details.":
-    "Your FINA operator information is needed to fiscalize this document. Please enter your operator details.",
-  "Save & Retry": "Save & Retry",
+    "Les informations de votre opérateur FINA sont nécessaires pour fiscaliser ce document. Veuillez saisir les coordonnées de votre opérateur.",
+  "Save & Retry": "Enregistrer et réessayer",
   "Unified document numbering": "Numérotation unifiée des documents",
   "Use the same numbering sequence for all documents, including non-fiscalized ones":
     "Utiliser la même séquence de numérotation pour tous les documents, y compris les non-fiscalisés",
+  "Starting Number": "Numéro de départ",
+  "First invoice number for this premise sequence": "Premier numéro de facture pour cette séquence d'établissement",
+  "First invoice number for this device sequence": "Premier numéro de facture pour cette séquence d’appareil",
+  "Set Starting Number": "Définir le numéro de départ",
+  "Starting number can no longer be changed after invoices have been issued for this fiscal sequence.":
+    "Le numéro de départ ne peut plus être modifié après l'émission de factures pour cette séquence fiscale.",
+  "Set this before issuing invoices for the selected fiscal sequence. Leave empty to clear it.":
+    "Définissez-le avant d’émettre des factures pour la séquence fiscale sélectionnée. Laissez vide pour le supprimer.",
+  "Fiscal Sequence": "Séquence fiscale",
+  "Starting number must be between 1 and 999999999": "Le numéro de départ doit être compris entre 1 et 999999999",
+  Save: "Enregistrer",
 } as const;

@@ -1,30 +1,25 @@
 import {
   type AdvanceInvoice,
   type CreditNote,
+  creditNotes,
   type DeliveryNote,
   downloadBlob,
   type Estimate,
   eSlog,
   type Invoice,
   invoices,
+  ujp,
 } from "@spaceinvoices/js-sdk";
 import { useState } from "react";
+import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { useEntities } from "@/ui/providers/entities-context";
+import { type DownloadDocumentType, getDocumentPdfFileName } from "../shared/document-pdf-filename";
 
 type Document = Invoice | Estimate | CreditNote | AdvanceInvoice | DeliveryNote;
-type DocumentType = "invoice" | "estimate" | "credit_note" | "advance_invoice" | "delivery_note";
+type DocumentType = DownloadDocumentType;
 type ESlogDocumentType = "invoice" | "estimate" | "credit_note" | "advance_invoice";
 
-// Document type labels for PDF filename
-const TYPE_LABELS: Record<string, string> = {
-  invoice: "Invoice",
-  estimate: "Estimate",
-  credit_note: "Credit Note",
-  advance_invoice: "Advance Invoice",
-  delivery_note: "Delivery Note",
-};
-
-interface UseDocumentDownloadOptions {
+interface UseDocumentDownloadOptions extends Pick<ComponentTranslationProps, "locale" | "translationLocale" | "t"> {
   onDownloadStart?: () => void;
   onDownloadSuccess?: (fileName: string) => void;
   onDownloadError?: (error: string) => void;
@@ -37,11 +32,17 @@ export function useDocumentDownload({
   onDownloadStart,
   onDownloadSuccess,
   onDownloadError,
+  locale,
+  translationLocale,
+  t,
 }: UseDocumentDownloadOptions = {}) {
   const { activeEntity } = useEntities();
 
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
   const [isDownloadingEslog, setIsDownloadingEslog] = useState(false);
+  const [isDownloadingUjp, setIsDownloadingUjp] = useState(false);
+  const [isDownloadingXRechnung, setIsDownloadingXRechnung] = useState(false);
+  const [isDownloadingZugferd, setIsDownloadingZugferd] = useState(false);
 
   /**
    * Download PDF with an optional language override.
@@ -60,12 +61,18 @@ export function useDocumentDownload({
       // SDK signature: renderPdf(id, params?, SDKMethodOptions?)
       // entity_id goes in SDKMethodOptions (last arg), not params
       // Note: renderPdf is on invoices module but works with any document ID via /documents/{id}/pdf
-      const typeLabel =
-        documentType === "estimate" && (document as Estimate).title_type === "proforma_invoice"
-          ? "Proforma Invoice"
-          : TYPE_LABELS[documentType] || "Document";
       const params = language ? { language } : {};
-      const fileName = `${typeLabel} ${document.number}.pdf`;
+      const filenameLocale = language ?? activeEntity.locale ?? locale ?? translationLocale;
+      const fileName = getDocumentPdfFileName(
+        documentType,
+        document.number,
+        documentType === "estimate" ? (document as Estimate).title_type : undefined,
+        {
+          locale: filenameLocale,
+          translationLocale: filenameLocale,
+          t,
+        },
+      );
 
       await invoices.downloadPdf(document.id, fileName, params, { entity_id: activeEntity.id });
 
@@ -113,10 +120,71 @@ export function useDocumentDownload({
     }
   };
 
+  /**
+   * Download Slovenian UJP package ZIP.
+   */
+  const downloadUjp = async (document: Document) => {
+    if (!activeEntity?.id) {
+      onDownloadError?.("Download failed");
+      return;
+    }
+
+    setIsDownloadingUjp(true);
+
+    try {
+      const blob = await ujp.download(document.id, { entity_id: activeEntity.id });
+      downloadBlob(blob, `${document.number} UJP.zip`);
+    } catch (error) {
+      console.error("Error downloading UJP package:", error);
+      onDownloadError?.("UJP package download failed");
+    } finally {
+      setIsDownloadingUjp(false);
+    }
+  };
+
+  const downloadGermanEInvoice = async (
+    document: Document,
+    documentType: Extract<DocumentType, "invoice" | "credit_note">,
+    format: "xrechnung" | "zugferd",
+  ) => {
+    if (!activeEntity?.id) {
+      onDownloadError?.("Download failed");
+      return;
+    }
+
+    const setDownloading = format === "xrechnung" ? setIsDownloadingXRechnung : setIsDownloadingZugferd;
+    setDownloading(true);
+
+    try {
+      const blob =
+        documentType === "invoice"
+          ? format === "xrechnung"
+            ? await invoices.downloadInvoiceXRechnung(document.id, { entity_id: activeEntity.id })
+            : await invoices.downloadInvoiceZugferd(document.id, { entity_id: activeEntity.id })
+          : format === "xrechnung"
+            ? await creditNotes.downloadCreditNoteXRechnung(document.id, { entity_id: activeEntity.id })
+            : await creditNotes.downloadCreditNoteZugferd(document.id, { entity_id: activeEntity.id });
+      const suffix = format === "xrechnung" ? "XRechnung.xml" : "ZUGFeRD.pdf";
+      const download = typeof blob === "string" ? new Blob([blob], { type: "application/xml" }) : blob;
+      downloadBlob(download, `${document.number} ${suffix}`);
+      onDownloadSuccess?.(`${document.number} ${suffix}`);
+    } catch (error) {
+      console.error("Error downloading German e-invoice:", error);
+      onDownloadError?.(format === "xrechnung" ? "XRechnung download failed" : "ZUGFeRD download failed");
+    } finally {
+      setDownloading(false);
+    }
+  };
+
   return {
     isDownloadingPdf,
     isDownloadingEslog,
+    isDownloadingUjp,
+    isDownloadingXRechnung,
+    isDownloadingZugferd,
     downloadPdf,
     downloadEslog,
+    downloadUjp,
+    downloadGermanEInvoice,
   };
 }

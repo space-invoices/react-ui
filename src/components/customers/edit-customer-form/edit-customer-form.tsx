@@ -8,6 +8,11 @@ import type { CreateCustomerSchema } from "@/ui/generated/schemas";
 import { createCustomerSchema } from "@/ui/generated/schemas";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
+import {
+  CustomerBankAccountFields,
+  customerBankAccountsFormSchema,
+  normalizeCustomerBankAccounts,
+} from "../customer-bank-account-fields";
 import { useUpdateCustomer } from "../customers.hooks";
 import de from "./locales/de";
 import es from "./locales/es";
@@ -44,6 +49,14 @@ type EditCustomerFormProps = {
   renderSubmitButton?: (props: { isSubmitting: boolean; submit: () => void }) => React.ReactNode;
 } & ComponentTranslationProps;
 
+const customerFormSchema = createCustomerSchema.extend({
+  bank_accounts: customerBankAccountsFormSchema,
+});
+
+type CustomerFormSchema = CreateCustomerSchema & {
+  bank_accounts?: Array<Record<string, unknown>>;
+};
+
 export default function EditCustomerForm({
   entityId,
   customer,
@@ -64,10 +77,12 @@ export default function EditCustomerForm({
     if (company.post_code) form.setValue("post_code", company.post_code);
     if (company.city) form.setValue("city", company.city);
     if (company.tax_number) form.setValue("tax_number", company.tax_number);
+    if (company.registration_number) form.setValue("company_number", company.registration_number);
+    if (company.bank_accounts?.[0]) form.setValue("bank_accounts", [company.bank_accounts[0] as any]);
   };
 
-  const form = useForm<CreateCustomerSchema>({
-    resolver: zodResolver(createCustomerSchema),
+  const form = useForm<CustomerFormSchema>({
+    resolver: zodResolver(customerFormSchema),
     defaultValues: {
       name: customer.name ?? "",
       address: customer.address ?? "",
@@ -76,6 +91,10 @@ export default function EditCustomerForm({
       state: customer.state ?? "",
       country: customer.country ?? "",
       tax_number: customer.tax_number ?? "",
+      company_number: customer.company_number ?? "",
+      bank_accounts: (customer.bank_accounts as Array<Record<string, unknown>> | null | undefined) ?? [
+        { type: "iban" },
+      ],
     },
   });
 
@@ -93,10 +112,10 @@ export default function EditCustomerForm({
     },
   });
 
-  const onSubmit = async (values: CreateCustomerSchema) => {
+  const onSubmit = async (values: CustomerFormSchema) => {
     updateCustomer({
       id: customer.id,
-      data: values,
+      data: normalizeCustomerBankAccounts(values),
     });
   };
 
@@ -132,6 +151,15 @@ export default function EditCustomerForm({
         </div>
 
         <FormInput control={form.control} name="tax_number" label={t("Tax Number")} />
+
+        <FormInput control={form.control} name="company_number" label={t("Company Number")} />
+
+        <CustomerBankAccountFields
+          control={form.control}
+          t={t}
+          locale={i18nProps.locale}
+          translationLocale={i18nProps.translationLocale}
+        />
 
         {renderSubmitButton?.({
           isSubmitting: isPending || form.formState.isSubmitting,

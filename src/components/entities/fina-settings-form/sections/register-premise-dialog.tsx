@@ -21,6 +21,8 @@ import {
   FormMessage,
 } from "@/ui/components/ui/form";
 import { Input } from "@/ui/components/ui/input";
+import { fiscalStartingNumberZodSchema, optionalFiscalStartingNumber } from "../../fiscal-starting-number";
+import { StartingNumberInput } from "../../starting-number-dialog";
 import { useCreateFinaPremise } from "../fina-settings.hooks";
 
 const createPremiseSchema = z.object({
@@ -29,6 +31,7 @@ const createPremiseSchema = z.object({
     .min(1, "Premise ID is required")
     .max(20)
     .regex(/^[0-9a-zA-Z]{1,20}$/, "Must be alphanumeric, 1-20 characters"),
+  starting_number: fiscalStartingNumberZodSchema,
 });
 
 type CreatePremiseForm = z.infer<typeof createPremiseSchema>;
@@ -50,10 +53,12 @@ export const RegisterFinaPremiseDialog: FC<RegisterFinaPremiseDialogProps> = ({
   onSuccess,
   onError,
 }) => {
+  const isPremiseStartingNumberEnabled = (entity.settings?.fina?.numbering_sequence ?? "P") === "P";
   const form = useForm<CreatePremiseForm>({
     resolver: zodResolver(createPremiseSchema),
     defaultValues: {
       business_premise_name: "",
+      starting_number: isPremiseStartingNumberEnabled ? 1 : undefined,
     },
   });
 
@@ -100,6 +105,28 @@ export const RegisterFinaPremiseDialog: FC<RegisterFinaPremiseDialogProps> = ({
                 </FormItem>
               )}
             />
+
+            {isPremiseStartingNumberEnabled && (
+              <FormField
+                control={form.control}
+                name="starting_number"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t("Starting Number")}</FormLabel>
+                    <FormControl>
+                      <StartingNumberInput
+                        id="fina-premise-starting-number"
+                        value={field.value == null ? "" : String(field.value)}
+                        onChange={(value) => field.onChange(optionalFiscalStartingNumber(value))}
+                        t={t}
+                        data-testid="fina-premise-starting-number"
+                      />
+                    </FormControl>
+                    <FormDescription>{t("First invoice number for this premise sequence")}</FormDescription>
+                  </FormItem>
+                )}
+              />
+            )}
 
             <DialogFooter>
               <Button

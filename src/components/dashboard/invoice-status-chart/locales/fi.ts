@@ -1,10 +1,10 @@
 export default {
-  "Invoice Status": "Invoice Status",
-  "Breakdown of invoices by payment status": "Breakdown of invoices by payment status",
+  "Invoice Status": "Laskujen tila",
+  "Breakdown of invoices by payment status": "Laskujen jakauma maksutilan mukaan",
   Paid: "Maksettu",
   Pending: "Odottaa",
-  Overdue: "Overdue",
-  Voided: "Voided",
-  "No data available": "No data available",
+  Overdue: "Erääntynyt",
+  Voided: "Mitätöity",
+  "No data available": "Tietoja ei ole saatavilla",
   Invoices: "Laskut",
 } as const;

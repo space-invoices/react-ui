@@ -5,6 +5,8 @@ export default {
   Description: "Opis",
   "Enter description": "Vnesite opis",
   Unit: "Enota",
+  "e.g. hours": "npr. ure",
+  "E-invoicing unit code": "Koda enote za e-račune",
   Price: "Cena",
   "There was an error creating the item": "Prišlo je do napake pri ustvarjanju izdelka",
   // Gross price support

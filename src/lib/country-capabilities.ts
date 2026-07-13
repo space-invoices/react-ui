@@ -4,6 +4,7 @@ import type { PdfTemplateId } from "@/ui/components/documents/create/live-previe
 import type { Entity } from "@/ui/providers/entities-context";
 
 export const PORTUGAL_COUNTRY_CODE = "PT";
+export const ITALY_COUNTRY_CODE = "IT";
 export const PORTUGAL_PDF_LOCALE = "pt-PT";
 export const PORTUGAL_CANONICAL_PDF_TEMPLATE: PdfTemplateId = "classic";
 const ACTIVE_ACCOUNT_COOKIE = "l.account";
@@ -12,10 +13,47 @@ const SUPPORT_ACCOUNT_ID = import.meta.env.VITE_SUPPORT_ACCOUNT_ID || "acc_00000
 export type CountryAwareDocument = Invoice | Estimate | CreditNote | AdvanceInvoice | DeliveryNote;
 export type CountryAwareDocumentType = "invoice" | "estimate" | "credit_note" | "advance_invoice" | "delivery_note";
 
-type CountryEntity = Pick<Entity, "country_code" | "settings"> | null | undefined;
+type CountryEntity = Pick<Entity, "country_code" | "settings" | "country_rules"> | null | undefined;
 
 export function isPortugalEntity(entity: CountryEntity): boolean {
   return entity?.country_code === PORTUGAL_COUNTRY_CODE;
+}
+
+export function isItalyEntity(entity: CountryEntity): boolean {
+  return entity?.country_code === ITALY_COUNTRY_CODE;
+}
+
+function hasCountryFeature(entity: CountryEntity, feature: string): boolean {
+  return !!entity?.country_rules?.features?.includes(feature as any);
+}
+
+export function hasItalyFatturaPaSupport(entity: CountryEntity): boolean {
+  return isItalyEntity(entity) && hasCountryFeature(entity, "e_invoicing");
+}
+
+export function hasUsTaxRateLookupSupport(entity: CountryEntity): boolean {
+  return hasCountryFeature(entity, "us_tax_rate_lookup");
+}
+
+function hasUpnQrSupport(entity: CountryEntity): boolean {
+  return entity?.country_code === "SI" && hasCountryFeature(entity, "upn_qr");
+}
+
+function hasHub3QrSupport(entity: CountryEntity): boolean {
+  return entity?.country_code === "HR" && hasCountryFeature(entity, "hub3_qr");
+}
+
+function hasEpcQrSupport(entity: CountryEntity): boolean {
+  return hasCountryFeature(entity, "epc_qr");
+}
+
+function isGermanStandardEnabled(entity: CountryEntity, standard: "xrechnung" | "zugferd"): boolean {
+  const settings = (entity?.settings as Record<string, any> | undefined) ?? {};
+  return settings[standard]?.enabled === true;
+}
+
+function isGermanStandardValidationRequired(entity: CountryEntity, standard: "xrechnung" | "zugferd"): boolean {
+  return isGermanStandardEnabled(entity, standard);
 }
 
 function getCookieValue(name: string) {
@@ -64,14 +102,54 @@ export function getPortugalEditBlockedReason(entity: CountryEntity): string | un
 export function getEntityCountryCapabilities(entity: CountryEntity) {
   const isPortugal = isPortugalEntity(entity) && hasPortugalUiAccess();
   const isSlovenia = entity?.country_code === "SI";
+  const isItaly = isItalyEntity(entity);
+  const hasItalyFatturaPa = hasItalyFatturaPaSupport(entity);
+  const isGermany = entity?.country_code === "DE";
+  const hasEInvoicing = hasCountryFeature(entity, "e_invoicing");
+  const hasFurs = hasCountryFeature(entity, "furs");
+  const hasFina = hasCountryFeature(entity, "fina");
+  const hasEslog = hasCountryFeature(entity, "eslog");
+  const hasEuTaxRules = hasCountryFeature(entity, "eu_tax_rules");
+  const hasTaxClauseDefaults = hasCountryFeature(entity, "tax_clause_defaults");
+  const hasUsTaxRateLookup = hasUsTaxRateLookupSupport(entity);
+  const hasLayeredTaxRates = ((entity?.country_rules as any)?.max_taxes_per_item ?? 1) > 1;
+  const showUpnQrSettings = hasUpnQrSupport(entity);
+  const showHub3QrSettings = hasHub3QrSupport(entity);
+  const showEpcQrSettings = hasEpcQrSupport(entity);
+  const xrechnungEnabled = isGermany && hasEInvoicing && isGermanStandardEnabled(entity, "xrechnung");
+  const zugferdEnabled = isGermany && hasEInvoicing && isGermanStandardEnabled(entity, "zugferd");
+  const germanEInvoicingEnabled = xrechnungEnabled || zugferdEnabled;
 
   return {
     isPortugal,
     isSlovenia,
+    isItaly,
+    isGermany,
+    hasFurs,
+    hasFina,
+    hasEslog,
+    hasEInvoicing,
+    hasEuTaxRules,
+    hasTaxClauseDefaults,
+    hasUsTaxRateLookup,
+    hasLayeredTaxRates,
+    hasItalyFatturaPa,
+    requiresItalyFatturaPaValidation: hasItalyFatturaPa,
     usesFixedPdfTemplate: isPortugal,
     showPtSaftExport: isPortugal,
     showSloveniaVodExport: isSlovenia,
+    showGermanEInvoicingExports: germanEInvoicingEnabled,
+    showXRechnungExport: xrechnungEnabled,
+    showZugferdExport: zugferdEnabled,
+    requiresGermanEInvoicingValidation:
+      (isGermany && hasEInvoicing && isGermanStandardValidationRequired(entity, "xrechnung")) ||
+      (isGermany && hasEInvoicing && isGermanStandardValidationRequired(entity, "zugferd")),
+    requiresXRechnungValidation: isGermany && hasEInvoicing && isGermanStandardValidationRequired(entity, "xrechnung"),
+    requiresZugferdValidation: isGermany && hasEInvoicing && isGermanStandardValidationRequired(entity, "zugferd"),
     showPtAtcudSettings: isPortugal,
+    showUpnQrSettings,
+    showHub3QrSettings,
+    showEpcQrSettings,
     allowTemplateSettings: !isPortugal,
     allowEmailSettings: !isPortugal,
     showTemplatesSettings: !isPortugal,
@@ -92,6 +170,15 @@ export function getDocumentCountryCapabilities(
 ) {
   const entityCapabilities = getEntityCountryCapabilities(entity);
   const isDraft = document?.is_draft === true;
+  const xrechnungValid = (document as any)?.xrechnung?.validation_status === "valid";
+  const zugferdValid = (document as any)?.zugferd?.validation_status === "valid";
+  const xrechnungValidationBlocksDownload = entityCapabilities.requiresXRechnungValidation && !xrechnungValid;
+  const zugferdValidationBlocksDownload = entityCapabilities.requiresZugferdValidation && !zugferdValid;
+  const germanEInvoicingValidationBlocksDownload = xrechnungValidationBlocksDownload || zugferdValidationBlocksDownload;
+  const supportsGermanEInvoicingExport =
+    !isDraft &&
+    (documentType === "invoice" || documentType === "credit_note") &&
+    entityCapabilities.showGermanEInvoicingExports;
 
   return {
     ...entityCapabilities,
@@ -106,6 +193,11 @@ export function getDocumentCountryCapabilities(
       (documentType === "invoice" || documentType === "advance_invoice" || documentType === "credit_note") &&
       !(entityCapabilities.isPortugal && documentType === "credit_note"),
     forceDocumentPdfLocale: entityCapabilities.forcePdfLocale,
+    showXRechnungExport: supportsGermanEInvoicingExport && entityCapabilities.showXRechnungExport,
+    showZugferdExport: supportsGermanEInvoicingExport && entityCapabilities.showZugferdExport,
+    germanEInvoicingValidationBlocksDownload,
+    xrechnungValidationBlocksDownload,
+    zugferdValidationBlocksDownload,
     isDraft,
   };
 }

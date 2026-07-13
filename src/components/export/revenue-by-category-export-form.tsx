@@ -9,6 +9,7 @@ import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import { downloadExportFile } from "./export-download";
 
 type ExportFormat = "xlsx" | "csv";
 
@@ -108,7 +109,12 @@ export function RevenueByCategoryExportForm({
         ...(language ? { language } : {}),
       });
 
-      const response = await fetch(`${apiBaseUrl}/documents/export/revenue-by-category?${queryParams.toString()}`, {
+      const fileName = await downloadExportFile({
+        apiBaseUrl,
+        path: "/documents/export/revenue-by-category",
+        query: queryParams,
+        fallbackFileName: `revenue-by-category.${exportFormat}`,
+        format: exportFormat,
         headers: {
           Authorization: `Bearer ${token}`,
           "x-entity-id": entityId,
@@ -116,32 +122,6 @@ export function RevenueByCategoryExportForm({
           ...getClientHeaders("ui"),
         },
       });
-
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({}));
-        throw new Error(error.message || error.error || `Export failed: ${response.statusText}`);
-      }
-
-      const contentDisposition = response.headers.get("content-disposition");
-      let fileName = `revenue-by-category.${exportFormat}`;
-      if (contentDisposition) {
-        const match = contentDisposition.match(/filename="?([^";\n]+)"?/);
-        if (match) {
-          fileName = match[1];
-        }
-      }
-
-      const blob = await response.blob();
-      const downloadUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = downloadUrl;
-      link.download = fileName;
-      document.body.appendChild(link);
-      link.click();
-      setTimeout(() => {
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(downloadUrl);
-      }, 1000);
 
       onSuccess?.(fileName);
     } catch (error) {

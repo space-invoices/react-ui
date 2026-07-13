@@ -29,6 +29,23 @@ export type FinaSubmitOptions = {
 
 export type EslogSubmitOptions = {
   validation_enabled: boolean;
+  validation_required?: boolean;
+};
+
+export type UjpSubmitOptions = {
+  validation_enabled: boolean;
+  validation_required?: boolean;
+};
+
+export type GermanEInvoicingSubmitOptions = {
+  xrechnung?: {
+    validation_enabled: boolean;
+    validation_required?: boolean;
+  };
+  zugferd?: {
+    validation_enabled: boolean;
+    validation_required?: boolean;
+  };
 };
 
 /**
@@ -88,14 +105,47 @@ export function buildFinaOptions(opts: {
 /**
  * Build eSLOG validation options for document submission.
  *
- * Returns undefined when eSLOG should not be included (drafts, edit mode, unavailable).
+ * Returns undefined when eSLOG should not be included.
  */
 export function buildEslogOptions(opts: {
   isDraft: boolean;
-  isEditMode?: boolean;
   isAvailable: boolean;
   isEnabled: boolean | undefined;
 }): EslogSubmitOptions | undefined {
-  if (opts.isDraft || opts.isEditMode || !opts.isAvailable) return undefined;
-  return { validation_enabled: opts.isEnabled === true };
+  if (!opts.isAvailable) return undefined;
+  const enabled = opts.isEnabled === true;
+  return {
+    validation_enabled: enabled,
+    ...(enabled ? { validation_required: true } : {}),
+  };
+}
+
+export function buildUjpOptions(opts: {
+  isAvailable: boolean;
+  isEnabled: boolean | undefined;
+  requiresUjpValidation: boolean;
+}): UjpSubmitOptions | undefined {
+  if (!opts.isAvailable || !opts.requiresUjpValidation) return undefined;
+  const enabled = opts.isEnabled === true;
+  return {
+    validation_enabled: enabled,
+    ...(enabled ? { validation_required: true } : {}),
+  };
+}
+
+export function buildGermanEInvoicingOptions(opts: {
+  isEditMode?: boolean;
+  isAvailable: boolean;
+  xrechnungEnabled?: boolean;
+  zugferdEnabled?: boolean;
+}): GermanEInvoicingSubmitOptions | undefined {
+  if (opts.isEditMode || !opts.isAvailable) return undefined;
+  const result: GermanEInvoicingSubmitOptions = {};
+  if (opts.xrechnungEnabled === true) {
+    result.xrechnung = { validation_enabled: true, validation_required: true };
+  }
+  if (opts.zugferdEnabled === true) {
+    result.zugferd = { validation_enabled: true, validation_required: true };
+  }
+  return Object.keys(result).length > 0 ? result : undefined;
 }

@@ -250,4 +250,15 @@ export default {
   "A premise with this name already exists": "Starfsstöð með þessu nafni er þegar til",
   "Exactly 4 digits": "Nákvæmlega 4 tölustafir",
   "Your Name": "Nafnið þitt",
+  "Starting Number": "Upphafsnúmer",
+  "First invoice number for this premise sequence": "Fyrsta reikningsnúmer fyrir þessa starfsstöðvarröð",
+  "First invoice number for this device sequence": "Fyrsta reikningsnúmer fyrir þessa tækjaröð",
+  "Set Starting Number": "Stilla upphafsnúmer",
+  "Starting number can no longer be changed after invoices have been issued for this fiscal sequence.":
+    "Ekki er lengur hægt að breyta upphafsnúmerinu eftir að reikningar hafa verið gefnir út fyrir þessa skattaröð.",
+  "Set this before issuing invoices for the selected fiscal sequence. Leave empty to clear it.":
+    "Stilltu þetta áður en reikningar eru gefnir út fyrir valda skattaröð. Skildu eftir autt til að hreinsa.",
+  "Fiscal Sequence": "Skattaröð",
+  "Starting number must be between 1 and 999999999": "Upphafsnúmerið verður að vera á milli 1 og 999999999",
+  Save: "Vista",
 } as const;

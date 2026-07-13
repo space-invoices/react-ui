@@ -87,8 +87,10 @@ export function CollectionRateCard(props: CollectionRateCardProps) {
         <CardTitle className="font-medium text-muted-foreground text-sm">{t("Collection Rate")}</CardTitle>
       </CardHeader>
       <CardContent className="pt-0">
-        <div className={`font-bold text-2xl ${getVariantColor(collectionRate)}`}>{collectionRate.toFixed(1)}%</div>
-        <p className="mt-1 text-muted-foreground text-xs">
+        <div className={`break-words font-bold text-xl sm:text-2xl ${getVariantColor(collectionRate)}`}>
+          {collectionRate.toFixed(1)}%
+        </div>
+        <p className="mt-1 break-words text-muted-foreground text-xs">
           {formatCurrency(totalCollected)} / {formatCurrency(totalInvoiced)}
         </p>
       </CardContent>

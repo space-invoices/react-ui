@@ -29,12 +29,18 @@ export type StoreBilling = {
   extra_store_price_cents_yearly: number | null;
 } | null;
 
+export type WLBillingCurrencyCode = "EUR" | "USD";
+export type WLBillingProfile = "default" | "us_company";
+export type WLPaymentProvider = "stripe" | "paypal" | "bank";
+export type WLStripePublishableKeyKind = "default" | "us_company";
+
 export type WhiteLabelPlan = {
   id: string;
   slug: string;
   name: string;
   billing_interval: string | null;
   base_price_cents: number | null;
+  currency_code?: WLBillingCurrencyCode;
   limits: PlanLimits;
   features: string[];
   is_free: boolean;
@@ -58,10 +64,15 @@ export type CurrentSubscription = {
   current_period_end: string;
   payment_provider: "stripe" | "paypal" | "bank" | "braintree";
   bank_reference: string | null;
+  currency_code?: WLBillingCurrencyCode;
+  billing_profile?: WLBillingProfile;
+  allowed_payment_providers?: WLPaymentProvider[];
+  stripe_publishable_key_kind?: WLStripePublishableKeyKind;
   billing_email: string | null;
   coupon_code: string | null;
   trial_ends_at: string | null;
   trial_days_remaining: number | null;
+  trial_started_now?: boolean;
   cancel_at: string | null;
   scheduled_change: {
     plan: WhiteLabelPlan;
@@ -143,6 +154,7 @@ const DEFAULT_SUBSCRIPTION: CurrentSubscription = {
     name: "Unlimited",
     billing_interval: null,
     base_price_cents: null,
+    currency_code: "EUR",
     limits: null,
     features: [], // Empty = all features
     is_free: true,
@@ -154,10 +166,15 @@ const DEFAULT_SUBSCRIPTION: CurrentSubscription = {
   current_period_end: new Date().toISOString(),
   payment_provider: "stripe",
   bank_reference: null,
+  currency_code: "EUR",
+  billing_profile: "default",
+  allowed_payment_providers: ["stripe"],
+  stripe_publishable_key_kind: "default",
   billing_email: null,
   coupon_code: null,
   trial_ends_at: null,
   trial_days_remaining: null,
+  trial_started_now: false,
   cancel_at: null,
   scheduled_change: null,
   payment_method: {

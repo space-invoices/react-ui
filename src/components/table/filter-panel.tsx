@@ -224,12 +224,12 @@ function DateRangeFilter({ fields, value, onChange, t, locale }: DateRangeFilter
   );
 
   return (
-    <div className="space-y-3">
+    <div className="min-w-0 space-y-3">
       <Label className="font-medium text-muted-foreground text-xs uppercase">{t("Date Range")}</Label>
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="space-y-2">
         {/* Field selector */}
         <Select value={selectedField} onValueChange={(v) => v && handleFieldChange(v)}>
-          <SelectTrigger size="sm" className="w-[140px]">
+          <SelectTrigger size="sm" className="w-full sm:w-[160px]">
             <SelectValue>{selectedFieldLabel}</SelectValue>
           </SelectTrigger>
           <SelectContent>
@@ -241,26 +241,28 @@ function DateRangeFilter({ fields, value, onChange, t, locale }: DateRangeFilter
           </SelectContent>
         </Select>
 
-        {/* From date */}
-        <DatePicker
-          value={value?.range.from}
-          onChange={handleFromChange}
-          placeholder={t("From")}
-          t={t}
-          locale={locale}
-        />
+        <div className="flex flex-wrap items-center gap-2">
+          {/* From date */}
+          <DatePicker
+            value={value?.range.from}
+            onChange={handleFromChange}
+            placeholder={t("From")}
+            t={t}
+            locale={locale}
+          />
 
-        <span className="text-muted-foreground">–</span>
+          <span className="text-muted-foreground">–</span>
 
-        {/* To date */}
-        <DatePicker
-          value={value?.range.to}
-          onChange={handleToChange}
-          placeholder={t("To")}
-          t={t}
-          locale={locale}
-          minDate={value?.range.from}
-        />
+          {/* To date */}
+          <DatePicker
+            value={value?.range.to}
+            onChange={handleToChange}
+            placeholder={t("To")}
+            t={t}
+            locale={locale}
+            minDate={value?.range.from}
+          />
+        </div>
       </div>
     </div>
   );
@@ -401,7 +403,11 @@ function StatusFilterSection({ value, options, onChange, t }: StatusFilterSectio
     partially_paid: t("Partially Paid"),
     unpaid: t("Unpaid"),
     overdue: t("Overdue"),
+    due_soon: t("Due Soon"),
     voided: t("Voided"),
+    draft: t("Draft"),
+    open: t("Open"),
+    missing_attachment: t("Missing Attachment"),
   };
 
   return (

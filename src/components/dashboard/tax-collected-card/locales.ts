@@ -64,8 +64,8 @@ const et = {
 } as const;
 
 const fi = {
-  Tax: "Tax",
-  "No tax data": "No tax data",
+  Tax: "Vero",
+  "No tax data": "Ei verotietoja",
 } as const;
 
 const is = {

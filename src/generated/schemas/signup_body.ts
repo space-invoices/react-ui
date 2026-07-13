@@ -25,6 +25,7 @@ const signupSchemaDefinition = z.object({
     .optional(),
   metadata: z.union([z.record(z.string(), z.any()), z.null()]).optional(),
   company_name: z.string().min(1).optional(),
+  account_invitation_token: z.string().min(1).optional(),
 });
 
 export type SignupSchema = z.infer<typeof signupSchemaDefinition>;

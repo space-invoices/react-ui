@@ -9,7 +9,14 @@ import { z } from 'zod';
 // Schemas for finapremise endpoints
 
 // Schema for createFinaPremise operation
-const createFinaPremiseSchemaDefinition = z.object({ code: z.string(), message: z.string() }).passthrough();
+const createFinaPremiseSchemaDefinition = z.object({
+  business_premise_name: z
+    .string()
+    .min(1)
+    .max(20)
+    .regex(/^[0-9a-zA-Z]{1,20}$/),
+  starting_number: z.union([z.number(), z.null()]).optional(),
+});
 
 export type CreateFinaPremiseSchema = z.infer<typeof createFinaPremiseSchemaDefinition>;
 export const createFinaPremiseSchema = createFinaPremiseSchemaDefinition;

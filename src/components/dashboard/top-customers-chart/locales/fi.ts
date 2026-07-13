@@ -1,7 +1,7 @@
 export default {
-  Revenue: "Revenue",
-  Unknown: "Unknown",
-  "Top Customers": "Top Customers",
-  "Top 5 customers by revenue": "Top 5 customers by revenue",
-  "No data available": "No data available",
+  Revenue: "Liikevaihto",
+  Unknown: "Tuntematon",
+  "Top Customers": "Parhaat asiakkaat",
+  "Top 5 customers by revenue": "Viisi parasta asiakasta liikevaihdon mukaan",
+  "No data available": "Tietoja ei ole saatavilla",
 } as const;

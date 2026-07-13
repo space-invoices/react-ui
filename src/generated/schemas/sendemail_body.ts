@@ -10,7 +10,11 @@ import { z } from 'zod';
 
 // Schema for sendEmail operation
 const sendEmailSchemaDefinition = z.object({
-  to: z.string().email(),
+  to: z
+    .string()
+    .regex(
+      /^\s*[^\s,@]+@[^\s,@]+\.[^\s,@]+(?:\s*,\s*[^\s,@]+@[^\s,@]+\.[^\s,@]+){0,3}\s*$/
+    ),
   subject: z.string().min(1).max(255).optional(),
   body_text: z.string().min(1).optional(),
   document_id: z.union([z.string(), z.null()]).optional(),

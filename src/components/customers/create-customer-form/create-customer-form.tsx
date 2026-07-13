@@ -8,6 +8,11 @@ import type { CreateCustomerSchema } from "@/ui/generated/schemas";
 import { createCustomerSchema } from "@/ui/generated/schemas";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
+import {
+  CustomerBankAccountFields,
+  customerBankAccountsFormSchema,
+  normalizeCustomerBankAccounts,
+} from "../customer-bank-account-fields";
 import { useCreateCustomer } from "../customers.hooks";
 import de from "./locales/de";
 import es from "./locales/es";
@@ -43,6 +48,14 @@ type CreateCustomerFormProps = {
   renderSubmitButton?: (props: { isSubmitting: boolean; submit: () => void }) => React.ReactNode;
 } & ComponentTranslationProps;
 
+const customerFormSchema = createCustomerSchema.extend({
+  bank_accounts: customerBankAccountsFormSchema,
+});
+
+type CustomerFormSchema = CreateCustomerSchema & {
+  bank_accounts?: Array<Record<string, unknown>>;
+};
+
 export default function CreateCustomerForm({
   entityId,
   entityCountryCode,
@@ -67,11 +80,12 @@ export default function CreateCustomerForm({
     if (company.city) form.setValue("city", company.city);
     if (company.tax_number) form.setValue("tax_number", company.tax_number);
     if (company.registration_number) form.setValue("company_number", company.registration_number);
+    if (company.bank_accounts?.[0]) form.setValue("bank_accounts", [company.bank_accounts[0] as any]);
     // Note: country is intentionally not set - keep entity's country or let user choose
   };
 
-  const form = useForm<CreateCustomerSchema>({
-    resolver: zodResolver(createCustomerSchema),
+  const form = useForm<CustomerFormSchema>({
+    resolver: zodResolver(customerFormSchema),
     defaultValues: {
       name: "",
       address: "",
@@ -81,6 +95,7 @@ export default function CreateCustomerForm({
       country: "",
       tax_number: "",
       company_number: "",
+      bank_accounts: [{ type: "iban" }],
     },
   });
 
@@ -99,10 +114,10 @@ export default function CreateCustomerForm({
     },
   });
 
-  const onSubmit = async (values: CreateCustomerSchema) => {
+  const onSubmit = async (values: CustomerFormSchema) => {
     // Zod validation ensures required fields are present before this is called
     // The type cast is safe because React Hook Form's DeepPartial doesn't reflect runtime validation
-    createCustomer(values as CreateCustomerRequest);
+    createCustomer(normalizeCustomerBankAccounts(values) as CreateCustomerRequest);
   };
 
   const handleSubmitClick = () => {
@@ -140,6 +155,13 @@ export default function CreateCustomerForm({
         <FormInput control={form.control} name="tax_number" label={t("Tax Number")} />
 
         <FormInput control={form.control} name="company_number" label={t("Company Number")} />
+
+        <CustomerBankAccountFields
+          control={form.control}
+          t={t}
+          locale={i18nProps.locale}
+          translationLocale={i18nProps.translationLocale}
+        />
 
         {renderSubmitButton?.({
           isSubmitting: isPending || form.formState.isSubmitting,

@@ -16,7 +16,7 @@ export function StatCard({ title, value, href, onClick }: StatCardProps) {
         <CardTitle className="font-medium text-muted-foreground text-sm">{title}</CardTitle>
       </CardHeader>
       <CardContent className="pt-0">
-        <div className="font-bold text-2xl">{value ?? 0}</div>
+        <div className="break-words font-bold text-xl sm:text-2xl">{value ?? 0}</div>
       </CardContent>
     </Card>
   );

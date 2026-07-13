@@ -15,7 +15,7 @@ const uploadFileSchemaDefinition = z
     category: z.enum(["logo", "signature", "attachment"]),
     account_payable_id: z.string().optional(),
     business_unit_id: z.string().optional(),
-    incoming_purchase_document_id: z.string().optional(),
+    expense_id: z.string().optional(),
   })
   .passthrough();
 

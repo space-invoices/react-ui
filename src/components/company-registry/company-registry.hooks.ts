@@ -37,13 +37,14 @@ export function useCompanyRegistrySearch(countryCode: string, query: string) {
 /**
  * Get list of countries that have company registry data available
  */
-export function useSupportedCountries() {
+export function useSupportedCountries(options: { enabled?: boolean } = {}) {
   return useQuery({
     queryKey: [COMPANY_REGISTRY_CACHE_KEY, "countries"],
     queryFn: async (): Promise<{ data: string[] }> => {
       const response = await companyRegistry.list();
       return { data: response.data };
     },
+    enabled: options.enabled ?? true,
     staleTime: 1000 * 60 * 60, // Cache for 1 hour - doesn't change often
   });
 }
@@ -51,10 +52,11 @@ export function useSupportedCountries() {
 /**
  * Check if company registry is available for a specific country
  */
-export function useIsCountrySupported(countryCode: string) {
-  const { data: countriesData, isLoading } = useSupportedCountries();
+export function useIsCountrySupported(countryCode: string, options: { enabled?: boolean } = {}) {
+  const enabled = (options.enabled ?? true) && !!countryCode;
+  const { data: countriesData, isLoading } = useSupportedCountries({ enabled });
 
-  const isSupported = countriesData?.data?.includes(countryCode) ?? false;
+  const isSupported = enabled ? (countriesData?.data?.includes(countryCode) ?? false) : false;
 
   return {
     isSupported,

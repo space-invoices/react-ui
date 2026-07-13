@@ -1,9 +1,10 @@
-import type { Customer } from "@spaceinvoices/js-sdk";
+import type { CompanyRegistryResult, Customer } from "@spaceinvoices/js-sdk";
 
 import { Plus } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
-import { Autocomplete } from "@/ui/common/autocomplete";
+import { Autocomplete, type AutocompleteOption } from "@/ui/common/autocomplete";
+import { useCompanyRegistrySearch, useIsCountrySupported } from "@/ui/components/company-registry";
 import { useDebounce } from "@/ui/hooks/use-debounce";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
@@ -16,6 +17,53 @@ const MAX_TEXT_LENGTH = 100;
 const truncateText = (text: string, maxLength: number = MAX_TEXT_LENGTH): string => {
   return text.length > maxLength ? `${text.substring(0, maxLength)}...` : text;
 };
+
+function mapCompanyRegistryResultToCustomer(company: CompanyRegistryResult, countryCode: string) {
+  return {
+    name: company.name,
+    address: company.address,
+    address_2: null,
+    post_code: company.post_code,
+    city: company.city,
+    state: null,
+    country: null,
+    country_code: countryCode || company.country_code,
+    tax_number: company.tax_number,
+    company_number: company.registration_number,
+  };
+}
+
+function normalizeMatchValue(value?: string | null) {
+  return value?.trim().toLowerCase() ?? "";
+}
+
+function isCompanyAlreadyShownAsCustomer(company: CompanyRegistryResult, customers: Customer[]) {
+  const companyTaxNumber = normalizeMatchValue(company.tax_number);
+  const companyRegistrationNumber = normalizeMatchValue(company.registration_number);
+  const companyName = normalizeMatchValue(company.name);
+  const companyAddress = normalizeMatchValue(company.address);
+  const companyCity = normalizeMatchValue(company.city);
+
+  return customers.some((customer) => {
+    const customerTaxNumber = normalizeMatchValue(customer.tax_number);
+    const customerCompanyNumber = normalizeMatchValue(customer.company_number);
+
+    if (companyTaxNumber && customerTaxNumber && companyTaxNumber === customerTaxNumber) {
+      return true;
+    }
+
+    if (companyRegistrationNumber && customerCompanyNumber && companyRegistrationNumber === customerCompanyNumber) {
+      return true;
+    }
+
+    return (
+      companyName &&
+      companyName === normalizeMatchValue(customer.name) &&
+      companyAddress === normalizeMatchValue(customer.address) &&
+      companyCity === normalizeMatchValue(customer.city)
+    );
+  });
+}
 
 type CustomerAutocompleteProps = {
   entityId: string;
@@ -35,6 +83,7 @@ type CustomerAutocompleteProps = {
   inputRef?: React.Ref<HTMLInputElement>;
   commitOnBlurMode?: "none" | "create" | "update-inline";
   ariaInvalid?: boolean;
+  companyRegistryCountryCode?: string | null;
 } & ComponentTranslationProps;
 
 export function CustomerAutocomplete({
@@ -53,6 +102,7 @@ export function CustomerAutocomplete({
   inputRef,
   commitOnBlurMode = "none",
   ariaInvalid = false,
+  companyRegistryCountryCode,
   locale = "en",
   translationLocale,
   t: translationFn,
@@ -85,6 +135,17 @@ export function CustomerAutocomplete({
   // Fetch search results
   const { data: searchData, isLoading } = useCustomerSearch(entityId, debouncedSearch);
   const searchResults = searchData?.data || [];
+  const normalizedRegistryCountryCode = companyRegistryCountryCode?.trim().toUpperCase() ?? "";
+  const { isSupported: isCompanyRegistrySupported } = useIsCountrySupported(normalizedRegistryCountryCode, {
+    enabled: !!normalizedRegistryCountryCode,
+  });
+  const shouldSearchCompanyRegistry =
+    isCompanyRegistrySupported && !!normalizedRegistryCountryCode && debouncedSearch.trim().length >= 2;
+  const { data: companyRegistryData, isLoading: isCompanyRegistryLoading } = useCompanyRegistrySearch(
+    normalizedRegistryCountryCode,
+    shouldSearchCompanyRegistry ? debouncedSearch : "",
+  );
+  const rawCompanyRegistryResults = isCompanyRegistrySupported ? (companyRegistryData?.data ?? []) : [];
 
   // Use search results if searching, otherwise show recent customers
   const customers = useMemo(() => {
@@ -94,7 +155,11 @@ export function CustomerAutocomplete({
     return recentCustomers;
   }, [debouncedSearch, searchResults, recentCustomers]);
 
-  const options = customers.map((customer) => {
+  const companyRegistryResults = useMemo(() => {
+    return rawCompanyRegistryResults.filter((company) => !isCompanyAlreadyShownAsCustomer(company, customers));
+  }, [rawCompanyRegistryResults, customers]);
+
+  const customerOptions: AutocompleteOption[] = customers.map((customer) => {
     const customerIndex = customers.findIndex((entry) => entry.id === customer.id);
     const truncatedName = truncateText(customer.name);
     const address = [customer.address, customer.city, customer.country].filter(Boolean).join(", ");
@@ -117,11 +182,33 @@ export function CustomerAutocomplete({
     };
   });
 
-  // Always add "Create new" option at the top
+  const companyRegistryOptions: AutocompleteOption[] = companyRegistryResults.map((company) => {
+    const truncatedName = truncateText(company.name);
+    const address = [company.address, company.city].filter(Boolean).join(", ");
+    const truncatedAddress = truncateText(address);
+    const meta = [company.tax_number ? `${t("Tax")}: ${company.tax_number}` : null, company.registration_number]
+      .filter(Boolean)
+      .join(" · ");
+
+    return {
+      value: `__company_registry__:${company.id}`,
+      group: t("Companies directory"),
+      label: (
+        <div className="flex min-w-0 flex-1 overflow-hidden">
+          <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+            <span className="truncate font-medium">{truncatedName}</span>
+            {truncatedAddress && <span className="truncate text-muted-foreground text-xs">{truncatedAddress}</span>}
+            {meta && <span className="truncate text-muted-foreground text-xs">{meta}</span>}
+          </div>
+        </div>
+      ),
+    };
+  });
+
+  // Keep company-directory matches visually separate and above manual creation so lookup is discoverable.
   const createNewLabel = debouncedSearch?.trim() ? `${t("Create")} "${debouncedSearch}"` : t("Create new");
   const resolvedPlaceholder = placeholder ? t(placeholder) : placeholder;
-
-  options.unshift({
+  const createNewOption: AutocompleteOption = {
     value: `__create__:${debouncedSearch || ""}`,
     label: (
       <span className="flex items-center gap-2">
@@ -129,7 +216,9 @@ export function CustomerAutocomplete({
         {createNewLabel}
       </span>
     ) as any,
-  });
+  };
+
+  const options = [...customerOptions, ...companyRegistryOptions, createNewOption];
 
   const handleValueChange = (selectedValue: string) => {
     // Handle "create new" selection
@@ -152,6 +241,23 @@ export function CustomerAutocomplete({
       }
 
       // Set search to the customer name so it shows in the input
+      setSearch(truncatedName);
+      setDisplayValue(truncatedName);
+      return;
+    }
+
+    if (selectedValue.startsWith("__company_registry__:")) {
+      const companyId = selectedValue.replace("__company_registry__:", "");
+      const selectedCompany = companyRegistryResults.find((company) => company.id === companyId);
+      if (!selectedCompany) return;
+
+      const registryCustomer = mapCompanyRegistryResultToCustomer(selectedCompany, normalizedRegistryCountryCode);
+
+      if (onValueChange) {
+        onValueChange("", registryCustomer as Customer);
+      }
+
+      const truncatedName = truncateText(registryCustomer.name || "");
       setSearch(truncatedName);
       setDisplayValue(truncatedName);
       return;
@@ -241,7 +347,7 @@ export function CustomerAutocomplete({
       placeholder={resolvedPlaceholder}
       className={className}
       disabled={disabled}
-      loading={isLoading}
+      loading={isLoading || isCompanyRegistryLoading}
       emptyText={debouncedSearch ? t("No customers found") : t("Recent customers")}
       displayValue={displayValue}
       inputTestId={inputTestId}

@@ -8,6 +8,65 @@ import { z } from 'zod';
 
 // Schemas for item endpoints
 
+// Dependency schema for item
+const DocumentItemEInvoicingData = z
+  .object({ unit_code: z.union([z.string(), z.null()]) })
+  .partial();
+
+
+// Dependency schema for item
+const DocumentItemTranslations = z
+  .object({
+    name: z
+      .object({
+        "en-US": z.string().max(500),
+        "de-DE": z.string().max(500),
+        "it-IT": z.string().max(500),
+        "fr-FR": z.string().max(500),
+        "es-ES": z.string().max(500),
+        "sl-SI": z.string().max(500),
+        "pt-PT": z.string().max(500),
+        "nl-NL": z.string().max(500),
+        "pl-PL": z.string().max(500),
+        "hr-HR": z.string().max(500),
+        "sv-SE": z.string().max(500),
+        "fi-FI": z.string().max(500),
+        "et-EE": z.string().max(500),
+        "bg-BG": z.string().max(500),
+        "cs-CZ": z.string().max(500),
+        "sk-SK": z.string().max(500),
+        "nb-NO": z.string().max(500),
+        "is-IS": z.string().max(500),
+      })
+      .partial()
+      .passthrough(),
+    description: z
+      .object({
+        "en-US": z.string().max(2000),
+        "de-DE": z.string().max(2000),
+        "it-IT": z.string().max(2000),
+        "fr-FR": z.string().max(2000),
+        "es-ES": z.string().max(2000),
+        "sl-SI": z.string().max(2000),
+        "pt-PT": z.string().max(2000),
+        "nl-NL": z.string().max(2000),
+        "pl-PL": z.string().max(2000),
+        "hr-HR": z.string().max(2000),
+        "sv-SE": z.string().max(2000),
+        "fi-FI": z.string().max(2000),
+        "et-EE": z.string().max(2000),
+        "bg-BG": z.string().max(2000),
+        "cs-CZ": z.string().max(2000),
+        "sk-SK": z.string().max(2000),
+        "nb-NO": z.string().max(2000),
+        "is-IS": z.string().max(2000),
+      })
+      .partial()
+      .passthrough(),
+  })
+  .partial();
+
+
 // Schema for createItem operation
 const createItemSchemaDefinition = z.object({
   name: z.string().min(1),
@@ -17,9 +76,14 @@ const createItemSchemaDefinition = z.object({
     .optional(),
   price: z.number().optional(),
   gross_price: z.number().optional(),
+  unit: z.union([z.string(), z.null()]).optional(),
+  e_invoicing: z.union([DocumentItemEInvoicingData, z.null()]).optional(),
   tax_ids: z.array(z.string().max(36)).optional(),
   financial_category_id: z.union([z.string(), z.null()]).optional(),
   metadata: z.union([z.record(z.string(), z.any()), z.null()]).optional(),
+  translations: z
+    .union([DocumentItemTranslations.and(z.unknown()), z.null()])
+    .optional(),
   taxes: z
     .union([
       z.array(
@@ -48,9 +112,15 @@ const updateItemSchemaDefinition = z
     ]),
     price: z.number(),
     gross_price: z.number(),
+    unit: z.union([z.string(), z.null()]),
+    e_invoicing: z.union([DocumentItemEInvoicingData, z.null()]),
     tax_ids: z.array(z.string().max(36)),
     financial_category_id: z.union([z.string(), z.null()]),
     metadata: z.union([z.record(z.string(), z.any()), z.null()]),
+    translations: z.union([
+      DocumentItemTranslations.and(z.unknown()),
+      z.null(),
+    ]),
     taxes: z.union([
       z.array(
         z

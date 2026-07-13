@@ -160,7 +160,7 @@ export function RevenueByCategoryChart({
         <CardTitle>{t("revenue-by-category-chart.title")}</CardTitle>
         <CardDescription>{t("revenue-by-category-chart.description")}</CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="overflow-hidden">
         {hasData ? chart : <ChartEmptyState label={t("revenue-by-category-chart.empty")}>{chart}</ChartEmptyState>}
       </CardContent>
     </Card>

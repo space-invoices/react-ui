@@ -1,5 +1,5 @@
 import type { Entity } from "@spaceinvoices/js-sdk";
-import { Building2, Cpu, MapPin, MoreVertical, Truck } from "lucide-react";
+import { Building2, Cpu, Hash, MapPin, MoreVertical, Truck } from "lucide-react";
 import { type FC, type ReactNode, useState } from "react";
 import type { SectionType } from "../furs-settings-form";
 
@@ -8,6 +8,8 @@ type ExtendedFursBusinessPremise = {
   id: string;
   entity_id: string;
   business_premise_name: string;
+  starting_number?: number | null;
+  can_update_starting_number?: boolean;
   type: string;
   real_estate?: {
     cadastral_number?: string; // String in DB, not number
@@ -32,6 +34,8 @@ type ExtendedFursBusinessPremise = {
     id: string;
     electronic_device_name?: string; // API returns this field name
     name?: string; // Frontend might use this
+    starting_number?: number | null;
+    can_update_starting_number?: boolean;
   }>;
 };
 
@@ -56,7 +60,24 @@ import {
 import { Input } from "@/ui/components/ui/input";
 import { Label } from "@/ui/components/ui/label";
 import { cn } from "@/ui/lib/utils";
-import { useClosePremise, useRegisterElectronicDevice } from "../furs-settings.hooks";
+import {
+  canEditStartingNumber,
+  isFiscalStartingNumberValueValid,
+  optionalFiscalStartingNumber,
+} from "../../fiscal-starting-number";
+import {
+  DeviceStartingNumberButton,
+  StartingNumberDialog,
+  StartingNumberInput,
+  StartingNumberMenuItem,
+  type StartingNumberTarget,
+} from "../../starting-number-dialog";
+import {
+  useClosePremise,
+  useRegisterElectronicDevice,
+  useUpdateFursDevice,
+  useUpdateFursPremise,
+} from "../furs-settings.hooks";
 import { RegisterPremiseDialog } from "./register-premise-dialog";
 
 interface PremisesManagementSectionProps {
@@ -82,6 +103,14 @@ export const PremisesManagementSection: FC<PremisesManagementSectionProps> = ({
   const [addDeviceDialogOpen, setAddDeviceDialogOpen] = useState(false);
   const [selectedPremiseId, setSelectedPremiseId] = useState<string | null>(null);
   const [deviceName, setDeviceName] = useState("");
+  const [deviceStartingNumber, setDeviceStartingNumber] = useState("");
+  const [startingNumberTarget, setStartingNumberTarget] = useState<StartingNumberTarget | null>(null);
+  const numberingStrategy = (entity.settings?.furs?.numbering_strategy ?? "C") as "B" | "C";
+  const isPremiseStartingNumberEnabled = numberingStrategy === "C";
+  const isDeviceStartingNumberEnabled = numberingStrategy === "B";
+  const startingNumberLockedMessage = t(
+    "Starting number can no longer be changed after invoices have been issued for this fiscal sequence.",
+  );
 
   const getSuggestedDeviceName = (premiseId: string) => {
     const premise = premises.find((item) => item.id === premiseId);
@@ -102,7 +131,28 @@ export const PremisesManagementSection: FC<PremisesManagementSectionProps> = ({
     onSuccess: () => {
       setAddDeviceDialogOpen(false);
       setDeviceName("");
+      setDeviceStartingNumber("");
       setSelectedPremiseId(null);
+      onSuccess?.();
+    },
+    onError: (error) => {
+      onError?.(error);
+    },
+  });
+
+  const { mutate: updatePremise, isPending: isUpdatingPremise } = useUpdateFursPremise({
+    onSuccess: () => {
+      setStartingNumberTarget(null);
+      onSuccess?.();
+    },
+    onError: (error) => {
+      onError?.(error);
+    },
+  });
+
+  const { mutate: updateDevice, isPending: isUpdatingDevice } = useUpdateFursDevice({
+    onSuccess: () => {
+      setStartingNumberTarget(null);
       onSuccess?.();
     },
     onError: (error) => {
@@ -127,18 +177,47 @@ export const PremisesManagementSection: FC<PremisesManagementSectionProps> = ({
   const handleAddDevice = (premiseId: string) => {
     setSelectedPremiseId(premiseId);
     setDeviceName(getSuggestedDeviceName(premiseId));
+    setDeviceStartingNumber("1");
     setAddDeviceDialogOpen(true);
   };
 
   const handleRegisterDevice = () => {
-    if (!selectedPremiseId || !deviceName.trim()) return;
+    if (!selectedPremiseId || !deviceName.trim() || !isFiscalStartingNumberValueValid(deviceStartingNumber)) return;
+    const startingNumber = isDeviceStartingNumberEnabled
+      ? optionalFiscalStartingNumber(deviceStartingNumber)
+      : undefined;
 
     registerDevice({
       entityId: entity.id,
       premiseId: selectedPremiseId,
       deviceName: deviceName.trim(),
+      startingNumber,
     });
   };
+
+  const handleEditStartingNumber = (target: StartingNumberTarget) => {
+    setStartingNumberTarget(target);
+  };
+
+  const handleSaveStartingNumber = (value: number | null, target: StartingNumberTarget) => {
+    if (target.type === "premise") {
+      updatePremise({
+        entityId: entity.id,
+        premiseId: target.id,
+        data: { starting_number: value },
+      });
+      return;
+    }
+
+    updateDevice({
+      entityId: entity.id,
+      premiseId: target.premiseId,
+      deviceId: target.id,
+      data: { starting_number: value },
+    });
+  };
+
+  const isUpdatingStartingNumber = isUpdatingPremise || isUpdatingDevice;
 
   const premisesContent = (
     <div className="space-y-4">
@@ -219,6 +298,21 @@ export const PremisesManagementSection: FC<PremisesManagementSectionProps> = ({
                             <Cpu className="mr-2 h-4 w-4" />
                             {t("Add Electronic Device")}
                           </DropdownMenuItem>
+                          {isPremiseStartingNumberEnabled && (
+                            <StartingNumberMenuItem
+                              label={t("Set Starting Number")}
+                              canEdit={canEditStartingNumber(premise)}
+                              lockedMessage={startingNumberLockedMessage}
+                              onEdit={() =>
+                                handleEditStartingNumber({
+                                  type: "premise",
+                                  id: premise.id,
+                                  label: premise.business_premise_name,
+                                  current: premise.starting_number,
+                                })
+                              }
+                            />
+                          )}
                           <DropdownMenuItem
                             onClick={() => handleClosePremise(premise.id)}
                             className="cursor-pointer text-destructive"
@@ -272,15 +366,56 @@ export const PremisesManagementSection: FC<PremisesManagementSectionProps> = ({
                       </div>
                     )}
 
+                    {isPremiseStartingNumberEnabled && premise.starting_number != null && (
+                      <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                        <Hash className="h-4 w-4" />
+                        <span>
+                          {t("Starting Number")}: {premise.starting_number}
+                        </span>
+                      </div>
+                    )}
+
                     {/* Devices Count or Warning */}
                     {premise.Devices && premise.Devices.length > 0 ? (
-                      <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                        <Badge variant="secondary" className="text-xs">
-                          {premise.Devices.length} {premise.Devices.length === 1 ? t("Device") : t("Devices")}
-                        </Badge>
-                        <span className="text-xs">
-                          {premise.Devices.map((d) => d.electronic_device_name || d.name || t("Unnamed")).join(", ")}
-                        </span>
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                          <Badge variant="secondary" className="text-xs">
+                            {premise.Devices.length} {premise.Devices.length === 1 ? t("Device") : t("Devices")}
+                          </Badge>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {premise.Devices.map((device) => {
+                            const deviceName = device.electronic_device_name || device.name || t("Unnamed");
+
+                            return (
+                              <div key={device.id} className="flex items-center gap-1 rounded border px-2 py-1 text-xs">
+                                <Cpu className="h-3 w-3 text-muted-foreground" />
+                                <span>{deviceName}</span>
+                                {isDeviceStartingNumberEnabled && device.starting_number != null && (
+                                  <span className="text-muted-foreground">
+                                    {t("Starting Number")}: {device.starting_number}
+                                  </span>
+                                )}
+                                {premise.is_active && isDeviceStartingNumberEnabled && (
+                                  <DeviceStartingNumberButton
+                                    canEdit={canEditStartingNumber(device)}
+                                    title={t("Set Starting Number")}
+                                    lockedMessage={startingNumberLockedMessage}
+                                    onEdit={() =>
+                                      handleEditStartingNumber({
+                                        type: "device",
+                                        id: device.id,
+                                        premiseId: premise.id,
+                                        label: deviceName,
+                                        current: device.starting_number,
+                                      })
+                                    }
+                                  />
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
                     ) : (
                       <Alert>
@@ -365,6 +500,19 @@ export const PremisesManagementSection: FC<PremisesManagementSectionProps> = ({
                   {t("Enter a unique name for this device (e.g., E1, E2, POS1, DEVICE1)")}
                 </p>
               </div>
+              {isDeviceStartingNumberEnabled && (
+                <div className="space-y-2">
+                  <Label htmlFor="deviceStartingNumber">{t("Starting Number")}</Label>
+                  <StartingNumberInput
+                    id="deviceStartingNumber"
+                    value={deviceStartingNumber}
+                    onChange={setDeviceStartingNumber}
+                    t={t}
+                    data-testid="furs-device-starting-number-input"
+                  />
+                  <p className="text-muted-foreground text-sm">{t("First invoice number for this device sequence")}</p>
+                </div>
+              )}
             </div>
             <DialogFooter>
               <Button
@@ -378,7 +526,9 @@ export const PremisesManagementSection: FC<PremisesManagementSectionProps> = ({
               </Button>
               <Button
                 onClick={handleRegisterDevice}
-                disabled={!deviceName.trim() || isRegisteringDevice}
+                disabled={
+                  !deviceName.trim() || isRegisteringDevice || !isFiscalStartingNumberValueValid(deviceStartingNumber)
+                }
                 className="cursor-pointer"
                 data-testid="furs-register-device-submit"
               >
@@ -387,6 +537,16 @@ export const PremisesManagementSection: FC<PremisesManagementSectionProps> = ({
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        <StartingNumberDialog
+          target={startingNumberTarget}
+          onOpenChange={(open) => !open && setStartingNumberTarget(null)}
+          onSave={handleSaveStartingNumber}
+          isPending={isUpdatingStartingNumber}
+          t={t}
+          inputTestId="furs-starting-number-edit-input"
+          saveTestId="furs-starting-number-save"
+        />
       </div>
     </div>
   );

@@ -9,6 +9,24 @@ import { z } from 'zod';
 // Schemas for customcreditnote endpoints
 
 // Dependency schema for customcreditnote
+const DocumentEInvoicingCustomerData = z
+  .object({ buyer_reference: z.union([z.string(), z.null()]) })
+  .partial()
+  .passthrough();
+
+
+// Dependency schema for customcreditnote
+const UjpCustomerData = z
+  .object({
+    receiver_name: z.union([z.string(), z.null()]),
+    receiver_identifier: z.union([z.string(), z.null()]),
+    receiver_agent: z.union([z.string(), z.null()]),
+    receiver_mailbox: z.union([z.string(), z.null()]),
+  })
+  .partial();
+
+
+// Dependency schema for customcreditnote
 const DocumentEntity = z
   .object({
     name: z.union([z.string(), z.null()]),
@@ -26,7 +44,10 @@ const DocumentEntity = z
     company_number: z.union([z.string(), z.null()]),
     phone: z.union([z.string(), z.null()]),
     peppol_id: z.union([z.string(), z.null()]),
+    e_invoicing: z.union([DocumentEInvoicingCustomerData, z.null()]),
+    bank_accounts: z.union([z.array(z.any()), z.null()]),
     is_end_consumer: z.union([z.boolean(), z.null()]),
+    ujp: z.union([UjpCustomerData, z.null()]),
     bank_account: z.union([
       z
         .object({
@@ -51,15 +72,935 @@ const DocumentEntity = z
 
 
 // Dependency schema for customcreditnote
-const CreateDocumentCustomer = DocumentEntity.and(
-  z.union([
-    z
-      .object({ save_customer: z.union([z.boolean(), z.null()]) })
+const EmailDefaultTranslations = z
+  .object({
+    invoice_subject: z
+      .object({
+        "en-US": z.string().max(500),
+        "de-DE": z.string().max(500),
+        "it-IT": z.string().max(500),
+        "fr-FR": z.string().max(500),
+        "es-ES": z.string().max(500),
+        "sl-SI": z.string().max(500),
+        "pt-PT": z.string().max(500),
+        "nl-NL": z.string().max(500),
+        "pl-PL": z.string().max(500),
+        "hr-HR": z.string().max(500),
+        "sv-SE": z.string().max(500),
+        "fi-FI": z.string().max(500),
+        "et-EE": z.string().max(500),
+        "bg-BG": z.string().max(500),
+        "cs-CZ": z.string().max(500),
+        "sk-SK": z.string().max(500),
+        "nb-NO": z.string().max(500),
+        "is-IS": z.string().max(500),
+      })
       .partial()
       .passthrough(),
-    z.null(),
-  ])
+    invoice_body: z
+      .object({
+        "en-US": z.string().max(2000),
+        "de-DE": z.string().max(2000),
+        "it-IT": z.string().max(2000),
+        "fr-FR": z.string().max(2000),
+        "es-ES": z.string().max(2000),
+        "sl-SI": z.string().max(2000),
+        "pt-PT": z.string().max(2000),
+        "nl-NL": z.string().max(2000),
+        "pl-PL": z.string().max(2000),
+        "hr-HR": z.string().max(2000),
+        "sv-SE": z.string().max(2000),
+        "fi-FI": z.string().max(2000),
+        "et-EE": z.string().max(2000),
+        "bg-BG": z.string().max(2000),
+        "cs-CZ": z.string().max(2000),
+        "sk-SK": z.string().max(2000),
+        "nb-NO": z.string().max(2000),
+        "is-IS": z.string().max(2000),
+      })
+      .partial()
+      .passthrough(),
+    estimate_subject: z
+      .object({
+        "en-US": z.string().max(500),
+        "de-DE": z.string().max(500),
+        "it-IT": z.string().max(500),
+        "fr-FR": z.string().max(500),
+        "es-ES": z.string().max(500),
+        "sl-SI": z.string().max(500),
+        "pt-PT": z.string().max(500),
+        "nl-NL": z.string().max(500),
+        "pl-PL": z.string().max(500),
+        "hr-HR": z.string().max(500),
+        "sv-SE": z.string().max(500),
+        "fi-FI": z.string().max(500),
+        "et-EE": z.string().max(500),
+        "bg-BG": z.string().max(500),
+        "cs-CZ": z.string().max(500),
+        "sk-SK": z.string().max(500),
+        "nb-NO": z.string().max(500),
+        "is-IS": z.string().max(500),
+      })
+      .partial()
+      .passthrough(),
+    estimate_body: z
+      .object({
+        "en-US": z.string().max(2000),
+        "de-DE": z.string().max(2000),
+        "it-IT": z.string().max(2000),
+        "fr-FR": z.string().max(2000),
+        "es-ES": z.string().max(2000),
+        "sl-SI": z.string().max(2000),
+        "pt-PT": z.string().max(2000),
+        "nl-NL": z.string().max(2000),
+        "pl-PL": z.string().max(2000),
+        "hr-HR": z.string().max(2000),
+        "sv-SE": z.string().max(2000),
+        "fi-FI": z.string().max(2000),
+        "et-EE": z.string().max(2000),
+        "bg-BG": z.string().max(2000),
+        "cs-CZ": z.string().max(2000),
+        "sk-SK": z.string().max(2000),
+        "nb-NO": z.string().max(2000),
+        "is-IS": z.string().max(2000),
+      })
+      .partial()
+      .passthrough(),
+    credit_note_subject: z
+      .object({
+        "en-US": z.string().max(500),
+        "de-DE": z.string().max(500),
+        "it-IT": z.string().max(500),
+        "fr-FR": z.string().max(500),
+        "es-ES": z.string().max(500),
+        "sl-SI": z.string().max(500),
+        "pt-PT": z.string().max(500),
+        "nl-NL": z.string().max(500),
+        "pl-PL": z.string().max(500),
+        "hr-HR": z.string().max(500),
+        "sv-SE": z.string().max(500),
+        "fi-FI": z.string().max(500),
+        "et-EE": z.string().max(500),
+        "bg-BG": z.string().max(500),
+        "cs-CZ": z.string().max(500),
+        "sk-SK": z.string().max(500),
+        "nb-NO": z.string().max(500),
+        "is-IS": z.string().max(500),
+      })
+      .partial()
+      .passthrough(),
+    credit_note_body: z
+      .object({
+        "en-US": z.string().max(2000),
+        "de-DE": z.string().max(2000),
+        "it-IT": z.string().max(2000),
+        "fr-FR": z.string().max(2000),
+        "es-ES": z.string().max(2000),
+        "sl-SI": z.string().max(2000),
+        "pt-PT": z.string().max(2000),
+        "nl-NL": z.string().max(2000),
+        "pl-PL": z.string().max(2000),
+        "hr-HR": z.string().max(2000),
+        "sv-SE": z.string().max(2000),
+        "fi-FI": z.string().max(2000),
+        "et-EE": z.string().max(2000),
+        "bg-BG": z.string().max(2000),
+        "cs-CZ": z.string().max(2000),
+        "sk-SK": z.string().max(2000),
+        "nb-NO": z.string().max(2000),
+        "is-IS": z.string().max(2000),
+      })
+      .partial()
+      .passthrough(),
+    advance_invoice_subject: z
+      .object({
+        "en-US": z.string().max(500),
+        "de-DE": z.string().max(500),
+        "it-IT": z.string().max(500),
+        "fr-FR": z.string().max(500),
+        "es-ES": z.string().max(500),
+        "sl-SI": z.string().max(500),
+        "pt-PT": z.string().max(500),
+        "nl-NL": z.string().max(500),
+        "pl-PL": z.string().max(500),
+        "hr-HR": z.string().max(500),
+        "sv-SE": z.string().max(500),
+        "fi-FI": z.string().max(500),
+        "et-EE": z.string().max(500),
+        "bg-BG": z.string().max(500),
+        "cs-CZ": z.string().max(500),
+        "sk-SK": z.string().max(500),
+        "nb-NO": z.string().max(500),
+        "is-IS": z.string().max(500),
+      })
+      .partial()
+      .passthrough(),
+    advance_invoice_body: z
+      .object({
+        "en-US": z.string().max(2000),
+        "de-DE": z.string().max(2000),
+        "it-IT": z.string().max(2000),
+        "fr-FR": z.string().max(2000),
+        "es-ES": z.string().max(2000),
+        "sl-SI": z.string().max(2000),
+        "pt-PT": z.string().max(2000),
+        "nl-NL": z.string().max(2000),
+        "pl-PL": z.string().max(2000),
+        "hr-HR": z.string().max(2000),
+        "sv-SE": z.string().max(2000),
+        "fi-FI": z.string().max(2000),
+        "et-EE": z.string().max(2000),
+        "bg-BG": z.string().max(2000),
+        "cs-CZ": z.string().max(2000),
+        "sk-SK": z.string().max(2000),
+        "nb-NO": z.string().max(2000),
+        "is-IS": z.string().max(2000),
+      })
+      .partial()
+      .passthrough(),
+    delivery_note_subject: z
+      .object({
+        "en-US": z.string().max(500),
+        "de-DE": z.string().max(500),
+        "it-IT": z.string().max(500),
+        "fr-FR": z.string().max(500),
+        "es-ES": z.string().max(500),
+        "sl-SI": z.string().max(500),
+        "pt-PT": z.string().max(500),
+        "nl-NL": z.string().max(500),
+        "pl-PL": z.string().max(500),
+        "hr-HR": z.string().max(500),
+        "sv-SE": z.string().max(500),
+        "fi-FI": z.string().max(500),
+        "et-EE": z.string().max(500),
+        "bg-BG": z.string().max(500),
+        "cs-CZ": z.string().max(500),
+        "sk-SK": z.string().max(500),
+        "nb-NO": z.string().max(500),
+        "is-IS": z.string().max(500),
+      })
+      .partial()
+      .passthrough(),
+    delivery_note_body: z
+      .object({
+        "en-US": z.string().max(2000),
+        "de-DE": z.string().max(2000),
+        "it-IT": z.string().max(2000),
+        "fr-FR": z.string().max(2000),
+        "es-ES": z.string().max(2000),
+        "sl-SI": z.string().max(2000),
+        "pt-PT": z.string().max(2000),
+        "nl-NL": z.string().max(2000),
+        "pl-PL": z.string().max(2000),
+        "hr-HR": z.string().max(2000),
+        "sv-SE": z.string().max(2000),
+        "fi-FI": z.string().max(2000),
+        "et-EE": z.string().max(2000),
+        "bg-BG": z.string().max(2000),
+        "cs-CZ": z.string().max(2000),
+        "sk-SK": z.string().max(2000),
+        "nb-NO": z.string().max(2000),
+        "is-IS": z.string().max(2000),
+      })
+      .partial()
+      .passthrough(),
+  })
+  .partial()
+  .passthrough();
+
+
+// Dependency schema for customcreditnote
+const PaymentReminderTranslations = z
+  .object({
+    email_subject: z
+      .object({
+        "en-US": z.string().max(500),
+        "de-DE": z.string().max(500),
+        "it-IT": z.string().max(500),
+        "fr-FR": z.string().max(500),
+        "es-ES": z.string().max(500),
+        "sl-SI": z.string().max(500),
+        "pt-PT": z.string().max(500),
+        "nl-NL": z.string().max(500),
+        "pl-PL": z.string().max(500),
+        "hr-HR": z.string().max(500),
+        "sv-SE": z.string().max(500),
+        "fi-FI": z.string().max(500),
+        "et-EE": z.string().max(500),
+        "bg-BG": z.string().max(500),
+        "cs-CZ": z.string().max(500),
+        "sk-SK": z.string().max(500),
+        "nb-NO": z.string().max(500),
+        "is-IS": z.string().max(500),
+      })
+      .partial()
+      .passthrough(),
+    email_body: z
+      .object({
+        "en-US": z.string().max(2000),
+        "de-DE": z.string().max(2000),
+        "it-IT": z.string().max(2000),
+        "fr-FR": z.string().max(2000),
+        "es-ES": z.string().max(2000),
+        "sl-SI": z.string().max(2000),
+        "pt-PT": z.string().max(2000),
+        "nl-NL": z.string().max(2000),
+        "pl-PL": z.string().max(2000),
+        "hr-HR": z.string().max(2000),
+        "sv-SE": z.string().max(2000),
+        "fi-FI": z.string().max(2000),
+        "et-EE": z.string().max(2000),
+        "bg-BG": z.string().max(2000),
+        "cs-CZ": z.string().max(2000),
+        "sk-SK": z.string().max(2000),
+        "nb-NO": z.string().max(2000),
+        "is-IS": z.string().max(2000),
+      })
+      .partial()
+      .passthrough(),
+    payment_instructions: z
+      .object({
+        "en-US": z.string().max(2000),
+        "de-DE": z.string().max(2000),
+        "it-IT": z.string().max(2000),
+        "fr-FR": z.string().max(2000),
+        "es-ES": z.string().max(2000),
+        "sl-SI": z.string().max(2000),
+        "pt-PT": z.string().max(2000),
+        "nl-NL": z.string().max(2000),
+        "pl-PL": z.string().max(2000),
+        "hr-HR": z.string().max(2000),
+        "sv-SE": z.string().max(2000),
+        "fi-FI": z.string().max(2000),
+        "et-EE": z.string().max(2000),
+        "bg-BG": z.string().max(2000),
+        "cs-CZ": z.string().max(2000),
+        "sk-SK": z.string().max(2000),
+        "nb-NO": z.string().max(2000),
+        "is-IS": z.string().max(2000),
+      })
+      .partial()
+      .passthrough(),
+  })
+  .partial()
+  .passthrough();
+
+
+// Dependency schema for customcreditnote
+const TaxClauseDefaultTranslations = z
+  .object({
+    domestic: z
+      .object({
+        "en-US": z.string().max(2000),
+        "de-DE": z.string().max(2000),
+        "it-IT": z.string().max(2000),
+        "fr-FR": z.string().max(2000),
+        "es-ES": z.string().max(2000),
+        "sl-SI": z.string().max(2000),
+        "pt-PT": z.string().max(2000),
+        "nl-NL": z.string().max(2000),
+        "pl-PL": z.string().max(2000),
+        "hr-HR": z.string().max(2000),
+        "sv-SE": z.string().max(2000),
+        "fi-FI": z.string().max(2000),
+        "et-EE": z.string().max(2000),
+        "bg-BG": z.string().max(2000),
+        "cs-CZ": z.string().max(2000),
+        "sk-SK": z.string().max(2000),
+        "nb-NO": z.string().max(2000),
+        "is-IS": z.string().max(2000),
+      })
+      .partial()
+      .passthrough(),
+    intra_eu_b2b: z
+      .object({
+        "en-US": z.string().max(2000),
+        "de-DE": z.string().max(2000),
+        "it-IT": z.string().max(2000),
+        "fr-FR": z.string().max(2000),
+        "es-ES": z.string().max(2000),
+        "sl-SI": z.string().max(2000),
+        "pt-PT": z.string().max(2000),
+        "nl-NL": z.string().max(2000),
+        "pl-PL": z.string().max(2000),
+        "hr-HR": z.string().max(2000),
+        "sv-SE": z.string().max(2000),
+        "fi-FI": z.string().max(2000),
+        "et-EE": z.string().max(2000),
+        "bg-BG": z.string().max(2000),
+        "cs-CZ": z.string().max(2000),
+        "sk-SK": z.string().max(2000),
+        "nb-NO": z.string().max(2000),
+        "is-IS": z.string().max(2000),
+      })
+      .partial()
+      .passthrough(),
+    intra_eu_b2c: z
+      .object({
+        "en-US": z.string().max(2000),
+        "de-DE": z.string().max(2000),
+        "it-IT": z.string().max(2000),
+        "fr-FR": z.string().max(2000),
+        "es-ES": z.string().max(2000),
+        "sl-SI": z.string().max(2000),
+        "pt-PT": z.string().max(2000),
+        "nl-NL": z.string().max(2000),
+        "pl-PL": z.string().max(2000),
+        "hr-HR": z.string().max(2000),
+        "sv-SE": z.string().max(2000),
+        "fi-FI": z.string().max(2000),
+        "et-EE": z.string().max(2000),
+        "bg-BG": z.string().max(2000),
+        "cs-CZ": z.string().max(2000),
+        "sk-SK": z.string().max(2000),
+        "nb-NO": z.string().max(2000),
+        "is-IS": z.string().max(2000),
+      })
+      .partial()
+      .passthrough(),
+    "3w_b2b": z
+      .object({
+        "en-US": z.string().max(2000),
+        "de-DE": z.string().max(2000),
+        "it-IT": z.string().max(2000),
+        "fr-FR": z.string().max(2000),
+        "es-ES": z.string().max(2000),
+        "sl-SI": z.string().max(2000),
+        "pt-PT": z.string().max(2000),
+        "nl-NL": z.string().max(2000),
+        "pl-PL": z.string().max(2000),
+        "hr-HR": z.string().max(2000),
+        "sv-SE": z.string().max(2000),
+        "fi-FI": z.string().max(2000),
+        "et-EE": z.string().max(2000),
+        "bg-BG": z.string().max(2000),
+        "cs-CZ": z.string().max(2000),
+        "sk-SK": z.string().max(2000),
+        "nb-NO": z.string().max(2000),
+        "is-IS": z.string().max(2000),
+      })
+      .partial()
+      .passthrough(),
+    "3w_b2c": z
+      .object({
+        "en-US": z.string().max(2000),
+        "de-DE": z.string().max(2000),
+        "it-IT": z.string().max(2000),
+        "fr-FR": z.string().max(2000),
+        "es-ES": z.string().max(2000),
+        "sl-SI": z.string().max(2000),
+        "pt-PT": z.string().max(2000),
+        "nl-NL": z.string().max(2000),
+        "pl-PL": z.string().max(2000),
+        "hr-HR": z.string().max(2000),
+        "sv-SE": z.string().max(2000),
+        "fi-FI": z.string().max(2000),
+        "et-EE": z.string().max(2000),
+        "bg-BG": z.string().max(2000),
+        "cs-CZ": z.string().max(2000),
+        "sk-SK": z.string().max(2000),
+        "nb-NO": z.string().max(2000),
+        "is-IS": z.string().max(2000),
+      })
+      .partial()
+      .passthrough(),
+    export: z
+      .object({
+        "en-US": z.string().max(2000),
+        "de-DE": z.string().max(2000),
+        "it-IT": z.string().max(2000),
+        "fr-FR": z.string().max(2000),
+        "es-ES": z.string().max(2000),
+        "sl-SI": z.string().max(2000),
+        "pt-PT": z.string().max(2000),
+        "nl-NL": z.string().max(2000),
+        "pl-PL": z.string().max(2000),
+        "hr-HR": z.string().max(2000),
+        "sv-SE": z.string().max(2000),
+        "fi-FI": z.string().max(2000),
+        "et-EE": z.string().max(2000),
+        "bg-BG": z.string().max(2000),
+        "cs-CZ": z.string().max(2000),
+        "sk-SK": z.string().max(2000),
+        "nb-NO": z.string().max(2000),
+        "is-IS": z.string().max(2000),
+      })
+      .partial()
+      .passthrough(),
+  })
+  .partial()
+  .passthrough();
+
+
+// Dependency schema for customcreditnote
+const EntitySettingsTranslations = z
+  .object({
+    default_invoice_note: z
+      .object({
+        "en-US": z.string().max(2000),
+        "de-DE": z.string().max(2000),
+        "it-IT": z.string().max(2000),
+        "fr-FR": z.string().max(2000),
+        "es-ES": z.string().max(2000),
+        "sl-SI": z.string().max(2000),
+        "pt-PT": z.string().max(2000),
+        "nl-NL": z.string().max(2000),
+        "pl-PL": z.string().max(2000),
+        "hr-HR": z.string().max(2000),
+        "sv-SE": z.string().max(2000),
+        "fi-FI": z.string().max(2000),
+        "et-EE": z.string().max(2000),
+        "bg-BG": z.string().max(2000),
+        "cs-CZ": z.string().max(2000),
+        "sk-SK": z.string().max(2000),
+        "nb-NO": z.string().max(2000),
+        "is-IS": z.string().max(2000),
+      })
+      .partial()
+      .passthrough(),
+    default_invoice_payment_terms: z
+      .object({
+        "en-US": z.string().max(500),
+        "de-DE": z.string().max(500),
+        "it-IT": z.string().max(500),
+        "fr-FR": z.string().max(500),
+        "es-ES": z.string().max(500),
+        "sl-SI": z.string().max(500),
+        "pt-PT": z.string().max(500),
+        "nl-NL": z.string().max(500),
+        "pl-PL": z.string().max(500),
+        "hr-HR": z.string().max(500),
+        "sv-SE": z.string().max(500),
+        "fi-FI": z.string().max(500),
+        "et-EE": z.string().max(500),
+        "bg-BG": z.string().max(500),
+        "cs-CZ": z.string().max(500),
+        "sk-SK": z.string().max(500),
+        "nb-NO": z.string().max(500),
+        "is-IS": z.string().max(500),
+      })
+      .partial()
+      .passthrough(),
+    default_estimate_note: z
+      .object({
+        "en-US": z.string().max(2000),
+        "de-DE": z.string().max(2000),
+        "it-IT": z.string().max(2000),
+        "fr-FR": z.string().max(2000),
+        "es-ES": z.string().max(2000),
+        "sl-SI": z.string().max(2000),
+        "pt-PT": z.string().max(2000),
+        "nl-NL": z.string().max(2000),
+        "pl-PL": z.string().max(2000),
+        "hr-HR": z.string().max(2000),
+        "sv-SE": z.string().max(2000),
+        "fi-FI": z.string().max(2000),
+        "et-EE": z.string().max(2000),
+        "bg-BG": z.string().max(2000),
+        "cs-CZ": z.string().max(2000),
+        "sk-SK": z.string().max(2000),
+        "nb-NO": z.string().max(2000),
+        "is-IS": z.string().max(2000),
+      })
+      .partial()
+      .passthrough(),
+    default_estimate_payment_terms: z
+      .object({
+        "en-US": z.string().max(500),
+        "de-DE": z.string().max(500),
+        "it-IT": z.string().max(500),
+        "fr-FR": z.string().max(500),
+        "es-ES": z.string().max(500),
+        "sl-SI": z.string().max(500),
+        "pt-PT": z.string().max(500),
+        "nl-NL": z.string().max(500),
+        "pl-PL": z.string().max(500),
+        "hr-HR": z.string().max(500),
+        "sv-SE": z.string().max(500),
+        "fi-FI": z.string().max(500),
+        "et-EE": z.string().max(500),
+        "bg-BG": z.string().max(500),
+        "cs-CZ": z.string().max(500),
+        "sk-SK": z.string().max(500),
+        "nb-NO": z.string().max(500),
+        "is-IS": z.string().max(500),
+      })
+      .partial()
+      .passthrough(),
+    default_credit_note_note: z
+      .object({
+        "en-US": z.string().max(2000),
+        "de-DE": z.string().max(2000),
+        "it-IT": z.string().max(2000),
+        "fr-FR": z.string().max(2000),
+        "es-ES": z.string().max(2000),
+        "sl-SI": z.string().max(2000),
+        "pt-PT": z.string().max(2000),
+        "nl-NL": z.string().max(2000),
+        "pl-PL": z.string().max(2000),
+        "hr-HR": z.string().max(2000),
+        "sv-SE": z.string().max(2000),
+        "fi-FI": z.string().max(2000),
+        "et-EE": z.string().max(2000),
+        "bg-BG": z.string().max(2000),
+        "cs-CZ": z.string().max(2000),
+        "sk-SK": z.string().max(2000),
+        "nb-NO": z.string().max(2000),
+        "is-IS": z.string().max(2000),
+      })
+      .partial()
+      .passthrough(),
+    default_credit_note_payment_terms: z
+      .object({
+        "en-US": z.string().max(500),
+        "de-DE": z.string().max(500),
+        "it-IT": z.string().max(500),
+        "fr-FR": z.string().max(500),
+        "es-ES": z.string().max(500),
+        "sl-SI": z.string().max(500),
+        "pt-PT": z.string().max(500),
+        "nl-NL": z.string().max(500),
+        "pl-PL": z.string().max(500),
+        "hr-HR": z.string().max(500),
+        "sv-SE": z.string().max(500),
+        "fi-FI": z.string().max(500),
+        "et-EE": z.string().max(500),
+        "bg-BG": z.string().max(500),
+        "cs-CZ": z.string().max(500),
+        "sk-SK": z.string().max(500),
+        "nb-NO": z.string().max(500),
+        "is-IS": z.string().max(500),
+      })
+      .partial()
+      .passthrough(),
+    default_advance_invoice_note: z
+      .object({
+        "en-US": z.string().max(2000),
+        "de-DE": z.string().max(2000),
+        "it-IT": z.string().max(2000),
+        "fr-FR": z.string().max(2000),
+        "es-ES": z.string().max(2000),
+        "sl-SI": z.string().max(2000),
+        "pt-PT": z.string().max(2000),
+        "nl-NL": z.string().max(2000),
+        "pl-PL": z.string().max(2000),
+        "hr-HR": z.string().max(2000),
+        "sv-SE": z.string().max(2000),
+        "fi-FI": z.string().max(2000),
+        "et-EE": z.string().max(2000),
+        "bg-BG": z.string().max(2000),
+        "cs-CZ": z.string().max(2000),
+        "sk-SK": z.string().max(2000),
+        "nb-NO": z.string().max(2000),
+        "is-IS": z.string().max(2000),
+      })
+      .partial()
+      .passthrough(),
+    default_delivery_note_note: z
+      .object({
+        "en-US": z.string().max(2000),
+        "de-DE": z.string().max(2000),
+        "it-IT": z.string().max(2000),
+        "fr-FR": z.string().max(2000),
+        "es-ES": z.string().max(2000),
+        "sl-SI": z.string().max(2000),
+        "pt-PT": z.string().max(2000),
+        "nl-NL": z.string().max(2000),
+        "pl-PL": z.string().max(2000),
+        "hr-HR": z.string().max(2000),
+        "sv-SE": z.string().max(2000),
+        "fi-FI": z.string().max(2000),
+        "et-EE": z.string().max(2000),
+        "bg-BG": z.string().max(2000),
+        "cs-CZ": z.string().max(2000),
+        "sk-SK": z.string().max(2000),
+        "nb-NO": z.string().max(2000),
+        "is-IS": z.string().max(2000),
+      })
+      .partial()
+      .passthrough(),
+    document_footer: z
+      .object({
+        "en-US": z.string().max(500),
+        "de-DE": z.string().max(500),
+        "it-IT": z.string().max(500),
+        "fr-FR": z.string().max(500),
+        "es-ES": z.string().max(500),
+        "sl-SI": z.string().max(500),
+        "pt-PT": z.string().max(500),
+        "nl-NL": z.string().max(500),
+        "pl-PL": z.string().max(500),
+        "hr-HR": z.string().max(500),
+        "sv-SE": z.string().max(500),
+        "fi-FI": z.string().max(500),
+        "et-EE": z.string().max(500),
+        "bg-BG": z.string().max(500),
+        "cs-CZ": z.string().max(500),
+        "sk-SK": z.string().max(500),
+        "nb-NO": z.string().max(500),
+        "is-IS": z.string().max(500),
+      })
+      .partial()
+      .passthrough(),
+    default_document_signature: z
+      .object({
+        "en-US": z.string().max(1000),
+        "de-DE": z.string().max(1000),
+        "it-IT": z.string().max(1000),
+        "fr-FR": z.string().max(1000),
+        "es-ES": z.string().max(1000),
+        "sl-SI": z.string().max(1000),
+        "pt-PT": z.string().max(1000),
+        "nl-NL": z.string().max(1000),
+        "pl-PL": z.string().max(1000),
+        "hr-HR": z.string().max(1000),
+        "sv-SE": z.string().max(1000),
+        "fi-FI": z.string().max(1000),
+        "et-EE": z.string().max(1000),
+        "bg-BG": z.string().max(1000),
+        "cs-CZ": z.string().max(1000),
+        "sk-SK": z.string().max(1000),
+        "nb-NO": z.string().max(1000),
+        "is-IS": z.string().max(1000),
+      })
+      .partial()
+      .passthrough(),
+    email_defaults: EmailDefaultTranslations,
+    payment_reminders: PaymentReminderTranslations,
+    tax_clause_defaults: TaxClauseDefaultTranslations,
+  })
+  .partial()
+  .passthrough();
+
+
+// Dependency schema for customcreditnote
+const TaxClauseDefaults = z
+  .object({
+    domestic: z.union([z.string(), z.null()]),
+    intra_eu_b2b: z.union([z.string(), z.null()]),
+    intra_eu_b2c: z.union([z.string(), z.null()]),
+    "3w_b2b": z.union([z.string(), z.null()]),
+    "3w_b2c": z.union([z.string(), z.null()]),
+    export: z.union([z.string(), z.null()]),
+  })
+  .partial()
+  .passthrough();
+
+
+// Dependency schema for customcreditnote
+const BusinessUnitSettings = z
+  .object({
+    pdf_template: z.union([
+      z.union([z.enum(["modern", "classic", "condensed", "minimal", "fashion", "timeless_modern_full_data"]), z.null()]),
+      z.null(),
+    ]),
+    primary_color: z.union([z.string(), z.null()]),
+    logo_scale_percent: z.union([z.number(), z.null()]),
+    email_defaults: z.union([
+      z
+        .object({
+          invoice_subject: z.union([z.string(), z.null()]),
+          invoice_body: z.union([z.string(), z.null()]),
+          estimate_subject: z.union([z.string(), z.null()]),
+          estimate_body: z.union([z.string(), z.null()]),
+          credit_note_subject: z.union([z.string(), z.null()]),
+          credit_note_body: z.union([z.string(), z.null()]),
+          advance_invoice_subject: z.union([z.string(), z.null()]),
+          advance_invoice_body: z.union([z.string(), z.null()]),
+          delivery_note_subject: z.union([z.string(), z.null()]),
+          delivery_note_body: z.union([z.string(), z.null()]),
+        })
+        .partial()
+        .passthrough(),
+      z.null(),
+    ]),
+    translations: z.union([EntitySettingsTranslations, z.null()]),
+    default_invoice_note: z.union([z.string(), z.null()]),
+    default_invoice_payment_terms: z.union([z.string(), z.null()]),
+    default_estimate_note: z.union([z.string(), z.null()]),
+    default_estimate_payment_terms: z.union([z.string(), z.null()]),
+    default_credit_note_note: z.union([z.string(), z.null()]),
+    default_credit_note_payment_terms: z.union([z.string(), z.null()]),
+    default_advance_invoice_note: z.union([z.string(), z.null()]),
+    default_delivery_note_note: z.union([z.string(), z.null()]),
+    document_footer: z.union([z.string(), z.null()]),
+    default_document_signature: z.union([z.string(), z.null()]),
+    bank_accounts: z.union([z.array(z.any()), z.null()]),
+    delivery_note_hide_prices: z.union([z.boolean(), z.null()]),
+    credit_note_negative_values: z.union([z.boolean(), z.null()]),
+    show_payment_amounts: z.union([z.boolean(), z.null()]),
+    tax_clause_defaults: z.union([TaxClauseDefaults, z.null()]),
+  })
+  .partial();
+
+
+// Dependency schema for customcreditnote
+const BusinessUnitSnapshot = z
+  .object({
+    id: z.string(),
+    name: z.string(),
+    deleted_at: z.union([z.string(), z.null()]).optional(),
+    address: z.union([z.string(), z.null()]).optional(),
+    address_2: z.union([z.string(), z.null()]).optional(),
+    post_code: z.union([z.string(), z.null()]).optional(),
+    city: z.union([z.string(), z.null()]).optional(),
+    state: z.union([z.string(), z.null()]).optional(),
+    country: z.union([z.string(), z.null()]).optional(),
+    country_code: z.union([z.string(), z.null()]).optional(),
+    email: z.union([z.string(), z.null()]).optional(),
+    phone: z.union([z.string(), z.null()]).optional(),
+    website: z.union([z.string(), z.null()]).optional(),
+    settings: BusinessUnitSettings,
+    logo_url: z.union([z.string(), z.null()]).optional(),
+    signature_url: z.union([z.string(), z.null()]).optional(),
+  })
+  .passthrough();
+
+
+// Dependency schema for customcreditnote
+const CreateDocumentBusinessUnit = BusinessUnitSnapshot.and(
+  z
+    .object({ settings: z.union([BusinessUnitSettings, z.null()]) })
+    .partial()
+    .passthrough()
 );
+
+
+// Dependency schema for customcreditnote
+const CreateDocumentCustomer = DocumentEntity.and(
+  z
+    .object({ save_customer: z.union([z.boolean(), z.null()]) })
+    .partial()
+    .passthrough()
+);
+
+
+// Dependency schema for customcreditnote
+const DocumentTranslations = z
+  .object({
+    note: z
+      .object({
+        "en-US": z.string().max(2000),
+        "de-DE": z.string().max(2000),
+        "it-IT": z.string().max(2000),
+        "fr-FR": z.string().max(2000),
+        "es-ES": z.string().max(2000),
+        "sl-SI": z.string().max(2000),
+        "pt-PT": z.string().max(2000),
+        "nl-NL": z.string().max(2000),
+        "pl-PL": z.string().max(2000),
+        "hr-HR": z.string().max(2000),
+        "sv-SE": z.string().max(2000),
+        "fi-FI": z.string().max(2000),
+        "et-EE": z.string().max(2000),
+        "bg-BG": z.string().max(2000),
+        "cs-CZ": z.string().max(2000),
+        "sk-SK": z.string().max(2000),
+        "nb-NO": z.string().max(2000),
+        "is-IS": z.string().max(2000),
+      })
+      .partial()
+      .passthrough(),
+    payment_terms: z
+      .object({
+        "en-US": z.string().max(500),
+        "de-DE": z.string().max(500),
+        "it-IT": z.string().max(500),
+        "fr-FR": z.string().max(500),
+        "es-ES": z.string().max(500),
+        "sl-SI": z.string().max(500),
+        "pt-PT": z.string().max(500),
+        "nl-NL": z.string().max(500),
+        "pl-PL": z.string().max(500),
+        "hr-HR": z.string().max(500),
+        "sv-SE": z.string().max(500),
+        "fi-FI": z.string().max(500),
+        "et-EE": z.string().max(500),
+        "bg-BG": z.string().max(500),
+        "cs-CZ": z.string().max(500),
+        "sk-SK": z.string().max(500),
+        "nb-NO": z.string().max(500),
+        "is-IS": z.string().max(500),
+      })
+      .partial()
+      .passthrough(),
+    tax_clause: z
+      .object({
+        "en-US": z.string().max(2000),
+        "de-DE": z.string().max(2000),
+        "it-IT": z.string().max(2000),
+        "fr-FR": z.string().max(2000),
+        "es-ES": z.string().max(2000),
+        "sl-SI": z.string().max(2000),
+        "pt-PT": z.string().max(2000),
+        "nl-NL": z.string().max(2000),
+        "pl-PL": z.string().max(2000),
+        "hr-HR": z.string().max(2000),
+        "sv-SE": z.string().max(2000),
+        "fi-FI": z.string().max(2000),
+        "et-EE": z.string().max(2000),
+        "bg-BG": z.string().max(2000),
+        "cs-CZ": z.string().max(2000),
+        "sk-SK": z.string().max(2000),
+        "nb-NO": z.string().max(2000),
+        "is-IS": z.string().max(2000),
+      })
+      .partial()
+      .passthrough(),
+    footer: z
+      .object({
+        "en-US": z.string().max(500),
+        "de-DE": z.string().max(500),
+        "it-IT": z.string().max(500),
+        "fr-FR": z.string().max(500),
+        "es-ES": z.string().max(500),
+        "sl-SI": z.string().max(500),
+        "pt-PT": z.string().max(500),
+        "nl-NL": z.string().max(500),
+        "pl-PL": z.string().max(500),
+        "hr-HR": z.string().max(500),
+        "sv-SE": z.string().max(500),
+        "fi-FI": z.string().max(500),
+        "et-EE": z.string().max(500),
+        "bg-BG": z.string().max(500),
+        "cs-CZ": z.string().max(500),
+        "sk-SK": z.string().max(500),
+        "nb-NO": z.string().max(500),
+        "is-IS": z.string().max(500),
+      })
+      .partial()
+      .passthrough(),
+    signature: z
+      .object({
+        "en-US": z.string().max(1000),
+        "de-DE": z.string().max(1000),
+        "it-IT": z.string().max(1000),
+        "fr-FR": z.string().max(1000),
+        "es-ES": z.string().max(1000),
+        "sl-SI": z.string().max(1000),
+        "pt-PT": z.string().max(1000),
+        "nl-NL": z.string().max(1000),
+        "pl-PL": z.string().max(1000),
+        "hr-HR": z.string().max(1000),
+        "sv-SE": z.string().max(1000),
+        "fi-FI": z.string().max(1000),
+        "et-EE": z.string().max(1000),
+        "bg-BG": z.string().max(1000),
+        "cs-CZ": z.string().max(1000),
+        "sk-SK": z.string().max(1000),
+        "nb-NO": z.string().max(1000),
+        "is-IS": z.string().max(1000),
+      })
+      .partial()
+      .passthrough(),
+  })
+  .partial();
+
+
+// Dependency schema for customcreditnote
+const DocumentItemEInvoicingData = z
+  .object({ unit_code: z.union([z.string(), z.null()]) })
+  .partial();
 
 
 // Dependency schema for customcreditnote
@@ -70,6 +1011,8 @@ const DocumentItemTax = z
     classification: z.union([z.string(), z.null()]),
     reverse_charge: z.union([z.boolean(), z.null()]),
     amount: z.union([z.number(), z.null()]),
+    is_deductible: z.union([z.boolean(), z.null()]),
+    deductible_percentage: z.union([z.number(), z.null()]),
     pt_exemption_code: z.union([z.string(), z.null()]),
     pt_exemption_reason: z.union([z.string(), z.null()]),
   })
@@ -81,6 +1024,72 @@ const LineDiscount = z.object({
   value: z.number().gte(0),
   type: z.enum(["percent", "amount"]).optional().default("percent"),
 });
+
+
+// Dependency schema for customcreditnote
+const DocumentItemRevenueRecognition = z
+  .object({
+    method: z.union([
+      z.union([z.enum(["immediate", "service_period_daily"]), z.null()]),
+      z.null(),
+    ]),
+    date_from: z.union([z.string(), z.null()]),
+    date_to: z.union([z.string(), z.null()]),
+  })
+  .partial();
+
+
+// Dependency schema for customcreditnote
+const DocumentItemTranslations = z
+  .object({
+    name: z
+      .object({
+        "en-US": z.string().max(500),
+        "de-DE": z.string().max(500),
+        "it-IT": z.string().max(500),
+        "fr-FR": z.string().max(500),
+        "es-ES": z.string().max(500),
+        "sl-SI": z.string().max(500),
+        "pt-PT": z.string().max(500),
+        "nl-NL": z.string().max(500),
+        "pl-PL": z.string().max(500),
+        "hr-HR": z.string().max(500),
+        "sv-SE": z.string().max(500),
+        "fi-FI": z.string().max(500),
+        "et-EE": z.string().max(500),
+        "bg-BG": z.string().max(500),
+        "cs-CZ": z.string().max(500),
+        "sk-SK": z.string().max(500),
+        "nb-NO": z.string().max(500),
+        "is-IS": z.string().max(500),
+      })
+      .partial()
+      .passthrough(),
+    description: z
+      .object({
+        "en-US": z.string().max(2000),
+        "de-DE": z.string().max(2000),
+        "it-IT": z.string().max(2000),
+        "fr-FR": z.string().max(2000),
+        "es-ES": z.string().max(2000),
+        "sl-SI": z.string().max(2000),
+        "pt-PT": z.string().max(2000),
+        "nl-NL": z.string().max(2000),
+        "pl-PL": z.string().max(2000),
+        "hr-HR": z.string().max(2000),
+        "sv-SE": z.string().max(2000),
+        "fi-FI": z.string().max(2000),
+        "et-EE": z.string().max(2000),
+        "bg-BG": z.string().max(2000),
+        "cs-CZ": z.string().max(2000),
+        "sk-SK": z.string().max(2000),
+        "nb-NO": z.string().max(2000),
+        "is-IS": z.string().max(2000),
+      })
+      .partial()
+      .passthrough(),
+  })
+  .partial();
 
 
 // Dependency schema for customcreditnote
@@ -97,12 +1106,18 @@ const CustomDocumentItem = z
     gross_price: z.union([z.number(), z.null()]),
     quantity: z.union([z.number(), z.null()]),
     unit: z.union([z.string(), z.null()]),
+    e_invoicing: z.union([DocumentItemEInvoicingData, z.null()]),
     taxes: z.array(DocumentItemTax),
     discounts: z.array(LineDiscount).max(5),
     total: z.union([z.number(), z.null()]),
     total_with_tax: z.union([z.number(), z.null()]),
     item_id: z.union([z.string(), z.null()]),
     metadata: z.union([z.record(z.string(), z.any()), z.null()]),
+    revenue_recognition: z.union([DocumentItemRevenueRecognition, z.null()]),
+    translations: z.union([
+      DocumentItemTranslations.and(z.unknown()),
+      z.null(),
+    ]),
     financial_category_id: z.union([z.string(), z.null()]),
     save_item: z.union([z.boolean(), z.null()]),
   })
@@ -125,10 +1140,6 @@ const DocumentSummaryTax = z
 
 // Dependency schema for customcreditnote
 const CreateDocumentPayment = z.object({
-  incoming_purchase_document_id: z.union([z.string(), z.null()]).optional(),
-  applied_to_incoming_purchase_document_id: z
-    .union([z.string(), z.null()])
-    .optional(),
   amount: z.union([z.number(), z.null()]).optional(),
   type: z.enum([
     "cash",
@@ -159,64 +1170,80 @@ const CreateDocumentCategoryAssignment = z
 
 
 // Dependency schema for customcreditnote
-const CreateFursDocumentData = z.union([
-  z
-    .object({
-      business_premise_name: z.union([z.string(), z.null()]),
-      electronic_device_name: z.union([z.string(), z.null()]),
-      operator_tax_number: z.union([z.string(), z.null()]),
-      operator_label: z.union([z.string(), z.null()]),
-      skip: z.union([z.boolean(), z.null()]),
-    })
-    .partial(),
-  z.null(),
-]);
+const CreateFursDocumentData = z
+  .object({
+    business_premise_name: z.union([z.string(), z.null()]),
+    electronic_device_name: z.union([z.string(), z.null()]),
+    operator_tax_number: z.union([z.string(), z.null()]),
+    operator_label: z.union([z.string(), z.null()]),
+    skip: z.union([z.boolean(), z.null()]),
+  })
+  .partial();
 
 
 // Dependency schema for customcreditnote
-const CreateFinaInvoiceData = z.union([
-  z
-    .object({
-      business_premise_name: z.union([z.string(), z.null()]),
-      electronic_device_name: z.union([z.string(), z.null()]),
-      operator_oib: z.union([z.string(), z.null()]),
-      operator_label: z.union([z.string(), z.null()]),
-      payment_type: z.union([
-        z.union([z.enum(["cash", "card", "online", "bank_transfer", "paypal", "crypto", "coupon", "other"]), z.null()]),
-        z.null(),
-      ]),
-      subsequent_submit: z.union([z.boolean(), z.null()]),
-    })
-    .partial(),
-  z.null(),
-]);
+const CreateFinaInvoiceData = z
+  .object({
+    business_premise_name: z.union([z.string(), z.null()]),
+    electronic_device_name: z.union([z.string(), z.null()]),
+    operator_oib: z.union([z.string(), z.null()]),
+    operator_label: z.union([z.string(), z.null()]),
+    payment_type: z.union([
+      z.union([z.enum(["cash", "card", "online", "bank_transfer", "paypal", "crypto", "coupon", "other"]), z.null()]),
+      z.null(),
+    ]),
+    subsequent_submit: z.union([z.boolean(), z.null()]),
+  })
+  .partial();
 
 
 // Dependency schema for customcreditnote
-const EslogInput = z.union([
-  z
-    .object({ validation_enabled: z.union([z.boolean(), z.null()]) })
-    .partial()
-    .passthrough(),
-  z.null(),
-]);
+const EslogInput = z
+  .object({
+    validation_enabled: z.union([z.boolean(), z.null()]),
+    validation_required: z.union([z.boolean(), z.null()]),
+  })
+  .partial()
+  .passthrough();
+
+
+// Dependency schema for customcreditnote
+const GermanEInvoicingInput = z
+  .object({
+    validation_enabled: z.union([z.boolean(), z.null()]),
+    validation_required: z.union([z.boolean(), z.null()]),
+  })
+  .partial()
+  .passthrough();
+
+
+// Dependency schema for customcreditnote
+const UjpInput = z
+  .object({
+    validation_enabled: z.union([z.boolean(), z.null()]),
+    validation_required: z.union([z.boolean(), z.null()]),
+  })
+  .partial()
+  .passthrough();
 
 
 // Schema for createCustomCreditNote operation
 const createCustomCreditNoteSchemaDefinition = z.object({
   is_draft: z.union([z.boolean(), z.null()]).optional(),
   date: z.union([z.string(), z.null()]).optional(),
-  issuer: DocumentEntity.and(
-    z.union([z.object({}).partial().passthrough(), z.null()])
-  ).optional(),
+  issuer: z.union([DocumentEntity, z.null()]).optional(),
   business_unit_id: z.union([z.string(), z.null()]).optional(),
+  business_unit: z.union([CreateDocumentBusinessUnit, z.null()]).optional(),
   customer_id: z.union([z.string(), z.null()]).optional(),
-  customer: CreateDocumentCustomer.optional(),
+  customer: z.union([CreateDocumentCustomer, z.null()]).optional(),
   note: z.union([z.string(), z.null()]).optional(),
   payment_terms: z.union([z.string(), z.null()]).optional(),
   tax_clause: z.union([z.string(), z.null()]).optional(),
   footer: z.union([z.string(), z.null()]).optional(),
   signature: z.union([z.string(), z.null()]).optional(),
+  translations: z
+    .union([DocumentTranslations.and(z.unknown()), z.null()])
+    .optional(),
   calculation_mode: z
     .union([z.union([z.enum(["b2b_standard", "b2c_gross_discount"]), z.null()]), z.null()])
     .optional(),
@@ -236,6 +1263,7 @@ const createCustomCreditNoteSchemaDefinition = z.object({
   date_service: z.union([z.string(), z.null()]).optional(),
   date_service_to: z.union([z.string(), z.null()]).optional(),
   date_due: z.union([z.string(), z.null()]).optional(),
+  expected_total_with_tax: z.union([z.number(), z.null()]).optional(),
   items: z.array(CustomDocumentItem).min(1),
   total: z.number(),
   total_with_tax: z.number(),
@@ -246,9 +1274,12 @@ const createCustomCreditNoteSchemaDefinition = z.object({
   category_assignments: z
     .union([z.array(CreateDocumentCategoryAssignment), z.null()])
     .optional(),
-  furs: CreateFursDocumentData.optional(),
-  fina: CreateFinaInvoiceData.optional(),
-  eslog: EslogInput.optional(),
+  furs: z.union([CreateFursDocumentData, z.null()]).optional(),
+  fina: z.union([CreateFinaInvoiceData, z.null()]).optional(),
+  eslog: z.union([EslogInput, z.null()]).optional(),
+  xrechnung: z.union([GermanEInvoicingInput, z.null()]).optional(),
+  zugferd: z.union([GermanEInvoicingInput, z.null()]).optional(),
+  ujp: z.union([UjpInput, z.null()]).optional(),
 });
 
 export type CreateCustomCreditNoteSchema = z.infer<typeof createCustomCreditNoteSchemaDefinition>;

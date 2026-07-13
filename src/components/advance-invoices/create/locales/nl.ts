@@ -31,6 +31,9 @@ export default {
   "FINA fiscalized invoices always use the current date":
     "FINA-gefiscaliseerde documenten gebruiken altijd de huidige datum",
   // Signature field
+  Bold: "Vet",
+  Italic: "Cursief",
+  "Bullet list": "Opsommingstekens",
   Signature: "Handtekening",
   "Add signature text...": "Handtekeningtekst toevoegen...",
   Reference: "Referentie",
@@ -61,4 +64,12 @@ export default {
   "Remaining to allocate": "Nog toe te wijzen",
   "This document must be fully paid on creation": "Dit document moet volledig betaald zijn bij het aanmaken",
   "Record one or more payments on creation": "Registreer een of meer betalingen bij het aanmaken",
+  "E-invoicing unit settings": "Instellingen voor e-facturatie-eenheid",
+  "Only affects e-invoicing XML. The document unit stays unchanged.":
+    "Heeft alleen invloed op de XML voor e-facturatie. De documenteenheid blijft ongewijzigd.",
+  "Select XML unit code": "XML-eenheidscode selecteren",
+  "Enter a supported UN/ECE code": "Voer een ondersteunde UN/ECE-code in",
+  "Use display unit": "Weergegeven eenheid gebruiken",
+  "Clear unit code": "Eenheidscode wissen",
+  "custom code": "aangepaste code",
 } as const;

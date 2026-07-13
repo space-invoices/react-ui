@@ -1,6 +1,6 @@
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 
-type SecondaryAction = {
+type FooterAction = {
   label: string;
   onClick: () => void;
   isPending?: boolean;
@@ -12,7 +12,8 @@ type FormFooterState = {
   isDirty: boolean;
   label: string;
   onSubmit?: () => void;
-  secondaryAction?: SecondaryAction;
+  secondaryAction?: FooterAction;
+  tertiaryAction?: FooterAction;
 };
 
 type FormFooterContextType = {
@@ -42,7 +43,8 @@ type UseFormFooterRegistrationProps = {
   isDirty: boolean;
   label: string;
   onSubmit?: () => void;
-  secondaryAction?: SecondaryAction;
+  secondaryAction?: FooterAction;
+  tertiaryAction?: FooterAction;
 };
 
 export function useFormFooterRegistration({
@@ -52,10 +54,12 @@ export function useFormFooterRegistration({
   label,
   onSubmit,
   secondaryAction,
+  tertiaryAction,
 }: UseFormFooterRegistrationProps) {
   const { setFormFooter } = useFormFooterContext();
   const onSubmitRef = useRef(onSubmit);
   const secondaryActionRef = useRef(secondaryAction);
+  const tertiaryActionRef = useRef(tertiaryAction);
 
   useEffect(() => {
     onSubmitRef.current = onSubmit;
@@ -64,6 +68,10 @@ export function useFormFooterRegistration({
   useEffect(() => {
     secondaryActionRef.current = secondaryAction;
   }, [secondaryAction]);
+
+  useEffect(() => {
+    tertiaryActionRef.current = tertiaryAction;
+  }, [tertiaryAction]);
 
   const stableOnSubmit = useCallback(() => {
     onSubmitRef.current?.();
@@ -74,6 +82,12 @@ export function useFormFooterRegistration({
   const secondaryActionPending = secondaryAction?.isPending;
   const stableSecondaryActionOnClick = useCallback(() => {
     secondaryActionRef.current?.onClick();
+  }, []);
+  const hasTertiaryAction = !!tertiaryAction;
+  const tertiaryActionLabel = tertiaryAction?.label;
+  const tertiaryActionPending = tertiaryAction?.isPending;
+  const stableTertiaryActionOnClick = useCallback(() => {
+    tertiaryActionRef.current?.onClick();
   }, []);
 
   const stableSecondaryAction = useMemo(() => {
@@ -86,6 +100,15 @@ export function useFormFooterRegistration({
     };
   }, [hasSecondaryAction, secondaryActionLabel, secondaryActionPending, stableSecondaryActionOnClick]);
 
+  const stableTertiaryAction = useMemo(() => {
+    if (!hasTertiaryAction || !tertiaryActionLabel) return undefined;
+    return {
+      label: tertiaryActionLabel,
+      isPending: tertiaryActionPending,
+      onClick: stableTertiaryActionOnClick,
+    };
+  }, [hasTertiaryAction, stableTertiaryActionOnClick, tertiaryActionLabel, tertiaryActionPending]);
+
   useEffect(() => {
     setFormFooter({
       formId,
@@ -94,8 +117,19 @@ export function useFormFooterRegistration({
       label,
       onSubmit: onSubmit ? stableOnSubmit : undefined,
       secondaryAction: stableSecondaryAction,
+      tertiaryAction: stableTertiaryAction,
     });
-  }, [formId, isPending, isDirty, label, onSubmit, setFormFooter, stableOnSubmit, stableSecondaryAction]);
+  }, [
+    formId,
+    isPending,
+    isDirty,
+    label,
+    onSubmit,
+    setFormFooter,
+    stableOnSubmit,
+    stableSecondaryAction,
+    stableTertiaryAction,
+  ]);
 
   useEffect(() => {
     return () => {

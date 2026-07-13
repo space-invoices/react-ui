@@ -11,8 +11,6 @@ type DocumentDateValues = {
 
 const messages = {
   dateInFuture: "Document date cannot be in the future.",
-  serviceDateAfterIssueDate: "Service date cannot be later than the issue date.",
-  serviceDateToAfterIssueDate: "Service period end date cannot be later than the issue date.",
   serviceDateToBeforeServiceDate: "Service period end date must be on or after the service start date.",
   dueDateBeforeIssueDate: "Due date must be on or after the issue date.",
   validTillBeforeIssueDate: "Valid until date must be on or after the issue date.",
@@ -43,22 +41,9 @@ function applyBaseDocumentDateRules(value: DocumentDateValues, ctx: z.Refinement
 }
 
 function applyInvoiceLikeServiceDateRules(value: DocumentDateValues, ctx: z.RefinementCtx) {
-  const date = normalizeDateOnlyInput(value.date ?? undefined);
   const dateService = normalizeDateOnlyInput(value.date_service ?? undefined);
   const dateServiceTo = normalizeDateOnlyInput(value.date_service_to ?? undefined);
 
-  addCustomIssue(
-    ctx,
-    ["date_service"],
-    messages.serviceDateAfterIssueDate,
-    !!date && !!dateService && compareDateOnly(dateService, date) > 0,
-  );
-  addCustomIssue(
-    ctx,
-    ["date_service_to"],
-    messages.serviceDateToAfterIssueDate,
-    !!date && !!dateServiceTo && compareDateOnly(dateServiceTo, date) > 0,
-  );
   addCustomIssue(
     ctx,
     ["date_service_to"],

@@ -18,7 +18,9 @@ export const creditNoteFormSchema = z.object({
   currency_code: z.string().max(3).optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
   linked_documents: z.array(z.string()).optional(),
-  eslog: z.object({ validation_enabled: z.boolean().optional() }).optional(),
+  eslog: z
+    .object({ validation_enabled: z.boolean().optional(), validation_required: z.boolean().optional() })
+    .optional(),
 });
 
 export type CreditNoteFormValues = z.infer<typeof creditNoteFormSchema>;

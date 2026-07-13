@@ -6,6 +6,27 @@
  */
 import { z } from "zod";
 
+export const ujpCustomerSchema = z
+  .object({
+    receiver_name: z.string().nullish(),
+    receiver_identifier: z.string().nullish(),
+    receiver_agent: z.string().nullish(),
+    receiver_mailbox: z.string().nullish(),
+  })
+  .nullish();
+
+export const customerBankAccountSchema = z.object({
+  type: z.enum(["iban", "us_domestic", "uk_domestic", "other"]).optional().default("iban"),
+  name: z.string().nullish(),
+  bank_name: z.string().nullish(),
+  iban: z.string().nullish(),
+  account_number: z.string().nullish(),
+  bic: z.string().nullish(),
+  routing_number: z.string().nullish(),
+  sort_code: z.string().nullish(),
+  is_default: z.boolean().nullish(),
+});
+
 /** Customer schema - for inline customer data on documents */
 export const customerSchema = z
   .object({
@@ -19,6 +40,10 @@ export const customerSchema = z
     country: z.string().nullish(),
     country_code: z.string().nullish(),
     tax_number: z.string().nullish(),
+    company_number: z.string().nullish(),
+    bank_accounts: z.array(customerBankAccountSchema).nullish(),
+    is_end_consumer: z.boolean().nullish(),
+    ujp: ujpCustomerSchema,
     save_customer: z.boolean().optional(),
   })
   .nullish();

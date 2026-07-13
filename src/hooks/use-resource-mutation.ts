@@ -46,8 +46,14 @@ export function useResourceMutation<TData, TError = Error, TVariables = unknown,
   return useMutation<TData, TError, TVariables, TContext>({
     ...otherOptions,
     mutationFn: async (variables: TVariables) => {
-      // Build SDK options (entity_id, etc.)
-      const options: SDKMethodOptions | undefined = entityId ? { entity_id: entityId } : undefined;
+      // Build SDK options (entity_id, account_id, etc.)
+      const options: SDKMethodOptions | undefined =
+        entityId || accountId
+          ? {
+              ...(entityId ? { entity_id: entityId } : {}),
+              ...(accountId ? { account_id: accountId } : {}),
+            }
+          : undefined;
 
       if (operation === "update") {
         const { id, data } = variables as { id: string; data: unknown };

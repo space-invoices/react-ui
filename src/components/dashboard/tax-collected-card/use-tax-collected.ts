@@ -75,7 +75,7 @@ export function useTaxCollectedData(entityId: string | undefined, locale?: strin
       group_by: ["rate", "quote_currency"],
       date_from: prevMonthRange.from,
       date_to: prevMonthRange.to,
-      filters: { is_draft: false, voided_at: null },
+      filters: { is_draft: false, voided_at: null, reverse_charge: false },
     },
     // [1] Current year taxes
     {
@@ -84,7 +84,7 @@ export function useTaxCollectedData(entityId: string | undefined, locale?: strin
       group_by: ["rate", "quote_currency"],
       date_from: yearRange.from,
       date_to: yearRange.to,
-      filters: { is_draft: false, voided_at: null },
+      filters: { is_draft: false, voided_at: null, reverse_charge: false },
     },
   ];
 

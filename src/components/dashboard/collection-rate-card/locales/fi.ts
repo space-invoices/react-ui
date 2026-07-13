@@ -1,3 +1,3 @@
 export default {
-  "Collection Rate": "Collection Rate",
+  "Collection Rate": "Perintäaste",
 } as const;

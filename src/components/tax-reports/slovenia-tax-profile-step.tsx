@@ -27,6 +27,11 @@ type SloveniaTaxProfileStepProps = {
   yearOptions: number[];
 };
 
+function getActivityCodeKey(activityCodes: string[], activityCode: string, index: number): string {
+  const duplicateCount = activityCodes.slice(0, index).filter((value) => value === activityCode).length;
+  return `${activityCode || "blank"}-${duplicateCount}`;
+}
+
 export function SloveniaTaxProfileStep({
   form,
   t,
@@ -176,7 +181,7 @@ export function SloveniaTaxProfileStep({
           <Label>{t("slovenia-yearly.profile.activity-code.label")}</Label>
           <div className="space-y-2">
             {activityCodes.map((activityCode, index) => (
-              <div key={`activity-code-${index}`} className="flex items-center gap-2">
+              <div key={getActivityCodeKey(activityCodes, activityCode, index)} className="flex items-center gap-2">
                 <Input
                   id={index === 0 ? "si-yearly-activity-code" : undefined}
                   value={activityCode}
@@ -191,7 +196,9 @@ export function SloveniaTaxProfileStep({
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => onActivityCodesChange(activityCodes.filter((_, currentIndex) => currentIndex !== index))}
+                    onClick={() =>
+                      onActivityCodesChange(activityCodes.filter((_, currentIndex) => currentIndex !== index))
+                    }
                   >
                     {t("slovenia-yearly.profile.activity-code.remove")}
                   </Button>

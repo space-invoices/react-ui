@@ -250,4 +250,15 @@ export default {
   "A premise with this name already exists": "Вече съществува търговски обект с това име",
   "Exactly 4 digits": "Точно 4 цифри",
   "Your Name": "Вашето име",
+  "Starting Number": "Начален номер",
+  "First invoice number for this premise sequence": "Първи номер на фактура за тази последователност на обекта",
+  "First invoice number for this device sequence": "Първи номер на фактура за тази последователност на устройството",
+  "Set Starting Number": "Задаване на начален номер",
+  "Starting number can no longer be changed after invoices have been issued for this fiscal sequence.":
+    "Началният номер вече не може да се променя, след като са издадени фактури за тази фискална последователност.",
+  "Set this before issuing invoices for the selected fiscal sequence. Leave empty to clear it.":
+    "Задайте това преди издаване на фактури за избраната фискална последователност. Оставете празно за изчистване.",
+  "Fiscal Sequence": "Фискална последователност",
+  "Starting number must be between 1 and 999999999": "Началният номер трябва да е между 1 и 999999999",
+  Save: "Запазване",
 } as const;

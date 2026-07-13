@@ -82,7 +82,7 @@ export default {
   "Add Electronic Device": "Lägg till elektronisk enhet",
   "Register an electronic device for this business premise.":
     "Registrera en elektronisk enhet för den här affärslokalen.",
-  "Device ID": "Device ID",
+  "Device ID": "Enhets-ID",
   "Enter a numeric device ID (e.g., 1, 2, 3)": "Ange ett numeriskt enhets-ID, till exempel 1, 2 eller 3",
   Cancel: "Avbryt",
   "Register Device": "Registrera enhet",
@@ -93,7 +93,7 @@ export default {
   "Premise ID": "Lokal-ID",
   "Unique identifier for this premise (e.g., PP1, OFFICE1)":
     "Unik identifierare för den här lokalen, till exempel PP1 eller OFFICE1",
-  "Adding...": "Adding...",
+  "Adding...": "Lägger till...",
   "Save Settings": "Spara inställningar",
   "Saving...": "Sparar...",
   "Loading...": "Laddar...",
@@ -173,4 +173,15 @@ export default {
   "Unified document numbering": "Enhetlig dokumentnumrering",
   "Use the same numbering sequence for all documents, including non-fiscalized ones":
     "Använd samma nummersekvens för alla dokument, även de som inte fiskaliseras",
+  "Starting Number": "Startnummer",
+  "First invoice number for this premise sequence": "Första fakturanumret för denna verksamhetsställets sekvens",
+  "First invoice number for this device sequence": "Första fakturanumret för denna enhetssekvens",
+  "Set Starting Number": "Ange startnummer",
+  "Starting number can no longer be changed after invoices have been issued for this fiscal sequence.":
+    "Startnumret kan inte längre ändras efter att fakturor har utfärdats för denna fiskala sekvens.",
+  "Set this before issuing invoices for the selected fiscal sequence. Leave empty to clear it.":
+    "Ange detta innan fakturor utfärdas för den valda fiskala sekvensen. Lämna tomt för att rensa.",
+  "Fiscal Sequence": "Fiskal sekvens",
+  "Starting number must be between 1 and 999999999": "Startnumret måste vara mellan 1 och 999999999",
+  Save: "Spara",
 } as const;

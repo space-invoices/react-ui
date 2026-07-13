@@ -23,8 +23,14 @@ export type WhiteLabelConfig = {
   reviewedFeatureCatalogIds: string[];
   billingEnabled: boolean; // Whether billing-related UI should be available
   accountUsersFullUiEnabled: boolean; // Whether account users bypass white-label UI hiding
+  analytics: {
+    posthogKey: string | null;
+    posthogHost: string | null;
+    posthogTrackEmbeds: boolean;
+  };
   halAppId: string | null; // Hal app ID for chat widget (null = no Hal integration)
   supportEmail: string | null; // White-label support contact email
+  googleTagId: string | null; // Google tag ID for conversion tracking
 };
 
 // Default config until API responds (Space Invoices = all features visible)
@@ -41,8 +47,22 @@ const DEFAULT_CONFIG: WhiteLabelConfig = {
   reviewedFeatureCatalogIds: [],
   billingEnabled: false,
   accountUsersFullUiEnabled: true,
+  analytics: {
+    posthogKey: null,
+    posthogHost: "https://eu.i.posthog.com",
+    posthogTrackEmbeds: false,
+  },
   halAppId: null,
   supportEmail: null,
+  googleTagId: null,
+};
+
+const DEFAULT_CONTEXT: WhiteLabelContextType = {
+  ...DEFAULT_CONFIG,
+  isFeatureVisible: () => true,
+  isCapabilityVisible: () => true,
+  isUiControlVisible: () => true,
+  isLoading: false,
 };
 
 type WhiteLabelContextType = WhiteLabelConfig & {
@@ -99,8 +119,14 @@ export function WhiteLabelProvider({ children, apiBaseUrl = "", isAccountUser = 
             reviewedFeatureCatalogIds: data.reviewed_feature_catalog_ids ?? [],
             billingEnabled: data.billing_enabled ?? false,
             accountUsersFullUiEnabled: data.account_users_full_ui_enabled ?? true,
+            analytics: {
+              posthogKey: data.analytics?.posthog_key ?? null,
+              posthogHost: data.analytics?.posthog_host ?? "https://eu.i.posthog.com",
+              posthogTrackEmbeds: data.analytics?.posthog_track_embeds ?? false,
+            },
             halAppId: data.hal_app_id ?? null,
             supportEmail: data.support_email ?? null,
+            googleTagId: data.google_tag_id ?? null,
           });
         }
       } catch {
@@ -177,16 +203,10 @@ export function WhiteLabelProvider({ children, apiBaseUrl = "", isAccountUser = 
   return <WhiteLabelContext.Provider value={value}>{children}</WhiteLabelContext.Provider>;
 }
 
-/**
- * Hook to access the white-label context
- * @throws Error if used outside of WhiteLabelProvider
- */
 export function useWhiteLabel() {
-  const context = useContext(WhiteLabelContext);
+  return useContext(WhiteLabelContext) ?? DEFAULT_CONTEXT;
+}
 
-  if (context === undefined) {
-    throw new Error("useWhiteLabel must be used within a WhiteLabelProvider");
-  }
-
-  return context;
+export function useWhiteLabelOptional() {
+  return useContext(WhiteLabelContext);
 }

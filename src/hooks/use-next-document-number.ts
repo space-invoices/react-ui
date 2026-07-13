@@ -1,5 +1,5 @@
+import { documents } from "@spaceinvoices/js-sdk";
 import { useQuery } from "@tanstack/react-query";
-import { documents } from "../../../js-sdk/src/sdk/documents";
 
 export const NEXT_DOCUMENT_NUMBER_CACHE_KEY = "next-document-number";
 

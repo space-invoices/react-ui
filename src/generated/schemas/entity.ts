@@ -8,6 +8,950 @@ import { z } from 'zod';
 
 // Schemas for entity endpoints
 
+// Dependency schema for entity
+const NumberSequenceStarts = z
+  .object({
+    invoice: z.union([z.number(), z.null()]),
+    estimate: z.union([z.number(), z.null()]),
+    credit_note: z.union([z.number(), z.null()]),
+    advance_invoice: z.union([z.number(), z.null()]),
+    delivery_note: z.union([z.number(), z.null()]),
+  })
+  .partial()
+  .passthrough();
+
+
+// Dependency schema for entity
+const UnitNumberSequenceStarts = z
+  .object({
+    invoice: z.union([z.record(z.string(), z.union([z.number(), z.null()])), z.null()]),
+    estimate: z.union([z.record(z.string(), z.union([z.number(), z.null()])), z.null()]),
+    credit_note: z.union([z.record(z.string(), z.union([z.number(), z.null()])), z.null()]),
+    advance_invoice: z.union([
+      z.record(z.string(), z.union([z.number(), z.null()])),
+      z.null(),
+    ]),
+    delivery_note: z.union([
+      z.record(z.string(), z.union([z.number(), z.null()])),
+      z.null(),
+    ]),
+  })
+  .partial()
+  .passthrough();
+
+
+// Dependency schema for entity
+const EmailDefaultTranslations = z
+  .object({
+    invoice_subject: z
+      .object({
+        "en-US": z.string().max(500),
+        "de-DE": z.string().max(500),
+        "it-IT": z.string().max(500),
+        "fr-FR": z.string().max(500),
+        "es-ES": z.string().max(500),
+        "sl-SI": z.string().max(500),
+        "pt-PT": z.string().max(500),
+        "nl-NL": z.string().max(500),
+        "pl-PL": z.string().max(500),
+        "hr-HR": z.string().max(500),
+        "sv-SE": z.string().max(500),
+        "fi-FI": z.string().max(500),
+        "et-EE": z.string().max(500),
+        "bg-BG": z.string().max(500),
+        "cs-CZ": z.string().max(500),
+        "sk-SK": z.string().max(500),
+        "nb-NO": z.string().max(500),
+        "is-IS": z.string().max(500),
+      })
+      .partial()
+      .passthrough(),
+    invoice_body: z
+      .object({
+        "en-US": z.string().max(2000),
+        "de-DE": z.string().max(2000),
+        "it-IT": z.string().max(2000),
+        "fr-FR": z.string().max(2000),
+        "es-ES": z.string().max(2000),
+        "sl-SI": z.string().max(2000),
+        "pt-PT": z.string().max(2000),
+        "nl-NL": z.string().max(2000),
+        "pl-PL": z.string().max(2000),
+        "hr-HR": z.string().max(2000),
+        "sv-SE": z.string().max(2000),
+        "fi-FI": z.string().max(2000),
+        "et-EE": z.string().max(2000),
+        "bg-BG": z.string().max(2000),
+        "cs-CZ": z.string().max(2000),
+        "sk-SK": z.string().max(2000),
+        "nb-NO": z.string().max(2000),
+        "is-IS": z.string().max(2000),
+      })
+      .partial()
+      .passthrough(),
+    estimate_subject: z
+      .object({
+        "en-US": z.string().max(500),
+        "de-DE": z.string().max(500),
+        "it-IT": z.string().max(500),
+        "fr-FR": z.string().max(500),
+        "es-ES": z.string().max(500),
+        "sl-SI": z.string().max(500),
+        "pt-PT": z.string().max(500),
+        "nl-NL": z.string().max(500),
+        "pl-PL": z.string().max(500),
+        "hr-HR": z.string().max(500),
+        "sv-SE": z.string().max(500),
+        "fi-FI": z.string().max(500),
+        "et-EE": z.string().max(500),
+        "bg-BG": z.string().max(500),
+        "cs-CZ": z.string().max(500),
+        "sk-SK": z.string().max(500),
+        "nb-NO": z.string().max(500),
+        "is-IS": z.string().max(500),
+      })
+      .partial()
+      .passthrough(),
+    estimate_body: z
+      .object({
+        "en-US": z.string().max(2000),
+        "de-DE": z.string().max(2000),
+        "it-IT": z.string().max(2000),
+        "fr-FR": z.string().max(2000),
+        "es-ES": z.string().max(2000),
+        "sl-SI": z.string().max(2000),
+        "pt-PT": z.string().max(2000),
+        "nl-NL": z.string().max(2000),
+        "pl-PL": z.string().max(2000),
+        "hr-HR": z.string().max(2000),
+        "sv-SE": z.string().max(2000),
+        "fi-FI": z.string().max(2000),
+        "et-EE": z.string().max(2000),
+        "bg-BG": z.string().max(2000),
+        "cs-CZ": z.string().max(2000),
+        "sk-SK": z.string().max(2000),
+        "nb-NO": z.string().max(2000),
+        "is-IS": z.string().max(2000),
+      })
+      .partial()
+      .passthrough(),
+    credit_note_subject: z
+      .object({
+        "en-US": z.string().max(500),
+        "de-DE": z.string().max(500),
+        "it-IT": z.string().max(500),
+        "fr-FR": z.string().max(500),
+        "es-ES": z.string().max(500),
+        "sl-SI": z.string().max(500),
+        "pt-PT": z.string().max(500),
+        "nl-NL": z.string().max(500),
+        "pl-PL": z.string().max(500),
+        "hr-HR": z.string().max(500),
+        "sv-SE": z.string().max(500),
+        "fi-FI": z.string().max(500),
+        "et-EE": z.string().max(500),
+        "bg-BG": z.string().max(500),
+        "cs-CZ": z.string().max(500),
+        "sk-SK": z.string().max(500),
+        "nb-NO": z.string().max(500),
+        "is-IS": z.string().max(500),
+      })
+      .partial()
+      .passthrough(),
+    credit_note_body: z
+      .object({
+        "en-US": z.string().max(2000),
+        "de-DE": z.string().max(2000),
+        "it-IT": z.string().max(2000),
+        "fr-FR": z.string().max(2000),
+        "es-ES": z.string().max(2000),
+        "sl-SI": z.string().max(2000),
+        "pt-PT": z.string().max(2000),
+        "nl-NL": z.string().max(2000),
+        "pl-PL": z.string().max(2000),
+        "hr-HR": z.string().max(2000),
+        "sv-SE": z.string().max(2000),
+        "fi-FI": z.string().max(2000),
+        "et-EE": z.string().max(2000),
+        "bg-BG": z.string().max(2000),
+        "cs-CZ": z.string().max(2000),
+        "sk-SK": z.string().max(2000),
+        "nb-NO": z.string().max(2000),
+        "is-IS": z.string().max(2000),
+      })
+      .partial()
+      .passthrough(),
+    advance_invoice_subject: z
+      .object({
+        "en-US": z.string().max(500),
+        "de-DE": z.string().max(500),
+        "it-IT": z.string().max(500),
+        "fr-FR": z.string().max(500),
+        "es-ES": z.string().max(500),
+        "sl-SI": z.string().max(500),
+        "pt-PT": z.string().max(500),
+        "nl-NL": z.string().max(500),
+        "pl-PL": z.string().max(500),
+        "hr-HR": z.string().max(500),
+        "sv-SE": z.string().max(500),
+        "fi-FI": z.string().max(500),
+        "et-EE": z.string().max(500),
+        "bg-BG": z.string().max(500),
+        "cs-CZ": z.string().max(500),
+        "sk-SK": z.string().max(500),
+        "nb-NO": z.string().max(500),
+        "is-IS": z.string().max(500),
+      })
+      .partial()
+      .passthrough(),
+    advance_invoice_body: z
+      .object({
+        "en-US": z.string().max(2000),
+        "de-DE": z.string().max(2000),
+        "it-IT": z.string().max(2000),
+        "fr-FR": z.string().max(2000),
+        "es-ES": z.string().max(2000),
+        "sl-SI": z.string().max(2000),
+        "pt-PT": z.string().max(2000),
+        "nl-NL": z.string().max(2000),
+        "pl-PL": z.string().max(2000),
+        "hr-HR": z.string().max(2000),
+        "sv-SE": z.string().max(2000),
+        "fi-FI": z.string().max(2000),
+        "et-EE": z.string().max(2000),
+        "bg-BG": z.string().max(2000),
+        "cs-CZ": z.string().max(2000),
+        "sk-SK": z.string().max(2000),
+        "nb-NO": z.string().max(2000),
+        "is-IS": z.string().max(2000),
+      })
+      .partial()
+      .passthrough(),
+    delivery_note_subject: z
+      .object({
+        "en-US": z.string().max(500),
+        "de-DE": z.string().max(500),
+        "it-IT": z.string().max(500),
+        "fr-FR": z.string().max(500),
+        "es-ES": z.string().max(500),
+        "sl-SI": z.string().max(500),
+        "pt-PT": z.string().max(500),
+        "nl-NL": z.string().max(500),
+        "pl-PL": z.string().max(500),
+        "hr-HR": z.string().max(500),
+        "sv-SE": z.string().max(500),
+        "fi-FI": z.string().max(500),
+        "et-EE": z.string().max(500),
+        "bg-BG": z.string().max(500),
+        "cs-CZ": z.string().max(500),
+        "sk-SK": z.string().max(500),
+        "nb-NO": z.string().max(500),
+        "is-IS": z.string().max(500),
+      })
+      .partial()
+      .passthrough(),
+    delivery_note_body: z
+      .object({
+        "en-US": z.string().max(2000),
+        "de-DE": z.string().max(2000),
+        "it-IT": z.string().max(2000),
+        "fr-FR": z.string().max(2000),
+        "es-ES": z.string().max(2000),
+        "sl-SI": z.string().max(2000),
+        "pt-PT": z.string().max(2000),
+        "nl-NL": z.string().max(2000),
+        "pl-PL": z.string().max(2000),
+        "hr-HR": z.string().max(2000),
+        "sv-SE": z.string().max(2000),
+        "fi-FI": z.string().max(2000),
+        "et-EE": z.string().max(2000),
+        "bg-BG": z.string().max(2000),
+        "cs-CZ": z.string().max(2000),
+        "sk-SK": z.string().max(2000),
+        "nb-NO": z.string().max(2000),
+        "is-IS": z.string().max(2000),
+      })
+      .partial()
+      .passthrough(),
+  })
+  .partial()
+  .passthrough();
+
+
+// Dependency schema for entity
+const PaymentReminderTranslations = z
+  .object({
+    email_subject: z
+      .object({
+        "en-US": z.string().max(500),
+        "de-DE": z.string().max(500),
+        "it-IT": z.string().max(500),
+        "fr-FR": z.string().max(500),
+        "es-ES": z.string().max(500),
+        "sl-SI": z.string().max(500),
+        "pt-PT": z.string().max(500),
+        "nl-NL": z.string().max(500),
+        "pl-PL": z.string().max(500),
+        "hr-HR": z.string().max(500),
+        "sv-SE": z.string().max(500),
+        "fi-FI": z.string().max(500),
+        "et-EE": z.string().max(500),
+        "bg-BG": z.string().max(500),
+        "cs-CZ": z.string().max(500),
+        "sk-SK": z.string().max(500),
+        "nb-NO": z.string().max(500),
+        "is-IS": z.string().max(500),
+      })
+      .partial()
+      .passthrough(),
+    email_body: z
+      .object({
+        "en-US": z.string().max(2000),
+        "de-DE": z.string().max(2000),
+        "it-IT": z.string().max(2000),
+        "fr-FR": z.string().max(2000),
+        "es-ES": z.string().max(2000),
+        "sl-SI": z.string().max(2000),
+        "pt-PT": z.string().max(2000),
+        "nl-NL": z.string().max(2000),
+        "pl-PL": z.string().max(2000),
+        "hr-HR": z.string().max(2000),
+        "sv-SE": z.string().max(2000),
+        "fi-FI": z.string().max(2000),
+        "et-EE": z.string().max(2000),
+        "bg-BG": z.string().max(2000),
+        "cs-CZ": z.string().max(2000),
+        "sk-SK": z.string().max(2000),
+        "nb-NO": z.string().max(2000),
+        "is-IS": z.string().max(2000),
+      })
+      .partial()
+      .passthrough(),
+    payment_instructions: z
+      .object({
+        "en-US": z.string().max(2000),
+        "de-DE": z.string().max(2000),
+        "it-IT": z.string().max(2000),
+        "fr-FR": z.string().max(2000),
+        "es-ES": z.string().max(2000),
+        "sl-SI": z.string().max(2000),
+        "pt-PT": z.string().max(2000),
+        "nl-NL": z.string().max(2000),
+        "pl-PL": z.string().max(2000),
+        "hr-HR": z.string().max(2000),
+        "sv-SE": z.string().max(2000),
+        "fi-FI": z.string().max(2000),
+        "et-EE": z.string().max(2000),
+        "bg-BG": z.string().max(2000),
+        "cs-CZ": z.string().max(2000),
+        "sk-SK": z.string().max(2000),
+        "nb-NO": z.string().max(2000),
+        "is-IS": z.string().max(2000),
+      })
+      .partial()
+      .passthrough(),
+  })
+  .partial()
+  .passthrough();
+
+
+// Dependency schema for entity
+const TaxClauseDefaultTranslations = z
+  .object({
+    domestic: z
+      .object({
+        "en-US": z.string().max(2000),
+        "de-DE": z.string().max(2000),
+        "it-IT": z.string().max(2000),
+        "fr-FR": z.string().max(2000),
+        "es-ES": z.string().max(2000),
+        "sl-SI": z.string().max(2000),
+        "pt-PT": z.string().max(2000),
+        "nl-NL": z.string().max(2000),
+        "pl-PL": z.string().max(2000),
+        "hr-HR": z.string().max(2000),
+        "sv-SE": z.string().max(2000),
+        "fi-FI": z.string().max(2000),
+        "et-EE": z.string().max(2000),
+        "bg-BG": z.string().max(2000),
+        "cs-CZ": z.string().max(2000),
+        "sk-SK": z.string().max(2000),
+        "nb-NO": z.string().max(2000),
+        "is-IS": z.string().max(2000),
+      })
+      .partial()
+      .passthrough(),
+    intra_eu_b2b: z
+      .object({
+        "en-US": z.string().max(2000),
+        "de-DE": z.string().max(2000),
+        "it-IT": z.string().max(2000),
+        "fr-FR": z.string().max(2000),
+        "es-ES": z.string().max(2000),
+        "sl-SI": z.string().max(2000),
+        "pt-PT": z.string().max(2000),
+        "nl-NL": z.string().max(2000),
+        "pl-PL": z.string().max(2000),
+        "hr-HR": z.string().max(2000),
+        "sv-SE": z.string().max(2000),
+        "fi-FI": z.string().max(2000),
+        "et-EE": z.string().max(2000),
+        "bg-BG": z.string().max(2000),
+        "cs-CZ": z.string().max(2000),
+        "sk-SK": z.string().max(2000),
+        "nb-NO": z.string().max(2000),
+        "is-IS": z.string().max(2000),
+      })
+      .partial()
+      .passthrough(),
+    intra_eu_b2c: z
+      .object({
+        "en-US": z.string().max(2000),
+        "de-DE": z.string().max(2000),
+        "it-IT": z.string().max(2000),
+        "fr-FR": z.string().max(2000),
+        "es-ES": z.string().max(2000),
+        "sl-SI": z.string().max(2000),
+        "pt-PT": z.string().max(2000),
+        "nl-NL": z.string().max(2000),
+        "pl-PL": z.string().max(2000),
+        "hr-HR": z.string().max(2000),
+        "sv-SE": z.string().max(2000),
+        "fi-FI": z.string().max(2000),
+        "et-EE": z.string().max(2000),
+        "bg-BG": z.string().max(2000),
+        "cs-CZ": z.string().max(2000),
+        "sk-SK": z.string().max(2000),
+        "nb-NO": z.string().max(2000),
+        "is-IS": z.string().max(2000),
+      })
+      .partial()
+      .passthrough(),
+    "3w_b2b": z
+      .object({
+        "en-US": z.string().max(2000),
+        "de-DE": z.string().max(2000),
+        "it-IT": z.string().max(2000),
+        "fr-FR": z.string().max(2000),
+        "es-ES": z.string().max(2000),
+        "sl-SI": z.string().max(2000),
+        "pt-PT": z.string().max(2000),
+        "nl-NL": z.string().max(2000),
+        "pl-PL": z.string().max(2000),
+        "hr-HR": z.string().max(2000),
+        "sv-SE": z.string().max(2000),
+        "fi-FI": z.string().max(2000),
+        "et-EE": z.string().max(2000),
+        "bg-BG": z.string().max(2000),
+        "cs-CZ": z.string().max(2000),
+        "sk-SK": z.string().max(2000),
+        "nb-NO": z.string().max(2000),
+        "is-IS": z.string().max(2000),
+      })
+      .partial()
+      .passthrough(),
+    "3w_b2c": z
+      .object({
+        "en-US": z.string().max(2000),
+        "de-DE": z.string().max(2000),
+        "it-IT": z.string().max(2000),
+        "fr-FR": z.string().max(2000),
+        "es-ES": z.string().max(2000),
+        "sl-SI": z.string().max(2000),
+        "pt-PT": z.string().max(2000),
+        "nl-NL": z.string().max(2000),
+        "pl-PL": z.string().max(2000),
+        "hr-HR": z.string().max(2000),
+        "sv-SE": z.string().max(2000),
+        "fi-FI": z.string().max(2000),
+        "et-EE": z.string().max(2000),
+        "bg-BG": z.string().max(2000),
+        "cs-CZ": z.string().max(2000),
+        "sk-SK": z.string().max(2000),
+        "nb-NO": z.string().max(2000),
+        "is-IS": z.string().max(2000),
+      })
+      .partial()
+      .passthrough(),
+    export: z
+      .object({
+        "en-US": z.string().max(2000),
+        "de-DE": z.string().max(2000),
+        "it-IT": z.string().max(2000),
+        "fr-FR": z.string().max(2000),
+        "es-ES": z.string().max(2000),
+        "sl-SI": z.string().max(2000),
+        "pt-PT": z.string().max(2000),
+        "nl-NL": z.string().max(2000),
+        "pl-PL": z.string().max(2000),
+        "hr-HR": z.string().max(2000),
+        "sv-SE": z.string().max(2000),
+        "fi-FI": z.string().max(2000),
+        "et-EE": z.string().max(2000),
+        "bg-BG": z.string().max(2000),
+        "cs-CZ": z.string().max(2000),
+        "sk-SK": z.string().max(2000),
+        "nb-NO": z.string().max(2000),
+        "is-IS": z.string().max(2000),
+      })
+      .partial()
+      .passthrough(),
+  })
+  .partial()
+  .passthrough();
+
+
+// Dependency schema for entity
+const EntitySettingsTranslations = z
+  .object({
+    default_invoice_note: z
+      .object({
+        "en-US": z.string().max(2000),
+        "de-DE": z.string().max(2000),
+        "it-IT": z.string().max(2000),
+        "fr-FR": z.string().max(2000),
+        "es-ES": z.string().max(2000),
+        "sl-SI": z.string().max(2000),
+        "pt-PT": z.string().max(2000),
+        "nl-NL": z.string().max(2000),
+        "pl-PL": z.string().max(2000),
+        "hr-HR": z.string().max(2000),
+        "sv-SE": z.string().max(2000),
+        "fi-FI": z.string().max(2000),
+        "et-EE": z.string().max(2000),
+        "bg-BG": z.string().max(2000),
+        "cs-CZ": z.string().max(2000),
+        "sk-SK": z.string().max(2000),
+        "nb-NO": z.string().max(2000),
+        "is-IS": z.string().max(2000),
+      })
+      .partial()
+      .passthrough(),
+    default_invoice_payment_terms: z
+      .object({
+        "en-US": z.string().max(500),
+        "de-DE": z.string().max(500),
+        "it-IT": z.string().max(500),
+        "fr-FR": z.string().max(500),
+        "es-ES": z.string().max(500),
+        "sl-SI": z.string().max(500),
+        "pt-PT": z.string().max(500),
+        "nl-NL": z.string().max(500),
+        "pl-PL": z.string().max(500),
+        "hr-HR": z.string().max(500),
+        "sv-SE": z.string().max(500),
+        "fi-FI": z.string().max(500),
+        "et-EE": z.string().max(500),
+        "bg-BG": z.string().max(500),
+        "cs-CZ": z.string().max(500),
+        "sk-SK": z.string().max(500),
+        "nb-NO": z.string().max(500),
+        "is-IS": z.string().max(500),
+      })
+      .partial()
+      .passthrough(),
+    default_estimate_note: z
+      .object({
+        "en-US": z.string().max(2000),
+        "de-DE": z.string().max(2000),
+        "it-IT": z.string().max(2000),
+        "fr-FR": z.string().max(2000),
+        "es-ES": z.string().max(2000),
+        "sl-SI": z.string().max(2000),
+        "pt-PT": z.string().max(2000),
+        "nl-NL": z.string().max(2000),
+        "pl-PL": z.string().max(2000),
+        "hr-HR": z.string().max(2000),
+        "sv-SE": z.string().max(2000),
+        "fi-FI": z.string().max(2000),
+        "et-EE": z.string().max(2000),
+        "bg-BG": z.string().max(2000),
+        "cs-CZ": z.string().max(2000),
+        "sk-SK": z.string().max(2000),
+        "nb-NO": z.string().max(2000),
+        "is-IS": z.string().max(2000),
+      })
+      .partial()
+      .passthrough(),
+    default_estimate_payment_terms: z
+      .object({
+        "en-US": z.string().max(500),
+        "de-DE": z.string().max(500),
+        "it-IT": z.string().max(500),
+        "fr-FR": z.string().max(500),
+        "es-ES": z.string().max(500),
+        "sl-SI": z.string().max(500),
+        "pt-PT": z.string().max(500),
+        "nl-NL": z.string().max(500),
+        "pl-PL": z.string().max(500),
+        "hr-HR": z.string().max(500),
+        "sv-SE": z.string().max(500),
+        "fi-FI": z.string().max(500),
+        "et-EE": z.string().max(500),
+        "bg-BG": z.string().max(500),
+        "cs-CZ": z.string().max(500),
+        "sk-SK": z.string().max(500),
+        "nb-NO": z.string().max(500),
+        "is-IS": z.string().max(500),
+      })
+      .partial()
+      .passthrough(),
+    default_credit_note_note: z
+      .object({
+        "en-US": z.string().max(2000),
+        "de-DE": z.string().max(2000),
+        "it-IT": z.string().max(2000),
+        "fr-FR": z.string().max(2000),
+        "es-ES": z.string().max(2000),
+        "sl-SI": z.string().max(2000),
+        "pt-PT": z.string().max(2000),
+        "nl-NL": z.string().max(2000),
+        "pl-PL": z.string().max(2000),
+        "hr-HR": z.string().max(2000),
+        "sv-SE": z.string().max(2000),
+        "fi-FI": z.string().max(2000),
+        "et-EE": z.string().max(2000),
+        "bg-BG": z.string().max(2000),
+        "cs-CZ": z.string().max(2000),
+        "sk-SK": z.string().max(2000),
+        "nb-NO": z.string().max(2000),
+        "is-IS": z.string().max(2000),
+      })
+      .partial()
+      .passthrough(),
+    default_credit_note_payment_terms: z
+      .object({
+        "en-US": z.string().max(500),
+        "de-DE": z.string().max(500),
+        "it-IT": z.string().max(500),
+        "fr-FR": z.string().max(500),
+        "es-ES": z.string().max(500),
+        "sl-SI": z.string().max(500),
+        "pt-PT": z.string().max(500),
+        "nl-NL": z.string().max(500),
+        "pl-PL": z.string().max(500),
+        "hr-HR": z.string().max(500),
+        "sv-SE": z.string().max(500),
+        "fi-FI": z.string().max(500),
+        "et-EE": z.string().max(500),
+        "bg-BG": z.string().max(500),
+        "cs-CZ": z.string().max(500),
+        "sk-SK": z.string().max(500),
+        "nb-NO": z.string().max(500),
+        "is-IS": z.string().max(500),
+      })
+      .partial()
+      .passthrough(),
+    default_advance_invoice_note: z
+      .object({
+        "en-US": z.string().max(2000),
+        "de-DE": z.string().max(2000),
+        "it-IT": z.string().max(2000),
+        "fr-FR": z.string().max(2000),
+        "es-ES": z.string().max(2000),
+        "sl-SI": z.string().max(2000),
+        "pt-PT": z.string().max(2000),
+        "nl-NL": z.string().max(2000),
+        "pl-PL": z.string().max(2000),
+        "hr-HR": z.string().max(2000),
+        "sv-SE": z.string().max(2000),
+        "fi-FI": z.string().max(2000),
+        "et-EE": z.string().max(2000),
+        "bg-BG": z.string().max(2000),
+        "cs-CZ": z.string().max(2000),
+        "sk-SK": z.string().max(2000),
+        "nb-NO": z.string().max(2000),
+        "is-IS": z.string().max(2000),
+      })
+      .partial()
+      .passthrough(),
+    default_delivery_note_note: z
+      .object({
+        "en-US": z.string().max(2000),
+        "de-DE": z.string().max(2000),
+        "it-IT": z.string().max(2000),
+        "fr-FR": z.string().max(2000),
+        "es-ES": z.string().max(2000),
+        "sl-SI": z.string().max(2000),
+        "pt-PT": z.string().max(2000),
+        "nl-NL": z.string().max(2000),
+        "pl-PL": z.string().max(2000),
+        "hr-HR": z.string().max(2000),
+        "sv-SE": z.string().max(2000),
+        "fi-FI": z.string().max(2000),
+        "et-EE": z.string().max(2000),
+        "bg-BG": z.string().max(2000),
+        "cs-CZ": z.string().max(2000),
+        "sk-SK": z.string().max(2000),
+        "nb-NO": z.string().max(2000),
+        "is-IS": z.string().max(2000),
+      })
+      .partial()
+      .passthrough(),
+    document_footer: z
+      .object({
+        "en-US": z.string().max(500),
+        "de-DE": z.string().max(500),
+        "it-IT": z.string().max(500),
+        "fr-FR": z.string().max(500),
+        "es-ES": z.string().max(500),
+        "sl-SI": z.string().max(500),
+        "pt-PT": z.string().max(500),
+        "nl-NL": z.string().max(500),
+        "pl-PL": z.string().max(500),
+        "hr-HR": z.string().max(500),
+        "sv-SE": z.string().max(500),
+        "fi-FI": z.string().max(500),
+        "et-EE": z.string().max(500),
+        "bg-BG": z.string().max(500),
+        "cs-CZ": z.string().max(500),
+        "sk-SK": z.string().max(500),
+        "nb-NO": z.string().max(500),
+        "is-IS": z.string().max(500),
+      })
+      .partial()
+      .passthrough(),
+    default_document_signature: z
+      .object({
+        "en-US": z.string().max(1000),
+        "de-DE": z.string().max(1000),
+        "it-IT": z.string().max(1000),
+        "fr-FR": z.string().max(1000),
+        "es-ES": z.string().max(1000),
+        "sl-SI": z.string().max(1000),
+        "pt-PT": z.string().max(1000),
+        "nl-NL": z.string().max(1000),
+        "pl-PL": z.string().max(1000),
+        "hr-HR": z.string().max(1000),
+        "sv-SE": z.string().max(1000),
+        "fi-FI": z.string().max(1000),
+        "et-EE": z.string().max(1000),
+        "bg-BG": z.string().max(1000),
+        "cs-CZ": z.string().max(1000),
+        "sk-SK": z.string().max(1000),
+        "nb-NO": z.string().max(1000),
+        "is-IS": z.string().max(1000),
+      })
+      .partial()
+      .passthrough(),
+    email_defaults: EmailDefaultTranslations,
+    payment_reminders: PaymentReminderTranslations,
+    tax_clause_defaults: TaxClauseDefaultTranslations,
+  })
+  .partial()
+  .passthrough();
+
+
+// Dependency schema for entity
+const CalculationSettings = z
+  .object({
+    default_mode: z.union([
+      z.union([z.enum(["b2b_standard", "b2c_gross_discount"]), z.null()]),
+      z.null(),
+    ]),
+  })
+  .partial()
+  .passthrough();
+
+
+// Dependency schema for entity
+const SloveniaYearlyReportingSettings = z
+  .object({
+    activity_codes: z.union([
+      z.array(z.string().regex(/^\d{2}\.\d{3}$/)),
+      z.null(),
+    ]),
+    registration_number: z.union([z.string(), z.null()]),
+    accounting_type: z.union([
+      z.union([z.enum(["records", "single_entry", "double_entry"]), z.null()]),
+      z.null(),
+    ]),
+    normiranec_insurance_basis: z.union([
+      z.union([z.enum(["full_time_self_employed", "other"]), z.null()]),
+      z.null(),
+    ]),
+    default_withholding_tax_amount: z.union([z.number(), z.null()]),
+    default_foreign_tax_credit_amount: z.union([z.number(), z.null()]),
+  })
+  .partial()
+  .passthrough();
+
+
+// Dependency schema for entity
+const SloveniaAccountingKontoMappings = z
+  .object({
+    receivables: z.union([z.string(), z.null()]),
+    payables: z.union([z.string(), z.null()]),
+    sales_vat_22: z.union([z.string(), z.null()]),
+    sales_vat_95: z.union([z.string(), z.null()]),
+    sales_vat_5: z.union([z.string(), z.null()]),
+    purchase_vat_recoverable_22: z.union([z.string(), z.null()]),
+    purchase_vat_recoverable_95: z.union([z.string(), z.null()]),
+    purchase_vat_recoverable_5: z.union([z.string(), z.null()]),
+    sales_revenue_22: z.union([z.string(), z.null()]),
+    sales_revenue_95: z.union([z.string(), z.null()]),
+    sales_revenue_5: z.union([z.string(), z.null()]),
+    sales_revenue_exempt: z.union([z.string(), z.null()]),
+    sales_revenue_eu_goods: z.union([z.string(), z.null()]),
+    sales_revenue_eu_services: z.union([z.string(), z.null()]),
+    sales_revenue_reverse_charge: z.union([z.string(), z.null()]),
+    sales_revenue_third_country_goods: z.union([z.string(), z.null()]),
+    sales_revenue_third_country_services: z.union([z.string(), z.null()]),
+    purchase_expense_22: z.union([z.string(), z.null()]),
+    purchase_expense_95: z.union([z.string(), z.null()]),
+    purchase_expense_5: z.union([z.string(), z.null()]),
+    purchase_expense_exempt: z.union([z.string(), z.null()]),
+    purchase_expense_eu_goods: z.union([z.string(), z.null()]),
+    purchase_expense_eu_services: z.union([z.string(), z.null()]),
+    purchase_expense_reverse_charge: z.union([z.string(), z.null()]),
+    purchase_expense_third_country_goods: z.union([z.string(), z.null()]),
+    purchase_expense_third_country_services: z.union([z.string(), z.null()]),
+  })
+  .partial()
+  .passthrough();
+
+
+// Dependency schema for entity
+const SloveniaAccountingExportsSettings = z
+  .object({
+    preferred_format: z.union([
+      z.union([z.enum(["vod_xml", "vasco_xml", "minimax_xml"]), z.null()]),
+      z.null(),
+    ]),
+    konto_mappings: z.union([SloveniaAccountingKontoMappings, z.null()]),
+  })
+  .partial()
+  .passthrough();
+
+
+// Dependency schema for entity
+const SloveniaEntitySettings = z
+  .object({
+    business_form: z.union([
+      z.union([z.enum(["sp", "doo", "dno", "club"]), z.null()]),
+      z.null(),
+    ]),
+    income_tax_regime: z.union([
+      z.union([z.enum(["normirani", "dejanski"]), z.null()]),
+      z.null(),
+    ]),
+    vat_profile: z.union([
+      z.union([z.enum(["standard", "special_vat_identified", "non_vat_subject"]), z.null()]),
+      z.null(),
+    ]),
+    tax_residency: z.union([
+      z.union([z.enum(["resident", "non_resident"]), z.null()]),
+      z.null(),
+    ]),
+    yearly_reporting: z.union([SloveniaYearlyReportingSettings, z.null()]),
+    accounting_exports: z.union([SloveniaAccountingExportsSettings, z.null()]),
+  })
+  .partial()
+  .passthrough();
+
+
+// Dependency schema for entity
+const PtEntitySettings = z
+  .object({
+    operator_first_name: z.string().min(1),
+    operator_last_name: z.string().min(1),
+    operator_tax_number: z.string().regex(/^\d{9}$/),
+  })
+  .partial()
+  .passthrough();
+
+
+// Dependency schema for entity
+const EuTaxRules = z
+  .object({
+    vies_validate_vat: z.boolean().default(true),
+    auto_reverse_charge: z.boolean().default(false),
+    auto_remove_tax_export: z.boolean().default(false),
+    require_gross_prices: z.boolean().default(false),
+  })
+  .partial()
+  .passthrough();
+
+
+// Dependency schema for entity
+const TaxRules = z
+  .object({ eu: z.union([EuTaxRules, z.null()]) })
+  .partial()
+  .passthrough();
+
+
+// Dependency schema for entity
+const UpnQrSettings = z
+  .object({
+    enabled: z.boolean(),
+    display_mode: z
+      .enum(["qr_only", "full_slip"])
+      .optional()
+      .default("qr_only"),
+    purpose_code: z
+      .string()
+      .min(4)
+      .max(4)
+      .regex(/^[A-Z]{4}$/)
+      .optional()
+      .default("OTHR"),
+  })
+  .passthrough();
+
+
+// Dependency schema for entity
+const Hub3QrSettings = z
+  .object({
+    enabled: z.boolean(),
+    purpose_code: z
+      .string()
+      .min(4)
+      .max(4)
+      .regex(/^[A-Z]{4}$/)
+      .optional()
+      .default("OTHR"),
+    reference_model: z
+      .string()
+      .regex(/^HR\d{2}$/)
+      .optional()
+      .default("HR00"),
+  })
+  .passthrough();
+
+
+// Dependency schema for entity
+const TaxClauseDefaults = z
+  .object({
+    domestic: z.union([z.string(), z.null()]),
+    intra_eu_b2b: z.union([z.string(), z.null()]),
+    intra_eu_b2c: z.union([z.string(), z.null()]),
+    "3w_b2b": z.union([z.string(), z.null()]),
+    "3w_b2c": z.union([z.string(), z.null()]),
+    export: z.union([z.string(), z.null()]),
+  })
+  .partial()
+  .passthrough();
+
+
+// Dependency schema for entity
+const EInvoicingEntitySettings = z
+  .object({
+    enabled: z.boolean().default(false),
+    auto_send: z.boolean().default(false),
+    default_scheme_id: z.string(),
+  })
+  .partial()
+  .passthrough();
+
+
+// Dependency schema for entity
+const RevenueRecognitionSettings = z
+  .object({
+    default_method: z.enum(["off", "service_period_daily"]).default("off"),
+  })
+  .partial();
+
+
 // Schema for createEntity operation
 const createEntitySchemaDefinition = z.object({
   name: z.string().min(1),
@@ -45,6 +989,7 @@ const createEntitySchemaDefinition = z.object({
             credit_note: z.union([z.string(), z.null()]),
             advance_invoice: z.union([z.string(), z.null()]),
             delivery_note: z.union([z.string(), z.null()]),
+            expense: z.union([z.string(), z.null()]),
           })
           .partial()
           .passthrough(),
@@ -63,12 +1008,18 @@ const createEntitySchemaDefinition = z.object({
           .passthrough(),
         z.null(),
       ]),
+      number_sequence_starts: z.union([NumberSequenceStarts, z.null()]),
+      unit_number_sequence_starts: z.union([
+        UnitNumberSequenceStarts,
+        z.null(),
+      ]),
       primary_color: z.union([z.string(), z.null()]),
       logo_scale_percent: z.union([z.number(), z.null()]),
       has_logo: z.union([z.boolean(), z.null()]),
       has_signature: z.union([z.boolean(), z.null()]),
       default_invoice_due_days: z.union([z.number(), z.null()]),
       default_estimate_valid_days: z.union([z.number(), z.null()]),
+      email: z.union([z.string(), z.null()]),
       email_defaults: z.union([
         z
           .object({
@@ -97,156 +1048,9 @@ const createEntitySchemaDefinition = z.object({
       default_delivery_note_note: z.union([z.string(), z.null()]),
       document_footer: z.union([z.string(), z.null()]),
       default_document_signature: z.union([z.string(), z.null()]),
-      calculation: z.union([
-        z
-          .object({
-            default_mode: z.union([
-              z.union([z.enum(["b2b_standard", "b2c_gross_discount"]), z.null()]),
-              z.null(),
-            ]),
-          })
-          .partial()
-          .passthrough(),
-        z.null(),
-      ]),
-      slovenia: z.union([
-        z
-          .object({
-            business_form: z.union([
-              z.union([z.enum(["sp", "doo", "dno", "club"]), z.null()]),
-              z.null(),
-            ]),
-            income_tax_regime: z.union([
-              z.union([z.enum(["normirani", "dejanski"]), z.null()]),
-              z.null(),
-            ]),
-            vat_profile: z.union([
-              z.union([z.enum(["standard", "special_vat_identified", "non_vat_subject"]), z.null()]),
-              z.null(),
-            ]),
-            tax_residency: z.union([
-              z.union([z.enum(["resident", "non_resident"]), z.null()]),
-              z.null(),
-            ]),
-            yearly_reporting: z.union([
-              z
-                .object({
-                  activity_codes: z.union([
-                    z.array(z.string().regex(/^\d{2}\.\d{3}$/)),
-                    z.null(),
-                  ]),
-                  registration_number: z.union([z.string(), z.null()]),
-                  accounting_type: z.union([
-                    z.union([z.enum(["records", "single_entry", "double_entry"]), z.null()]),
-                    z.null(),
-                  ]),
-                  normiranec_insurance_basis: z.union([
-                    z.union([z.enum(["full_time_self_employed", "other"]), z.null()]),
-                    z.null(),
-                  ]),
-                  default_withholding_tax_amount: z.union([
-                    z.number(),
-                    z.null(),
-                  ]),
-                  default_foreign_tax_credit_amount: z.union([
-                    z.number(),
-                    z.null(),
-                  ]),
-                })
-                .partial()
-                .passthrough(),
-              z.null(),
-            ]),
-            accounting_exports: z.union([
-              z
-                .object({
-                  preferred_format: z.union([
-                    z.union([z.enum(["vod_xml", "vasco_xml", "minimax_xml"]), z.null()]),
-                    z.null(),
-                  ]),
-                  konto_mappings: z.union([
-                    z
-                      .object({
-                        receivables: z.union([z.string(), z.null()]),
-                        payables: z.union([z.string(), z.null()]),
-                        sales_vat_22: z.union([z.string(), z.null()]),
-                        sales_vat_95: z.union([z.string(), z.null()]),
-                        sales_vat_5: z.union([z.string(), z.null()]),
-                        purchase_vat_recoverable_22: z.union([
-                          z.string(),
-                          z.null(),
-                        ]),
-                        purchase_vat_recoverable_95: z.union([
-                          z.string(),
-                          z.null(),
-                        ]),
-                        purchase_vat_recoverable_5: z.union([
-                          z.string(),
-                          z.null(),
-                        ]),
-                        sales_revenue_22: z.union([z.string(), z.null()]),
-                        sales_revenue_95: z.union([z.string(), z.null()]),
-                        sales_revenue_5: z.union([z.string(), z.null()]),
-                        sales_revenue_exempt: z.union([z.string(), z.null()]),
-                        sales_revenue_eu_goods: z.union([z.string(), z.null()]),
-                        sales_revenue_eu_services: z.union([
-                          z.string(),
-                          z.null(),
-                        ]),
-                        sales_revenue_reverse_charge: z.union([
-                          z.string(),
-                          z.null(),
-                        ]),
-                        sales_revenue_third_country_goods: z.union([
-                          z.string(),
-                          z.null(),
-                        ]),
-                        sales_revenue_third_country_services: z.union([
-                          z.string(),
-                          z.null(),
-                        ]),
-                        purchase_expense_22: z.union([z.string(), z.null()]),
-                        purchase_expense_95: z.union([z.string(), z.null()]),
-                        purchase_expense_5: z.union([z.string(), z.null()]),
-                        purchase_expense_exempt: z.union([
-                          z.string(),
-                          z.null(),
-                        ]),
-                        purchase_expense_eu_goods: z.union([
-                          z.string(),
-                          z.null(),
-                        ]),
-                        purchase_expense_eu_services: z.union([
-                          z.string(),
-                          z.null(),
-                        ]),
-                        purchase_expense_reverse_charge: z.union([
-                          z.string(),
-                          z.null(),
-                        ]),
-                        purchase_expense_third_country_goods: z.union([
-                          z.string(),
-                          z.null(),
-                        ]),
-                        purchase_expense_third_country_services: z.union([
-                          z.string(),
-                          z.null(),
-                        ]),
-                      })
-                      .partial()
-                      .passthrough(),
-                    z.null(),
-                  ]),
-                })
-                .partial()
-                .passthrough(),
-              z.null(),
-            ]),
-          })
-          .partial()
-          .passthrough(),
-        z.null(),
-      ]),
+      translations: z.union([EntitySettingsTranslations, z.null()]),
+      calculation: z.union([CalculationSettings, z.null()]),
+      slovenia: z.union([SloveniaEntitySettings, z.null()]),
       furs: z.union([
         z
           .object({
@@ -277,18 +1081,8 @@ const createEntitySchemaDefinition = z.object({
           .passthrough(),
         z.null(),
       ]),
-      pt: z.union([
-        z
-          .object({
-            operator_first_name: z.string().min(1),
-            operator_last_name: z.string().min(1),
-            operator_tax_number: z.string().regex(/^\d{9}$/),
-          })
-          .partial()
-          .passthrough(),
-        z.null(),
-      ]),
-      tax_rules: z.any().optional(),
+      pt: z.union([PtEntitySettings, z.null()]),
+      tax_rules: z.union([TaxRules, z.null()]),
       overdue_notifications: z.union([
         z
           .object({
@@ -303,83 +1097,49 @@ const createEntitySchemaDefinition = z.object({
           .passthrough(),
         z.null(),
       ]),
-      upn_qr: z.union([
+      payment_reminders: z.union([
         z
           .object({
-            enabled: z.boolean(),
-            display_mode: z
-              .enum(["qr_only", "full_slip"])
-              .optional()
-              .default("qr_only"),
-            purpose_code: z
-              .string()
-              .min(4)
-              .max(4)
-              .regex(/^[A-Z]{4}$/)
-              .optional()
-              .default("OTHR"),
+            email_subject: z.union([z.string(), z.null()]),
+            email_body: z.union([z.string(), z.null()]),
+            payment_instructions: z.union([z.string(), z.null()]),
           })
+          .partial()
           .passthrough(),
         z.null(),
       ]),
+      upn_qr: z.union([UpnQrSettings, z.null()]),
       epc_qr: z.union([
         z.object({ enabled: z.boolean() }).passthrough(),
         z.null(),
       ]),
-      hub3_qr: z.union([
+      hub3_qr: z.union([Hub3QrSettings, z.null()]),
+      bank_accounts: z.union([z.array(z.any()), z.null()]),
+      eslog_validation_enabled: z.union([z.boolean(), z.null()]),
+      ujp_validation_with_eslog_enabled: z.union([z.boolean(), z.null()]),
+      xrechnung: z.union([
         z
-          .object({
-            enabled: z.boolean(),
-            purpose_code: z
-              .string()
-              .min(4)
-              .max(4)
-              .regex(/^[A-Z]{4}$/)
-              .optional()
-              .default("OTHR"),
-            reference_model: z
-              .string()
-              .regex(/^HR\d{2}$/)
-              .optional()
-              .default("HR00"),
-          })
+          .object({ enabled: z.boolean().default(false) })
+          .partial()
           .passthrough(),
         z.null(),
       ]),
-      bank_accounts: z.union([z.array(z.any()), z.null()]),
-      eslog_validation_enabled: z.union([z.boolean(), z.null()]),
+      zugferd: z.union([
+        z
+          .object({ enabled: z.boolean().default(false) })
+          .partial()
+          .passthrough(),
+        z.null(),
+      ]),
       delivery_note_hide_prices: z.union([z.boolean(), z.null()]),
       credit_note_negative_values: z.union([z.boolean(), z.null()]),
       show_payment_amounts: z.union([z.boolean(), z.null()]),
       receipt_note: z.union([z.string(), z.null()]),
       receipt_footer: z.union([z.string(), z.null()]),
       receipt_signature: z.union([z.string(), z.null()]),
-      tax_clause_defaults: z.union([
-        z
-          .object({
-            domestic: z.union([z.string(), z.null()]),
-            intra_eu_b2b: z.union([z.string(), z.null()]),
-            intra_eu_b2c: z.union([z.string(), z.null()]),
-            "3w_b2b": z.union([z.string(), z.null()]),
-            "3w_b2c": z.union([z.string(), z.null()]),
-            export: z.union([z.string(), z.null()]),
-          })
-          .partial()
-          .passthrough(),
-        z.null(),
-      ]),
-      e_invoicing: z.union([
-        z
-          .object({
-            enabled: z.boolean().default(false),
-            provider: z.literal("flowin").default("flowin"),
-            auto_send: z.boolean().default(false),
-            default_scheme_id: z.string(),
-          })
-          .partial()
-          .passthrough(),
-        z.null(),
-      ]),
+      tax_clause_defaults: z.union([TaxClauseDefaults, z.null()]),
+      e_invoicing: z.union([EInvoicingEntitySettings, z.null()]),
+      revenue_recognition: z.union([RevenueRecognitionSettings, z.null()]),
     })
     .partial()
     .passthrough()
@@ -423,6 +1183,7 @@ const patchEntitySchemaDefinition = z
               credit_note: z.union([z.string(), z.null()]),
               advance_invoice: z.union([z.string(), z.null()]),
               delivery_note: z.union([z.string(), z.null()]),
+              expense: z.union([z.string(), z.null()]),
             })
             .partial()
             .passthrough(),
@@ -441,12 +1202,18 @@ const patchEntitySchemaDefinition = z
             .passthrough(),
           z.null(),
         ]),
+        number_sequence_starts: z.union([NumberSequenceStarts, z.null()]),
+        unit_number_sequence_starts: z.union([
+          UnitNumberSequenceStarts,
+          z.null(),
+        ]),
         primary_color: z.union([z.string(), z.null()]),
         logo_scale_percent: z.union([z.number(), z.null()]),
         has_logo: z.union([z.boolean(), z.null()]),
         has_signature: z.union([z.boolean(), z.null()]),
         default_invoice_due_days: z.union([z.number(), z.null()]),
         default_estimate_valid_days: z.union([z.number(), z.null()]),
+        email: z.union([z.string(), z.null()]),
         email_defaults: z.union([
           z
             .object({
@@ -475,157 +1242,11 @@ const patchEntitySchemaDefinition = z
         default_delivery_note_note: z.union([z.string(), z.null()]),
         document_footer: z.union([z.string(), z.null()]),
         default_document_signature: z.union([z.string(), z.null()]),
-        calculation: z.union([
-          z
-            .object({
-              default_mode: z.union([
-                z.union([z.enum(["b2b_standard", "b2c_gross_discount"]), z.null()]),
-                z.null(),
-              ]),
-            })
-            .partial()
-            .passthrough(),
-          z.null(),
-        ]),
+        translations: z.union([EntitySettingsTranslations, z.null()]),
+        calculation: z.union([CalculationSettings, z.null()]),
         slovenia: z.union([
-          z
-            .object({
-              business_form: z.union([
-                z.union([z.enum(["sp", "doo", "dno", "club"]), z.null()]),
-                z.null(),
-              ]),
-              income_tax_regime: z.union([
-                z.union([z.enum(["normirani", "dejanski"]), z.null()]),
-                z.null(),
-              ]),
-              vat_profile: z.union([
-                z.union([z.enum(["standard", "special_vat_identified", "non_vat_subject"]), z.null()]),
-                z.null(),
-              ]),
-              tax_residency: z.union([
-                z.union([z.enum(["resident", "non_resident"]), z.null()]),
-                z.null(),
-              ]),
-              yearly_reporting: z.union([
-                z
-                  .object({
-                    activity_codes: z.union([
-                      z.array(z.string().regex(/^\d{2}\.\d{3}$/)),
-                      z.null(),
-                    ]),
-                    registration_number: z.union([z.string(), z.null()]),
-                    accounting_type: z.union([
-                      z.union([z.enum(["records", "single_entry", "double_entry"]), z.null()]),
-                      z.null(),
-                    ]),
-                    normiranec_insurance_basis: z.union([
-                      z.union([z.enum(["full_time_self_employed", "other"]), z.null()]),
-                      z.null(),
-                    ]),
-                    default_withholding_tax_amount: z.union([
-                      z.number(),
-                      z.null(),
-                    ]),
-                    default_foreign_tax_credit_amount: z.union([
-                      z.number(),
-                      z.null(),
-                    ]),
-                  })
-                  .partial()
-                  .passthrough(),
-                z.null(),
-              ]),
-              accounting_exports: z.union([
-                z
-                  .object({
-                    preferred_format: z.union([
-                      z.union([z.enum(["vod_xml", "vasco_xml", "minimax_xml"]), z.null()]),
-                      z.null(),
-                    ]),
-                    konto_mappings: z.union([
-                      z
-                        .object({
-                          receivables: z.union([z.string(), z.null()]),
-                          payables: z.union([z.string(), z.null()]),
-                          sales_vat_22: z.union([z.string(), z.null()]),
-                          sales_vat_95: z.union([z.string(), z.null()]),
-                          sales_vat_5: z.union([z.string(), z.null()]),
-                          purchase_vat_recoverable_22: z.union([
-                            z.string(),
-                            z.null(),
-                          ]),
-                          purchase_vat_recoverable_95: z.union([
-                            z.string(),
-                            z.null(),
-                          ]),
-                          purchase_vat_recoverable_5: z.union([
-                            z.string(),
-                            z.null(),
-                          ]),
-                          sales_revenue_22: z.union([z.string(), z.null()]),
-                          sales_revenue_95: z.union([z.string(), z.null()]),
-                          sales_revenue_5: z.union([z.string(), z.null()]),
-                          sales_revenue_exempt: z.union([z.string(), z.null()]),
-                          sales_revenue_eu_goods: z.union([
-                            z.string(),
-                            z.null(),
-                          ]),
-                          sales_revenue_eu_services: z.union([
-                            z.string(),
-                            z.null(),
-                          ]),
-                          sales_revenue_reverse_charge: z.union([
-                            z.string(),
-                            z.null(),
-                          ]),
-                          sales_revenue_third_country_goods: z.union([
-                            z.string(),
-                            z.null(),
-                          ]),
-                          sales_revenue_third_country_services: z.union([
-                            z.string(),
-                            z.null(),
-                          ]),
-                          purchase_expense_22: z.union([z.string(), z.null()]),
-                          purchase_expense_95: z.union([z.string(), z.null()]),
-                          purchase_expense_5: z.union([z.string(), z.null()]),
-                          purchase_expense_exempt: z.union([
-                            z.string(),
-                            z.null(),
-                          ]),
-                          purchase_expense_eu_goods: z.union([
-                            z.string(),
-                            z.null(),
-                          ]),
-                          purchase_expense_eu_services: z.union([
-                            z.string(),
-                            z.null(),
-                          ]),
-                          purchase_expense_reverse_charge: z.union([
-                            z.string(),
-                            z.null(),
-                          ]),
-                          purchase_expense_third_country_goods: z.union([
-                            z.string(),
-                            z.null(),
-                          ]),
-                          purchase_expense_third_country_services: z.union([
-                            z.string(),
-                            z.null(),
-                          ]),
-                        })
-                        .partial()
-                        .passthrough(),
-                      z.null(),
-                    ]),
-                  })
-                  .partial()
-                  .passthrough(),
-                z.null(),
-              ]),
-            })
-            .partial()
-            .passthrough(),
+          SloveniaEntitySettings,
+          z.object({}).partial().passthrough(),
           z.null(),
         ]),
         furs: z.union([
@@ -641,6 +1262,7 @@ const patchEntitySchemaDefinition = z
             })
             .partial()
             .passthrough(),
+          z.object({}).partial().passthrough(),
           z.null(),
         ]),
         fina: z.union([
@@ -656,20 +1278,11 @@ const patchEntitySchemaDefinition = z
             })
             .partial()
             .passthrough(),
+          z.object({}).partial().passthrough(),
           z.null(),
         ]),
-        pt: z.union([
-          z
-            .object({
-              operator_first_name: z.string().min(1),
-              operator_last_name: z.string().min(1),
-              operator_tax_number: z.string().regex(/^\d{9}$/),
-            })
-            .partial()
-            .passthrough(),
-          z.null(),
-        ]),
-        tax_rules: z.any().optional(),
+        pt: z.union([PtEntitySettings, z.null()]),
+        tax_rules: z.union([TaxRules, z.null()]),
         overdue_notifications: z.union([
           z
             .object({
@@ -684,81 +1297,55 @@ const patchEntitySchemaDefinition = z
             .passthrough(),
           z.null(),
         ]),
-        upn_qr: z.union([
+        payment_reminders: z.union([
           z
             .object({
-              enabled: z.boolean(),
-              display_mode: z
-                .enum(["qr_only", "full_slip"])
-                .optional()
-                .default("qr_only"),
-              purpose_code: z
-                .string()
-                .min(4)
-                .max(4)
-                .regex(/^[A-Z]{4}$/)
-                .optional()
-                .default("OTHR"),
+              email_subject: z.union([z.string(), z.null()]),
+              email_body: z.union([z.string(), z.null()]),
+              payment_instructions: z.union([z.string(), z.null()]),
             })
+            .partial()
             .passthrough(),
           z.null(),
         ]),
+        upn_qr: z.union([UpnQrSettings, z.null()]),
         epc_qr: z.union([
           z.object({ enabled: z.boolean() }).passthrough(),
           z.null(),
         ]),
-        hub3_qr: z.union([
+        hub3_qr: z.union([Hub3QrSettings, z.null()]),
+        bank_accounts: z.union([z.array(z.any()), z.null()]),
+        eslog_validation_enabled: z.union([z.boolean(), z.null()]),
+        ujp_validation_with_eslog_enabled: z.union([z.boolean(), z.null()]),
+        xrechnung: z.union([
           z
-            .object({
-              enabled: z.boolean(),
-              purpose_code: z
-                .string()
-                .min(4)
-                .max(4)
-                .regex(/^[A-Z]{4}$/)
-                .optional()
-                .default("OTHR"),
-              reference_model: z
-                .string()
-                .regex(/^HR\d{2}$/)
-                .optional()
-                .default("HR00"),
-            })
+            .object({ enabled: z.boolean().default(false) })
+            .partial()
             .passthrough(),
           z.null(),
         ]),
-        bank_accounts: z.union([z.array(z.any()), z.null()]),
-        eslog_validation_enabled: z.union([z.boolean(), z.null()]),
+        zugferd: z.union([
+          z
+            .object({ enabled: z.boolean().default(false) })
+            .partial()
+            .passthrough(),
+          z.null(),
+        ]),
         delivery_note_hide_prices: z.union([z.boolean(), z.null()]),
         credit_note_negative_values: z.union([z.boolean(), z.null()]),
         show_payment_amounts: z.union([z.boolean(), z.null()]),
         receipt_note: z.union([z.string(), z.null()]),
         receipt_footer: z.union([z.string(), z.null()]),
         receipt_signature: z.union([z.string(), z.null()]),
-        tax_clause_defaults: z.union([
-          z
-            .object({
-              domestic: z.union([z.string(), z.null()]),
-              intra_eu_b2b: z.union([z.string(), z.null()]),
-              intra_eu_b2c: z.union([z.string(), z.null()]),
-              "3w_b2b": z.union([z.string(), z.null()]),
-              "3w_b2c": z.union([z.string(), z.null()]),
-              export: z.union([z.string(), z.null()]),
-            })
-            .partial()
-            .passthrough(),
+        tax_clause_defaults: z.union([TaxClauseDefaults, z.null()]),
+        e_invoicing: z.union([
+          EInvoicingEntitySettings,
+          z.object({}).partial().passthrough(),
           z.null(),
         ]),
-        e_invoicing: z.union([
-          z
-            .object({
-              enabled: z.boolean().default(false),
-              provider: z.literal("flowin").default("flowin"),
-              auto_send: z.boolean().default(false),
-              default_scheme_id: z.string(),
-            })
-            .partial()
-            .passthrough(),
+        revenue_recognition: z.union([
+          RevenueRecognitionSettings,
+          z.object({}).partial().passthrough(),
           z.null(),
         ]),
       })

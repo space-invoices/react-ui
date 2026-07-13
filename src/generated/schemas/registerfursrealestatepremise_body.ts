@@ -28,6 +28,7 @@ const registerFursRealEstatePremiseSchemaDefinition = z.object({
         .regex(/^\d{4}$/),
     })
     .passthrough(),
+  starting_number: z.union([z.number(), z.null()]).optional(),
 });
 
 export type RegisterFursRealEstatePremiseSchema = z.infer<typeof registerFursRealEstatePremiseSchemaDefinition>;

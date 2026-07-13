@@ -23,7 +23,7 @@ import { useA4Scaling } from "./use-a4-scaling";
 
 const SAVED_PREVIEW_TIMING_EVENT = "si:saved-preview-timing";
 const SAVED_DOCUMENT_PREVIEW_QUERY_KEY = "document-preview-html";
-const SAVED_DOCUMENT_PREVIEW_RENDERER_VERSION = "html-preview-v16";
+const SAVED_DOCUMENT_PREVIEW_RENDERER_VERSION = "html-preview-v17";
 const SAVED_DOCUMENT_PREVIEW_STALE_TIME = 1000 * 60 * 5;
 const SAVED_DOCUMENT_PREVIEW_GC_TIME = 1000 * 60 * 30;
 
@@ -38,6 +38,7 @@ export function getSavedDocumentPreviewQueryKey({
   documentUpdatedAt,
   entityId,
   template,
+  language,
   isPublicView,
   shareableId,
 }: {
@@ -45,6 +46,7 @@ export function getSavedDocumentPreviewQueryKey({
   documentUpdatedAt?: string | null;
   entityId?: string | null;
   template?: "modern" | "classic" | "condensed" | "minimal" | "fashion";
+  language?: string | null;
   isPublicView?: boolean;
   shareableId?: string | null;
 }) {
@@ -55,6 +57,7 @@ export function getSavedDocumentPreviewQueryKey({
     documentUpdatedAt ?? null,
     entityId ?? null,
     template ?? null,
+    language ?? null,
     isPublicView ?? false,
     shareableId ?? null,
   ] as const;
@@ -70,7 +73,7 @@ type DocumentPreviewDisplayProps = {
   template?: "modern" | "classic" | "condensed" | "minimal" | "fashion";
   className?: string;
   apiBaseUrl?: string;
-  /** Language for translated labels in public preview rendering. */
+  /** Language for translated document labels in preview rendering. */
   language?: string;
   /** Whether this is a public view (no auth required) */
   isPublicView?: boolean;
@@ -125,10 +128,11 @@ export function DocumentPreviewDisplay({
       documentUpdatedAt,
       entityId: activeEntity?.id,
       template: effectiveTemplate,
+      language,
       isPublicView,
       shareableId,
     });
-  }, [activeEntity?.id, documentId, documentUpdatedAt, effectiveTemplate, isPublicView, shareableId]);
+  }, [activeEntity?.id, documentId, documentUpdatedAt, effectiveTemplate, isPublicView, language, shareableId]);
 
   const prerequisitesReady = isPublicView
     ? !!shareableId && !!apiBaseUrl
@@ -172,7 +176,7 @@ export function DocumentPreviewDisplay({
 
         const html = await invoices.renderHtml(
           documentId,
-          { template: effectiveTemplate },
+          { template: effectiveTemplate, ...(language ? { language } : {}) },
           {
             entity_id: activeEntity.id,
             signal: abortController.signal,

@@ -28,7 +28,9 @@ export const invoiceFormSchema = z.object({
       skip: z.boolean().optional(),
     })
     .optional(),
-  eslog: z.object({ validation_enabled: z.boolean().optional() }).optional(),
+  eslog: z
+    .object({ validation_enabled: z.boolean().optional(), validation_required: z.boolean().optional() })
+    .optional(),
   bank_account_index: z.number().optional(),
 });
 

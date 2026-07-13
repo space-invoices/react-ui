@@ -17,6 +17,15 @@ export default {
   Quantity: "Ilosc",
   Price: "Cena",
   Unit: "Jednostka",
+  "E-invoicing unit code": "Kod jednostki e-fakturowania",
+  "E-invoicing unit settings": "Ustawienia jednostki e-fakturowania",
+  "Only affects e-invoicing XML. The document unit stays unchanged.":
+    "Wpływa tylko na XML e-fakturowania. Jednostka na dokumencie pozostaje bez zmian.",
+  "Select XML unit code": "Wybierz kod jednostki XML",
+  "Enter a supported UN/ECE code": "Wprowadź obsługiwany kod UN/ECE",
+  "Use display unit": "Użyj wyświetlanej jednostki",
+  "Clear unit code": "Wyczyść kod jednostki",
+  "custom code": "kod niestandardowy",
   Discount: "Rabat",
   Tax: "Podatek",
   "Tax rate": "Stawka podatkowa",
@@ -40,6 +49,9 @@ export default {
   // Note field
   Note: "Notatka",
   "Insert variable": "Wstaw zmienna",
+  Bold: "Pogrubienie",
+  Italic: "Kursywa",
+  "Bullet list": "Lista punktowana",
   "Add payment instructions, terms, or other notes...": "Dodaj instrukcje platnosci, warunki lub inne uwagi...",
   // Signature field
   Signature: "Podpis",

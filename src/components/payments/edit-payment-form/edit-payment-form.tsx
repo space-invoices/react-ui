@@ -5,37 +5,19 @@ import { useForm } from "react-hook-form";
 import type { z } from "zod";
 import { Button } from "@/ui/components/ui/button";
 import { Calendar } from "@/ui/components/ui/calendar";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/ui/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/ui/components/ui/form";
 import { Input } from "@/ui/components/ui/input";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/ui/components/ui/popover";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/ui/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/ui/components/ui/popover";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui/components/ui/select";
 import { Textarea } from "@/ui/components/ui/textarea";
+import { type UpdatePaymentSchema, updatePaymentSchema } from "@/ui/generated/schemas/payment";
 import {
-  type UpdatePaymentSchema,
-  updatePaymentSchema,
-} from "@/ui/generated/schemas/payment";
-import { toUtcMidnightIsoString } from "@/ui/lib/date-only";
-import {
-  DOCUMENT_PAYMENT_FORM_LABELS,
-  DOCUMENT_PAYMENT_FORM_TYPES,
-} from "@/ui/lib/payment-types";
+  formatDateOnlyForDisplay,
+  normalizeDateOnlyInput,
+  toLocalCalendarDate,
+  toLocalDateOnlyString,
+} from "@/ui/lib/date-only";
+import { DOCUMENT_PAYMENT_FORM_LABELS, DOCUMENT_PAYMENT_FORM_TYPES } from "@/ui/lib/payment-types";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
 import { cn } from "@/ui/lib/utils";
@@ -76,10 +58,7 @@ type EditPaymentFormProps = {
   payment: Payment;
   onSuccess?: (payment: Payment) => void;
   onError?: (error: Error) => void;
-  renderSubmitButton?: (props: {
-    isSubmitting: boolean;
-    submit: () => void;
-  }) => React.ReactNode;
+  renderSubmitButton?: (props: { isSubmitting: boolean; submit: () => void }) => React.ReactNode;
 } & ComponentTranslationProps;
 
 export default function EditPaymentForm({
@@ -97,9 +76,11 @@ export default function EditPaymentForm({
 
   // SDK converts date strings to Date objects, so we need to convert back to string
   const dateString =
-    (payment.date as unknown) instanceof Date
-      ? (payment.date as unknown as Date).toISOString()
-      : String(payment.date);
+    normalizeDateOnlyInput(
+      (payment.date as unknown) instanceof Date
+        ? (payment.date as unknown as Date).toISOString()
+        : String(payment.date),
+    ) ?? "";
 
   const form = useForm<EditFormSchema>({
     resolver: zodResolver(editFormSchema),
@@ -131,7 +112,7 @@ export default function EditPaymentForm({
       id: payment.id,
       data: {
         ...values,
-        date: toUtcMidnightIsoString(values.date),
+        date: normalizeDateOnlyInput(values.date),
       },
     });
   };
@@ -180,8 +161,7 @@ export default function EditPaymentForm({
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder={t("Select payment type")}>
-                      {field.value &&
-                        t(DOCUMENT_PAYMENT_FORM_LABELS[field.value])}
+                      {field.value && t(DOCUMENT_PAYMENT_FORM_LABELS[field.value])}
                     </SelectValue>
                   </SelectTrigger>
                 </FormControl>
@@ -208,16 +188,16 @@ export default function EditPaymentForm({
                 <PopoverTrigger asChild>
                   <FormControl>
                     <Button
+                      type="button"
                       variant="outline"
-                      className={cn(
-                        "w-full pl-3 text-left font-normal",
-                        !field.value && "text-muted-foreground",
-                      )}
+                      className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
                     >
                       {field.value ? (
-                        new Date(field.value).toLocaleDateString(
-                          i18nProps.locale,
-                        )
+                        formatDateOnlyForDisplay(field.value, i18nProps.locale ?? "en-US", {
+                          year: "numeric",
+                          month: "numeric",
+                          day: "numeric",
+                        })
                       ) : (
                         <span>{t("Pick a date")}</span>
                       )}
@@ -228,11 +208,9 @@ export default function EditPaymentForm({
                 <PopoverContent className="w-auto p-0" align="start">
                   <Calendar
                     mode="single"
-                    selected={field.value ? new Date(field.value) : undefined}
-                    onSelect={(date) => field.onChange(date?.toISOString())}
-                    disabled={(date) =>
-                      date > new Date() || date < new Date("1900-01-01")
-                    }
+                    selected={toLocalCalendarDate(field.value)}
+                    onSelect={(date) => field.onChange(date ? toLocalDateOnlyString(date) : undefined)}
+                    disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
                     initialFocus
                   />
                 </PopoverContent>
@@ -249,11 +227,7 @@ export default function EditPaymentForm({
             <FormItem>
               <FormLabel>{t("Reference")}</FormLabel>
               <FormControl>
-                <Input
-                  placeholder={t("Enter reference number")}
-                  {...field}
-                  value={field.value ?? ""}
-                />
+                <Input placeholder={t("Enter reference number")} {...field} value={field.value ?? ""} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -267,11 +241,7 @@ export default function EditPaymentForm({
             <FormItem>
               <FormLabel>{t("Note")}</FormLabel>
               <FormControl>
-                <Textarea
-                  placeholder={t("Enter payment notes")}
-                  {...field}
-                  value={field.value ?? ""}
-                />
+                <Textarea placeholder={t("Enter payment notes")} {...field} value={field.value ?? ""} />
               </FormControl>
               <FormMessage />
             </FormItem>

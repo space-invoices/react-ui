@@ -251,4 +251,15 @@ export default {
   "A premise with this name already exists": "Tämänniminen toimipaikka on jo olemassa",
   "Exactly 4 digits": "Täsmälleen 4 numeroa",
   "Your Name": "Nimesi",
+  "Starting Number": "Aloitusnumero",
+  "First invoice number for this premise sequence": "Ensimmäinen laskunumero tämän toimipaikan sarjalle",
+  "First invoice number for this device sequence": "Ensimmäinen laskunumero tämän laitteen sarjalle",
+  "Set Starting Number": "Aseta aloitusnumero",
+  "Starting number can no longer be changed after invoices have been issued for this fiscal sequence.":
+    "Aloitusnumeroa ei voi enää muuttaa, kun tälle verotukselliselle numerosarjalle on annettu laskuja.",
+  "Set this before issuing invoices for the selected fiscal sequence. Leave empty to clear it.":
+    "Aseta tämä ennen laskujen antamista valitulle fiskalisointisarjalle. Jätä tyhjäksi poistaaksesi arvon.",
+  "Fiscal Sequence": "Fiskalisointisarja",
+  "Starting number must be between 1 and 999999999": "Aloitusnumeron on oltava välillä 1–999999999",
+  Save: "Tallenna",
 } as const;

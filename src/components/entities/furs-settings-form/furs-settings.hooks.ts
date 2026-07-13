@@ -8,12 +8,22 @@ import type {
   GetFursSettings200,
   RegisterFursMovablePremiseBody,
   RegisterFursRealEstatePremiseBody,
+  UpdateFursBusinessPremiseBody,
+  UpdateFursElectronicDeviceBody,
   UpdateFursSettingsBody,
   UpdateUserFursSettingsBody,
   UploadFursCertificate200,
   User,
 } from "@spaceinvoices/js-sdk";
-import { downloadBlob, fursCertificate, fursDevices, fursPremises, fursSettings, users } from "@spaceinvoices/js-sdk";
+import {
+  downloadBlob,
+  fursCertificate,
+  fursDevices,
+  fursInternalAct,
+  fursPremises,
+  fursSettings,
+  users,
+} from "@spaceinvoices/js-sdk";
 import {
   type UseMutationOptions,
   type UseQueryOptions,
@@ -23,6 +33,7 @@ import {
 } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import { ENTITIES_CACHE_KEY } from "../entities.hooks";
 
 /**
  * Query Keys
@@ -90,21 +101,7 @@ function getInternalActDownloader(api: FursInternalActApi, format: InternalActFo
 }
 
 async function loadFursInternalActApi(): Promise<FursInternalActApi> {
-  try {
-    const module = (await import("../../../../../js-sdk/src/sdk/furs-internal-act.ts")) as unknown as {
-      fursInternalAct?: FursInternalActApi;
-    };
-
-    if (!module.fursInternalAct) {
-      throw new Error("FURS internal act SDK module is not available");
-    }
-
-    return module.fursInternalAct;
-  } catch (error) {
-    throw new Error("FURS internal act download is not available yet", {
-      cause: error,
-    });
-  }
+  return fursInternalAct as FursInternalActApi;
 }
 
 /**
@@ -144,6 +141,9 @@ export function useUpdateFursSettings(
       queryClient.invalidateQueries({
         queryKey: fursQueryKeys.settings(variables.entityId),
       });
+      // FURS settings live in entity.settings.furs — refresh cached entities
+      // so other consumers of entity.settings don't act on a stale copy
+      queryClient.invalidateQueries({ queryKey: [ENTITIES_CACHE_KEY] });
       // Call the original onSuccess if provided
       if (options?.onSuccess) {
         (options.onSuccess as (d: any, v: any, c: any) => void)(data, variables, context);
@@ -271,17 +271,56 @@ export function useClosePremise(options?: UseMutationOptions<any, Error, { entit
 }
 
 /**
- * Hook: Register electronic device
+ * Hook: Update business premise
  */
-export function useRegisterElectronicDevice(
-  options?: UseMutationOptions<any, Error, { entityId: string; premiseId: string; deviceName: string }>,
+export function useUpdateFursPremise(
+  options?: UseMutationOptions<
+    any,
+    Error,
+    { entityId: string; premiseId: string; data: UpdateFursBusinessPremiseBody }
+  >,
 ) {
   const queryClient = useQueryClient();
 
   return useMutation({
     ...options,
-    mutationFn: async ({ entityId, premiseId, deviceName }) => {
-      return fursDevices.registerFursElectronicDevice(premiseId, { name: deviceName }, { entity_id: entityId });
+    mutationFn: async ({ entityId, premiseId, data }) => {
+      return fursPremises.update(premiseId, data, { entity_id: entityId });
+    },
+    onSuccess: (data, variables, context) => {
+      queryClient.invalidateQueries({
+        queryKey: fursQueryKeys.premises(variables.entityId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: fursQueryKeys.premise(variables.premiseId),
+      });
+      if (options?.onSuccess) {
+        (options.onSuccess as (d: any, v: any, c: any) => void)(data, variables, context);
+      }
+    },
+  });
+}
+
+/**
+ * Hook: Register electronic device
+ */
+export function useRegisterElectronicDevice(
+  options?: UseMutationOptions<
+    any,
+    Error,
+    { entityId: string; premiseId: string; deviceName: string; startingNumber?: number }
+  >,
+) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    ...options,
+    mutationFn: async ({ entityId, premiseId, deviceName, startingNumber }) => {
+      return fursDevices.registerFursElectronicDevice(
+        premiseId,
+        { name: deviceName, starting_number: startingNumber },
+        { entity_id: entityId },
+      );
     },
     onSuccess: (data, variables, context) => {
       // Invalidate premises list to refresh devices
@@ -293,6 +332,39 @@ export function useRegisterElectronicDevice(
         queryKey: fursQueryKeys.devices(variables.premiseId),
       });
       // Call the original onSuccess if provided
+      if (options?.onSuccess) {
+        (options.onSuccess as (d: any, v: any, c: any) => void)(data, variables, context);
+      }
+    },
+  });
+}
+
+/**
+ * Hook: Update electronic device
+ */
+export function useUpdateFursDevice(
+  options?: UseMutationOptions<
+    any,
+    Error,
+    { entityId: string; premiseId?: string; deviceId: string; data: UpdateFursElectronicDeviceBody }
+  >,
+) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    ...options,
+    mutationFn: async ({ entityId, deviceId, data }) => {
+      return fursDevices.update(deviceId, data, { entity_id: entityId });
+    },
+    onSuccess: (data, variables, context) => {
+      queryClient.invalidateQueries({
+        queryKey: fursQueryKeys.premises(variables.entityId),
+      });
+      if (variables.premiseId) {
+        queryClient.invalidateQueries({
+          queryKey: fursQueryKeys.devices(variables.premiseId),
+        });
+      }
       if (options?.onSuccess) {
         (options.onSuccess as (d: any, v: any, c: any) => void)(data, variables, context);
       }

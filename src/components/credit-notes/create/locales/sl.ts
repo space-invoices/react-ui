@@ -17,6 +17,15 @@ export default {
   Quantity: "Količina",
   Price: "Cena",
   Unit: "Enota",
+  "E-invoicing unit code": "Koda enote za e-račune",
+  "E-invoicing unit settings": "Nastavitve enote za e-račune",
+  "Only affects e-invoicing XML. The document unit stays unchanged.":
+    "Vpliva samo na XML e-računa. Enota na dokumentu ostane nespremenjena.",
+  "Select XML unit code": "Izberite kodo enote XML",
+  "Enter a supported UN/ECE code": "Vnesite podprto kodo UN/ECE",
+  "Use display unit": "Uporabi prikazano enoto",
+  "Clear unit code": "Počisti kodo enote",
+  "custom code": "koda po meri",
   Discount: "Popust",
   Tax: "DDV",
   "Tax rate": "Davčna stopnja",
@@ -39,6 +48,9 @@ export default {
   // Note field
   Note: "Pripis",
   "Insert variable": "Vstavi spremenljivko",
+  Bold: "Krepko",
+  Italic: "Ležeče",
+  "Bullet list": "Seznam z oznakami",
   "Add payment instructions, terms, or other notes...": "Dodaj navodila za plačilo, pogoje ali druge pripise...",
   // Signature field
   Signature: "Podpis",

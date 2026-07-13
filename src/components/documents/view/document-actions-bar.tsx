@@ -1,6 +1,7 @@
 import type { AdvanceInvoice, CreditNote, DeliveryNote, Estimate, Invoice } from "@spaceinvoices/js-sdk";
 import {
   Ban,
+  Bell,
   Check,
   CheckCircle,
   ChevronDown,
@@ -33,6 +34,7 @@ import { ESLOG_XML_EXPORT_ENABLED } from "@/ui/lib/eslog-export";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
 import type { Entity } from "@/ui/providers/entities-context";
+import { useWhiteLabel } from "@/ui/providers/white-label-provider";
 import bg from "./locales/bg";
 import cs from "./locales/cs";
 import de from "./locales/de";
@@ -87,6 +89,7 @@ interface DocumentActionsBarProps extends ComponentTranslationProps {
   currentLocale: string;
   onAddPayment?: () => void;
   onSendEmail?: () => void;
+  onSendPaymentReminder?: () => void;
   onDownloadStart?: () => void;
   onDownloadSuccess?: (fileName: string) => void;
   onDownloadError?: (error: string) => void;
@@ -131,6 +134,14 @@ interface DocumentActionsBarProps extends ComponentTranslationProps {
   voidDisabledReason?: string;
   /** Whether users can choose alternative PDF label languages */
   allowPdfLanguageSelection?: boolean;
+  /** Collapse secondary actions into an overflow menu on smaller screens */
+  collapseToOverflowMenu?: boolean;
+  /** Horizontal alignment of the action row */
+  align?: "start" | "end";
+  /** Keep Send visible even in compact overflow mode */
+  compactInlineSend?: boolean;
+  /** Keep Edit visible even in compact overflow mode */
+  compactInlineEdit?: boolean;
 }
 
 export function DocumentActionsBar({
@@ -141,6 +152,7 @@ export function DocumentActionsBar({
   currentLocale,
   onAddPayment,
   onSendEmail,
+  onSendPaymentReminder,
   onDownloadStart,
   onDownloadSuccess,
   onDownloadError,
@@ -165,32 +177,84 @@ export function DocumentActionsBar({
   isVoiding,
   voidDisabledReason,
   allowPdfLanguageSelection = true,
+  collapseToOverflowMenu = true,
+  align = "start",
+  compactInlineSend = false,
+  compactInlineEdit = false,
   ...i18nProps
 }: DocumentActionsBarProps) {
   const t = createTranslation({ ...i18nProps, translations, locale: currentLocale });
+  const { isCapabilityVisible } = useWhiteLabel();
   const [linkCopied, setLinkCopied] = useState(false);
   const duplicateTargets = allowedDuplicateTargets ?? getAllowedDuplicateTargets(documentType);
 
-  const { isDownloadingPdf, isDownloadingEslog, downloadPdf, downloadEslog } = useDocumentDownload({
+  const {
+    isDownloadingPdf,
+    isDownloadingEslog,
+    isDownloadingUjp,
+    isDownloadingXRechnung,
+    isDownloadingZugferd,
+    downloadPdf,
+    downloadEslog,
+    downloadUjp,
+    downloadGermanEInvoice,
+  } = useDocumentDownload({
     onDownloadStart,
     onDownloadSuccess,
     onDownloadError,
+    locale: entity.locale ?? currentLocale,
   });
   const countryCapabilities = getDocumentCountryCapabilities(entity, documentType, document);
+  const germanEInvoicingExportsVisible =
+    countryCapabilities.showGermanEInvoicingExports && isCapabilityVisible("compliance.e_invoicing");
+  const isDraft = (document as any).is_draft === true;
 
   const supportsPayments =
     documentType === "invoice" || documentType === "advance_invoice" || documentType === "credit_note";
 
+  const entitySettings = (entity.settings ?? {}) as Record<string, unknown>;
+  const isSlovenianEntity = entity.country_code === "SI";
   const eslogFeatureAvailable =
-    ESLOG_XML_EXPORT_ENABLED && (entity.country_rules?.features?.includes("eslog") ?? false);
+    ESLOG_XML_EXPORT_ENABLED &&
+    isSlovenianEntity &&
+    entitySettings.eslog_validation_enabled === true &&
+    (entity.country_rules?.features?.includes("eslog") ?? false);
+  const supportsEslogDownload =
+    documentType === "invoice" ||
+    documentType === "credit_note" ||
+    documentType === "estimate" ||
+    documentType === "advance_invoice";
+  const supportsUjpDownload = documentType === "invoice" || documentType === "credit_note";
   const eslogValid = (document as Invoice).eslog?.validation_status === "valid";
-  const showEslogDownload = eslogFeatureAvailable && eslogValid;
+  const ujpValid = (document as Invoice | CreditNote).ujp?.validation_status === "valid";
+  const showEslogDownload = eslogFeatureAvailable && supportsEslogDownload;
+  const showUjpDownload =
+    eslogFeatureAvailable && supportsUjpDownload && entitySettings.ujp_validation_with_eslog_enabled === true;
+  const eslogDisabledReason = eslogValid ? undefined : t("e-SLOG validation must be valid before downloading.");
+  const ujpDisabledReason = ujpValid ? undefined : t("UJP validation must be valid before downloading.");
+  const xrechnungDisabledReason = countryCapabilities.xrechnungValidationBlocksDownload
+    ? t("XRechnung validation must be valid before downloading.")
+    : undefined;
+  const zugferdDisabledReason = countryCapabilities.zugferdValidationBlocksDownload
+    ? t("ZUGFeRD validation must be valid before downloading.")
+    : undefined;
 
   const shareableId = (document as Invoice | Estimate | CreditNote | AdvanceInvoice | DeliveryNote).shareable_id;
   const shareUrl = shareableId ? `${window.location.origin}/documents/shareable/${shareableId}` : null;
 
   const handleDownloadPdf = (language?: string) => downloadPdf(document, documentType, language);
   const handleDownloadEslog = () => downloadEslog(document, documentType);
+  const handleDownloadUjp = () => downloadUjp(document);
+  const handleDownloadXRechnung = () => {
+    if (documentType === "invoice" || documentType === "credit_note") {
+      downloadGermanEInvoice(document, documentType, "xrechnung");
+    }
+  };
+  const handleDownloadZugferd = () => {
+    if (documentType === "invoice" || documentType === "credit_note") {
+      downloadGermanEInvoice(document, documentType, "zugferd");
+    }
+  };
 
   const getDocumentTypeActionLabel = (type: DocumentType) => {
     const translated = t(type);
@@ -227,8 +291,6 @@ export function DocumentActionsBar({
       console.error("Failed to copy link:", error);
     }
   };
-
-  const isDraft = (document as any).is_draft === true;
 
   // --- Primary actions (always visible) ---
   const showPdfLanguageSelection = allowPdfLanguageSelection && countryCapabilities.allowPdfLanguageSelection;
@@ -278,31 +340,168 @@ export function DocumentActionsBar({
     </Button>
   );
 
-  const eslogButton = showEslogDownload ? (
+  const eslogMainButton = (
     <Button
       variant="outline"
       size="sm"
-      disabled={isDownloadingEslog}
-      onClick={handleDownloadEslog}
-      className="cursor-pointer"
+      disabled={isDownloadingEslog || !!eslogDisabledReason}
+      onClick={eslogDisabledReason ? undefined : handleDownloadEslog}
+      className={showUjpDownload ? "cursor-pointer rounded-r-none" : "cursor-pointer"}
     >
       {isDownloadingEslog ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileCode2 className="mr-2 h-4 w-4" />}
       e-SLOG
     </Button>
+  );
+
+  const wrappedEslogMainButton = eslogDisabledReason ? (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span>{eslogMainButton}</span>
+      </TooltipTrigger>
+      <TooltipContent {...actionMenuTooltipProps}>{eslogDisabledReason}</TooltipContent>
+    </Tooltip>
+  ) : (
+    eslogMainButton
+  );
+
+  const renderUjpMenuItem = () =>
+    showUjpDownload ? (
+      ujpDisabledReason ? (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div>
+              <DropdownMenuItem disabled className="cursor-pointer">
+                <FileCode2 className="mr-2 h-4 w-4" />
+                {t("UJP package")}
+              </DropdownMenuItem>
+            </div>
+          </TooltipTrigger>
+          <TooltipContent {...actionMenuTooltipProps}>{ujpDisabledReason}</TooltipContent>
+        </Tooltip>
+      ) : (
+        <DropdownMenuItem onClick={handleDownloadUjp} disabled={isDownloadingUjp} className="cursor-pointer">
+          {isDownloadingUjp ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <FileCode2 className="mr-2 h-4 w-4" />
+          )}
+          {t("UJP package")}
+        </DropdownMenuItem>
+      )
+    ) : null;
+
+  const ujpMenuItem = renderUjpMenuItem();
+  const eslogOverflowUjpMenuItem = renderUjpMenuItem();
+
+  const eslogButton = showEslogDownload ? (
+    showUjpDownload ? (
+      <div className="flex">
+        {wrappedEslogMainButton}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={isDownloadingUjp}
+              className="cursor-pointer rounded-l-none border-l-0 px-2"
+            >
+              <ChevronDown className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">{ujpMenuItem}</DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    ) : (
+      wrappedEslogMainButton
+    )
   ) : null;
+
+  const xrechnungButton =
+    germanEInvoicingExportsVisible && countryCapabilities.showXRechnungExport ? (
+      xrechnungDisabledReason ? (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span>
+              <Button variant="outline" size="sm" disabled className="cursor-pointer">
+                <FileCode2 className="mr-2 h-4 w-4" />
+                {t("XRechnung")}
+              </Button>
+            </span>
+          </TooltipTrigger>
+          <TooltipContent {...actionMenuTooltipProps}>{xrechnungDisabledReason}</TooltipContent>
+        </Tooltip>
+      ) : (
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={isDownloadingXRechnung}
+          onClick={handleDownloadXRechnung}
+          className="cursor-pointer"
+        >
+          {isDownloadingXRechnung ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <FileCode2 className="mr-2 h-4 w-4" />
+          )}
+          {t("XRechnung")}
+        </Button>
+      )
+    ) : null;
+
+  const zugferdButton =
+    germanEInvoicingExportsVisible && countryCapabilities.showZugferdExport ? (
+      zugferdDisabledReason ? (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span>
+              <Button variant="outline" size="sm" disabled className="cursor-pointer">
+                <Download className="mr-2 h-4 w-4" />
+                {t("ZUGFeRD")}
+              </Button>
+            </span>
+          </TooltipTrigger>
+          <TooltipContent {...actionMenuTooltipProps}>{zugferdDisabledReason}</TooltipContent>
+        </Tooltip>
+      ) : (
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={isDownloadingZugferd}
+          onClick={handleDownloadZugferd}
+          className="cursor-pointer"
+        >
+          {isDownloadingZugferd ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <Download className="mr-2 h-4 w-4" />
+          )}
+          {t("ZUGFeRD")}
+        </Button>
+      )
+    ) : null;
 
   const sendButton = onSendEmail ? (
     <Button
       variant="outline"
       size="sm"
       onClick={onSendEmail}
-      className="cursor-pointer"
+      className={
+        collapseToOverflowMenu && !compactInlineSend ? "hidden cursor-pointer md:inline-flex" : "cursor-pointer"
+      }
       data-demo="marketing-demo-send-email"
     >
       <Mail className="mr-2 h-4 w-4" />
       {t("Send")}
     </Button>
   ) : null;
+
+  const reminderButton = onSendPaymentReminder ? (
+    <Button variant="outline" size="sm" onClick={onSendPaymentReminder} className="cursor-pointer">
+      <Bell className="mr-2 h-4 w-4" />
+      {t("Reminder")}
+    </Button>
+  ) : null;
+
   const paymentAllowed = countryCapabilities.allowPaymentAction;
 
   const paymentButton =
@@ -508,31 +707,78 @@ export function DocumentActionsBar({
     shareButton ||
     recurringButton ||
     duplicateButton ||
+    xrechnungButton ||
+    zugferdButton ||
+    reminderButton ||
     voidButton ||
     finalizeButton ||
     deleteDraftButton;
 
+  const rowAlignmentClass = align === "end" ? "justify-end" : "justify-start";
+  const secondaryActions = (
+    <>
+      {eslogButton}
+      {xrechnungButton}
+      {zugferdButton}
+      {reminderButton}
+      {paymentButton}
+      {editButton}
+      {shareButton}
+      {recurringButton}
+      {duplicateButton}
+      {voidButton}
+      {finalizeButton}
+      {deleteDraftButton}
+    </>
+  );
+
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className={`flex flex-wrap items-center gap-2 ${rowAlignmentClass}`}>
       {/* Always-visible compact actions */}
       {pdfButton}
-      {sendButton}
+      {collapseToOverflowMenu ? (
+        sendButton
+      ) : onSendEmail ? (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onSendEmail}
+          className="cursor-pointer"
+          data-demo="marketing-demo-send-email"
+        >
+          <Mail className="mr-2 h-4 w-4" />
+          {t("Send")}
+        </Button>
+      ) : null}
 
-      {/* Additional actions — visible on md+ screens as inline buttons */}
-      <div className="hidden flex-wrap items-center gap-2 md:flex">
-        {eslogButton}
-        {paymentButton}
-        {editButton}
-        {shareButton}
-        {recurringButton}
-        {duplicateButton}
-        {voidButton}
-        {finalizeButton}
-        {deleteDraftButton}
-      </div>
+      {/* Additional actions — visible once the actions bar has a full row */}
+      {collapseToOverflowMenu && compactInlineEdit ? editButton : null}
+      {collapseToOverflowMenu ? (
+        <div className="hidden flex-wrap items-center gap-2 md:flex">
+          {compactInlineEdit ? (
+            <>
+              {eslogButton}
+              {xrechnungButton}
+              {zugferdButton}
+              {reminderButton}
+              {paymentButton}
+              {shareButton}
+              {recurringButton}
+              {duplicateButton}
+              {voidButton}
+              {finalizeButton}
+              {deleteDraftButton}
+            </>
+          ) : (
+            secondaryActions
+          )}
+        </div>
+      ) : (
+        secondaryActions
+      )}
 
-      {/* Mobile overflow — visible on small screens only */}
-      {(eslogButton || paymentButton || hasSecondaryActions) && (
+      {/* Overflow actions — only for the narrowest widths */}
+      {collapseToOverflowMenu && (eslogButton || paymentButton || hasSecondaryActions) && (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="sm" className="cursor-pointer md:hidden">
@@ -540,12 +786,99 @@ export function DocumentActionsBar({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            {eslogButton && (
-              <DropdownMenuItem onClick={handleDownloadEslog} disabled={isDownloadingEslog} className="cursor-pointer">
-                <FileCode2 className="mr-2 h-4 w-4" />
-                e-SLOG
+            {onSendEmail && !compactInlineSend && (
+              <DropdownMenuItem onClick={onSendEmail} className="cursor-pointer md:hidden">
+                <Mail className="mr-2 h-4 w-4" />
+                {t("Send")}
               </DropdownMenuItem>
             )}
+            {onSendPaymentReminder && (
+              <DropdownMenuItem onClick={onSendPaymentReminder} className="cursor-pointer md:hidden">
+                <Bell className="mr-2 h-4 w-4" />
+                {t("Reminder")}
+              </DropdownMenuItem>
+            )}
+            {eslogButton && (
+              <>
+                {eslogDisabledReason ? (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div>
+                        <DropdownMenuItem disabled className="cursor-pointer">
+                          <FileCode2 className="mr-2 h-4 w-4" />
+                          e-SLOG
+                        </DropdownMenuItem>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent {...actionMenuTooltipProps}>{eslogDisabledReason}</TooltipContent>
+                  </Tooltip>
+                ) : (
+                  <DropdownMenuItem
+                    onClick={handleDownloadEslog}
+                    disabled={isDownloadingEslog}
+                    className="cursor-pointer"
+                  >
+                    <FileCode2 className="mr-2 h-4 w-4" />
+                    e-SLOG
+                  </DropdownMenuItem>
+                )}
+                {eslogOverflowUjpMenuItem}
+              </>
+            )}
+            {xrechnungButton &&
+              (xrechnungDisabledReason ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div>
+                      <DropdownMenuItem disabled className="cursor-pointer">
+                        <FileCode2 className="mr-2 h-4 w-4" />
+                        {t("XRechnung")}
+                      </DropdownMenuItem>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent {...actionMenuTooltipProps}>{xrechnungDisabledReason}</TooltipContent>
+                </Tooltip>
+              ) : (
+                <DropdownMenuItem
+                  onClick={handleDownloadXRechnung}
+                  disabled={isDownloadingXRechnung}
+                  className="cursor-pointer"
+                >
+                  {isDownloadingXRechnung ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <FileCode2 className="mr-2 h-4 w-4" />
+                  )}
+                  {t("XRechnung")}
+                </DropdownMenuItem>
+              ))}
+            {zugferdButton &&
+              (zugferdDisabledReason ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div>
+                      <DropdownMenuItem disabled className="cursor-pointer">
+                        <Download className="mr-2 h-4 w-4" />
+                        {t("ZUGFeRD")}
+                      </DropdownMenuItem>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent {...actionMenuTooltipProps}>{zugferdDisabledReason}</TooltipContent>
+                </Tooltip>
+              ) : (
+                <DropdownMenuItem
+                  onClick={handleDownloadZugferd}
+                  disabled={isDownloadingZugferd}
+                  className="cursor-pointer"
+                >
+                  {isDownloadingZugferd ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Download className="mr-2 h-4 w-4" />
+                  )}
+                  {t("ZUGFeRD")}
+                </DropdownMenuItem>
+              ))}
             {supportsPayments && paymentAllowed && (onAddPayment || paymentDisabledReason) ? (
               paymentDisabledReason ? (
                 <DropdownMenuItem disabled className="cursor-pointer">
@@ -559,8 +892,10 @@ export function DocumentActionsBar({
                 </DropdownMenuItem>
               )
             ) : null}
-            {(eslogButton || paymentButton) && hasSecondaryActions && <DropdownMenuSeparator />}
-            {onEdit && (
+            {(onSendEmail || onSendPaymentReminder || eslogButton || paymentButton) && hasSecondaryActions && (
+              <DropdownMenuSeparator />
+            )}
+            {onEdit && !compactInlineEdit && (
               <DropdownMenuItem
                 onClick={isEditable ? onEdit : undefined}
                 disabled={!isEditable}

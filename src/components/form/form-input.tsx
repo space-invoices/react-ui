@@ -37,17 +37,29 @@ const FormInputComponent = <
   }: FormInputProps<TFieldValues, TName>,
   ref: React.Ref<HTMLInputElement>,
 ) => {
-  const handleFieldChange = (field: any, e: React.ChangeEvent<HTMLInputElement>) => {
+  const applyFieldValue = (field: any, rawValue: string) => {
     if (type === "number") {
-      const value = Number(e.target.value);
+      const value = Number(rawValue);
       field.onChange(value);
       onChange?.(value);
     } else {
-      // Convert empty strings to undefined to prevent sending empty strings to API
-      const value = e.target.value === "" ? undefined : e.target.value;
-      field.onChange(value);
+      // Keep the controlled input clearable while preserving existing external empty-value semantics.
+      const value = rawValue === "" ? undefined : rawValue;
+      field.onChange(rawValue);
       onChange?.(value);
     }
+  };
+
+  const handleFieldChange = (field: any, e: React.ChangeEvent<HTMLInputElement>) => {
+    applyFieldValue(field, e.target.value);
+  };
+
+  const handleKeyDown = (field: any, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (type === "number") return;
+    if (e.key !== "Backspace" || (!e.metaKey && !e.ctrlKey)) return;
+
+    e.preventDefault();
+    applyFieldValue(field, "");
   };
 
   return (
@@ -72,6 +84,7 @@ const FormInputComponent = <
               ref={ref}
               value={field.value ?? ""}
               onChange={(e) => handleFieldChange(field, e)}
+              onKeyDown={(e) => handleKeyDown(field, e)}
             />
           </FormControl>
           <FormMessage />

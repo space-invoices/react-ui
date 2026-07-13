@@ -7,6 +7,7 @@ import { cn } from "@/ui/lib/utils";
 export type AutocompleteOption = {
   value: string;
   label: string | React.ReactNode;
+  group?: string;
   testId?: string;
   dataDemo?: string;
 };
@@ -158,6 +159,21 @@ export function Autocomplete({
     }
   };
 
+  const optionGroups = React.useMemo(() => {
+    const groups: Array<{ label?: string; options: AutocompleteOption[] }> = [];
+
+    for (const option of options) {
+      const previousGroup = groups.at(-1);
+      if (previousGroup && previousGroup.label === option.group) {
+        previousGroup.options.push(option);
+      } else {
+        groups.push({ label: option.group, options: [option] });
+      }
+    }
+
+    return groups;
+  }, [options]);
+
   // Ignore synthetic "outside press" close events that originate from the anchor input itself.
   const handleOpenChange = (newOpen: boolean, eventDetails?: { reason?: string; event?: Event }) => {
     if (!newOpen && eventDetails?.reason === "outside-press" && eventDetails.event?.target === inputRef.current) {
@@ -212,20 +228,26 @@ export function Autocomplete({
             <Command shouldFilter={false}>
               <CommandList>
                 <CommandEmpty>{loading ? "Loading..." : emptyText}</CommandEmpty>
-                <CommandGroup>
-                  {options.map((option) => (
-                    <CommandItem
-                      key={option.value}
-                      value={option.value}
-                      onSelect={() => handleSelect(option.value)}
-                      className={cn(value === option.value && "font-bold")}
-                      data-testid={option.testId}
-                      data-demo={option.dataDemo}
-                    >
-                      {option.label}
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
+                {optionGroups.map((group) => (
+                  <CommandGroup
+                    key={`${group.label ?? "default"}-${group.options[0]?.value ?? "empty"}`}
+                    heading={group.label}
+                    className={cn(group !== optionGroups[0] && "border-t")}
+                  >
+                    {group.options.map((option) => (
+                      <CommandItem
+                        key={option.value}
+                        value={option.value}
+                        onSelect={() => handleSelect(option.value)}
+                        className={cn("cursor-pointer", value === option.value && "font-bold")}
+                        data-testid={option.testId}
+                        data-demo={option.dataDemo}
+                      >
+                        {option.label}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                ))}
               </CommandList>
             </Command>
           </Popover.Popup>

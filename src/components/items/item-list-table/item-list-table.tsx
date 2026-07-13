@@ -84,15 +84,15 @@ export default function ItemListTable({
         id: "name",
         header: t("Name"),
         sort: true,
-        className: "max-w-[18rem] lg:max-w-[24rem]",
+        className: "w-auto max-w-0 sm:w-[42%]",
         cell: (item) => (
           <Button
             variant="link"
-            className="h-auto w-full min-w-0 justify-start gap-2 px-0 py-0 text-left underline"
+            className="h-auto w-full min-w-0 justify-start gap-2 overflow-hidden px-0 py-0 text-left underline"
             onClick={() => onRowClick?.(item)}
           >
             <Package className="h-4 w-4 flex-shrink-0" />
-            <span className="min-w-0 truncate" title={item.name}>
+            <span className="block min-w-0 truncate" title={item.name}>
               {item.name}
             </span>
           </Button>
@@ -101,10 +101,10 @@ export default function ItemListTable({
       {
         id: "description",
         header: t("Description"),
-        className: "max-w-[20rem] lg:max-w-[32rem]",
+        className: "hidden max-w-0 sm:table-cell sm:w-[38%]",
         cell: (item) =>
           item.description ? (
-            <div className="truncate text-muted-foreground" title={item.description}>
+            <div className="min-w-0 truncate text-muted-foreground" title={item.description}>
               {item.description}
             </div>
           ) : null,
@@ -113,6 +113,7 @@ export default function ItemListTable({
         id: "price",
         header: t("Price"),
         align: "right",
+        className: "w-[6rem] sm:w-[7rem]",
         sort: {
           defaultDirection: "desc",
         },
@@ -134,6 +135,7 @@ export default function ItemListTable({
       queryParams={queryParams}
       resourceName="item"
       cacheKey={ITEMS_CACHE_KEY}
+      tableClassName="table-fixed"
       createNewTrigger={createNewTrigger}
       onFetch={handleFetch}
       onChangeParams={onChangeParams}

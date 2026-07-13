@@ -13,6 +13,18 @@ export default {
   "Unshare failed": "Odstranitev deljenja ni uspela",
   "Download failed": "Prenos ni uspel",
   "e-SLOG download failed": "Prenos e-SLOG ni uspel",
+  "UJP package": "UJP paket",
+  "UJP package download failed": "Prenos UJP paketa ni uspel",
+  XRechnung: "XRechnung",
+  ZUGFeRD: "ZUGFeRD",
+  "XRechnung download failed": "Prenos XRechnung ni uspel",
+  "ZUGFeRD download failed": "Prenos ZUGFeRD ni uspel",
+  "e-SLOG validation must be valid before downloading.": "Validacija e-SLOG mora biti uspešna pred prenosom.",
+  "UJP validation must be valid before downloading.": "Validacija UJP mora biti uspešna pred prenosom.",
+  "German e-invoice validation must be valid before downloading.":
+    "Validacija nemškega e-računa mora biti pred prenosom veljavna.",
+  "XRechnung validation must be valid before downloading.": "Validacija XRechnung mora biti pred prenosom veljavna.",
+  "ZUGFeRD validation must be valid before downloading.": "Validacija ZUGFeRD mora biti pred prenosom veljavna.",
   Recurring: "Ponavljajoče",
   Duplicate: "Podvoji",
   "Duplicate invoice": "Podvoji račun",
@@ -123,6 +135,8 @@ export default {
   Failed: "Neuspešno",
   Skipped: "Preskočeno",
   "Skipped by user": "Uporabnik preskočil",
+  "Not fiscalized": "Ni fiskalizirano",
+  Fiscalize: "Fiskaliziraj",
   "Retry fiscalization": "Ponovi fiskalizacijo",
 
   // PDF language names

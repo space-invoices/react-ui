@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import type { CreateDeliveryNoteRequest, DeliveryNote, UpdateDeliveryNote } from "@spaceinvoices/js-sdk";
+import type { CreateDeliveryNoteRequest, DeliveryNote, Tax, UpdateDeliveryNote } from "@spaceinvoices/js-sdk";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Resolver } from "react-hook-form";
@@ -11,11 +11,17 @@ import { Label } from "@/ui/components/ui/label";
 import { createDeliveryNoteSchema } from "@/ui/generated/schemas";
 import { useNextDocumentNumber } from "@/ui/hooks/use-next-document-number";
 import { useTransactionTypeCheck } from "@/ui/hooks/use-transaction-type-check";
+import {
+  DEFAULT_CONTENT_LOCALE,
+  DOCUMENT_CONTENT_TRANSLATIONS_FEATURE,
+  type DocumentContentLocaleMode,
+} from "@/ui/lib/document-content-translations";
 import { normalizeLineItemDiscountsForForm } from "@/ui/lib/schemas/shared";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
 import { useEntities } from "@/ui/providers/entities-context";
 import { useFormFooterRegistration } from "@/ui/providers/form-footer-context";
+import { useWhiteLabel } from "@/ui/providers/white-label-provider";
 import { CUSTOMERS_CACHE_KEY } from "../../customers/customers.hooks";
 import { BusinessUnitSelectField } from "../../documents/create/business-unit-select-field";
 import {
@@ -87,6 +93,7 @@ type CreateDeliveryNoteFormProps = {
   onError?: (error: unknown) => void;
   onChange?: (data: DeliveryNotePreviewPayload) => void;
   onAddNewTax?: () => void;
+  onFindEstimatedTax?: () => Promise<Tax | null | undefined> | Tax | null | undefined;
   /** Initial values for form fields (used for document duplication) */
   initialValues?: Partial<CreateDeliveryNoteRequest> & { business_unit_id?: string | null };
   businessUnits?: BusinessUnitOption[];
@@ -106,6 +113,7 @@ export default function CreateDeliveryNoteForm({
   onError,
   onChange,
   onAddNewTax,
+  onFindEstimatedTax,
   initialValues,
   businessUnits = [],
   showBusinessUnitSelect = businessUnits.length > 0 || !!(initialValues as any)?.business_unit_id,
@@ -127,8 +135,12 @@ export default function CreateDeliveryNoteForm({
   });
 
   const { activeEntity } = useEntities();
+  const whiteLabel = useWhiteLabel();
   const queryClient = useQueryClient();
   const isEditMode = mode === "edit";
+  const translationsFeatureEnabled = whiteLabel.isFeatureVisible(DOCUMENT_CONTENT_TRANSLATIONS_FEATURE);
+  const defaultContentLocale = activeEntity?.locale || "en-US";
+  const [contentLocale, setContentLocale] = useState<DocumentContentLocaleMode>(DEFAULT_CONTENT_LOCALE);
   const initialBusinessUnit = useMemo(
     () => businessUnits.find((unit) => unit.id === ((initialValues as any)?.business_unit_id ?? null)) ?? null,
     [businessUnits, initialValues],
@@ -165,6 +177,7 @@ export default function CreateDeliveryNoteForm({
             type: item.type ?? undefined,
             name: item.name || "",
             description: item.description || "",
+            translations: item.translations ?? {},
             ...(item.type !== "separator"
               ? {
                   item_id: item.item_id ?? undefined,
@@ -172,6 +185,8 @@ export default function CreateDeliveryNoteForm({
                   price: item.gross_price ?? item.price,
                   gross_price: item.gross_price ?? undefined,
                   unit: item.unit ?? undefined,
+                  financial_category_id: item.financial_category_id ?? undefined,
+                  e_invoicing: item.e_invoicing ?? undefined,
                   classification: item.classification ?? undefined,
                   taxes: item.taxes || [],
                   discounts: normalizeLineItemDiscountsForForm(item.discounts),
@@ -183,6 +198,7 @@ export default function CreateDeliveryNoteForm({
             {
               name: "",
               description: "",
+              translations: {},
               quantity: 1,
               price: undefined,
               taxes: [],
@@ -194,8 +210,18 @@ export default function CreateDeliveryNoteForm({
       tax_clause: (initialValues as any)?.tax_clause ?? "",
       footer: (initialValues as any)?.footer ?? (isEditMode ? "" : defaultFooter),
       signature: (initialValues as any)?.signature ?? (isEditMode ? "" : initialDocumentDefaults.signature),
+      translations:
+        (initialValues as any)?.translations ??
+        (isEditMode
+          ? {}
+          : {
+              note: initialDocumentDefaults.translations.note,
+              footer: initialDocumentDefaults.translations.footer,
+              signature: initialDocumentDefaults.translations.signature,
+            }),
     },
   });
+  const documentTranslations = useWatch({ control: form.control, name: "translations" });
   const selectedBusinessUnitId = useWatch({ control: form.control, name: "business_unit_id" as any });
   const selectedBusinessUnit = useMemo(
     () => businessUnits.find((unit) => unit.id === selectedBusinessUnitId) ?? null,
@@ -284,6 +310,21 @@ export default function CreateDeliveryNoteForm({
           shouldValidate: false,
         });
       }
+
+      const currentTranslations = (form.getValues("translations") as any)?.[field] ?? {};
+      const previousTranslations = previousDefaults.translations[field] ?? {};
+      const nextTranslations = derivedDocumentDefaults.translations[field] ?? {};
+      const matchesPreviousTranslations = JSON.stringify(currentTranslations) === JSON.stringify(previousTranslations);
+      const isEmptyTranslations = Object.keys(currentTranslations).length === 0;
+
+      if (matchesPreviousTranslations || isEmptyTranslations) {
+        form.setValue(`translations.${field}` as any, nextTranslations, {
+          shouldDirty:
+            matchesPreviousTranslations && JSON.stringify(previousTranslations) !== JSON.stringify(nextTranslations),
+          shouldTouch: false,
+          shouldValidate: false,
+        });
+      }
     }
 
     appliedDerivedDefaultsRef.current = derivedDocumentDefaults;
@@ -363,6 +404,7 @@ export default function CreateDeliveryNoteForm({
     initialCustomerName,
     handleCustomerSelect,
     handleCustomerClear,
+    handleCustomerEdit,
   } = useDeliveryNoteCustomerForm(form as any);
 
   const { mutate: createDeliveryNote, isPending } = useCreateDeliveryNote({
@@ -497,6 +539,7 @@ export default function CreateDeliveryNoteForm({
         currency_code: values.currency_code,
         reference: values.reference,
         note: values.note,
+        translations: values.translations,
         tax_clause: values.tax_clause,
         signature: values.signature,
         footer: values.footer,
@@ -550,9 +593,11 @@ export default function CreateDeliveryNoteForm({
             entityId={entityId}
             onCustomerSelect={handleCustomerSelect}
             onCustomerClear={handleCustomerClear}
+            onCustomerEdit={handleCustomerEdit}
             showCustomerForm={showCustomerForm}
             shouldFocusName={shouldFocusName}
             selectedCustomerId={selectedCustomerId}
+            entityCountryCode={activeEntity?.country_code}
             initialCustomerName={initialCustomerName}
             t={t}
             locale={locale}
@@ -593,6 +638,7 @@ export default function CreateDeliveryNoteForm({
           entityId={entityId}
           currencyCode={activeEntity?.currency_code ?? undefined}
           onAddNewTax={onAddNewTax}
+          onFindEstimatedTax={onFindEstimatedTax}
           t={t}
           locale={locale}
           isTaxSubject={activeEntity?.is_tax_subject ?? false}
@@ -600,6 +646,10 @@ export default function CreateDeliveryNoteForm({
           priceModesRef={priceModesRef}
           initialPriceModes={initialPriceModes}
           onItemsStateChange={emitCurrentPreviewPayload}
+          translationsEnabled={translationsFeatureEnabled}
+          contentLocale={contentLocale}
+          defaultContentLocale={defaultContentLocale}
+          onContentLocaleChange={setContentLocale}
           taxesDisabled={reverseChargeApplies}
           taxesDisabledMessage={
             reverseChargeApplies ? t("Reverse charge - tax exempt EU B2B sale") : viesWarning ? viesWarning : undefined
@@ -609,6 +659,7 @@ export default function CreateDeliveryNoteForm({
         <DocumentNoteField
           control={form.control}
           t={t}
+          uiLocale={locale}
           entity={activeEntity}
           document={{
             number: formValues.number,
@@ -616,11 +667,20 @@ export default function CreateDeliveryNoteForm({
             currency_code: formValues.currency_code,
             customer: formValues.customer as any,
           }}
+          translationsEnabled={translationsFeatureEnabled}
+          activeContentLocale={contentLocale}
+          defaultContentLocale={defaultContentLocale}
+          fieldTranslations={(documentTranslations as any)?.note}
+          onContentLocaleChange={setContentLocale}
+          onFieldTranslationsChange={(next) =>
+            form.setValue("translations", { ...(form.getValues("translations") ?? {}), note: next })
+          }
         />
 
         <DocumentTaxClauseField
           control={form.control}
           t={t}
+          uiLocale={locale}
           entity={activeEntity}
           document={{
             number: formValues.number,
@@ -630,11 +690,20 @@ export default function CreateDeliveryNoteForm({
           }}
           transactionType={transactionType}
           isTransactionTypeFetching={isViesFetching}
+          translationsEnabled={translationsFeatureEnabled}
+          activeContentLocale={contentLocale}
+          defaultContentLocale={defaultContentLocale}
+          fieldTranslations={(documentTranslations as any)?.tax_clause}
+          onContentLocaleChange={setContentLocale}
+          onFieldTranslationsChange={(next) =>
+            form.setValue("translations", { ...(form.getValues("translations") ?? {}), tax_clause: next })
+          }
         />
 
         <DocumentSignatureField
           control={form.control}
           t={t}
+          uiLocale={locale}
           entity={activeEntity}
           document={{
             number: formValues.number,
@@ -642,11 +711,20 @@ export default function CreateDeliveryNoteForm({
             currency_code: formValues.currency_code,
             customer: formValues.customer as any,
           }}
+          translationsEnabled={translationsFeatureEnabled}
+          activeContentLocale={contentLocale}
+          defaultContentLocale={defaultContentLocale}
+          fieldTranslations={(documentTranslations as any)?.signature}
+          onContentLocaleChange={setContentLocale}
+          onFieldTranslationsChange={(next) =>
+            form.setValue("translations", { ...(form.getValues("translations") ?? {}), signature: next })
+          }
         />
 
         <DocumentFooterField
           control={form.control}
           t={t}
+          uiLocale={locale}
           entity={activeEntity}
           document={{
             number: formValues.number,
@@ -654,6 +732,14 @@ export default function CreateDeliveryNoteForm({
             currency_code: formValues.currency_code,
             customer: formValues.customer as any,
           }}
+          translationsEnabled={translationsFeatureEnabled}
+          activeContentLocale={contentLocale}
+          defaultContentLocale={defaultContentLocale}
+          fieldTranslations={(documentTranslations as any)?.footer}
+          onContentLocaleChange={setContentLocale}
+          onFieldTranslationsChange={(next) =>
+            form.setValue("translations", { ...(form.getValues("translations") ?? {}), footer: next })
+          }
         />
       </form>
     </Form>

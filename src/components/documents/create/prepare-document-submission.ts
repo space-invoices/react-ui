@@ -2,14 +2,27 @@ import { normalizeDateOnlyInput } from "../../../lib/date-only";
 
 type CustomerData = {
   name?: string | null;
+  email?: string | null;
   address?: string | null;
   address_2?: string | null;
   post_code?: string | null;
   city?: string | null;
   state?: string | null;
   country?: string | null;
+  country_code?: string | null;
   tax_number?: string | null;
+  company_number?: string | null;
+  bank_accounts?: Array<Record<string, unknown>> | null;
   is_end_consumer?: boolean | null;
+  ujp?: {
+    receiver_name?: string | null;
+    receiver_identifier?: string | null;
+    receiver_agent?: string | null;
+    receiver_mailbox?: string | null;
+  } | null;
+  e_invoicing?: {
+    buyer_reference?: string | null;
+  } | null;
   save_customer?: boolean | null;
 };
 
@@ -19,6 +32,7 @@ type BaseDocumentValues = {
   business_unit_id?: string | null;
   customer_id?: string | null;
   customer?: CustomerData | null;
+  translations?: Record<string, unknown> | null;
 
   items?: any[];
   currency_code?: string;
@@ -49,6 +63,107 @@ type PrepareDocumentOptions = {
 };
 
 const CLEARABLE_TEXT_FIELDS = ["note", "payment_terms", "reference", "signature", "tax_clause", "footer"] as const;
+function cleanCustomerBankAccounts(bankAccounts: Array<Record<string, unknown>>): Array<Record<string, unknown>> {
+  return bankAccounts
+    .map((account) => {
+      const cleanedAccount = Object.fromEntries(
+        Object.entries(account).filter(([, value]) => value !== "" && value !== null && value !== undefined),
+      );
+      if (Object.keys(cleanedAccount).some((key) => key !== "type") && !cleanedAccount.type) {
+        cleanedAccount.type = "iban";
+      }
+      return cleanedAccount;
+    })
+    .filter((account) => Object.keys(account).some((key) => key !== "type"));
+}
+
+function cleanCustomerPayload(customer: CustomerData, originalCustomer?: CustomerData | null): Record<string, unknown> {
+  const cleanedCustomer: Record<string, unknown> = { save_customer: true };
+
+  for (const [key, value] of Object.entries(customer)) {
+    if (key === "save_customer" || value === undefined) {
+      continue;
+    }
+
+    if (value === null) {
+      if (originalCustomer) {
+        cleanedCustomer[key] = null;
+      }
+      continue;
+    }
+
+    if (value === "") {
+      if (originalCustomer && (originalCustomer as Record<string, unknown>)[key]) {
+        cleanedCustomer[key] = null;
+      }
+      continue;
+    }
+
+    if (key === "bank_accounts" && Array.isArray(value)) {
+      const cleanedBankAccounts = cleanCustomerBankAccounts(value);
+      if (cleanedBankAccounts.length > 0) {
+        cleanedCustomer.bank_accounts = cleanedBankAccounts;
+      }
+      continue;
+    }
+
+    if (key === "ujp" && typeof value === "object" && !Array.isArray(value)) {
+      const cleanedUjp = Object.fromEntries(
+        Object.entries(value).filter(
+          ([, nestedValue]) => nestedValue !== "" && nestedValue !== null && nestedValue !== undefined,
+        ),
+      );
+      if (Object.keys(cleanedUjp).length > 0) {
+        cleanedCustomer.ujp = cleanedUjp;
+      }
+      continue;
+    }
+
+    if (key === "e_invoicing" && typeof value === "object" && !Array.isArray(value)) {
+      const cleanedEInvoicing = Object.fromEntries(
+        Object.entries(value).filter(
+          ([, nestedValue]) => nestedValue !== "" && nestedValue !== null && nestedValue !== undefined,
+        ),
+      );
+      if (Object.keys(cleanedEInvoicing).length > 0) {
+        cleanedCustomer.e_invoicing = cleanedEInvoicing;
+      }
+      continue;
+    }
+
+    cleanedCustomer[key] = value;
+  }
+
+  return cleanedCustomer;
+}
+
+function cleanItemEInvoicingPayload(eInvoicing: unknown): Record<string, unknown> | undefined {
+  if (!eInvoicing || typeof eInvoicing !== "object" || Array.isArray(eInvoicing)) {
+    return undefined;
+  }
+
+  if (Object.hasOwn(eInvoicing, "unit_code")) {
+    const unitCode = (eInvoicing as { unit_code?: unknown }).unit_code;
+    if (typeof unitCode !== "string") {
+      return { unit_code: null };
+    }
+
+    const trimmedUnitCode = unitCode.trim();
+    return trimmedUnitCode ? { unit_code: trimmedUnitCode } : { unit_code: null };
+  }
+
+  const cleanedEInvoicing = Object.fromEntries(
+    Object.entries(eInvoicing).filter(
+      ([, nestedValue]) => nestedValue !== "" && nestedValue !== null && nestedValue !== undefined,
+    ),
+  );
+
+  return Object.keys(cleanedEInvoicing).length > 0 ? cleanedEInvoicing : undefined;
+}
+
+function customerPayloadHasAnyValue(customer: Record<string, unknown>): boolean {
+  return Object.keys(customer).some((key) => key !== "save_customer");
+}
 
 export function normalizeClearableFormTextField(value: unknown): string | null | undefined {
   if (value === undefined) return undefined;
@@ -67,33 +182,13 @@ export function prepareDocumentCustomerData<T extends BaseDocumentValues>(
     if (options.wasCustomerFormShown === false) {
       delete nextValues.customer;
     } else {
-      const customerChanged =
-        options.originalCustomer && JSON.stringify(nextValues.customer) !== JSON.stringify(options.originalCustomer);
-
-      if (!customerChanged) {
-        delete nextValues.customer;
-      } else {
-        const cleanedCustomer: any = { save_customer: true };
-        for (const [key, value] of Object.entries(nextValues.customer)) {
-          if (key !== "save_customer" && value !== "" && value !== null && value !== undefined) {
-            cleanedCustomer[key] = value;
-          }
-        }
-        nextValues.customer = cleanedCustomer;
-      }
+      const cleanedCustomer = cleanCustomerPayload(nextValues.customer, options.originalCustomer);
+      nextValues.customer = cleanedCustomer;
     }
   } else if (nextValues.customer) {
-    const cleanedCustomer: any = { save_customer: true };
-    let hasAnyValue = false;
+    const cleanedCustomer = cleanCustomerPayload(nextValues.customer);
 
-    for (const [key, value] of Object.entries(nextValues.customer)) {
-      if (key !== "save_customer" && value !== "" && value !== null && value !== undefined) {
-        cleanedCustomer[key] = value;
-        hasAnyValue = true;
-      }
-    }
-
-    if (!hasAnyValue) {
+    if (!customerPayloadHasAnyValue(cleanedCustomer)) {
       delete nextValues.customer;
     } else {
       nextValues.customer = cleanedCustomer;
@@ -120,10 +215,13 @@ export function prepareDocumentItems(items: any[] | undefined, priceModes: Price
         type: "separator",
         name: item.name,
         description: item.description || undefined,
+        translations: item.translations ?? undefined,
       };
     }
 
-    const { price, gross_price } = item;
+    const price = item.price === "" ? undefined : item.price;
+    const gross_price = item.gross_price === "" ? undefined : item.gross_price;
+    const quantity = item.quantity === "" ? undefined : item.quantity;
     const isGrossPrice = priceModes[index] ?? false;
     const effectivePrice = price ?? gross_price;
     const priceFields =
@@ -138,8 +236,10 @@ export function prepareDocumentItems(items: any[] | undefined, priceModes: Price
       save_item: item.save_item ?? undefined,
       name: item.name,
       description: item.description ?? undefined,
+      translations: item.translations ?? undefined,
       unit: item.unit ?? undefined,
-      quantity: item.quantity,
+      e_invoicing: cleanItemEInvoicingPayload(item.e_invoicing),
+      quantity,
       discounts: item.discounts,
       metadata: item.metadata ?? undefined,
       classification: item.classification ?? undefined,
@@ -165,11 +265,13 @@ export function prepareDocumentItems(items: any[] | undefined, priceModes: Price
 
 export function buildDocumentBasePayload(
   nextValues: Record<string, any>,
-  options: Pick<PrepareDocumentOptions, "documentType" | "secondaryDate">,
+  options: Pick<PrepareDocumentOptions, "documentType" | "secondaryDate"> & { includeCalculationMode?: boolean },
 ): Record<string, any> {
   const {
     number: _number,
+    calculation_mode,
     business_unit_id,
+    translations,
     note,
     payment_terms,
     reference,
@@ -185,8 +287,16 @@ export function buildDocumentBasePayload(
     date: normalizeDateOnlyInput(nextValues.date),
   };
 
+  if (options.includeCalculationMode !== false && calculation_mode !== undefined) {
+    payload.calculation_mode = calculation_mode;
+  }
+
   if (business_unit_id !== undefined) {
     payload.business_unit_id = business_unit_id || null;
+  }
+
+  if (translations && Object.keys(translations).length > 0) {
+    payload.translations = translations;
   }
 
   for (const [key, value] of Object.entries({
@@ -219,6 +329,46 @@ export function buildDocumentBasePayload(
   }
 
   return payload;
+}
+
+function normalizeComparablePayloadValue(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    const normalizedArray = value
+      .map(normalizeComparablePayloadValue)
+      .filter((nestedValue) => nestedValue !== undefined);
+    return normalizedArray.length > 0 ? normalizedArray : undefined;
+  }
+
+  if (value === "") {
+    return undefined;
+  }
+
+  if (!value || typeof value !== "object") {
+    return value;
+  }
+
+  const normalized: Record<string, unknown> = {};
+  for (const key of Object.keys(value as Record<string, unknown>).sort()) {
+    const nestedValue = (value as Record<string, unknown>)[key];
+    const normalizedNestedValue = normalizeComparablePayloadValue(nestedValue);
+    if (normalizedNestedValue === undefined) continue;
+    normalized[key] = normalizedNestedValue;
+  }
+  return Object.keys(normalized).length > 0 ? normalized : undefined;
+}
+
+export function omitUnchangedUpdatePayloadFields(
+  payload: Record<string, unknown>,
+  baselinePayload: Record<string, unknown>,
+): void {
+  for (const key of Object.keys(payload)) {
+    if (
+      JSON.stringify(normalizeComparablePayloadValue(payload[key])) ===
+      JSON.stringify(normalizeComparablePayloadValue(baselinePayload[key]))
+    ) {
+      delete payload[key];
+    }
+  }
 }
 
 /**

@@ -18,6 +18,15 @@ export default {
   Quantity: "Menge",
   Price: "Preis",
   Unit: "Einheit",
+  "E-invoicing unit code": "E-Rechnung-Einheitencode",
+  "E-invoicing unit settings": "E-Rechnungs-Einheitseinstellungen",
+  "Only affects e-invoicing XML. The document unit stays unchanged.":
+    "Betrifft nur das XML der E-Rechnung. Die Dokumenteinheit bleibt unverändert.",
+  "Select XML unit code": "XML-Einheitencode auswählen",
+  "Enter a supported UN/ECE code": "Geben Sie einen unterstützten UN/ECE-Code ein",
+  "Use display unit": "Anzeigeeinheit verwenden",
+  "Clear unit code": "Einheitencode löschen",
+  "custom code": "benutzerdefinierter Code",
   Discount: "Rabatt",
   Tax: "Steuer",
   "Tax rate": "Steuersatz",
@@ -38,22 +47,20 @@ export default {
   Card: "Karte",
   Check: "Scheck",
   Other: "Andere",
-  // Note field
   Note: "Notiz",
   "Insert variable": "Variable einfügen",
+  Bold: "Fett",
+  Italic: "Kursiv",
+  "Bullet list": "Aufzählung",
   "Add payment instructions, terms, or other notes...":
     "Zahlungsanweisungen, Bedingungen oder andere Notizen hinzufügen...",
-  // Signature field
   Signature: "Unterschrift",
   "Add signature text...": "Unterschriftstext hinzufügen...",
-  // Payment terms field
   "Payment Terms": "Zahlungsbedingungen",
   "Add payment terms...": "Zahlungsbedingungen hinzufügen...",
-  // Smart code categories
   Entity: "Unternehmen",
   Document: "Dokument",
   Customer: "Kunde",
-  // Smart code variable labels
   "Company name": "Firmenname",
   "Email address": "E-Mail-Adresse",
   "Invoice number": "Rechnungsnummer",
@@ -66,7 +73,6 @@ export default {
   "Customer email": "Kunden-E-Mail",
   "Today's date": "Heutiges Datum",
   "Current year": "Aktuelles Jahr",
-  // Recipient fields
   "Search or create customer...": "Kunde suchen oder erstellen...",
   Clear: "Löschen",
   Address: "Adresse",
@@ -75,13 +81,24 @@ export default {
   City: "Stadt",
   State: "Bundesland",
   Country: "Land",
+  "Bank Account": "Bankkonto",
+  "Account Type": "Kontotyp",
+  BIC: "BIC",
+  IBAN: "IBAN",
+  "US domestic": "US-Inland",
+  "UK domestic": "UK-Inland",
+  "Account Number": "Kontonummer",
+  "Routing Number": "Routing-Nummer",
+  "Sort Code": "Bankleitzahl",
+  "Company Number": "Unternehmensnummer",
+  "UJP receiver identifier": "UJP-Empfängerkennung",
+  "UJP receiver agent": "UJP-Empfänger-Agent",
+  "UJP receiver mailbox": "UJP-Empfänger-Mailbox",
   "Tax Number": "Steuernummer",
-  // Discount types
   "Percentage discount": "Prozentualer Rabatt",
   "Fixed amount discount": "Fester Rabatt",
   Percentage: "Prozent",
   "Fixed amount": "Fester Betrag",
-  // FURS fields
   "FURS Fiscalization": "FURS Fiskalisierung",
   "Business Premise": "Geschäftsräume",
   "Electronic Device": "Elektronisches Gerät",
@@ -99,9 +116,8 @@ export default {
   "Fiscally verify": "Steuerlich prüfen",
   "Click to skip fiscalization for this invoice":
     "Klicken Sie, um die Fiskalisierung für diese Rechnung zu überspringen",
-  "Business unit": "Business unit",
-  "No unit": "No unit",
-  // e-SLOG validation
+  "Business unit": "Geschäftseinheit",
+  "No unit": "Keine Einheit",
   "e-SLOG": "e-SLOG",
   "Click to skip e-SLOG validation for this invoice":
     "Klicken Sie, um die e-SLOG-Validierung für diese Rechnung zu überspringen",
@@ -127,21 +143,30 @@ export default {
     "Die Unternehmenswährung muss für e-SLOG EUR sein, wenn die Rechnung eine andere Währung verwendet.",
   "Customer name is required when customer is provided.":
     "Der Kundenname ist erforderlich, wenn ein Kunde angegeben ist.",
+  "Entity IBAN is required for UJP package validation. Update in Settings > Company.":
+    "Die IBAN des Unternehmens ist für die UJP-Paketvalidierung erforderlich. Aktualisieren Sie sie unter Einstellungen > Unternehmen.",
+  "Entity IBAN must be a valid Slovenian IBAN for UJP package validation.":
+    "Die IBAN des Unternehmens muss für die UJP-Paketvalidierung eine gültige slowenische IBAN sein.",
+  "Entity BIC is required for UJP package validation. Update in Settings > Company.":
+    "Der BIC des Unternehmens ist für die UJP-Paketvalidierung erforderlich. Aktualisieren Sie ihn unter Einstellungen > Unternehmen.",
+  "Entity BIC must be a valid 8- or 11-character BIC for UJP package validation.":
+    "Der BIC des Unternehmens muss für die UJP-Paketvalidierung ein gültiger BIC mit 8 oder 11 Zeichen sein.",
+  "Customer IBAN must be a valid Slovenian IBAN for UJP package validation.":
+    "Die Kunden-IBAN muss eine gültige slowenische IBAN für die UJP-Paketvalidierung sein.",
+  "Customer BIC must be a valid 8- or 11-character BIC for UJP package validation.":
+    "Der Kunden-BIC muss für die UJP-Paketvalidierung ein gültiger BIC mit 8 oder 11 Zeichen sein.",
   "At least one line item is required for e-SLOG.": "Für e-SLOG ist mindestens eine Position erforderlich.",
   "Item name is required for e-SLOG.": "Der Positionsname ist für e-SLOG erforderlich.",
   "Quantity must be greater than 0.": "Die Menge muss größer als 0 sein.",
   "Price is required for e-SLOG.": "Der Preis ist für e-SLOG erforderlich.",
   "Invalid Slovenian tax rate {{rate}}%. Valid: {{validRates}}":
     "Ungültiger slowenischer Steuersatz {{rate}}%. Gültig: {{validRates}}",
-  // VIES / Reverse Charge
   "Reverse charge - tax exempt EU B2B sale": "Reverse-Charge - steuerfreier EU B2B-Verkauf",
   "Taxes disabled": "Steuern deaktiviert",
-  // Gross price support
   "Gross price": "Bruttopreis",
   "Net price": "Nettopreis",
   "Gross price (tax included)": "Bruttopreis (inkl. MwSt.)",
   "Net price (before tax)": "Nettopreis (exkl. MwSt.)",
-  // Linked documents
   "Linked documents": "Verknüpfte Dokumente",
   Type: "Typ",
   Total: "Gesamt",
@@ -153,7 +178,6 @@ export default {
   "Advance invoice": "Vorausrechnung",
   "FINA fiscalized invoices always use the current date":
     "FINA-fiskalisierte Rechnungen verwenden immer das aktuelle Datum",
-  // Due days selector
   "On receipt": "Bei Erhalt",
   "7 days": "7 Tage",
   "14 days": "14 Tage",
@@ -161,8 +185,6 @@ export default {
   "60 days": "60 Tage",
   "90 days": "90 Tage",
   Custom: "Benutzerdefiniert",
-  // Separator items
-  // Service date
   "Service Date": "Leistungsdatum",
   "Service Period": "Leistungszeitraum",
   From: "Von",
@@ -170,7 +192,6 @@ export default {
   "Add separator": "Trennzeile hinzufügen",
   "Section header": "Abschnittsüberschrift",
   "Section title...": "Abschnittstitel...",
-  // Transaction type
   "Transaction type": "Transaktionstyp",
   Domestic: "Inland",
   "EU B2B": "EU B2B",
@@ -184,7 +205,6 @@ export default {
   "Add tax clause...": "Steuerklausel hinzufügen...",
   Footer: "Fußzeile",
   "Add document footer...": "Dokumentfußzeile hinzufügen...",
-  // Croatian domestic invoice validation
   "End consumer": "Endverbraucher",
   "Domestic B2B invoicing in Croatia is not supported":
     "Inländische B2B-Rechnungsstellung in Kroatien wird nicht unterstützt. Kroatien erfordert die Einhaltung von Fiskalisierung 2.0 für B2B-Rechnungsstellung.",
@@ -198,4 +218,22 @@ export default {
   "Remaining to allocate": "Noch zuzuweisen",
   "This document must be fully paid on creation": "Dieses Dokument muss bei der Erstellung vollständig bezahlt sein",
   "Record one or more payments on creation": "Bei der Erstellung eine oder mehrere Zahlungen erfassen",
+  "Entity bank account is required for e-SLOG payment instructions. Update in Settings > Company.":
+    "Das Bankkonto des Unternehmens ist für e-SLOG-Zahlungsanweisungen erforderlich. Aktualisieren Sie es unter Einstellungen > Unternehmen.",
+  "Customer tax number is required for e-SLOG business recipients.":
+    "Die Steuernummer des Kunden ist für e-SLOG-Geschäftsempfänger erforderlich.",
+  "Customer address is required for UJP package validation.":
+    "Die Kundenadresse ist für die UJP-Paketvalidierung erforderlich.",
+  "Customer postal code is required for UJP package validation.":
+    "Die Postleitzahl des Kunden ist für die UJP-Paketvalidierung erforderlich.",
+  "Customer city is required for UJP package validation.":
+    "Die Stadt des Kunden ist für die UJP-Paketvalidierung erforderlich.",
+  "Customer tax number or company number is required for UJP package validation.":
+    "Steuernummer oder Unternehmensnummer des Kunden ist für die UJP-Paketvalidierung erforderlich.",
+  "Customer IBAN and BIC are required for UJP package validation.":
+    "IBAN und BIC des Kunden sind für die UJP-Paketvalidierung erforderlich.",
+  "Customer IBAN is required for UJP package validation.":
+    "Die Kunden-IBAN ist für die UJP-Paketvalidierung erforderlich.",
+  "Customer BIC is required for UJP package validation.":
+    "Der Kunden-BIC ist für die UJP-Paketvalidierung erforderlich.",
 } as const;

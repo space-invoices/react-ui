@@ -1,5 +1,6 @@
 import type { CreateEstimateRequest } from "@spaceinvoices/js-sdk";
 import type { CreateEstimateSchema } from "@/ui/generated/schemas";
+import { buildDocumentValidationPayload, type DocumentValidationOptions } from "@/ui/lib/document-validation-payload";
 import { normalizePtDocumentInput, type PtDocumentInputForm } from "@/ui/lib/pt-document-input";
 import {
   buildDocumentBasePayload,
@@ -21,6 +22,8 @@ type PrepareOptions = {
   titleType?: "estimate" | "proforma_invoice";
   /** Whether to save as draft (skips numbering) */
   isDraft?: boolean;
+  /** e-SLOG validation data (for Slovenia) */
+  eslog?: DocumentValidationOptions;
 };
 
 /**
@@ -44,12 +47,17 @@ export function prepareEstimateSubmission(
     ...baseSubmission,
     title_type: options.titleType,
     ...(pt ? { pt } : {}),
+    ...(options.eslog !== undefined
+      ? {
+          eslog: buildDocumentValidationPayload(options.eslog),
+        }
+      : {}),
   };
 }
 
 export function prepareEstimateUpdateSubmission(
   values: CreateEstimateSchema & { pt?: PtDocumentInputForm | null },
-  options: Pick<PrepareOptions, "originalCustomer" | "priceModes" | "titleType">,
+  options: Pick<PrepareOptions, "originalCustomer" | "priceModes" | "titleType" | "eslog">,
 ): Record<string, unknown> {
   const nextValues: any = {
     ...values,
@@ -70,7 +78,9 @@ export function prepareEstimateUpdateSubmission(
     ...buildDocumentBasePayload(nextValues, {
       documentType: "estimate",
       secondaryDate: values.date_valid_till ?? undefined,
+      includeCalculationMode: false,
     }),
     ...(options.titleType ? { title_type: options.titleType } : {}),
+    ...(options.eslog !== undefined ? { eslog: buildDocumentValidationPayload(options.eslog) } : {}),
   };
 }

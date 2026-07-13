@@ -171,6 +171,7 @@ export function ItemCombobox({
   // Sync when value changes externally (e.g., duplication, form reset)
   useEffect(() => {
     if (value != null) {
+      setSearch(value);
       setDisplayValue(value);
     } else {
       setSearch("");

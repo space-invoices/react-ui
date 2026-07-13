@@ -1,6 +1,7 @@
 import { taxReports } from "@spaceinvoices/js-sdk";
 import { Download, Loader2 } from "lucide-react";
 import { useRef, useState } from "react";
+import { triggerBlobDownload } from "@/ui/lib/browser-download";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
 import { Button } from "../ui/button";
@@ -99,17 +100,7 @@ export function KirExportForm({
       // Generate filename
       const fileName = `KIR_${year}_${periodType === "month" ? `M${month}` : `Q${quarter}`}.zip`;
 
-      // Download the file
-      const downloadUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = downloadUrl;
-      link.download = fileName;
-      document.body.appendChild(link);
-      link.click();
-      setTimeout(() => {
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(downloadUrl);
-      }, 1000);
+      triggerBlobDownload(blob, fileName);
 
       onSuccess?.(fileName);
     } catch (error) {

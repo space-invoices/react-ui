@@ -2,9 +2,11 @@
  * Shared document items section for invoices and estimates
  * Handles: item management (add, remove, reorder)
  */
+
+import type { Tax } from "@spaceinvoices/js-sdk";
 import { PlusIcon, SeparatorHorizontal } from "lucide-react";
-import { useEffect } from "react";
 import type { MutableRefObject } from "react";
+import { useEffect } from "react";
 import type {
   UseFormClearErrors,
   UseFormGetValues,
@@ -14,22 +16,21 @@ import type {
 } from "react-hook-form";
 import { useController, useFieldArray } from "react-hook-form";
 import type { DocumentTypes } from "@/ui/components/documents/types";
-import { Button } from "@/ui/components/ui/button";
-import { cn } from "@/ui/lib/utils";
 import { useListTaxes } from "@/ui/components/taxes/taxes.hooks";
+import { Button } from "@/ui/components/ui/button";
+import type { DocumentContentLocaleMode } from "@/ui/lib/document-content-translations";
+import { cn } from "@/ui/lib/utils";
 import DocumentAddItemForm from "./document-add-item-form";
+import {
+  appendPriceMode,
+  buildInitialItemTaxes,
+  movePriceMode,
+  type PriceModesMap,
+  removePriceMode,
+} from "./document-item-state";
 import type { AnyControl } from "./form-types";
 
-/** Map of item index to gross price mode */
-export type PriceModesMap = Record<number, boolean>;
-
-function reindexPriceModes(priceModes: PriceModesMap, nextLength: number): PriceModesMap {
-  const reindexed: PriceModesMap = {};
-  for (let index = 0; index < nextLength; index += 1) {
-    reindexed[index] = priceModes[index] ?? false;
-  }
-  return reindexed;
-}
+export type { PriceModesMap } from "./document-item-state";
 
 type DocumentItemsSectionProps = {
   control: AnyControl;
@@ -45,6 +46,7 @@ type DocumentItemsSectionProps = {
   entityId: string;
   currencyCode?: string;
   onAddNewTax?: () => void;
+  onFindEstimatedTax?: () => Promise<Tax | null | undefined> | Tax | null | undefined;
   t: (key: string) => string;
   /** When true, tax controls are disabled (e.g., for VIES reverse charge) */
   taxesDisabled?: boolean;
@@ -60,6 +62,10 @@ type DocumentItemsSectionProps = {
   onItemsStateChange?: () => void;
   locale?: string;
   isTaxSubject?: boolean;
+  translationsEnabled?: boolean;
+  contentLocale?: DocumentContentLocaleMode;
+  defaultContentLocale?: string | null;
+  onContentLocaleChange?: (locale: DocumentContentLocaleMode) => void;
 };
 
 export function DocumentItemsSection({
@@ -74,6 +80,7 @@ export function DocumentItemsSection({
   entityId,
   currencyCode,
   onAddNewTax,
+  onFindEstimatedTax,
   t,
   taxesDisabled,
   taxesDisabledMessage,
@@ -83,6 +90,10 @@ export function DocumentItemsSection({
   onItemsStateChange,
   locale = "en",
   isTaxSubject = false,
+  translationsEnabled = false,
+  contentLocale,
+  defaultContentLocale,
+  onContentLocaleChange,
 }: DocumentItemsSectionProps) {
   const { fields, append, remove, move } = useFieldArray({
     control: control as any,
@@ -95,8 +106,6 @@ export function DocumentItemsSection({
     name: "items" as any,
   });
   const itemsError = itemsController.fieldState.error?.message;
-
-  const buildInitialTaxes = () => (isTaxSubject && hasEntityTaxes ? [{ tax_id: undefined }] : []);
 
   const syncPriceModes = (updater: (current: PriceModesMap) => PriceModesMap) => {
     if (!priceModesRef) return;
@@ -111,9 +120,9 @@ export function DocumentItemsSection({
       financial_category_id: undefined,
       quantity: 1,
       price: undefined,
-      taxes: buildInitialTaxes(),
+      taxes: buildInitialItemTaxes(isTaxSubject, hasEntityTaxes),
     });
-    syncPriceModes((current) => ({ ...current, [fields.length]: false }));
+    syncPriceModes((current) => appendPriceMode(current, fields.length));
     onItemsStateChange?.();
   };
 
@@ -123,44 +132,27 @@ export function DocumentItemsSection({
       name: "",
       description: "",
     });
-    syncPriceModes((current) => ({ ...current, [fields.length]: false }));
+    syncPriceModes((current) => appendPriceMode(current, fields.length));
     onItemsStateChange?.();
   };
 
   const removeItem = (index: number) => {
     remove(index);
-    syncPriceModes((current) => {
-      const next: PriceModesMap = {};
-      let nextIndex = 0;
-      for (let currentIndex = 0; currentIndex < fields.length; currentIndex += 1) {
-        if (currentIndex === index) continue;
-        next[nextIndex] = current[currentIndex] ?? false;
-        nextIndex += 1;
-      }
-      return next;
-    });
+    syncPriceModes((current) => removePriceMode(current, fields.length, index));
     onItemsStateChange?.();
   };
 
   const moveItemUp = (index: number) => {
     if (index === 0) return;
     move(index, index - 1);
-    syncPriceModes((current) => {
-      const next = reindexPriceModes(current, fields.length);
-      [next[index], next[index - 1]] = [next[index - 1], next[index]];
-      return next;
-    });
+    syncPriceModes((current) => movePriceMode(current, fields.length, index, index - 1));
     onItemsStateChange?.();
   };
 
   const moveItemDown = (index: number) => {
     if (index === fields.length - 1) return;
     move(index, index + 1);
-    syncPriceModes((current) => {
-      const next = reindexPriceModes(current, fields.length);
-      [next[index], next[index + 1]] = [next[index + 1], next[index]];
-      return next;
-    });
+    syncPriceModes((current) => movePriceMode(current, fields.length, index, index + 1));
     onItemsStateChange?.();
   };
 
@@ -202,6 +194,7 @@ export function DocumentItemsSection({
             onMoveUp={() => moveItemUp(index)}
             onMoveDown={() => moveItemDown(index)}
             onAddNewTax={onAddNewTax}
+            onFindEstimatedTax={onFindEstimatedTax}
             showRemove={items.length > 1}
             showMoveUp={index > 0}
             showMoveDown={index < items.length - 1}
@@ -217,6 +210,10 @@ export function DocumentItemsSection({
               onItemsStateChange?.();
             }}
             locale={locale}
+            translationsEnabled={translationsEnabled}
+            contentLocale={contentLocale}
+            defaultContentLocale={defaultContentLocale}
+            onContentLocaleChange={onContentLocaleChange}
           />
         </div>
       ))}

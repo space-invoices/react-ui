@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import type { CreateInvoiceRequest, Invoice } from "@spaceinvoices/js-sdk";
+import type { CreateInvoiceRequest, Invoice, Tax } from "@spaceinvoices/js-sdk";
 import { useQueryClient } from "@tanstack/react-query";
-import { AlertCircle, Check, FileCode2, X } from "lucide-react";
+import { AlertCircle, Check, X } from "lucide-react";
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Resolver } from "react-hook-form";
@@ -13,13 +13,22 @@ import { Form, FormRoot } from "@/ui/components/ui/form";
 import { Skeleton } from "@/ui/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/ui/components/ui/tooltip";
 import { createInvoiceSchema } from "@/ui/generated/schemas";
-import { useEslogValidation } from "@/ui/hooks/use-eslog-validation";
+import { getInitialEslogValidationEnabled, useEslogValidation } from "@/ui/hooks/use-eslog-validation";
 import { usePremiseSelection } from "@/ui/hooks/use-premise-selection";
 import { useTransactionTypeCheck } from "@/ui/hooks/use-transaction-type-check";
+import { getEntityCountryCapabilities } from "@/ui/lib/country-capabilities";
+import { normalizeDateOnlyInput, toLocalCalendarDate, toLocalDateOnlyString } from "@/ui/lib/date-only";
+import {
+  DEFAULT_CONTENT_LOCALE,
+  DOCUMENT_CONTENT_TRANSLATIONS_FEATURE,
+  type DocumentContentLocaleMode,
+} from "@/ui/lib/document-content-translations";
 import {
   buildEslogOptions,
   buildFinaOptions,
   buildFursOptions,
+  buildGermanEInvoicingOptions,
+  buildUjpOptions,
   type FiscalizationOperatorOverride,
 } from "@/ui/lib/fiscalization-options";
 import {
@@ -27,12 +36,14 @@ import {
   type PtDocumentInputForm,
   ptDocumentInputFormSchema,
 } from "@/ui/lib/pt-document-input";
+import { invalidateRevenueRecognitionQueries } from "@/ui/lib/revenue-recognition-cache";
 import { normalizeLineItemDiscountsForForm } from "@/ui/lib/schemas/shared";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
 import { cn } from "@/ui/lib/utils";
 import { useEntities } from "@/ui/providers/entities-context";
 import { useFormFooterRegistration } from "@/ui/providers/form-footer-context";
+import { useWhiteLabel } from "@/ui/providers/white-label-provider";
 import { CUSTOMERS_CACHE_KEY } from "../../customers/customers.hooks";
 import { BusinessUnitSelectField } from "../../documents/create/business-unit-select-field";
 import {
@@ -75,10 +86,12 @@ import {
 import { scrollToFirstInvalidField } from "../../documents/create/scroll-to-first-invalid-field";
 import type { DocumentTypes } from "../../documents/types";
 import { useCreateCustomInvoice, useCreateInvoice, useNextInvoiceNumber, useUpdateInvoice } from "../invoices.hooks";
+import { EslogSetupErrorsDialog } from "./eslog-setup-errors-dialog";
 import {
   buildEslogFieldErrors,
   getEntityErrors,
   getFormFieldErrors,
+  hasCustomerFieldErrors,
   mergeFieldErrors,
   translateEslogValidationError,
   validateEslogForm,
@@ -95,10 +108,10 @@ import sl from "./locales/sl";
 import { prepareInvoiceSubmission, prepareInvoiceUpdateSubmission } from "./prepare-invoice-submission";
 import { useInvoiceCustomerForm } from "./use-invoice-customer-form";
 
-function calculateDueDate(dateIso: string, days: number): string {
-  const date = new Date(dateIso);
+function calculateDueDate(dateValue: string, days: number): string {
+  const date = toLocalCalendarDate(dateValue) ?? new Date(dateValue);
   date.setDate(date.getDate() + days);
-  return date.toISOString();
+  return toLocalDateOnlyString(date);
 }
 
 function isSameCalendarDate(left: string | Date | undefined, right: string | Date): boolean {
@@ -147,6 +160,8 @@ function emitInvoiceCreateDebug(_detail: Record<string, unknown>) {
 // Form values: extend schema with local-only fields (number is for display, not sent to API)
 type CreateInvoiceFormValues = z.infer<typeof createInvoiceFormSchema> & {
   number?: string;
+  _duplicate_source_id?: string;
+  _duplicate_target_type?: string;
 };
 
 /** Preview payload extends request with display-only fields */
@@ -164,6 +179,7 @@ type DocumentAddFormProps = {
   onError?: (error: unknown) => void;
   onChange?: (data: InvoicePreviewPayload) => void;
   onAddNewTax?: () => void;
+  onFindEstimatedTax?: () => Promise<Tax | null | undefined> | Tax | null | undefined;
   onHeaderActionChange?: (action: ReactNode) => void;
   /** Initial values for form fields (used for document duplication or editing) */
   initialValues?: Partial<CreateInvoiceRequest> & { number?: string; business_unit_id?: string | null };
@@ -190,27 +206,24 @@ type DocumentAddFormProps = {
 function buildInvoiceFormValues({
   initialValues,
   currencyCode,
-  defaultInvoiceNote,
-  defaultPaymentTerms,
-  defaultFooter,
-  defaultSignature,
+  documentDefaults,
   defaultInvoiceDueDays,
   isEditMode,
+  fallbackNowIso,
 }: {
   initialValues?: Partial<CreateInvoiceRequest> & { number?: string; business_unit_id?: string | null };
   currencyCode?: string;
-  defaultInvoiceNote: string;
-  defaultPaymentTerms: string;
-  defaultFooter: string;
-  defaultSignature: string;
+  documentDefaults: ReturnType<typeof getDocumentDefaultFields>;
   defaultInvoiceDueDays: number;
   isEditMode: boolean;
+  fallbackNowIso: string;
 }): CreateInvoiceFormValues {
+  const resolvedDate = normalizeDateOnlyInput(initialValues?.date || fallbackNowIso) ?? fallbackNowIso;
   return {
     number: initialValues?.number || "",
     business_unit_id: (initialValues as any)?.business_unit_id ?? null,
     calculation_mode: (initialValues as any)?.calculation_mode ?? undefined,
-    date: initialValues?.date || new Date().toISOString(),
+    date: resolvedDate,
     customer_id: initialValues?.customer_id ?? undefined,
     customer: (initialValues?.customer as CreateInvoiceFormValues["customer"]) ?? undefined,
     items: initialValues?.items?.length
@@ -221,8 +234,11 @@ function buildInvoiceFormValues({
           ...(item.type !== "separator"
             ? {
                 item_id: item.item_id,
+                translations: item.translations ?? {},
                 classification: item.classification ?? undefined,
                 unit: item.unit ?? undefined,
+                financial_category_id: item.financial_category_id ?? undefined,
+                e_invoicing: item.e_invoicing ?? undefined,
                 quantity: item.quantity ?? 1,
                 price: item.gross_price ?? item.price,
                 gross_price: item.gross_price ?? undefined,
@@ -236,6 +252,7 @@ function buildInvoiceFormValues({
           {
             name: "",
             description: "",
+            translations: {},
             quantity: 1,
             price: undefined,
             taxes: [],
@@ -243,19 +260,24 @@ function buildInvoiceFormValues({
         ],
     currency_code: initialValues?.currency_code || currencyCode || "EUR",
     reference: (initialValues as any)?.reference ?? "",
-    note: initialValues?.note ?? (isEditMode ? "" : defaultInvoiceNote),
+    note: initialValues?.note ?? (isEditMode ? "" : documentDefaults.note),
     tax_clause: (initialValues as any)?.tax_clause ?? "",
-    payment_terms: initialValues?.payment_terms ?? (isEditMode ? "" : defaultPaymentTerms),
-    footer: (initialValues as any)?.footer ?? (isEditMode ? "" : defaultFooter),
-    signature: (initialValues as any)?.signature ?? (isEditMode ? "" : defaultSignature),
-    date_due:
-      initialValues?.date_due ||
+    payment_terms: initialValues?.payment_terms ?? (isEditMode ? "" : documentDefaults.payment_terms),
+    footer: (initialValues as any)?.footer ?? (isEditMode ? "" : documentDefaults.footer),
+    signature: (initialValues as any)?.signature ?? (isEditMode ? "" : documentDefaults.signature),
+    translations:
+      (initialValues as any)?.translations ??
       (isEditMode
-        ? undefined
-        : calculateDueDate(initialValues?.date || new Date().toISOString(), defaultInvoiceDueDays)),
-    date_service:
-      (initialValues as any)?.date_service ??
-      (isEditMode ? undefined : (initialValues?.date ?? new Date().toISOString())),
+        ? {}
+        : {
+            note: documentDefaults.translations.note,
+            payment_terms: documentDefaults.translations.payment_terms,
+            footer: documentDefaults.translations.footer,
+            signature: documentDefaults.translations.signature,
+          }),
+    date_due:
+      initialValues?.date_due || (isEditMode ? undefined : calculateDueDate(resolvedDate, defaultInvoiceDueDays)),
+    date_service: (initialValues as any)?.date_service ?? (isEditMode ? undefined : resolvedDate),
     date_service_to: (initialValues as any)?.date_service_to ?? undefined,
     linked_documents: (initialValues as any)?.linked_documents,
     pt: ((initialValues as any)?.pt as PtDocumentInputForm | undefined) ?? undefined,
@@ -269,6 +291,7 @@ export default function CreateInvoiceForm({
   onError,
   onChange,
   onAddNewTax,
+  onFindEstimatedTax,
   onHeaderActionChange,
   initialValues,
   businessUnits = [],
@@ -296,7 +319,15 @@ export default function CreateInvoiceForm({
 
   const isEditMode = mode === "edit";
   const { activeEntity } = useEntities();
+  const countryCapabilities = useMemo(() => getEntityCountryCapabilities(activeEntity), [activeEntity]);
+  const whiteLabel = useWhiteLabel();
   const queryClient = useQueryClient();
+  const invalidateRevenueRecognitionReports = useCallback(() => {
+    invalidateRevenueRecognitionQueries(queryClient);
+  }, [queryClient]);
+  const translationsFeatureEnabled = whiteLabel.isFeatureVisible(DOCUMENT_CONTENT_TRANSLATIONS_FEATURE);
+  const defaultContentLocale = activeEntity?.locale || "en-US";
+  const [contentLocale, setContentLocale] = useState<DocumentContentLocaleMode>(DEFAULT_CONTENT_LOCALE);
   const initialBusinessUnit = useMemo(
     () => businessUnits.find((unit) => unit.id === ((initialValues as any)?.business_unit_id ?? null)) ?? null,
     [businessUnits, initialValues],
@@ -308,11 +339,7 @@ export default function CreateInvoiceForm({
 
   // Get default invoice note and payment terms from entity settings
   const initialDocumentDefaults = getDocumentDefaultFields("invoice", initialMergedSettings);
-  const defaultInvoiceNote = initialDocumentDefaults.note;
-  const defaultPaymentTerms = initialDocumentDefaults.payment_terms;
-  const defaultFooter = initialDocumentDefaults.footer;
-  const defaultSignature = initialDocumentDefaults.signature;
-  const defaultInvoiceDueDays = (activeEntity?.settings as any)?.default_invoice_due_days ?? 30;
+  const defaultInvoiceDueDays = (initialMergedSettings as any)?.default_invoice_due_days ?? 30;
 
   // ============================================================================
   // FURS & FINA Premise Selection (shared hook)
@@ -325,10 +352,12 @@ export default function CreateInvoiceForm({
   // ============================================================================
   // e-SLOG Validation (shared hook)
   // ============================================================================
-  const eslog = useEslogValidation(activeEntity);
-  const eslogValidationModeRef = useRef<"submit" | "draft">("submit");
+  const initialEslogEnabled = getInitialEslogValidationEnabled(isEditMode, (initialValues as any)?.eslog);
+  const eslog = useEslogValidation(activeEntity, initialEslogEnabled);
   const eslogEntityErrorsRef = useRef(eslog.entityErrors);
   eslogEntityErrorsRef.current = eslog.entityErrors;
+  const [eslogSetupDialogOpen, setEslogSetupDialogOpen] = useState(false);
+  const isDraftSubmitRef = useRef(false);
 
   // UI-only state (not part of API schema)
   const [markAsPaid, setMarkAsPaid] = useState(false);
@@ -387,35 +416,26 @@ export default function CreateInvoiceForm({
       }),
     [initialPriceModes, initialValues],
   );
+  const fallbackNowIsoRef = useRef(normalizeDateOnlyInput(initialValues?.date || new Date().toISOString()) ?? "");
 
   const formDefaultValues = useMemo(
     () =>
       buildInvoiceFormValues({
         initialValues,
         currencyCode: activeEntity?.currency_code ?? undefined,
-        defaultInvoiceNote,
-        defaultPaymentTerms,
-        defaultFooter,
-        defaultSignature,
+        documentDefaults: initialDocumentDefaults,
         defaultInvoiceDueDays,
         isEditMode,
+        fallbackNowIso: fallbackNowIsoRef.current,
       }),
-    [
-      activeEntity?.currency_code,
-      defaultFooter,
-      defaultInvoiceDueDays,
-      defaultInvoiceNote,
-      defaultPaymentTerms,
-      defaultSignature,
-      initialValues,
-      isEditMode,
-    ],
+    [activeEntity?.currency_code, defaultInvoiceDueDays, initialDocumentDefaults, initialValues, isEditMode],
   );
 
   const baseResolver = useMemo(() => zodResolver(createInvoiceFormSchema) as Resolver<CreateInvoiceFormValues>, []);
   const eslogResolverStateRef = useRef({
     activeEntity,
     isEnabled: eslog.isEnabled === true,
+    requiresUjpValidation: eslog.requiresUjpValidation,
     isEditMode,
     translate: t,
     setEntityErrors: eslog.setEntityErrors,
@@ -423,6 +443,7 @@ export default function CreateInvoiceForm({
   eslogResolverStateRef.current = {
     activeEntity,
     isEnabled: eslog.isEnabled === true,
+    requiresUjpValidation: eslog.requiresUjpValidation,
     isEditMode,
     translate: t,
     setEntityErrors: eslog.setEntityErrors,
@@ -431,8 +452,7 @@ export default function CreateInvoiceForm({
     () => async (values, context, options) => {
       const result = await baseResolver(values, context, options);
       const resolverState = eslogResolverStateRef.current;
-      const shouldValidateEslog =
-        eslogValidationModeRef.current === "submit" && !resolverState.isEditMode && resolverState.isEnabled;
+      const shouldValidateEslog = !isDraftSubmitRef.current && resolverState.isEnabled;
 
       if (!shouldValidateEslog) {
         eslogEntityErrorsRef.current = [];
@@ -440,7 +460,9 @@ export default function CreateInvoiceForm({
         return result;
       }
 
-      const validationErrors = validateEslogForm(values as any, resolverState.activeEntity);
+      const validationErrors = validateEslogForm(values as any, resolverState.activeEntity, {
+        requireUjpRecipientRouting: resolverState.requiresUjpValidation,
+      });
       const entityErrors = getEntityErrors(validationErrors);
       eslogEntityErrorsRef.current = entityErrors;
       resolverState.setEntityErrors(entityErrors);
@@ -467,8 +489,12 @@ export default function CreateInvoiceForm({
     resolver,
     defaultValues: formDefaultValues,
   });
+  const autoDateDueRef = useRef<string | undefined>(
+    !isEditMode && !initialValues?.date_due ? form.getValues("date_due") : undefined,
+  );
 
   const watchedItems = useWatch({ control: form.control, name: "items" });
+  const documentTranslations = useWatch({ control: form.control, name: "translations" });
   const selectedBusinessUnitId = useWatch({ control: form.control, name: "business_unit_id" as any });
   const selectedBusinessUnit = useMemo(
     () => businessUnits.find((unit) => unit.id === selectedBusinessUnitId) ?? null,
@@ -478,6 +504,7 @@ export default function CreateInvoiceForm({
     () => mergeEntityAndBusinessUnitSettings((activeEntity?.settings as any) ?? {}, selectedBusinessUnit),
     [activeEntity?.settings, selectedBusinessUnit],
   );
+  const effectiveDefaultInvoiceDueDays = (mergedSettings as any)?.default_invoice_due_days ?? 30;
   const derivedDocumentDefaults = useMemo(() => getDocumentDefaultFields("invoice", mergedSettings), [mergedSettings]);
   const appliedDerivedDefaultsRef = useRef(derivedDocumentDefaults);
   const paymentDocumentTotal = useMemo(
@@ -556,7 +583,9 @@ export default function CreateInvoiceForm({
       if (type !== "custom") {
         const currentDate = form.getValues("date");
         if (currentDate) {
-          form.setValue("date_due", calculateDueDate(currentDate, type));
+          const nextDueDate = calculateDueDate(currentDate, type);
+          form.setValue("date_due", nextDueDate);
+          autoDateDueRef.current = nextDueDate;
         }
       }
     },
@@ -646,15 +675,15 @@ export default function CreateInvoiceForm({
   useEffect(() => {
     if (!onHeaderActionChange) return;
 
-    // Don't set header action while loading or in edit mode (FURS/FINA/e-SLOG not editable)
-    if (furs.isLoading || !skipPreferenceInitialized || fina.isLoading || isEditMode) {
+    // In edit mode, e-SLOG validation remains editable but FURS/FINA controls are create-only.
+    if (!isEditMode && (furs.isLoading || !skipPreferenceInitialized || fina.isLoading)) {
       if (headerActionSignatureRef.current === null) return;
       headerActionSignatureRef.current = null;
       onHeaderActionChange(null);
       return;
     }
 
-    const showFursToggle = furs.isEnabled && furs.hasPremises;
+    const showFursToggle = !isEditMode && furs.isEnabled && furs.hasPremises;
     const showEslogToggle = eslog.isAvailable;
     const isFursChecked = !skipFiscalization;
     const isEslogChecked = eslog.isEnabled === true;
@@ -700,7 +729,7 @@ export default function CreateInvoiceForm({
                           : "border-muted-foreground bg-background text-muted-foreground",
                       )}
                     >
-                      {isEslogChecked ? <Check className="size-3" /> : <FileCode2 className="size-3" />}
+                      {isEslogChecked ? <Check className="size-3" /> : null}
                     </div>
                     <span>{t("e-SLOG")}</span>
                   </Button>
@@ -794,6 +823,21 @@ export default function CreateInvoiceForm({
           shouldValidate: false,
         });
       }
+
+      const currentTranslations = (form.getValues("translations") as any)?.[field] ?? {};
+      const previousTranslations = previousDefaults.translations[field] ?? {};
+      const nextTranslations = derivedDocumentDefaults.translations[field] ?? {};
+      const matchesPreviousTranslations = JSON.stringify(currentTranslations) === JSON.stringify(previousTranslations);
+      const isEmptyTranslations = Object.keys(currentTranslations).length === 0;
+
+      if (matchesPreviousTranslations || isEmptyTranslations) {
+        form.setValue(`translations.${field}` as any, nextTranslations, {
+          shouldDirty:
+            matchesPreviousTranslations && JSON.stringify(previousTranslations) !== JSON.stringify(nextTranslations),
+          shouldTouch: false,
+          shouldValidate: false,
+        });
+      }
     }
 
     appliedDerivedDefaultsRef.current = derivedDocumentDefaults;
@@ -805,7 +849,7 @@ export default function CreateInvoiceForm({
     const today = new Date();
     if (isSameCalendarDate(form.getValues("date"), today)) return;
 
-    form.setValue("date", today.toISOString(), {
+    form.setValue("date", toLocalDateOnlyString(today), {
       shouldDirty: true,
       shouldTouch: false,
       shouldValidate: true,
@@ -926,12 +970,24 @@ export default function CreateInvoiceForm({
   const {
     originalCustomer,
     showCustomerForm,
+    setShowCustomerForm,
     shouldFocusName,
     selectedCustomerId,
     initialCustomerName,
     handleCustomerSelect,
     handleCustomerClear,
+    handleCustomerEdit,
   } = useInvoiceCustomerForm(form as any);
+
+  useEffect(() => {
+    if (!eslog.requiresUjpValidation || showCustomerForm) {
+      return;
+    }
+
+    if (hasCustomerFieldErrors(form.formState.errors as any)) {
+      setShowCustomerForm(true);
+    }
+  }, [eslog.requiresUjpValidation, form.formState.errors, setShowCustomerForm, showCustomerForm]);
 
   const { mutate: createInvoice, isPending: isCreatePending } = useCreateInvoice({
     entityId,
@@ -944,6 +1000,7 @@ export default function CreateInvoiceForm({
       if (data.customer_id) {
         queryClient.invalidateQueries({ queryKey: [CUSTOMERS_CACHE_KEY] });
       }
+      invalidateRevenueRecognitionReports();
       onSuccess?.(data);
     },
     onError,
@@ -957,6 +1014,7 @@ export default function CreateInvoiceForm({
       if (data.customer_id) {
         queryClient.invalidateQueries({ queryKey: [CUSTOMERS_CACHE_KEY] });
       }
+      invalidateRevenueRecognitionReports();
       onSuccess?.(data);
     },
     onError,
@@ -971,6 +1029,7 @@ export default function CreateInvoiceForm({
       }
       // Invalidate document queries to refresh the view
       queryClient.invalidateQueries({ queryKey: ["documents", "invoice", documentId] });
+      invalidateRevenueRecognitionReports();
       onSuccess?.(data);
     },
     onError,
@@ -984,7 +1043,8 @@ export default function CreateInvoiceForm({
       // Block Croatian domestic B2B and domestic B2C without FINA
       if (finaValidationError) return;
 
-      if (!isDraft && !isEditMode && eslog.isEnabled && eslogEntityErrorsRef.current.length > 0) {
+      if (!isDraft && eslog.isEnabled && eslogEntityErrorsRef.current.length > 0) {
+        setEslogSetupDialogOpen(true);
         return;
       }
 
@@ -1010,13 +1070,26 @@ export default function CreateInvoiceForm({
         operator: operatorPrefill,
       });
 
-      // Build e-SLOG options (skip for drafts and edit mode)
+      // Build e-SLOG/UJP options for create and update.
       const eslogOptions = buildEslogOptions({
         isDraft,
-        isEditMode,
         isAvailable: eslog.isAvailable,
         isEnabled: eslog.isEnabled,
       });
+      const ujpOptions = buildUjpOptions({
+        isAvailable: eslog.isAvailable,
+        isEnabled: eslog.isEnabled,
+        requiresUjpValidation: eslog.requiresUjpValidation,
+      });
+      const germanEInvoicingOptions = buildGermanEInvoicingOptions({
+        isEditMode,
+        isAvailable: countryCapabilities.showGermanEInvoicingExports,
+        xrechnungEnabled: countryCapabilities.showXRechnungExport,
+        zugferdEnabled: countryCapabilities.showZugferdExport,
+      });
+      const submissionValues: CreateInvoiceFormValues = eslog.isEnabled
+        ? { ...values, calculation_mode: "b2b_standard" as const }
+        : values;
 
       if (!isDraft && !isEditMode && markAsPaid) {
         const paymentValidation = validatePaymentRows(paymentRows, paymentDocumentTotal, "partial_allowed");
@@ -1030,11 +1103,16 @@ export default function CreateInvoiceForm({
       }
 
       if (isEditMode && documentId) {
-        const updatePayload = prepareInvoiceUpdateSubmission(values as any, {
+        const updatePayload = prepareInvoiceUpdateSubmission(submissionValues as any, {
           originalCustomer,
           wasCustomerFormShown: showCustomerForm,
           eslog: eslogOptions,
+          ujp: ujpOptions,
           priceModes: priceModesRef.current,
+          initialValues: initialValues as any,
+          initialPriceModes,
+          initialEslog: (initialValues as any)?.eslog,
+          initialUjp: (initialValues as any)?.ujp,
         }) as any;
 
         if (forceLinkedDocuments) {
@@ -1043,7 +1121,7 @@ export default function CreateInvoiceForm({
 
         updateInvoice({ id: documentId, data: updatePayload });
       } else {
-        const payload = prepareInvoiceSubmission(values as any, {
+        const payload = prepareInvoiceSubmission(submissionValues as any, {
           originalCustomer,
           wasCustomerFormShown: showCustomerForm,
           markAsPaid: isDraft ? false : markAsPaid,
@@ -1051,10 +1129,12 @@ export default function CreateInvoiceForm({
           furs: fursOptions,
           fina: finaOptions,
           eslog: eslogOptions,
+          ujp: ujpOptions,
+          germanEInvoicing: germanEInvoicingOptions,
           priceModes: priceModesRef.current,
           isDraft,
         });
-        const preservedExpectedTotalWithTax = getPreservedExpectedTotalWithTax(values);
+        const preservedExpectedTotalWithTax = getPreservedExpectedTotalWithTax(submissionValues);
         if (preservedExpectedTotalWithTax !== undefined) {
           (payload as any).expected_total_with_tax = preservedExpectedTotalWithTax;
         } else {
@@ -1065,7 +1145,7 @@ export default function CreateInvoiceForm({
           (payload as any).force_linked_documents = true;
         }
 
-        if (customCreateTemplate && financialInputsMatchSource(values)) {
+        if (customCreateTemplate && financialInputsMatchSource(submissionValues)) {
           delete (payload as any).expected_total_with_tax;
           createCustomInvoice(applyCustomCreateTemplate(payload as any, customCreateTemplate));
         } else {
@@ -1077,6 +1157,9 @@ export default function CreateInvoiceForm({
       createInvoice,
       createCustomInvoice,
       updateInvoice,
+      countryCapabilities.showGermanEInvoicingExports,
+      countryCapabilities.showXRechnungExport,
+      countryCapabilities.showZugferdExport,
       customCreateTemplate,
       documentId,
       eslog,
@@ -1084,6 +1167,8 @@ export default function CreateInvoiceForm({
       fina,
       forceLinkedDocuments,
       furs,
+      initialPriceModes,
+      initialValues,
       isEditMode,
       useFinaNumbering,
       markAsPaid,
@@ -1101,8 +1186,8 @@ export default function CreateInvoiceForm({
   // Handle save as draft - triggers form validation then submits with isDraft=true
   const handleSaveAsDraft = useCallback(async () => {
     setIsDraftPending(true);
+    isDraftSubmitRef.current = true;
     try {
-      eslogValidationModeRef.current = "draft";
       const isValid = await form.trigger();
       if (isValid) {
         const values = form.getValues();
@@ -1111,7 +1196,7 @@ export default function CreateInvoiceForm({
         scrollToFirstInvalidField(FORM_ID);
       }
     } finally {
-      eslogValidationModeRef.current = "submit";
+      isDraftSubmitRef.current = false;
       setIsDraftPending(false);
     }
   }, [form, submitInvoice]);
@@ -1131,16 +1216,20 @@ export default function CreateInvoiceForm({
           },
     [allowDrafts, draftLabel, handleSaveAsDraft, isDraftPending, isEditMode],
   );
+  const handleFooterSubmit = useCallback(() => {
+    (document.getElementById(FORM_ID) as HTMLFormElement | null)?.requestSubmit();
+  }, []);
 
   // Watch isDirty to get stable reference
   // When form is pre-populated via initialValues (duplicate/merge), treat as dirty immediately
   const isDirty = form.formState.isDirty || !!initialValues;
 
   useFormFooterRegistration({
-    formId: "create-invoice-form",
+    formId: FORM_ID,
     isPending,
     isDirty,
     label: saveLabel,
+    onSubmit: handleFooterSubmit,
     secondaryAction,
   });
 
@@ -1150,22 +1239,56 @@ export default function CreateInvoiceForm({
   const hasInitialDueDate = !!initialValues?.date_due;
   const duplicateHydrationStartedAtRef = useRef<number | null>(hasInitialValues ? performance.now() : null);
   const duplicateHydrationLoggedRef = useRef(false);
-  const appliedInitialValuesSignatureRef = useRef<string | null>(null);
+  const appliedInitialValuesHydrationKeyRef = useRef<string | null>(null);
+  const initialValuesHydrationKey = useMemo(() => {
+    if (!initialValues) return null;
+    return (
+      ((initialValues as any)._duplicate_source_id
+        ? `duplicate:${(initialValues as any)._duplicate_source_id}:${(initialValues as any)._duplicate_target_type ?? _type}`
+        : null) ?? JSON.stringify(formDefaultValues)
+    );
+  }, [formDefaultValues, initialValues, _type]);
+
+  useEffect(() => {
+    if (isEditMode || hasInitialDueDate) return;
+
+    const currentDate = form.getValues("date");
+    if (currentDate) {
+      const currentDueDate = form.getValues("date_due");
+      if (currentDueDate && autoDateDueRef.current && currentDueDate !== autoDateDueRef.current) {
+        return;
+      }
+
+      const nextDueDate = calculateDueDate(currentDate, effectiveDefaultInvoiceDueDays);
+      form.setValue("date_due", nextDueDate, {
+        shouldDirty: false,
+        shouldTouch: false,
+        shouldValidate: false,
+      });
+      autoDateDueRef.current = nextDueDate;
+    }
+    setDueDaysType(
+      (DUE_DAYS_PRESETS as readonly number[]).includes(effectiveDefaultInvoiceDueDays)
+        ? effectiveDefaultInvoiceDueDays
+        : "custom",
+    );
+  }, [effectiveDefaultInvoiceDueDays, form, hasInitialDueDate, isEditMode]);
 
   useEffect(() => {
     if (!hasInitialValues) return;
 
-    const nextSignature = JSON.stringify(formDefaultValues);
-    if (appliedInitialValuesSignatureRef.current === nextSignature) return;
+    if (!initialValuesHydrationKey) return;
+    if (appliedInitialValuesHydrationKeyRef.current === initialValuesHydrationKey) return;
+    if (appliedInitialValuesHydrationKeyRef.current !== null && form.formState.isDirty) return;
 
-    appliedInitialValuesSignatureRef.current = nextSignature;
+    appliedInitialValuesHydrationKeyRef.current = initialValuesHydrationKey;
     initialSetupDoneRef.current = false;
     duplicateHydrationStartedAtRef.current = performance.now();
     duplicateHydrationLoggedRef.current = false;
     form.reset(formDefaultValues);
     setTaxClauseHydrationVersion((currentVersion) => currentVersion + 1);
     priceModesRef.current = initialPriceModes;
-  }, [form, formDefaultValues, hasInitialValues, initialPriceModes]);
+  }, [form, formDefaultValues, hasInitialValues, initialPriceModes, initialValuesHydrationKey]);
 
   // Set default note and payment terms from entity settings when entity data is available
   // This handles the case where activeEntity loads asynchronously
@@ -1198,18 +1321,9 @@ export default function CreateInvoiceForm({
     if (entityDefaultFooter && !form.getValues("footer")) {
       form.setValue("footer", entityDefaultFooter);
     }
-    if (defaultSignature && !form.getValues("signature")) {
-      form.setValue("signature", defaultSignature);
-    }
-
-    // Auto-populate due date and due days type from entity settings when entity loads async
-    if (!isEditMode && !hasInitialDueDate) {
-      const dueDays = (activeEntity.settings as any)?.default_invoice_due_days ?? 30;
-      const currentDate = form.getValues("date");
-      if (currentDate) {
-        form.setValue("date_due", calculateDueDate(currentDate, dueDays));
-      }
-      setDueDaysType((DUE_DAYS_PRESETS as readonly number[]).includes(dueDays) ? dueDays : "custom");
+    const entityDefaultSignature = (activeEntity.settings as any)?.default_document_signature;
+    if (entityDefaultSignature && !form.getValues("signature")) {
+      form.setValue("signature", entityDefaultSignature);
     }
 
     initialSetupDoneRef.current = true;
@@ -1221,7 +1335,7 @@ export default function CreateInvoiceForm({
         elapsedMs: Number((performance.now() - duplicateHydrationStartedAtRef.current).toFixed(1)),
       });
     }
-  }, [activeEntity, defaultSignature, form, hasInitialDueDate, hasInitialValues, isEditMode]);
+  }, [activeEntity, form, hasInitialValues, isEditMode]);
 
   // Recalculate due date when document date changes (skip in edit mode and custom due days)
   const prevDateRef = useRef(form.getValues("date"));
@@ -1230,7 +1344,14 @@ export default function CreateInvoiceForm({
     if (!watchedDate || watchedDate === prevDateRef.current) return;
     prevDateRef.current = watchedDate;
     if (dueDaysType !== "custom") {
-      form.setValue("date_due", calculateDueDate(watchedDate, dueDaysType));
+      const currentDueDate = form.getValues("date_due");
+      if (currentDueDate && autoDateDueRef.current && currentDueDate !== autoDateDueRef.current) {
+        return;
+      }
+
+      const nextDueDate = calculateDueDate(watchedDate, dueDaysType);
+      form.setValue("date_due", nextDueDate);
+      autoDateDueRef.current = nextDueDate;
     }
   }, [watchedDate, isEditMode, form, dueDaysType]);
 
@@ -1266,10 +1387,11 @@ export default function CreateInvoiceForm({
         date_due: formValues.date_due,
         date_service: formValues.date_service,
         date_service_to: formValues.date_service_to,
-        customer_id: formValues.customer_id,
+        customer_id: selectedCustomerId ? formValues.customer_id : undefined,
         customer: formValues.customer,
         items: prepareDocumentItems(previewItems, priceModesRef.current),
         currency_code: formValues.currency_code,
+        calculation_mode: eslog.isEnabled ? "b2b_standard" : formValues.calculation_mode,
         linked_documents: formValues.linked_documents,
         ...(forceLinkedDocuments ? { force_linked_documents: true } : {}),
         reference: formValues.reference,
@@ -1306,6 +1428,7 @@ export default function CreateInvoiceForm({
       activeDeviceNameForNumber,
       activePremiseName,
       customCreateTemplate,
+      eslog.isEnabled,
       financialInputsMatchSource,
       forceLinkedDocuments,
       furs.hasPremises,
@@ -1313,6 +1436,7 @@ export default function CreateInvoiceForm({
       getPreservedExpectedTotalWithTax,
       isEditMode,
       isNextNumberLoading,
+      selectedCustomerId,
       skipFiscalization,
     ],
   );
@@ -1355,6 +1479,14 @@ export default function CreateInvoiceForm({
   useEffect(() => {
     if (!onChange) return;
 
+    const clearSettledInitialPreview = () => {
+      if (initialPreviewTimeoutRef.current) {
+        clearTimeout(initialPreviewTimeoutRef.current);
+        initialPreviewTimeoutRef.current = null;
+      }
+      pendingInitialPreviewPayloadRef.current = null;
+    };
+
     const emitSettledInitialPreview = (payload: InvoicePreviewPayload) => {
       pendingInitialPreviewPayloadRef.current = payload;
 
@@ -1391,7 +1523,7 @@ export default function CreateInvoiceForm({
     }
 
     // Subscribe to changes
-    const subscription = form.watch((formValues) => {
+    const subscription = form.watch((formValues, info) => {
       const payload = buildPreviewPayload(formValues);
       const payloadStr = JSON.stringify(payload);
       if (payloadStr !== prevPayloadRef.current) {
@@ -1404,9 +1536,14 @@ export default function CreateInvoiceForm({
             elapsedMs: Number((performance.now() - duplicateHydrationStartedAtRef.current).toFixed(1)),
           });
         }
-        if (hasInitialValues && !hasEmittedSettledInitialPreviewRef.current) {
+        const isUserEdit = info.type === "change" || form.formState.isDirty;
+        if (hasInitialValues && !hasEmittedSettledInitialPreviewRef.current && !isUserEdit) {
           emitSettledInitialPreview(payload);
         } else {
+          if (hasInitialValues && !hasEmittedSettledInitialPreviewRef.current) {
+            hasEmittedSettledInitialPreviewRef.current = true;
+            clearSettledInitialPreview();
+          }
           onChange(payload);
         }
       }
@@ -1424,6 +1561,12 @@ export default function CreateInvoiceForm({
 
   const onSubmit = (values: CreateInvoiceFormValues) => {
     submitInvoice(values, false);
+  };
+  const onInvalidSubmit = (errors: any) => {
+    if (eslog.requiresUjpValidation && hasCustomerFieldErrors(errors)) {
+      setShowCustomerForm(true);
+    }
+    scrollToFirstInvalidField(FORM_ID);
   };
 
   // Show skeleton while loading FURS data and next number
@@ -1493,7 +1636,14 @@ export default function CreateInvoiceForm({
 
   return (
     <Form {...form}>
-      <FormRoot id={FORM_ID} onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+      <FormRoot id={FORM_ID} onSubmit={form.handleSubmit(onSubmit, onInvalidSubmit)} className="space-y-8">
+        <EslogSetupErrorsDialog
+          open={eslogSetupDialogOpen}
+          onOpenChange={setEslogSetupDialogOpen}
+          errors={eslog.entityErrors}
+          t={t}
+        />
+
         {/* Croatian domestic invoice validation errors */}
         {finaValidationError && (
           <Alert variant="destructive" data-form-error-summary="true">
@@ -1506,9 +1656,9 @@ export default function CreateInvoiceForm({
         {eslog.entityErrors.length > 0 && (
           <Alert variant="destructive" data-form-error-summary="true">
             <AlertCircle className="h-4 w-4" />
-            <AlertTitle>{t("e-SLOG Validation Failed")}</AlertTitle>
+            <AlertTitle>{t("Missing required details")}</AlertTitle>
             <AlertDescription>
-              <p className="mb-2">{t("The following entity settings need to be updated:")}</p>
+              <p className="mb-2">{t("The following e-SLOG details need to be updated:")}</p>
               <ul className="list-disc space-y-1 pl-4">
                 {eslog.entityErrors.map((error) => (
                   <li key={error.field} className="text-sm">
@@ -1526,11 +1676,16 @@ export default function CreateInvoiceForm({
             entityId={entityId}
             onCustomerSelect={handleCustomerSelect}
             onCustomerClear={handleCustomerClear}
+            onCustomerEdit={handleCustomerEdit}
             showCustomerForm={showCustomerForm}
             shouldFocusName={shouldFocusName}
             selectedCustomerId={selectedCustomerId}
+            entityCountryCode={activeEntity?.country_code}
             initialCustomerName={initialCustomerName}
             showEndConsumerToggle={isCroatianEntity && (isDomesticTransaction || is3wTransaction)}
+            showBusinessRecipientFields={eslog.isEnabled === true && eslog.requiresUjpValidation}
+            showUjpRoutingFields={eslog.isEnabled === true && eslog.requiresUjpValidation}
+            showEInvoicingBuyerReference={countryCapabilities.showGermanEInvoicingExports}
             t={t}
             locale={locale}
           />
@@ -1634,6 +1789,7 @@ export default function CreateInvoiceForm({
           entityId={entityId}
           currencyCode={activeEntity?.currency_code ?? undefined}
           onAddNewTax={onAddNewTax}
+          onFindEstimatedTax={onFindEstimatedTax}
           t={t}
           locale={locale}
           taxesDisabled={reverseChargeApplies}
@@ -1645,11 +1801,16 @@ export default function CreateInvoiceForm({
           priceModesRef={priceModesRef}
           initialPriceModes={initialPriceModes}
           onItemsStateChange={emitCurrentPreviewPayload}
+          translationsEnabled={translationsFeatureEnabled}
+          contentLocale={contentLocale}
+          defaultContentLocale={defaultContentLocale}
+          onContentLocaleChange={setContentLocale}
         />
 
         <DocumentNoteField
           control={form.control}
           t={t}
+          uiLocale={locale}
           entity={activeEntity}
           document={{
             number: watchedNumber,
@@ -1658,11 +1819,20 @@ export default function CreateInvoiceForm({
             currency_code: watchedCurrencyCode,
             customer: watchedCustomer as any,
           }}
+          translationsEnabled={translationsFeatureEnabled}
+          activeContentLocale={contentLocale}
+          defaultContentLocale={defaultContentLocale}
+          fieldTranslations={(documentTranslations as any)?.note}
+          onContentLocaleChange={setContentLocale}
+          onFieldTranslationsChange={(next) =>
+            form.setValue("translations", { ...(form.getValues("translations") ?? {}), note: next })
+          }
         />
 
         <DocumentTaxClauseField
           control={form.control}
           t={t}
+          uiLocale={locale}
           entity={activeEntity}
           document={{
             number: watchedNumber,
@@ -1674,11 +1844,20 @@ export default function CreateInvoiceForm({
           transactionType={transactionType}
           isTransactionTypeFetching={isViesFetching}
           isFinaNonDomestic={isFinaNonDomestic}
+          translationsEnabled={translationsFeatureEnabled}
+          activeContentLocale={contentLocale}
+          defaultContentLocale={defaultContentLocale}
+          fieldTranslations={(documentTranslations as any)?.tax_clause}
+          onContentLocaleChange={setContentLocale}
+          onFieldTranslationsChange={(next) =>
+            form.setValue("translations", { ...(form.getValues("translations") ?? {}), tax_clause: next })
+          }
         />
 
         <DocumentPaymentTermsField
           control={form.control}
           t={t}
+          uiLocale={locale}
           entity={activeEntity}
           document={{
             number: watchedNumber,
@@ -1687,11 +1866,20 @@ export default function CreateInvoiceForm({
             currency_code: watchedCurrencyCode,
             customer: watchedCustomer as any,
           }}
+          translationsEnabled={translationsFeatureEnabled}
+          activeContentLocale={contentLocale}
+          defaultContentLocale={defaultContentLocale}
+          fieldTranslations={(documentTranslations as any)?.payment_terms}
+          onContentLocaleChange={setContentLocale}
+          onFieldTranslationsChange={(next) =>
+            form.setValue("translations", { ...(form.getValues("translations") ?? {}), payment_terms: next })
+          }
         />
 
         <DocumentSignatureField
           control={form.control}
           t={t}
+          uiLocale={locale}
           entity={activeEntity}
           document={{
             number: watchedNumber,
@@ -1700,11 +1888,20 @@ export default function CreateInvoiceForm({
             currency_code: watchedCurrencyCode,
             customer: watchedCustomer as any,
           }}
+          translationsEnabled={translationsFeatureEnabled}
+          activeContentLocale={contentLocale}
+          defaultContentLocale={defaultContentLocale}
+          fieldTranslations={(documentTranslations as any)?.signature}
+          onContentLocaleChange={setContentLocale}
+          onFieldTranslationsChange={(next) =>
+            form.setValue("translations", { ...(form.getValues("translations") ?? {}), signature: next })
+          }
         />
 
         <DocumentFooterField
           control={form.control}
           t={t}
+          uiLocale={locale}
           entity={activeEntity}
           document={{
             number: watchedNumber,
@@ -1713,6 +1910,14 @@ export default function CreateInvoiceForm({
             currency_code: watchedCurrencyCode,
             customer: watchedCustomer as any,
           }}
+          translationsEnabled={translationsFeatureEnabled}
+          activeContentLocale={contentLocale}
+          defaultContentLocale={defaultContentLocale}
+          fieldTranslations={(documentTranslations as any)?.footer}
+          onContentLocaleChange={setContentLocale}
+          onFieldTranslationsChange={(next) =>
+            form.setValue("translations", { ...(form.getValues("translations") ?? {}), footer: next })
+          }
         />
 
         {sourceDocuments && sourceDocuments.length > 0 && (

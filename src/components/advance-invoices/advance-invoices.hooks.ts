@@ -20,8 +20,8 @@ const {
   useDeleteResource: useDeleteAdvanceInvoice,
 } = createResourceHooks<AdvanceInvoice, CreateAdvanceInvoiceRequest, UpdateAdvanceInvoice>(
   {
-    create: advanceInvoices.create,
-    update: advanceInvoices.update,
+    create: (...args) => advanceInvoices.create(...args),
+    update: (...args) => advanceInvoices.update(...args),
     delete: voidAdvanceInvoice,
   },
   ADVANCE_INVOICES_CACHE_KEY,
@@ -33,8 +33,8 @@ const { useCreateResource: useCreateCustomAdvanceInvoice } = createResourceHooks
   UpdateAdvanceInvoice
 >(
   {
-    create: advanceInvoices.createCustom,
-    update: advanceInvoices.update,
+    create: (...args) => advanceInvoices.createCustom(...args),
+    update: (...args) => advanceInvoices.update(...args),
     delete: voidAdvanceInvoice,
   },
   ADVANCE_INVOICES_CACHE_KEY,

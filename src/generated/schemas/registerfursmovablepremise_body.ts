@@ -14,6 +14,7 @@ const registerFursMovablePremiseSchemaDefinition = z.object({
   movable_premise: z
     .object({ premise_type: z.enum(["A", "B", "C"]) })
     .passthrough(),
+  starting_number: z.union([z.number(), z.null()]).optional(),
 });
 
 export type RegisterFursMovablePremiseSchema = z.infer<typeof registerFursMovablePremiseSchemaDefinition>;

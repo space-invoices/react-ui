@@ -9,38 +9,32 @@ import { z } from 'zod';
 // Schemas for order endpoints
 
 // Dependency schema for order
-const OrderCustomer = z.union([
-  z
-    .object({
-      phone: z.string(),
-      company_name: z.string(),
-      tax_number: z.string(),
-      company_number: z.string(),
-      is_business: z.boolean(),
-      notes: z.string(),
-    })
-    .partial()
-    .passthrough(),
-  z.null(),
-]);
+const OrderCustomer = z
+  .object({
+    phone: z.string(),
+    company_name: z.string(),
+    tax_number: z.string(),
+    company_number: z.string(),
+    is_business: z.boolean(),
+    notes: z.string(),
+  })
+  .partial()
+  .passthrough();
 
 
 // Dependency schema for order
-const OrderAddress = z.union([
-  z
-    .object({
-      address: z.string(),
-      address_2: z.string(),
-      city: z.string(),
-      state: z.string(),
-      post_code: z.string(),
-      country: z.string(),
-      country_code: z.string(),
-    })
-    .partial()
-    .passthrough(),
-  z.null(),
-]);
+const OrderAddress = z
+  .object({
+    address: z.string(),
+    address_2: z.string(),
+    city: z.string(),
+    state: z.string(),
+    post_code: z.string(),
+    country: z.string(),
+    country_code: z.string(),
+  })
+  .partial()
+  .passthrough();
 
 
 // Dependency schema for order
@@ -71,9 +65,9 @@ const createOrderSchemaDefinition = z.object({
   source_order_number: z.union([z.string(), z.null()]).optional(),
   customer_name: z.union([z.string(), z.null()]).optional(),
   customer_email: z.union([z.string(), z.null()]).optional(),
-  customer: OrderCustomer.optional(),
-  billing_address: OrderAddress.optional(),
-  shipping_address: OrderAddress.optional(),
+  customer: z.union([OrderCustomer, z.null()]).optional(),
+  billing_address: z.union([OrderAddress, z.null()]).optional(),
+  shipping_address: z.union([OrderAddress, z.null()]).optional(),
   currency_code: z.string().max(3),
   total: z.number().gte(-140737488355328).lte(140737488355327),
   total_with_tax: z.number().gte(-140737488355328).lte(140737488355327),
@@ -104,9 +98,9 @@ const updateOrderSchemaDefinition = z
     source_order_number: z.union([z.string(), z.null()]),
     customer_name: z.union([z.string(), z.null()]),
     customer_email: z.union([z.string(), z.null()]),
-    customer: OrderCustomer,
-    billing_address: OrderAddress,
-    shipping_address: OrderAddress,
+    customer: z.union([OrderCustomer, z.null()]),
+    billing_address: z.union([OrderAddress, z.null()]),
+    shipping_address: z.union([OrderAddress, z.null()]),
     currency_code: z.string().max(3),
     total: z.number().gte(-140737488355328).lte(140737488355327),
     total_with_tax: z.number().gte(-140737488355328).lte(140737488355327),

@@ -2,6 +2,7 @@ import type { CreditNote } from "@spaceinvoices/js-sdk";
 import { creditNotes } from "@spaceinvoices/js-sdk";
 import { AlertTriangle } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
+import { CustomerLinkCell } from "@/ui/components/documents/list/customer-link-cell";
 import { DataTable } from "@/ui/components/table/data-table";
 import { FormattedDate } from "@/ui/components/table/date-cell";
 import { useTableFetch } from "@/ui/components/table/hooks/use-table-fetch";
@@ -52,6 +53,7 @@ type CreditNoteListTableProps = {
   namespace?: string;
   locale?: string;
   translationLocale?: string;
+  cacheKey?: string;
   entityId?: string;
   onView?: (creditNote: CreditNote) => void;
   onAddPayment?: (creditNote: CreditNote) => void;
@@ -70,15 +72,24 @@ type CreditNoteListTableProps = {
   onCreateNew?: () => void;
   onVoid?: (creditNote: CreditNote) => void;
   isVoiding?: boolean;
+  showSearchToolbar?: boolean;
+  showPagination?: boolean;
+  contentInsetClassName?: string;
+  bottomPaddingClassName?: string;
+  hiddenColumnIds?: string[];
+  getCustomerHref?: (customerId: string, creditNote: CreditNote) => string;
+  onCustomerClick?: (customerId: string, creditNote: CreditNote) => void;
 } & ListTableProps<CreditNote>;
 
 export default function CreditNoteListTable({
   queryParams,
+  cacheKey = "credit-notes",
   onRowClick,
   onView,
   onAddPayment,
   onDuplicate,
   onChangeParams,
+  disableUrlSync,
   entityId,
   onDownloadStart,
   onDownloadSuccess,
@@ -94,6 +105,13 @@ export default function CreditNoteListTable({
   onCreateNew,
   onVoid,
   isVoiding,
+  showSearchToolbar,
+  showPagination,
+  contentInsetClassName,
+  bottomPaddingClassName,
+  hiddenColumnIds,
+  getCustomerHref,
+  onCustomerClick,
   ...i18nProps
 }: CreditNoteListTableProps) {
   const t = createTranslation({
@@ -227,14 +245,6 @@ export default function CreditNoteListTable({
               <Button variant="link" className="cursor-pointer py-0 underline" onClick={() => onRowClick?.(creditNote)}>
                 {getDisplayDocumentNumber(creditNote as CreditNote & { is_draft?: boolean }, t)}
               </Button>
-              {(creditNote as any).is_draft && (
-                <Badge
-                  variant="outline"
-                  className="border-amber-500 bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-400"
-                >
-                  {t("Draft")}
-                </Badge>
-              )}
               {showWarning && (
                 <Tooltip>
                   <TooltipTrigger>
@@ -252,7 +262,15 @@ export default function CreditNoteListTable({
       {
         id: "customer",
         header: t("Customer"),
-        cell: (creditNote) => creditNote.customer?.name ?? "-",
+        cell: (creditNote) => (
+          <CustomerLinkCell
+            item={creditNote}
+            customerId={creditNote.customer_id}
+            customerName={creditNote.customer?.name}
+            getCustomerHref={getCustomerHref}
+            onCustomerClick={onCustomerClick}
+          />
+        ),
       },
       {
         id: "date",
@@ -319,19 +337,31 @@ export default function CreditNoteListTable({
       isVoiding,
       i18nProps.locale,
       fiscalizationFeatures,
+      getCustomerHref,
+      onCustomerClick,
     ],
   );
 
+  const visibleColumns = useMemo(() => {
+    if (!hiddenColumnIds?.length) {
+      return columns;
+    }
+
+    const hidden = new Set(hiddenColumnIds);
+    return columns.filter((column) => !hidden.has(column.id));
+  }, [columns, hiddenColumnIds]);
+
   return (
     <DataTable
-      columns={columns}
+      columns={visibleColumns}
       queryParams={queryParams}
       resourceName="credit_note"
-      cacheKey="credit-notes"
+      cacheKey={cacheKey}
       createNewLink={entityId ? `/app/${entityId}/documents/add/credit_note` : undefined}
       onCreateNew={onCreateNew}
       onFetch={handleFetch}
       onChangeParams={onChangeParams}
+      disableUrlSync={disableUrlSync}
       entityId={entityId}
       filterConfig={filterConfig}
       t={t}
@@ -340,21 +370,32 @@ export default function CreditNoteListTable({
       selectedIds={selectedIds}
       onSelectionChange={setSelectedIds}
       selectionToolbar={selectionToolbar}
+      showSearchToolbar={showSearchToolbar}
+      showPagination={showPagination}
+      contentInsetClassName={contentInsetClassName}
+      bottomPaddingClassName={bottomPaddingClassName}
     />
   );
 }
 
 /** Status badge for credit notes */
 function CreditNoteStatusBadge({ creditNote, t }: { creditNote: CreditNote; t: (key: string) => string }) {
+  if ((creditNote as any).is_draft) {
+    return (
+      <Badge
+        variant="outline"
+        className="border-amber-500 bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-400"
+      >
+        {t("Draft")}
+      </Badge>
+    );
+  }
   if ((creditNote as any).voided_at) {
     return (
       <Badge variant="outline" className="border-red-500 bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-400">
         {t("Voided")}
       </Badge>
     );
-  }
-  if ((creditNote as any).is_draft) {
-    return null;
   }
   // Hide payment badges for void-created credit notes (has "credit_for" relation)
   const isVoidCreated = (creditNote as any).document_relations?.some((rel: any) => rel.relation_type === "credit_for");

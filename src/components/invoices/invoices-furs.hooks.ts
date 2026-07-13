@@ -1,5 +1,6 @@
 import { advanceInvoices, creditNotes, deliveryNotes, invoices } from "@spaceinvoices/js-sdk";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { invalidateRevenueRecognitionQueries } from "@/ui/lib/revenue-recognition-cache";
 
 interface VoidDocumentParams {
   documentId: string;
@@ -41,6 +42,7 @@ export function useVoidDocument() {
       queryClient.invalidateQueries({ queryKey: ["advance-invoices"] });
       queryClient.invalidateQueries({ queryKey: ["delivery-notes"] });
       queryClient.invalidateQueries({ queryKey: ["documents", variables.documentType, variables.documentId] });
+      invalidateRevenueRecognitionQueries(queryClient);
     },
   });
 }

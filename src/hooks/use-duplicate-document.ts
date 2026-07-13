@@ -11,17 +11,12 @@ import type {
   Estimate,
   Invoice,
 } from "@spaceinvoices/js-sdk";
+import { advanceInvoices, creditNotes, deliveryNotes, documents, estimates, invoices } from "@spaceinvoices/js-sdk";
 import { useQuery } from "@tanstack/react-query";
 import { buildCustomCreateTemplateFromDocument } from "@/ui/components/documents/create/custom-create-template";
 import { toDocumentFormItem } from "@/ui/components/documents/create/document-form-item";
 import { totalsDifferByCents } from "@/ui/components/documents/create/preserved-expected-total";
 import { useEntities } from "@/ui/providers/entities-context";
-import { advanceInvoices } from "../../../js-sdk/src/sdk/advance-invoices";
-import { creditNotes } from "../../../js-sdk/src/sdk/credit-notes";
-import { deliveryNotes } from "../../../js-sdk/src/sdk/delivery-notes";
-import { documents } from "../../../js-sdk/src/sdk/documents";
-import { estimates } from "../../../js-sdk/src/sdk/estimates";
-import { invoices } from "../../../js-sdk/src/sdk/invoices";
 
 const DUPLICATE_TIMING_EVENT = "si:duplicate-timing";
 
@@ -40,7 +35,39 @@ type CreateRequest =
   | CreateDeliveryNoteRequest;
 type CreateRequestWithBusinessUnit = CreateRequest & {
   business_unit_id?: string | null;
+  business_unit?: unknown | null;
+  _duplicate_source_id?: string;
+  _duplicate_target_type?: DocumentType;
 };
+
+function normalizeCustomTemplateItems(
+  sourceItems: any[] | undefined,
+  formItems: any[] | undefined,
+  templateItems: any[] | undefined,
+): any[] {
+  return (templateItems ?? []).map((templateItem, index) => {
+    const sourceItem = sourceItems?.[index];
+    const formItem = formItems?.[index];
+    const translations = formItem?.translations ?? sourceItem?.translations ?? undefined;
+
+    if (templateItem?.type === "separator") {
+      return {
+        ...templateItem,
+        translations,
+      };
+    }
+
+    const usesGrossPrice = sourceItem?.gross_price !== null && sourceItem?.gross_price !== undefined;
+    const effectivePrice = formItem?.price;
+
+    return {
+      ...templateItem,
+      translations,
+      price: usesGrossPrice ? undefined : effectivePrice,
+      gross_price: usesGrossPrice ? effectivePrice : undefined,
+    };
+  });
+}
 
 function shouldCheckForPreservedTotal(document: any): boolean {
   return document?.creation_source === "custom" || Math.abs(document?.rounding_correction ?? 0) > 0;
@@ -55,6 +82,8 @@ function buildCalculatePayload(values: Partial<CreateRequestWithBusinessUnit>): 
     items: values.items,
     customer_id: (values as any).customer_id,
     customer: (values as any).customer,
+    business_unit_id: values.business_unit_id,
+    business_unit: values.business_unit,
     currency_code: (values as any).currency_code,
     date: (values as any).date,
     calculation_mode: (values as any).calculation_mode,
@@ -131,7 +160,10 @@ function transformDocumentForDuplication(
 
   // Build base duplicate data
   const baseData: Partial<CreateRequestWithBusinessUnit> = {
+    _duplicate_source_id: source.id,
+    _duplicate_target_type: targetType,
     business_unit_id: (source as any).business_unit_id ?? undefined,
+    business_unit: (source as any).business_unit ?? undefined,
     // Customer - always pass both customer_id AND customer data when available
     // The form needs customer data for display, even when customer_id is set
     ...(source.customer_id ? { customer_id: source.customer_id } : {}),
@@ -148,6 +180,7 @@ function transformDocumentForDuplication(
     signature: (source as any).signature,
     tax_clause: (source as any).tax_clause,
     footer: (source as any).footer,
+    translations: (source as any).translations ?? undefined,
     // Date - use today's date as ISO string
     date: new Date().toISOString(),
     // Number - leave empty for auto-generation
@@ -270,7 +303,13 @@ export function useDuplicateDocument({
 
       const initialValues = transformDocumentForDuplication(source, targetType);
       if ((source as any).creation_source === "custom") {
-        (initialValues as any)._custom_create_template = buildCustomCreateTemplateFromDocument(source);
+        const customCreateTemplate = buildCustomCreateTemplateFromDocument(source);
+        customCreateTemplate.items = normalizeCustomTemplateItems(
+          source.items as any[] | undefined,
+          initialValues.items as any[],
+          customCreateTemplate.items,
+        );
+        (initialValues as any)._custom_create_template = customCreateTemplate;
       }
       if (shouldCheckForPreservedTotal(source)) {
         const calculatePayload = buildCalculatePayload(initialValues);

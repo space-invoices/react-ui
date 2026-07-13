@@ -3,6 +3,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 
 const SCHEMAS_DIR = "./src/generated/schemas";
+const STAGING_SCHEMAS_DIR = "./src/generated/.schemas-staging";
 const GENERATED_DIR = "./generated";
 
 type OperationSchemaEntry = {
@@ -31,21 +32,32 @@ const getGroupName = (schemaName: string, alias?: string): string => {
 };
 
 function extractOperationSchemaEntries(fullContent: string): OperationSchemaEntry[] {
-  const endpointBlockRegex = / {2}\{[\s\S]*?\n {2}\},?/g;
   const dedupedEntries = new Map<string, OperationSchemaEntry>();
+  const aliasRegex = /alias:\s*"([^"]+)"/g;
 
-  for (const block of fullContent.match(endpointBlockRegex) ?? []) {
-    const aliasMatch = block.match(/alias:\s*"([^"]+)"/);
+  for (const aliasMatch of fullContent.matchAll(aliasRegex)) {
+    const aliasIndex = aliasMatch.index ?? 0;
+    const blockStart = fullContent.lastIndexOf("\n  {\n    method:", aliasIndex);
+    const nextBlockStart = fullContent.indexOf("\n  {\n    method:", aliasIndex + aliasMatch[0].length);
+    const block = fullContent.slice(
+      blockStart === -1 ? 0 : blockStart,
+      nextBlockStart === -1 ? undefined : nextBlockStart,
+    );
     const bodySchemaMatch = block.match(
       /type:\s*"Body",[\s\S]*?schema:\s*((?:[A-Z][A-Za-z0-9_]*|[a-z][A-Za-z0-9]*_Body))/,
     );
 
-    if (!aliasMatch || !bodySchemaMatch) {
+    const alias = aliasMatch[1];
+    // Multipart OCR admission uses an inline File request schema. Export its
+    // named 202 response instead of accidentally capturing an Error schema.
+    const responseSchemaMatch =
+      alias === "createExpenseRecognition" ? block.match(/\n {4}response:\s*([A-Z][A-Za-z0-9_]*)/) : null;
+    const schemaName = responseSchemaMatch?.[1] ?? bodySchemaMatch?.[1];
+
+    if (!schemaName) {
       continue;
     }
 
-    const alias = aliasMatch[1];
-    const schemaName = bodySchemaMatch[1];
     dedupedEntries.set(alias, {
       alias,
       schemaName,
@@ -57,8 +69,10 @@ function extractOperationSchemaEntries(fullContent: string): OperationSchemaEntr
 }
 
 async function main() {
-  // Ensure directories exist
-  await fs.mkdir(SCHEMAS_DIR, { recursive: true });
+  // Generate into a disposable staging directory. Never remove the checked-in
+  // output before every schema has been generated successfully.
+  await fs.rm(STAGING_SCHEMAS_DIR, { recursive: true, force: true });
+  await fs.mkdir(STAGING_SCHEMAS_DIR, { recursive: true });
   await fs.mkdir(GENERATED_DIR, { recursive: true });
 
   // Default to the checked-in API spec so generation is deterministic across worktrees.
@@ -104,6 +118,10 @@ async function main() {
 
   // Fix Zod v3 record syntax - z.record(z.string()) -> z.record(z.string(), z.any())
   content = content.replace(/z\.record\(z\.string\(\)\)/g, "z.record(z.string(), z.any())");
+  content = content.replace(
+    /z\.record\(z\.union\(\[z\.number\(\), z\.null\(\)\]\)\)/g,
+    "z.record(z.string(), z.union([z.number(), z.null()]))",
+  );
 
   // Fix nullable enums emitted as z.enum([... , null]), which newer Zod typings reject.
   content = content.replace(/z\.enum\(\[([\s\S]*?)\]\)/g, (match, values) => {
@@ -173,13 +191,6 @@ async function main() {
     groups[entry.groupName].push(entry);
     return groups;
   }, {});
-
-  // Remove previously generated schema files so stale outputs don't survive generator changes.
-  for (const file of await fs.readdir(SCHEMAS_DIR)) {
-    if (file.endsWith(".ts")) {
-      await fs.unlink(path.join(SCHEMAS_DIR, file));
-    }
-  }
 
   // Create files for each group
   for (const [groupName, groupEntries] of Object.entries(schemasByGroup)) {
@@ -305,7 +316,7 @@ ${schemas}
 ${exports}
 `;
 
-    await fs.writeFile(path.join(SCHEMAS_DIR, `${groupName}.ts`), schemaContent);
+    await fs.writeFile(path.join(STAGING_SCHEMAS_DIR, `${groupName}.ts`), schemaContent);
   }
   // Topological sort: ensures each schema is defined after all schemas it depends on
   function topologicalSort(names: string[], fullContent: string): string[] {
@@ -333,7 +344,7 @@ ${exports}
 
   // Create index file - export ALL schema files (not just schemasByGroup)
   const normalizedSchemaFiles = new Map<string, string>();
-  for (const file of await fs.readdir(SCHEMAS_DIR)) {
+  for (const file of await fs.readdir(STAGING_SCHEMAS_DIR)) {
     if (!file.endsWith(".ts") || file === "index.ts") continue;
 
     const name = file.replace(".ts", "");
@@ -360,11 +371,21 @@ ${allSchemaFiles.map((name) => `export * from './${name}';`).join("\n")}
 export { createInvoiceSchema as createCreditNoteSchema, type CreateInvoiceSchema as CreateCreditNoteSchema } from './invoice';
 `;
 
-  await fs.writeFile(path.join(SCHEMAS_DIR, "index.ts"), indexContent);
+  await fs.writeFile(path.join(STAGING_SCHEMAS_DIR, "index.ts"), indexContent);
+
+  // Publish only a complete generated tree. If anything above failed, the
+  // existing output remains untouched and the staging directory is cleaned by
+  // the catch handler below.
+  await fs.rm(SCHEMAS_DIR, { recursive: true, force: true });
+  await fs.rename(STAGING_SCHEMAS_DIR, SCHEMAS_DIR);
 
   // Clean up temporary files
   await fs.unlink(`${GENERATED_DIR}/schemas.ts`);
   await fs.unlink(`${GENERATED_DIR}/openapi.json`);
 }
 
-main().catch(console.error);
+main().catch(async (error) => {
+  await fs.rm(STAGING_SCHEMAS_DIR, { recursive: true, force: true });
+  console.error(error);
+  process.exitCode = 1;
+});

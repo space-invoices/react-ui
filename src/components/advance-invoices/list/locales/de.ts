@@ -43,10 +43,11 @@ export default {
   "Export PDFs": "PDFs exportieren",
   "Deselect all": "Auswahl aufheben",
   "Partially Paid": "Teilweise bezahlt",
-  "FURS fiscalization failed": "FURS fiscalization failed",
-  "FINA fiscalization failed": "FINA fiscalization failed",
-  "Retry Fiscalization": "Retry Fiscalization",
-  "Some selected documents don't have failed fiscalization": "Some selected documents don't have failed fiscalization",
+  "FURS fiscalization failed": "FURS-Fiskalisierung fehlgeschlagen",
+  "FINA fiscalization failed": "FINA-Fiskalisierung fehlgeschlagen",
+  "Retry Fiscalization": "Fiskalisierung erneut versuchen",
+  "Some selected documents don't have failed fiscalization":
+    "Einige ausgewählte Dokumente haben keine fehlgeschlagene Fiskalisierung",
   "Copy to Invoice": "In Rechnung kopieren",
   "Finalize draft documents before copying to invoice":
     "Entwurfsdokumente abschließen, bevor Sie in eine Rechnung kopieren",

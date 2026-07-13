@@ -8,6 +8,17 @@ import { z } from 'zod';
 
 // Schemas for customer endpoints
 
+// Dependency schema for customer
+const UjpCustomerData = z
+  .object({
+    receiver_name: z.union([z.string(), z.null()]),
+    receiver_identifier: z.union([z.string(), z.null()]),
+    receiver_agent: z.union([z.string(), z.null()]),
+    receiver_mailbox: z.union([z.string(), z.null()]),
+  })
+  .partial();
+
+
 // Schema for createCustomer operation
 const createCustomerSchemaDefinition = z.object({
   name: z.string().min(1),
@@ -21,9 +32,14 @@ const createCustomerSchemaDefinition = z.object({
   tax_number: z.union([z.string(), z.null()]).optional(),
   company_number: z.union([z.string(), z.null()]).optional(),
   peppol_id: z.union([z.string(), z.null()]).optional(),
+  bank_accounts: z.union([z.array(z.any()), z.null()]).optional(),
   email: z.union([z.string(), z.null()]).optional(),
+  contact_type: z
+    .union([z.union([z.enum(["buyer", "supplier", "both"]), z.null()]), z.null()])
+    .optional(),
   is_tax_subject: z.boolean().optional(),
   is_end_consumer: z.union([z.boolean(), z.null()]).optional(),
+  ujp: z.union([UjpCustomerData, z.null()]).optional(),
   metadata: z.union([z.record(z.string(), z.any()), z.null()]).optional(),
 });
 
@@ -42,9 +58,15 @@ const updateCustomerSchemaDefinition = z
     tax_number: z.union([z.string(), z.null()]),
     company_number: z.union([z.string(), z.null()]),
     peppol_id: z.union([z.string(), z.null()]),
+    bank_accounts: z.union([z.array(z.any()), z.null()]),
     email: z.union([z.string(), z.null()]),
+    contact_type: z.union([
+      z.union([z.enum(["buyer", "supplier", "both"]), z.null()]),
+      z.null(),
+    ]),
     is_tax_subject: z.boolean(),
     is_end_consumer: z.union([z.boolean(), z.null()]),
+    ujp: z.union([UjpCustomerData, z.null()]),
     metadata: z.union([z.record(z.string(), z.any()), z.null()]),
   })
   .partial();

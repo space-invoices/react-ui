@@ -257,4 +257,15 @@ export default {
   "A premise with this name already exists": "Un établissement portant ce nom existe déjà",
   "Exactly 4 digits": "Exactement 4 chiffres",
   "Your Name": "Votre nom",
+  "Starting Number": "Numéro de départ",
+  "First invoice number for this premise sequence": "Premier numéro de facture pour cette séquence d'établissement",
+  "First invoice number for this device sequence": "Premier numéro de facture pour cette séquence d’appareil",
+  "Set Starting Number": "Définir le numéro de départ",
+  "Starting number can no longer be changed after invoices have been issued for this fiscal sequence.":
+    "Le numéro de départ ne peut plus être modifié après l'émission de factures pour cette séquence fiscale.",
+  "Set this before issuing invoices for the selected fiscal sequence. Leave empty to clear it.":
+    "Définissez-le avant d’émettre des factures pour la séquence fiscale sélectionnée. Laissez vide pour le supprimer.",
+  "Fiscal Sequence": "Séquence fiscale",
+  "Starting number must be between 1 and 999999999": "Le numéro de départ doit être compris entre 1 et 999999999",
+  Save: "Enregistrer",
 } as const;

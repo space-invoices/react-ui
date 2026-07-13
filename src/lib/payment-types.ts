@@ -10,9 +10,9 @@ export const DOCUMENT_PAYMENT_FORM_LABELS = {
   other: "Other",
 } as const;
 
-export const DOCUMENT_PAYMENT_FORM_TYPES = Object.keys(
-  DOCUMENT_PAYMENT_FORM_LABELS,
-) as Array<keyof typeof DOCUMENT_PAYMENT_FORM_LABELS>;
+export const DOCUMENT_PAYMENT_FORM_TYPES = Object.keys(DOCUMENT_PAYMENT_FORM_LABELS) as Array<
+  keyof typeof DOCUMENT_PAYMENT_FORM_LABELS
+>;
 
 export function getDocumentPaymentTypeTranslationKey(type: string): string {
   switch (type) {
@@ -32,8 +32,6 @@ export function getDocumentPaymentTypeFallbackLabel(type: string): string {
     case "coupon":
       return "Coupon";
     default:
-      return DOCUMENT_PAYMENT_FORM_LABELS[
-        type as keyof typeof DOCUMENT_PAYMENT_FORM_LABELS
-      ] ?? type;
+      return DOCUMENT_PAYMENT_FORM_LABELS[type as keyof typeof DOCUMENT_PAYMENT_FORM_LABELS] ?? type;
   }
 }

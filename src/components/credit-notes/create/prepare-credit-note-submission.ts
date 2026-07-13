@@ -1,4 +1,5 @@
 import type { CreateCreditNoteRequest } from "@spaceinvoices/js-sdk";
+import { assignDocumentValidationPayload } from "@/ui/lib/document-validation-payload";
 import { normalizePtDocumentInput } from "@/ui/lib/pt-document-input";
 import {
   buildDocumentBasePayload,
@@ -16,6 +17,24 @@ type PrepareOptions = {
   payments?: Array<{ type: string; amount?: number }>;
   priceModes?: Record<number, boolean>;
   isDraft?: boolean;
+  eslog?: {
+    validation_enabled?: boolean;
+    validation_required?: boolean;
+  };
+  ujp?: {
+    validation_enabled?: boolean;
+    validation_required?: boolean;
+  };
+  germanEInvoicing?: {
+    xrechnung?: {
+      validation_enabled?: boolean;
+      validation_required?: boolean;
+    };
+    zugferd?: {
+      validation_enabled?: boolean;
+      validation_required?: boolean;
+    };
+  };
 };
 
 export function prepareCreditNoteSubmission(values: any, options: PrepareOptions): CreateCreditNoteRequest {
@@ -34,12 +53,22 @@ export function prepareCreditNoteSubmission(values: any, options: PrepareOptions
   if (pt) {
     (payload as any).pt = pt;
   }
+  assignDocumentValidationPayload(payload, "eslog", options.eslog);
+  assignDocumentValidationPayload(payload, "ujp", options.ujp);
+  if (options.germanEInvoicing !== undefined) {
+    if (options.germanEInvoicing.xrechnung) {
+      (payload as any).xrechnung = options.germanEInvoicing.xrechnung;
+    }
+    if (options.germanEInvoicing.zugferd) {
+      (payload as any).zugferd = options.germanEInvoicing.zugferd;
+    }
+  }
   return payload;
 }
 
 export function prepareCreditNoteUpdateSubmission(
   values: any,
-  options: Pick<PrepareOptions, "originalCustomer" | "wasCustomerFormShown" | "priceModes">,
+  options: Pick<PrepareOptions, "originalCustomer" | "wasCustomerFormShown" | "priceModes" | "eslog" | "ujp">,
 ): Record<string, unknown> {
   const nextValues: any = {
     ...values,
@@ -55,12 +84,15 @@ export function prepareCreditNoteUpdateSubmission(
 
   const payload = buildDocumentBasePayload(nextValues, {
     documentType: "credit_note",
+    includeCalculationMode: false,
   });
 
   const pt = normalizePtDocumentInput(values.pt);
   if (pt) {
     payload.pt = pt;
   }
+  assignDocumentValidationPayload(payload, "eslog", options.eslog);
+  assignDocumentValidationPayload(payload, "ujp", options.ujp);
 
   return payload;
 }

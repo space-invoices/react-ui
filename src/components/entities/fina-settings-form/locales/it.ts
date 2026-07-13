@@ -163,15 +163,27 @@ export default {
     "I valori predefiniti dell'operatore sono stati salvati, ma le integrazioni non sono state aggiornate completamente",
   "Select business premise": "Seleziona sede",
   "Select electronic device": "Seleziona dispositivo elettronico",
-  "Set operator OIB and label in General Settings first": "Set operator OIB and label in General Settings first",
-  "Complete General Settings first": "Complete General Settings first",
+  "Set operator OIB and label in General Settings first":
+    "Imposta prima l'OIB e l'etichetta dell'operatore nelle Impostazioni generali",
+  "Complete General Settings first": "Completa prima le Impostazioni generali",
   "Operator OIB and label are required for FINA fiscalization":
-    "Operator OIB and label are required for FINA fiscalization",
-  "FINA Operator Settings Required": "FINA Operator Settings Required",
+    "L'OIB e l'etichetta dell'operatore sono richiesti per la fiscalizzazione FINA",
+  "FINA Operator Settings Required": "Impostazioni operatore FINA richieste",
   "Your FINA operator information is needed to fiscalize this document. Please enter your operator details.":
-    "Your FINA operator information is needed to fiscalize this document. Please enter your operator details.",
-  "Save & Retry": "Save & Retry",
+    "Le informazioni del tuo operatore FINA sono necessarie per fiscalizzare questo documento. Inserisci i dati del tuo operatore.",
+  "Save & Retry": "Salva e riprova",
   "Unified document numbering": "Numerazione unificata dei documenti",
   "Use the same numbering sequence for all documents, including non-fiscalized ones":
     "Utilizza la stessa sequenza di numerazione per tutti i documenti, compresi quelli non fiscalizzati",
+  "Starting Number": "Numero iniziale",
+  "First invoice number for this premise sequence": "Primo numero fattura per questa sequenza della sede",
+  "First invoice number for this device sequence": "Primo numero fattura per questa sequenza del dispositivo",
+  "Set Starting Number": "Imposta numero iniziale",
+  "Starting number can no longer be changed after invoices have been issued for this fiscal sequence.":
+    "Il numero iniziale non può più essere modificato dopo l'emissione di fatture per questa sequenza fiscale.",
+  "Set this before issuing invoices for the selected fiscal sequence. Leave empty to clear it.":
+    "Impostalo prima di emettere fatture per la sequenza fiscale selezionata. Lascia vuoto per cancellarlo.",
+  "Fiscal Sequence": "Sequenza fiscale",
+  "Starting number must be between 1 and 999999999": "Il numero iniziale deve essere compreso tra 1 e 999999999",
+  Save: "Salva",
 } as const;

@@ -17,6 +17,15 @@ export default {
   Quantity: "Cantidad",
   Price: "Precio",
   Unit: "Unidad",
+  "E-invoicing unit code": "Código de unidad para e-facturación",
+  "E-invoicing unit settings": "Configuración de unidad para e-facturación",
+  "Only affects e-invoicing XML. The document unit stays unchanged.":
+    "Solo afecta al XML de e-facturación. La unidad del documento no cambia.",
+  "Select XML unit code": "Seleccionar código de unidad XML",
+  "Enter a supported UN/ECE code": "Introduce un código UN/ECE compatible",
+  "Use display unit": "Usar unidad visible",
+  "Clear unit code": "Borrar código de unidad",
+  "custom code": "código personalizado",
   Discount: "Descuento",
   Tax: "Impuesto",
   "Tax rate": "Tasa impositiva",
@@ -40,6 +49,9 @@ export default {
   // Note field
   Note: "Nota",
   "Insert variable": "Insertar variable",
+  Bold: "Negrita",
+  Italic: "Cursiva",
+  "Bullet list": "Lista con viñetas",
   "Add payment instructions, terms, or other notes...": "Agregue instrucciones de pago, terminos u otras notas...",
   // Signature field
   Signature: "Firma",

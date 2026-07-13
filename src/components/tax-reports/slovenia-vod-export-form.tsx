@@ -1,6 +1,7 @@
 import { taxReports } from "@spaceinvoices/js-sdk";
 import { ChevronDown, Download, Loader2, Save } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { triggerBlobDownload } from "@/ui/lib/browser-download";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
@@ -302,16 +303,7 @@ export function SloveniaVodExportForm({
       );
 
       const fileName = getVodDownloadFileName(dateFrom, dateTo);
-      const downloadUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = downloadUrl;
-      link.download = fileName;
-      document.body.appendChild(link);
-      link.click();
-      setTimeout(() => {
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(downloadUrl);
-      }, 1000);
+      triggerBlobDownload(blob, fileName);
 
       onSuccess?.(fileName);
     } catch (error) {

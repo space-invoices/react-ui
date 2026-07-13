@@ -42,10 +42,11 @@ export default {
   selected: "ausgewählt",
   "Export PDFs": "PDFs exportieren",
   "Deselect all": "Auswahl aufheben",
-  "FURS fiscalization failed": "FURS fiscalization failed",
-  "FINA fiscalization failed": "FINA fiscalization failed",
-  "Retry Fiscalization": "Retry Fiscalization",
-  "Some selected documents don't have failed fiscalization": "Some selected documents don't have failed fiscalization",
+  "FURS fiscalization failed": "FURS-Fiskalisierung fehlgeschlagen",
+  "FINA fiscalization failed": "FINA-Fiskalisierung fehlgeschlagen",
+  "Retry Fiscalization": "Fiskalisierung erneut versuchen",
+  "Some selected documents don't have failed fiscalization":
+    "Einige ausgewählte Dokumente haben keine fehlgeschlagene Fiskalisierung",
   Void: "Stornieren",
   "Cannot void a fiscalized credit note": "Stornierung einer fiskalisierten Gutschrift nicht möglich",
 } as const;

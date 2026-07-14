@@ -1,7 +1,7 @@
-import type { CreateInvoiceRequest } from "@spaceinvoices/js-sdk";
+import type { CreateInvoice } from "@spaceinvoices/js-sdk";
 
 type DocumentPreviewProps = {
-  data: Partial<CreateInvoiceRequest>;
+  data: Partial<CreateInvoice>;
 };
 
 export default function DocumentPreview({ data }: DocumentPreviewProps) {

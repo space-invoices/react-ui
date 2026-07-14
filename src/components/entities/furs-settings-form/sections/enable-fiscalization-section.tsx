@@ -1,4 +1,4 @@
-import type { GetFursSettings200Response } from "@spaceinvoices/js-sdk";
+import type { GetFursSettings200 } from "@spaceinvoices/js-sdk";
 import { AlertCircle, CheckCircle2, Power } from "lucide-react";
 import type { FC, ReactNode } from "react";
 import type { UseFormReturn } from "react-hook-form";
@@ -19,7 +19,7 @@ type ExtendedFursBusinessPremise = {
 interface EnableFiscalizationSectionProps {
   entityId: string;
   form: UseFormReturn<FursSettingsFormSchema>;
-  fursSettings?: GetFursSettings200Response;
+  fursSettings?: GetFursSettings200;
   premises?: ExtendedFursBusinessPremise[];
   t: (key: string) => string;
   wrapSection?: (section: SectionType, content: ReactNode) => ReactNode;

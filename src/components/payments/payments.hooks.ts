@@ -1,4 +1,4 @@
-import type { CreatePaymentRequest, Payment, UpdatePaymentBody } from "@spaceinvoices/js-sdk";
+import type { CreatePaymentBody, Payment, UpdatePaymentBody } from "@spaceinvoices/js-sdk";
 import { payments } from "@spaceinvoices/js-sdk";
 
 import { createResourceHooks } from "@/ui/hooks/create-resource-hooks";
@@ -13,7 +13,7 @@ const {
   useDeleteResource: useDeletePayment,
   useRestoreResource: useRestorePayment,
   usePermanentDeleteResource: usePermanentDeletePayment,
-} = createResourceHooks<Payment, CreatePaymentRequest, UpdatePaymentBody>(
+} = createResourceHooks<Payment, CreatePaymentBody, UpdatePaymentBody>(
   {
     create: payments.create,
     update: payments.update,

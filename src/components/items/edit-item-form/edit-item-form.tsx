@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import type { CreateItemRequest, Item } from "@spaceinvoices/js-sdk";
+import type { CreateItemBody, Item } from "@spaceinvoices/js-sdk";
 import { Minus, Plus } from "lucide-react";
 import { useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
@@ -226,7 +226,7 @@ export default function EditItemForm({
 
     updateItem({
       id: item.id,
-      data: payload as CreateItemRequest,
+      data: payload as CreateItemBody,
     });
   };
 

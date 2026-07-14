@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import type { CompanyRegistryResult, CreateEntityRequest, Entity } from "@spaceinvoices/js-sdk";
+import type { CompanyRegistryResult, CreateEntityBody, Entity } from "@spaceinvoices/js-sdk";
 import { useEffect, useRef, useState } from "react";
 import type { Resolver } from "react-hook-form";
 import { useForm } from "react-hook-form";
@@ -402,7 +402,7 @@ export function CreateEntityForm({
       const resolvedCountryCode = values.country_code || resolveCountryCodeFromName(values.country, locale);
       const { country_code: _countryCode, ...rest } = values;
       const payload = resolvedCountryCode ? { ...rest, country_code: resolvedCountryCode } : rest;
-      createEntity(payload as CreateEntityRequest);
+      createEntity(payload as CreateEntityBody);
     } catch (e) {
       onError?.(e);
       form.setError("root", {

@@ -1,6 +1,6 @@
-import type { CreateInvoiceRequest } from "@spaceinvoices/js-sdk";
+import type { CreateInvoice } from "@spaceinvoices/js-sdk";
 
-type DemoInvoiceData = Partial<CreateInvoiceRequest>;
+type DemoInvoiceData = Partial<CreateInvoice>;
 
 interface LocaleDemoData {
   customer: {

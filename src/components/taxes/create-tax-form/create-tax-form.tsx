@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import type { CreateTaxRequest, Tax } from "@spaceinvoices/js-sdk";
+import type { CreateTaxBody, Tax } from "@spaceinvoices/js-sdk";
 import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 import { FormInput } from "@/ui/components/form";
@@ -90,7 +90,7 @@ export default function CreateTaxForm({
 
   const onSubmit = async (values: CreateTaxSchema) => {
     // SDK accepts both Date and string for date fields, no conversion needed
-    createTax(values as CreateTaxRequest);
+    createTax(values as CreateTaxBody);
   };
 
   const handleSubmitClick = () => {

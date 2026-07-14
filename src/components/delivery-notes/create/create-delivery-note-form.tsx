@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import type { CreateDeliveryNoteRequest, DeliveryNote, Tax, UpdateDeliveryNote } from "@spaceinvoices/js-sdk";
+import type { CreateDeliveryNote, DeliveryNote, Tax, UpdateDeliveryNote } from "@spaceinvoices/js-sdk";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Resolver } from "react-hook-form";
@@ -81,7 +81,7 @@ type CreateDeliveryNoteFormValues = z.infer<typeof createDeliveryNoteSchema> & {
 };
 
 /** Preview payload extends request with display-only fields */
-type DeliveryNotePreviewPayload = Partial<CreateDeliveryNoteRequest> & {
+type DeliveryNotePreviewPayload = Partial<CreateDeliveryNote> & {
   number?: string;
   business_unit_id?: string | null;
 };
@@ -95,7 +95,7 @@ type CreateDeliveryNoteFormProps = {
   onAddNewTax?: () => void;
   onFindEstimatedTax?: () => Promise<Tax | null | undefined> | Tax | null | undefined;
   /** Initial values for form fields (used for document duplication) */
-  initialValues?: Partial<CreateDeliveryNoteRequest> & { business_unit_id?: string | null };
+  initialValues?: Partial<CreateDeliveryNote> & { business_unit_id?: string | null };
   businessUnits?: BusinessUnitOption[];
   showBusinessUnitSelect?: boolean;
   disableBusinessUnitSelect?: boolean;

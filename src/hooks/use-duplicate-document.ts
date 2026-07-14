@@ -1,11 +1,11 @@
 import type {
   AdvanceInvoice,
   CalculateDocumentPreview,
-  CreateAdvanceInvoiceRequest,
-  CreateCreditNoteRequest,
-  CreateDeliveryNoteRequest,
-  CreateEstimateRequest,
-  CreateInvoiceRequest,
+  CreateAdvanceInvoice,
+  CreateCreditNote,
+  CreateDeliveryNote,
+  CreateEstimate,
+  CreateInvoice,
   CreditNote,
   DeliveryNote,
   Estimate,
@@ -27,12 +27,7 @@ function emitDuplicateDebug(detail: Record<string, unknown>) {
 
 export type DocumentType = "invoice" | "estimate" | "credit_note" | "advance_invoice" | "delivery_note";
 type Document = Invoice | Estimate | CreditNote | AdvanceInvoice | DeliveryNote;
-type CreateRequest =
-  | CreateInvoiceRequest
-  | CreateEstimateRequest
-  | CreateCreditNoteRequest
-  | CreateAdvanceInvoiceRequest
-  | CreateDeliveryNoteRequest;
+type CreateRequest = CreateInvoice | CreateEstimate | CreateCreditNote | CreateAdvanceInvoice | CreateDeliveryNote;
 type CreateRequestWithBusinessUnit = CreateRequest & {
   business_unit_id?: string | null;
   business_unit?: unknown | null;
@@ -203,14 +198,14 @@ function transformDocumentForDuplication(
   if (sourceType === "estimate") {
     const sourceDoc = source as Estimate & { title_type?: "estimate" | "proforma_invoice" | null };
     if (sourceDoc.title_type) {
-      (baseData as CreateEstimateRequest).title_type = sourceDoc.title_type;
+      (baseData as CreateEstimate).title_type = sourceDoc.title_type;
     }
   }
 
   if (sourceType === "delivery_note") {
     const sourceDoc = source as DeliveryNote & { hide_prices?: boolean | null };
     if (sourceDoc.hide_prices !== undefined && sourceDoc.hide_prices !== null) {
-      (baseData as CreateDeliveryNoteRequest).hide_prices = sourceDoc.hide_prices;
+      (baseData as CreateDeliveryNote).hide_prices = sourceDoc.hide_prices;
     }
   }
 

@@ -1,4 +1,4 @@
-import type { CreateEstimateRequest } from "@spaceinvoices/js-sdk";
+import type { CreateEstimate } from "@spaceinvoices/js-sdk";
 import type { CreateEstimateSchema } from "@/ui/generated/schemas";
 import { buildDocumentValidationPayload, type DocumentValidationOptions } from "@/ui/lib/document-validation-payload";
 import { normalizePtDocumentInput, type PtDocumentInputForm } from "@/ui/lib/pt-document-input";
@@ -33,7 +33,7 @@ type PrepareOptions = {
 export function prepareEstimateSubmission(
   values: CreateEstimateSchema & { pt?: PtDocumentInputForm | null },
   options: PrepareOptions,
-): CreateEstimateRequest {
+): CreateEstimate {
   const pt = normalizePtDocumentInput(values.pt);
   const baseSubmission = prepareDocumentSubmission(values, {
     originalCustomer: options.originalCustomer,
@@ -41,7 +41,7 @@ export function prepareEstimateSubmission(
     secondaryDate: values.date_valid_till ?? undefined,
     priceModes: options.priceModes,
     isDraft: options.isDraft,
-  }) as CreateEstimateRequest;
+  }) as CreateEstimate;
 
   return {
     ...baseSubmission,

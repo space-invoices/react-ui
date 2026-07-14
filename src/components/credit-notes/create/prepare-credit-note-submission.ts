@@ -1,4 +1,4 @@
-import type { CreateCreditNoteRequest } from "@spaceinvoices/js-sdk";
+import type { CreateCreditNote } from "@spaceinvoices/js-sdk";
 import { assignDocumentValidationPayload } from "@/ui/lib/document-validation-payload";
 import { normalizePtDocumentInput } from "@/ui/lib/pt-document-input";
 import {
@@ -37,7 +37,7 @@ type PrepareOptions = {
   };
 };
 
-export function prepareCreditNoteSubmission(values: any, options: PrepareOptions): CreateCreditNoteRequest {
+export function prepareCreditNoteSubmission(values: any, options: PrepareOptions): CreateCreditNote {
   const payload = prepareDocumentSubmission(values, {
     originalCustomer: options.originalCustomer,
     wasCustomerFormShown: options.wasCustomerFormShown,
@@ -47,7 +47,7 @@ export function prepareCreditNoteSubmission(values: any, options: PrepareOptions
     documentType: "credit_note",
     priceModes: options.priceModes,
     isDraft: options.isDraft,
-  }) as CreateCreditNoteRequest;
+  }) as CreateCreditNote;
 
   const pt = normalizePtDocumentInput(values.pt);
   if (pt) {

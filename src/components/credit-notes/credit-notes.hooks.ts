@@ -9,7 +9,7 @@
  */
 
 import type {
-  CreateCreditNoteRequest,
+  CreateCreditNote,
   CreditNote,
   CustomCreateCreditNote,
   SDKMethodOptions,
@@ -28,7 +28,7 @@ const {
   useCreateResource: useCreateCreditNote,
   useUpdateResource: useUpdateCreditNote,
   useDeleteResource: useDeleteCreditNote,
-} = createResourceHooks<CreditNote, CreateCreditNoteRequest, UpdateCreditNote>(
+} = createResourceHooks<CreditNote, CreateCreditNote, UpdateCreditNote>(
   {
     create: creditNotes.create,
     update: creditNotes.update,

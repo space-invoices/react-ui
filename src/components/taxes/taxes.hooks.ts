@@ -1,4 +1,4 @@
-import { type CreateTaxBody, type PaginatedResponse, type Tax, taxes, type UpdateTaxBody } from "@spaceinvoices/js-sdk";
+import { type CreateTaxBody, type GetTaxes200, type Tax, taxes, type UpdateTaxBody } from "@spaceinvoices/js-sdk";
 import {
   type UseMutationOptions,
   type UseQueryOptions,
@@ -66,7 +66,7 @@ export function useReplaceTax(
  */
 export function useListTaxes(
   entityId: string,
-  options?: Omit<UseQueryOptions<PaginatedResponse<Tax>, Error>, "queryKey" | "queryFn">,
+  options?: Omit<UseQueryOptions<GetTaxes200, Error>, "queryKey" | "queryFn">,
 ) {
   return useQuery({
     queryKey: [TAXES_CACHE_KEY, entityId],

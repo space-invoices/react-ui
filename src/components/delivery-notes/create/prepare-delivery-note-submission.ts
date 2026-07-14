@@ -1,4 +1,4 @@
-import type { CreateDeliveryNoteRequest } from "@spaceinvoices/js-sdk";
+import type { CreateDeliveryNote } from "@spaceinvoices/js-sdk";
 import type { CreateDeliveryNoteSchema } from "@/ui/generated/schemas";
 import {
   buildDocumentBasePayload,
@@ -29,13 +29,13 @@ type PrepareOptions = {
 export function prepareDeliveryNoteSubmission(
   values: CreateDeliveryNoteSchema,
   options: PrepareOptions,
-): CreateDeliveryNoteRequest {
+): CreateDeliveryNote {
   const baseSubmission = prepareDocumentSubmission(values, {
     originalCustomer: options.originalCustomer,
     documentType: "delivery_note",
     priceModes: options.priceModes,
     isDraft: options.isDraft,
-  }) as CreateDeliveryNoteRequest;
+  }) as CreateDeliveryNote;
 
   return {
     ...baseSubmission,

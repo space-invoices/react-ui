@@ -1,6 +1,6 @@
 import type {
   AdvanceInvoice,
-  CreateAdvanceInvoiceRequest,
+  CreateAdvanceInvoice,
   CustomCreateAdvanceInvoice,
   SDKMethodOptions,
   UpdateAdvanceInvoice,
@@ -18,7 +18,7 @@ const {
   useCreateResource: useCreateAdvanceInvoice,
   useUpdateResource: useUpdateAdvanceInvoice,
   useDeleteResource: useDeleteAdvanceInvoice,
-} = createResourceHooks<AdvanceInvoice, CreateAdvanceInvoiceRequest, UpdateAdvanceInvoice>(
+} = createResourceHooks<AdvanceInvoice, CreateAdvanceInvoice, UpdateAdvanceInvoice>(
   {
     create: (...args) => advanceInvoices.create(...args),
     update: (...args) => advanceInvoices.update(...args),

@@ -1,4 +1,4 @@
-import type { CreateInvoiceRequest } from "@spaceinvoices/js-sdk";
+import type { CreateInvoice } from "@spaceinvoices/js-sdk";
 import type { CreateInvoiceSchema } from "@/ui/generated/schemas";
 import { assignDocumentValidationPayload } from "@/ui/lib/document-validation-payload";
 import { normalizePtDocumentInput, type PtDocumentInputForm } from "@/ui/lib/pt-document-input";
@@ -87,7 +87,7 @@ type PrepareOptions = {
 export function prepareInvoiceSubmission(
   values: CreateInvoiceSchema & { pt?: PtDocumentInputForm | null },
   options: PrepareOptions,
-): CreateInvoiceRequest {
+): CreateInvoice {
   const payload = prepareDocumentSubmission(values, {
     originalCustomer: options.originalCustomer,
     wasCustomerFormShown: options.wasCustomerFormShown,
@@ -98,7 +98,7 @@ export function prepareInvoiceSubmission(
     secondaryDate: values.date_due ?? undefined,
     priceModes: options.priceModes,
     isDraft: options.isDraft,
-  }) as CreateInvoiceRequest;
+  }) as CreateInvoice;
 
   // Add FURS data if provided
   if (options.furs) {

@@ -1,4 +1,4 @@
-import type { CreateItemRequest, Item, UpdateItemBody } from "@spaceinvoices/js-sdk";
+import type { CreateItemBody, Item, UpdateItemBody } from "@spaceinvoices/js-sdk";
 import { items } from "@spaceinvoices/js-sdk";
 import { useQuery } from "@tanstack/react-query";
 import { createResourceHooks } from "@/ui/hooks/create-resource-hooks";
@@ -13,7 +13,7 @@ const {
   useDeleteResource: useDeleteItem,
   useRestoreResource: useRestoreItem,
   usePermanentDeleteResource: usePermanentDeleteItem,
-} = createResourceHooks<Item, CreateItemRequest, UpdateItemBody>(
+} = createResourceHooks<Item, CreateItemBody, UpdateItemBody>(
   {
     create: items.create,
     update: items.update,

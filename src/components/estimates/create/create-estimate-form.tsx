@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import type { CreateEstimateRequest, Estimate, Tax, UpdateEstimate } from "@spaceinvoices/js-sdk";
+import type { CreateEstimate, Estimate, Tax, UpdateEstimate } from "@spaceinvoices/js-sdk";
 import { useQueryClient } from "@tanstack/react-query";
 import { AlertCircle, ArrowUpDown } from "lucide-react";
 import type { ReactNode } from "react";
@@ -114,7 +114,7 @@ type CreateEstimateFormValues = z.infer<typeof createEstimateFormSchema> & {
 };
 
 /** Preview payload extends request with display-only fields */
-type EstimatePreviewPayload = Partial<CreateEstimateRequest> & {
+type EstimatePreviewPayload = Partial<CreateEstimate> & {
   number?: string;
   pt?: PtDocumentInputForm;
   business_unit_id?: string | null;
@@ -131,7 +131,7 @@ type CreateEstimateFormProps = {
   /** Callback to update header action (title toggle) */
   onHeaderActionChange?: (action: ReactNode) => void;
   /** Initial values for form fields (used for document duplication) */
-  initialValues?: Partial<CreateEstimateRequest> & {
+  initialValues?: Partial<CreateEstimate> & {
     number?: string;
     business_unit_id?: string | null;
     title_type?: "estimate" | "proforma_invoice" | null;

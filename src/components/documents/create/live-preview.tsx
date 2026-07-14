@@ -1,6 +1,6 @@
 "use client";
 
-import type { CreateInvoiceRequest } from "@spaceinvoices/js-sdk";
+import type { CreateInvoice } from "@spaceinvoices/js-sdk";
 import { advanceInvoices, creditNotes, deliveryNotes, estimates, invoices } from "@spaceinvoices/js-sdk";
 import { Loader2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -24,7 +24,7 @@ function emitLivePreviewDebug(detail: Record<string, unknown>) {
 export type PdfTemplateId = "modern" | "classic" | "condensed" | "minimal" | "fashion";
 
 type LiveInvoicePreviewProps = {
-  data: Partial<CreateInvoiceRequest>;
+  data: Partial<CreateInvoice>;
   currency?: string;
   template?: PdfTemplateId;
   className?: string;
@@ -132,7 +132,7 @@ export function LiveInvoicePreview({
   );
 
   const buildPreviewRequest = useCallback(
-    (invoiceData: Partial<CreateInvoiceRequest>): PreviewRequest | null => {
+    (invoiceData: Partial<CreateInvoice>): PreviewRequest | null => {
       if (!invoiceData.items || invoiceData.items.length === 0) return null;
 
       // Prepare preview data with active entity as issuer (if not already set)

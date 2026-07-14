@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import type { CreateCreditNoteRequest, CreditNote, Tax, UpdateCreditNote } from "@spaceinvoices/js-sdk";
+import type { CreateCreditNote, CreditNote, Tax, UpdateCreditNote } from "@spaceinvoices/js-sdk";
 import { useQueryClient } from "@tanstack/react-query";
 import { AlertCircle, Check, X } from "lucide-react";
 import type { ReactNode } from "react";
@@ -160,7 +160,7 @@ type CreateCreditNoteFormValues = z.infer<typeof createCreditNoteFormSchema> & {
 };
 
 /** Preview payload extends request with display-only fields */
-type CreditNotePreviewPayload = Partial<CreateCreditNoteRequest> & {
+type CreditNotePreviewPayload = Partial<CreateCreditNote> & {
   number?: string;
   pt?: PtDocumentInputForm;
   business_unit_id?: string | null;
@@ -176,7 +176,7 @@ type CreateCreditNoteFormProps = {
   onFindEstimatedTax?: () => Promise<Tax | null | undefined> | Tax | null | undefined;
   onHeaderActionChange?: (action: ReactNode | null) => void;
   /** Initial values for form fields (used for document duplication) */
-  initialValues?: Partial<CreateCreditNoteRequest> & { business_unit_id?: string | null };
+  initialValues?: Partial<CreateCreditNote> & { business_unit_id?: string | null };
   businessUnits?: BusinessUnitOption[];
   showBusinessUnitSelect?: boolean;
   disableBusinessUnitSelect?: boolean;
@@ -886,7 +886,7 @@ export default function CreateCreditNoteForm({
         delete (payload as any).expected_total_with_tax;
         createCustomCreditNote(applyCustomCreateTemplate(payload as any, customCreateTemplate));
       } else {
-        createCreditNote(payload as CreateCreditNoteRequest);
+        createCreditNote(payload as CreateCreditNote);
       }
     },
     [

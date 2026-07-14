@@ -1,5 +1,6 @@
 const DATE_ONLY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const LEADING_DATE_ONLY_PATTERN = /^(\d{4}-\d{2}-\d{2})(?:$|T)/;
+const EXPLICIT_OFFSET_TIMESTAMP_PATTERN = /^(\d{4}-\d{2}-\d{2})T\d{2}:\d{2}:\d{2}(?:\.\d+)?[+-]\d{2}:\d{2}$/;
 
 export function toLocalDateOnlyString(date: Date): string {
   const year = date.getFullYear();
@@ -24,6 +25,14 @@ export function normalizeDateOnlyInput(value: string | undefined): string | unde
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) {
     return value;
+  }
+
+  // An explicit offset describes an instant, but document fields are business
+  // calendar dates. Preserve the sender's calendar token instead of converting
+  // it through the browser timezone and potentially crossing a day boundary.
+  const explicitOffsetMatch = value.match(EXPLICIT_OFFSET_TIMESTAMP_PATTERN);
+  if (explicitOffsetMatch) {
+    return explicitOffsetMatch[1];
   }
 
   return toLocalDateOnlyString(date);

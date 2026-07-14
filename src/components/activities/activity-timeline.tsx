@@ -1,4 +1,4 @@
-import type { Activity } from "@spaceinvoices/js-sdk";
+import type { GetActivities200DataItem } from "@spaceinvoices/js-sdk";
 import { CheckCircle2, Circle, Clock, Mail, Pencil, Receipt, RefreshCw, Trash2, XCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/ui/components/ui/card";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
@@ -15,11 +15,11 @@ import sl from "./locales/sl";
 
 const translations = { de, es, fr, hr, it, nl, pl, pt, sl } as const;
 
-// Re-export for convenience
-export type { Activity };
+// Re-export a UI-local name without depending on the removed SDK compatibility alias.
+export type Activity = GetActivities200DataItem;
 
 interface ActivityTimelineProps extends ComponentTranslationProps {
-  activities: Activity[];
+  activities: GetActivities200DataItem[];
   isLoading?: boolean;
 }
 

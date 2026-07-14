@@ -1,4 +1,4 @@
-import type { Entity, GetFursSettings200Response } from "@spaceinvoices/js-sdk";
+import type { Entity, GetFursSettings200 } from "@spaceinvoices/js-sdk";
 import { AlertCircle, CheckCircle2, ShieldCheck, Upload, XCircle } from "lucide-react";
 import { type FC, type ReactNode, useEffect, useState } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/ui/components/ui/alert";
@@ -11,7 +11,7 @@ import type { SectionType } from "../furs-settings-form";
 
 interface CertificateSettingsSectionProps {
   entity: Entity;
-  fursSettings?: GetFursSettings200Response;
+  fursSettings?: GetFursSettings200;
   t: (key: string) => string;
   onSuccess?: () => void;
   onError?: (error: unknown) => void;

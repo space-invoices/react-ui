@@ -1,4 +1,4 @@
-import type { CreateAdvanceInvoiceRequest } from "@spaceinvoices/js-sdk";
+import type { CreateAdvanceInvoice } from "@spaceinvoices/js-sdk";
 import type { CreateAdvanceInvoiceSchema } from "@/ui/generated/schemas";
 import { assignDocumentValidationPayload, type DocumentValidationOptions } from "@/ui/lib/document-validation-payload";
 import { normalizePtDocumentInput, type PtDocumentInputForm } from "@/ui/lib/pt-document-input";
@@ -54,7 +54,7 @@ type PrepareOptions = {
 export function prepareAdvanceInvoiceSubmission(
   values: CreateAdvanceInvoiceSchema & { pt?: PtDocumentInputForm | null },
   options: PrepareOptions,
-): CreateAdvanceInvoiceRequest {
+): CreateAdvanceInvoice {
   const payload = prepareDocumentSubmission(values as any, {
     originalCustomer: options.originalCustomer,
     wasCustomerFormShown: options.wasCustomerFormShown,
@@ -64,7 +64,7 @@ export function prepareAdvanceInvoiceSubmission(
     documentType: "advance_invoice",
     priceModes: options.priceModes,
     isDraft: options.isDraft,
-  }) as CreateAdvanceInvoiceRequest;
+  }) as CreateAdvanceInvoice;
 
   // Add FURS data if provided
   if (options.furs) {

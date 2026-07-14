@@ -83,11 +83,11 @@ export function BrandingSettingsForm({
         const signatureFile = entityFiles.data.find((f) => f.category === "signature");
 
         if (logoFile) {
-          setFetchedLogoUrl(logoFile.secureUrl);
+          setFetchedLogoUrl(logoFile.secure_url);
           if (!form.getValues("has_logo")) form.setValue("has_logo", true);
         }
         if (signatureFile) {
-          setFetchedSignatureUrl(signatureFile.secureUrl);
+          setFetchedSignatureUrl(signatureFile.secure_url);
           if (!form.getValues("has_signature")) form.setValue("has_signature", true);
         }
       } catch (error) {
@@ -124,10 +124,11 @@ export function BrandingSettingsForm({
     try {
       // SDK expects { file: Blob } as first arg, SDKMethodOptions as last
       const result = await upload.uploadImage({ file }, { entity_id: entity.id });
+      const secureUrl = result.secure_url ?? result.secureUrl;
       form.setValue("has_logo", true);
-      setUploadedLogoUrl(result.secureUrl);
+      setUploadedLogoUrl(secureUrl);
       onUploadSuccess?.();
-      return result;
+      return { secureUrl };
     } catch (error) {
       console.error("Upload failed:", error);
       onError?.(error);
@@ -143,9 +144,9 @@ export function BrandingSettingsForm({
       // SDK expects { file, category } as first arg, SDKMethodOptions as last
       const result = await files.uploadFile({ file, category: "signature" }, { entity_id: entity.id });
       form.setValue("has_signature", true);
-      setUploadedSignatureUrl(result.secureUrl);
+      setUploadedSignatureUrl(result.secure_url);
       onUploadSuccess?.();
-      return { secureUrl: result.secureUrl };
+      return { secureUrl: result.secure_url };
     } catch (error) {
       console.error("Signature upload failed:", error);
       onError?.(error);

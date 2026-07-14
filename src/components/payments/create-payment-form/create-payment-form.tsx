@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import type { CreatePaymentRequest, Payment } from "@spaceinvoices/js-sdk";
+import type { CreatePaymentBody, Payment } from "@spaceinvoices/js-sdk";
 import { CalendarIcon } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/ui/components/ui/button";
@@ -99,7 +99,7 @@ export default function CreatePaymentForm({
     createPayment({
       ...values,
       date: normalizeDateOnlyInput(values.date),
-    } as CreatePaymentRequest);
+    } as CreatePaymentBody);
   };
 
   const handleSubmitClick = () => {

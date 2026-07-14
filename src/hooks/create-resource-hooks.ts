@@ -55,7 +55,7 @@ function invalidateResourceQueries(
  * @example
  * ```ts
  * const { useCreateResource, useUpdateResource, useDeleteResource } =
- *   createResourceHooks<Customer, CreateCustomerRequest['data']>('customers', 'customers');
+ *   createResourceHooks<Customer, CreateCustomerBody['data']>('customers', 'customers');
  *
  * // Usage
  * const createCustomer = useCreateResource();

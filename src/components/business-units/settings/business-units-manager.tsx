@@ -725,8 +725,8 @@ function BusinessUnitSettingsEditor({
   useEffect(() => {
     async function loadFiles() {
       const result = await files.list({ entity_id: entityId, business_unit_id: unit.id } as any);
-      setLogoUrl(result.data.find((file) => file.category === "logo")?.secureUrl || "");
-      setSignatureUrl(result.data.find((file) => file.category === "signature")?.secureUrl || "");
+      setLogoUrl(result.data.find((file) => file.category === "logo")?.secure_url || "");
+      setSignatureUrl(result.data.find((file) => file.category === "signature")?.secure_url || "");
     }
 
     void loadFiles();
@@ -751,11 +751,11 @@ function BusinessUnitSettingsEditor({
         data: kind === "logo" ? { logo_file_id: uploaded.id } : { signature_file_id: uploaded.id },
       });
 
-      if (kind === "logo") setLogoUrl(uploaded.secureUrl);
-      else setSignatureUrl(uploaded.secureUrl);
+      if (kind === "logo") setLogoUrl(uploaded.secure_url);
+      else setSignatureUrl(uploaded.secure_url);
 
       toast.success(t("Saved successfully"));
-      return { secureUrl: uploaded.secureUrl };
+      return { secureUrl: uploaded.secure_url };
     } finally {
       if (kind === "logo") setIsUploadingLogo(false);
       else setIsUploadingSignature(false);

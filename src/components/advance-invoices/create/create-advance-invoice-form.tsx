@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import type { AdvanceInvoice, CreateAdvanceInvoiceRequest, Tax, UpdateAdvanceInvoice } from "@spaceinvoices/js-sdk";
+import type { AdvanceInvoice, CreateAdvanceInvoice, Tax, UpdateAdvanceInvoice } from "@spaceinvoices/js-sdk";
 import { useQueryClient } from "@tanstack/react-query";
 import { AlertCircle, Check, FileCode2, X } from "lucide-react";
 import type { ReactNode } from "react";
@@ -141,7 +141,7 @@ type CreateAdvanceInvoiceFormValues = z.infer<typeof createAdvanceInvoiceFormSch
 };
 
 /** Preview payload extends request with display-only fields */
-type AdvanceInvoicePreviewPayload = Partial<CreateAdvanceInvoiceRequest> & {
+type AdvanceInvoicePreviewPayload = Partial<CreateAdvanceInvoice> & {
   number?: string;
   pt?: PtDocumentInputForm;
   business_unit_id?: string | null;
@@ -157,7 +157,7 @@ type CreateAdvanceInvoiceFormProps = {
   onFindEstimatedTax?: () => Promise<Tax | null | undefined> | Tax | null | undefined;
   onHeaderActionChange?: (action: ReactNode) => void;
   /** Initial values for form fields (used for document duplication) */
-  initialValues?: Partial<CreateAdvanceInvoiceRequest> & { business_unit_id?: string | null };
+  initialValues?: Partial<CreateAdvanceInvoice> & { business_unit_id?: string | null };
   businessUnits?: BusinessUnitOption[];
   showBusinessUnitSelect?: boolean;
   disableBusinessUnitSelect?: boolean;

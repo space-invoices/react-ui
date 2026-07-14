@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import type { CreateItemRequest, Item } from "@spaceinvoices/js-sdk";
+import type { CreateItemBody, Item } from "@spaceinvoices/js-sdk";
 import { Minus, Plus } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { FieldErrors } from "react-hook-form";
@@ -241,7 +241,7 @@ export default function CreateItemForm({
       ? { ...commonPayload, gross_price: price, tax_ids }
       : { ...commonPayload, price, tax_ids };
 
-    createItem(payload as CreateItemRequest);
+    createItem(payload as CreateItemBody);
   };
 
   const onInvalid = (errors: FieldErrors<CreateItemSchema>) => {

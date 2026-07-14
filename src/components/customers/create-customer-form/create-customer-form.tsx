@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import type { CompanyRegistryResult, CreateCustomerRequest, Customer } from "@spaceinvoices/js-sdk";
+import type { CompanyRegistryResult, CreateCustomerBody, Customer } from "@spaceinvoices/js-sdk";
 import { useForm } from "react-hook-form";
 import { CompanyRegistryAutocomplete } from "@/ui/components/company-registry";
 import { FormInput } from "@/ui/components/form";
@@ -117,7 +117,7 @@ export default function CreateCustomerForm({
   const onSubmit = async (values: CustomerFormSchema) => {
     // Zod validation ensures required fields are present before this is called
     // The type cast is safe because React Hook Form's DeepPartial doesn't reflect runtime validation
-    createCustomer(normalizeCustomerBankAccounts(values) as CreateCustomerRequest);
+    createCustomer(normalizeCustomerBankAccounts(values) as CreateCustomerBody);
   };
 
   const handleSubmitClick = () => {

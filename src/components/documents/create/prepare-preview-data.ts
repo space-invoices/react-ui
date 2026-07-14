@@ -1,7 +1,7 @@
-import type { CreateInvoiceRequest } from "@spaceinvoices/js-sdk";
+import type { CreateInvoice } from "@spaceinvoices/js-sdk";
 import { normalizeDateOnlyInput } from "../../../lib/date-only";
 
-type ItemWithTaxes = NonNullable<CreateInvoiceRequest["items"]>[number];
+type ItemWithTaxes = NonNullable<CreateInvoice["items"]>[number];
 
 /**
  * Filters out items with unresolved tax_ids before sending to preview API.

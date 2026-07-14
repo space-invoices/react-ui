@@ -1,5 +1,5 @@
 import type {
-  CreateDeliveryNoteRequest,
+  CreateDeliveryNote,
   CustomCreateDeliveryNote,
   DeliveryNote,
   SDKMethodOptions,
@@ -21,7 +21,7 @@ const {
   useCreateResource: useCreateDeliveryNote,
   useUpdateResource: useUpdateDeliveryNote,
   useDeleteResource: useDeleteDeliveryNote,
-} = createResourceHooks<DeliveryNote, CreateDeliveryNoteRequest, UpdateDeliveryNote>(
+} = createResourceHooks<DeliveryNote, CreateDeliveryNote, UpdateDeliveryNote>(
   {
     create: deliveryNotes.create,
     update: deliveryNotes.update,

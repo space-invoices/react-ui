@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import type { CreateInvoiceRequest, Invoice, Tax } from "@spaceinvoices/js-sdk";
+import type { CreateInvoice, Invoice, Tax } from "@spaceinvoices/js-sdk";
 import { useQueryClient } from "@tanstack/react-query";
 import { AlertCircle, Check, X } from "lucide-react";
 import type { ReactNode } from "react";
@@ -165,7 +165,7 @@ type CreateInvoiceFormValues = z.infer<typeof createInvoiceFormSchema> & {
 };
 
 /** Preview payload extends request with display-only fields */
-type InvoicePreviewPayload = Partial<CreateInvoiceRequest> & {
+type InvoicePreviewPayload = Partial<CreateInvoice> & {
   id?: string;
   number?: string;
   pt?: PtDocumentInputForm;
@@ -182,7 +182,7 @@ type DocumentAddFormProps = {
   onFindEstimatedTax?: () => Promise<Tax | null | undefined> | Tax | null | undefined;
   onHeaderActionChange?: (action: ReactNode) => void;
   /** Initial values for form fields (used for document duplication or editing) */
-  initialValues?: Partial<CreateInvoiceRequest> & { number?: string; business_unit_id?: string | null };
+  initialValues?: Partial<CreateInvoice> & { number?: string; business_unit_id?: string | null };
   businessUnits?: BusinessUnitOption[];
   showBusinessUnitSelect?: boolean;
   disableBusinessUnitSelect?: boolean;
@@ -211,7 +211,7 @@ function buildInvoiceFormValues({
   isEditMode,
   fallbackNowIso,
 }: {
-  initialValues?: Partial<CreateInvoiceRequest> & { number?: string; business_unit_id?: string | null };
+  initialValues?: Partial<CreateInvoice> & { number?: string; business_unit_id?: string | null };
   currencyCode?: string;
   documentDefaults: ReturnType<typeof getDocumentDefaultFields>;
   defaultInvoiceDueDays: number;

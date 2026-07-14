@@ -952,6 +952,14 @@ const RevenueRecognitionSettings = z
   .partial();
 
 
+// Dependency schema for entity
+const ExpenseRecognitionSettings = z
+  .object({
+    default_method: z.enum(["off", "service_period_daily"]).default("off"),
+  })
+  .partial();
+
+
 // Schema for createEntity operation
 const createEntitySchemaDefinition = z.object({
   name: z.string().min(1),
@@ -1140,6 +1148,7 @@ const createEntitySchemaDefinition = z.object({
       tax_clause_defaults: z.union([TaxClauseDefaults, z.null()]),
       e_invoicing: z.union([EInvoicingEntitySettings, z.null()]),
       revenue_recognition: z.union([RevenueRecognitionSettings, z.null()]),
+      expense_recognition: z.union([ExpenseRecognitionSettings, z.null()]),
     })
     .partial()
     .passthrough()
@@ -1345,6 +1354,11 @@ const patchEntitySchemaDefinition = z
         ]),
         revenue_recognition: z.union([
           RevenueRecognitionSettings,
+          z.object({}).partial().passthrough(),
+          z.null(),
+        ]),
+        expense_recognition: z.union([
+          ExpenseRecognitionSettings,
           z.object({}).partial().passthrough(),
           z.null(),
         ]),

@@ -32,6 +32,19 @@ const ExpenseSupplier = z
 
 
 // Dependency schema for expense
+const ExpenseItemRecognition = z
+  .object({
+    method: z.union([
+      z.union([z.enum(["immediate", "service_period_daily"]), z.null()]),
+      z.null(),
+    ]),
+    date_from: z.union([z.string(), z.null()]),
+    date_to: z.union([z.string(), z.null()]),
+  })
+  .partial();
+
+
+// Dependency schema for expense
 const LineDiscount = z.object({
   value: z.number().gte(0),
   type: z.enum(["percent", "amount"]).optional().default("percent"),
@@ -122,6 +135,7 @@ const CreateExpenseItem = z
       z.null(),
     ]),
     financial_category_id: z.union([z.string(), z.null()]),
+    expense_recognition: z.union([ExpenseItemRecognition, z.null()]),
     price: z.union([z.number(), z.null()]),
     gross_price: z.union([z.number(), z.null()]),
     discounts: z.array(LineDiscount).default([]),

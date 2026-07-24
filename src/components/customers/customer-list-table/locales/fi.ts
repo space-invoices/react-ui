@@ -1,4 +1,8 @@
 export default {
+  "Contact Type": "Yhteystyyppi",
+  Customer: "Asiakas",
+  Supplier: "Toimittaja",
+  "Customer and supplier": "Asiakas ja toimittaja",
   "Your list is empty": "Asiakaslistasi on tyhjä",
   "Get started by creating your first entry": "Aloita luomalla ensimmäinen asiakkaasi",
   "Edit customer": "Muokkaa asiakasta",

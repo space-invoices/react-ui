@@ -1,5 +1,8 @@
 export default {
   Name: "Name",
+  "Contact Details": "Contact Details",
+  "Tax Details": "Tax Details",
+  "Bank Account": "Bank Account",
   "Enter name": "Enter name",
   Address: "Address",
   "Enter address": "Enter address",

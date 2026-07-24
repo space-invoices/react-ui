@@ -80,6 +80,7 @@ export default function DeliveryNoteListTable({
   onDuplicate,
   onChangeParams,
   disableUrlSync,
+  hideCreateNew,
   entityId,
   onDownloadStart,
   onDownloadSuccess,
@@ -324,7 +325,7 @@ export default function DeliveryNoteListTable({
       onFetch={handleFetch}
       cacheKey={cacheKey}
       resourceName="delivery note"
-      createNewLink={entityId ? `/app/${entityId}/documents/add/delivery_note` : undefined}
+      createNewLink={!hideCreateNew && entityId ? `/app/${entityId}/documents/add/delivery_note` : undefined}
       onCreateNew={onCreateNew}
       entityId={entityId}
       filterConfig={filterConfig}

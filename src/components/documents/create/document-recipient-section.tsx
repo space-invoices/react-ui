@@ -169,6 +169,7 @@ export function DocumentRecipientSection({
         <Label className={cn(customerNameError && "text-destructive")}>{t("Name")}</Label>
         <CustomerAutocomplete
           entityId={entityId}
+          contactType="buyer"
           value={selectedCustomerId}
           committedDisplayName={customerNameController.field.value ?? initialCustomerName}
           onValueChange={onCustomerSelect}

@@ -87,6 +87,7 @@ export default function AdvanceInvoiceListTable({
   onDuplicate,
   onChangeParams,
   disableUrlSync,
+  hideCreateNew,
   entityId,
   onDownloadStart,
   onDownloadSuccess,
@@ -358,7 +359,7 @@ export default function AdvanceInvoiceListTable({
       queryParams={queryParams}
       resourceName="advance_invoice"
       cacheKey={cacheKey}
-      createNewLink={entityId ? `/app/${entityId}/documents/add/advance_invoice` : undefined}
+      createNewLink={!hideCreateNew && entityId ? `/app/${entityId}/documents/add/advance_invoice` : undefined}
       onCreateNew={onCreateNew}
       onFetch={handleFetch}
       onChangeParams={onChangeParams}

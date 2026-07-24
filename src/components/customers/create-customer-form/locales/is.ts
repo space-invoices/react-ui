@@ -1,4 +1,7 @@
 export default {
+  "Contact Details": "Tengiliðaupplýsingar",
+  "Tax Details": "Skattaupplýsingar",
+  "Bank Account": "Bankareikningur",
   Name: "Nafn",
   "Enter name": "Sláðu inn nafn",
   Address: "Heimilisfang",

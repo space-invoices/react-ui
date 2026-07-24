@@ -7,32 +7,59 @@ import { createTranslation } from "@/ui/lib/translation";
 import { DataTable } from "../../table/data-table";
 import { useTableFetch } from "../../table/hooks/use-table-fetch";
 import { withTableTranslations } from "../../table/locales";
-import type { Column, ListTableProps, TableQueryParams, TableQueryResponse } from "../../table/types";
+import type { Column, FilterConfig, ListTableProps, TableQueryParams, TableQueryResponse } from "../../table/types";
 import { CUSTOMERS_CACHE_KEY } from "../customers.hooks";
 import CustomerListRowActions from "./customer-list-row-actions";
+import bg from "./locales/bg";
+import cs from "./locales/cs";
 import de from "./locales/de";
 import en from "./locales/en";
 import es from "./locales/es";
+import et from "./locales/et";
+import fi from "./locales/fi";
 import fr from "./locales/fr";
 import hr from "./locales/hr";
+import is from "./locales/is";
 import it from "./locales/it";
+import nb from "./locales/nb";
 import nl from "./locales/nl";
 import pl from "./locales/pl";
 import pt from "./locales/pt";
+import sk from "./locales/sk";
 import sl from "./locales/sl";
+import sv from "./locales/sv";
 
 const translations = withTableTranslations({
+  bg,
+  cs,
   en,
   sl,
   de,
   it,
   fr,
   es,
+  et,
+  fi,
   pt,
+  is,
+  nb,
   nl,
   pl,
+  sk,
+  sv,
   hr,
 } as const);
+
+function getContactTypeLabel(customer: Customer, t: (key: string) => string) {
+  switch (customer.contact_type) {
+    case "supplier":
+      return t("Supplier");
+    case "both":
+      return t("Customer and supplier");
+    default:
+      return t("Customer");
+  }
+}
 
 type CustomerListTableProps = {
   t?: (key: string) => string;
@@ -74,6 +101,20 @@ export default function CustomerListTable({
     return response as unknown as TableQueryResponse<Customer>;
   }, entityId);
 
+  const filterConfig: FilterConfig = {
+    selectFilters: [
+      {
+        id: "contact_type",
+        label: t("Contact Type"),
+        options: [
+          { value: "buyer", label: t("Customer") },
+          { value: "supplier", label: t("Supplier") },
+          { value: "both", label: t("Customer and supplier") },
+        ],
+      },
+    ],
+  };
+
   const columns: Column<Customer>[] = useMemo(
     () => [
       {
@@ -86,6 +127,11 @@ export default function CustomerListTable({
             {customer.name}
           </Button>
         ),
+      },
+      {
+        id: "contact_type",
+        header: t("Contact Type"),
+        cell: (customer) => getContactTypeLabel(customer, t),
       },
       {
         id: "address",
@@ -143,6 +189,7 @@ export default function CustomerListTable({
   return (
     <DataTable
       columns={columns}
+      filterConfig={filterConfig}
       queryParams={queryParams}
       resourceName="customer"
       cacheKey={CUSTOMERS_CACHE_KEY}

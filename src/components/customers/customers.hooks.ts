@@ -6,9 +6,19 @@ import { createResourceHooks } from "@/ui/hooks/create-resource-hooks";
 // Define a constant for the customers cache key
 export const CUSTOMERS_CACHE_KEY = "customers";
 
-export const useCustomerSearch = (entityId: string, search: string) => {
+export type CustomerDirectoryRole = "buyer" | "supplier";
+
+export function canUseCustomerAsBuyer(customer: { contact_type?: string | null } | null | undefined) {
+  return customer?.contact_type !== "supplier";
+}
+
+function buildContactTypeQuery(role?: CustomerDirectoryRole) {
+  return role ? JSON.stringify({ contact_type: { in: [role, "both"] } }) : undefined;
+}
+
+export const useCustomerSearch = (entityId: string, search: string, role?: CustomerDirectoryRole) => {
   return useQuery({
-    queryKey: [CUSTOMERS_CACHE_KEY, "search", entityId, search],
+    queryKey: [CUSTOMERS_CACHE_KEY, "search", entityId, search, role ?? "all"],
     queryFn: async () => {
       if (!search) return { data: [] };
 
@@ -16,6 +26,7 @@ export const useCustomerSearch = (entityId: string, search: string) => {
         entity_id: entityId,
         search,
         limit: 10,
+        ...(role ? { query: buildContactTypeQuery(role) } : {}),
       });
 
       return response;
@@ -24,14 +35,15 @@ export const useCustomerSearch = (entityId: string, search: string) => {
   });
 };
 
-export const useRecentCustomers = (entityId: string) => {
+export const useRecentCustomers = (entityId: string, role?: CustomerDirectoryRole) => {
   return useQuery({
-    queryKey: [CUSTOMERS_CACHE_KEY, "recent", entityId],
+    queryKey: [CUSTOMERS_CACHE_KEY, "recent", entityId, role ?? "all"],
     queryFn: async () => {
       const response = await customers.list({
         entity_id: entityId,
         limit: 5,
         order_by: "-created_at", // Sort by most recently created
+        ...(role ? { query: buildContactTypeQuery(role) } : {}),
       });
 
       return response;

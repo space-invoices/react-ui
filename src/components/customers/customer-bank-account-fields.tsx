@@ -292,7 +292,9 @@ export function CustomerBankAccountFields({
         name={fieldName("type")}
         render={({ field }) => (
           <FormItem>
-            {!compact && <FormLabel>{translate("Bank Account")}</FormLabel>}
+            <FormLabel className={compact ? "sr-only" : undefined}>
+              {translate(compact ? "Account Type" : "Bank Account")}
+            </FormLabel>
             <Select value={field.value ?? "iban"} onValueChange={field.onChange}>
               <FormControl>
                 <SelectTrigger className="h-10 w-full">

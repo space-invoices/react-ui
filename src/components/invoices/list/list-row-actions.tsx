@@ -137,11 +137,11 @@ export default memo(function InvoiceListRowActions({
               </DropdownMenuItem>
             )}
           </DropdownMenuGroup>
-          {!invoice.paid_in_full && (
+          {!invoice.paid_in_full && !invoice.is_draft && onAddPayment && (
             <>
               <DropdownMenuSeparator />
               <DropdownMenuGroup>
-                <DropdownMenuItem className="cursor-pointer" onClick={() => onAddPayment?.(invoice)}>
+                <DropdownMenuItem className="cursor-pointer" onClick={() => onAddPayment(invoice)}>
                   <Plus className="h-4 w-4" />
                   {t("Add Payment")}
                 </DropdownMenuItem>

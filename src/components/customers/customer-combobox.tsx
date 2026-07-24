@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Combobox } from "@/ui/components/combobox";
 import { useDebounce } from "@/ui/hooks/use-debounce";
 
-import { useCustomerSearch, useRecentCustomers } from "./customers.hooks";
+import { type CustomerDirectoryRole, useCustomerSearch, useRecentCustomers } from "./customers.hooks";
 
 type CustomerComboboxProps = {
   entityId: string;
@@ -15,6 +15,7 @@ type CustomerComboboxProps = {
   placeholder?: string;
   className?: string;
   disabled?: boolean;
+  contactType?: CustomerDirectoryRole;
 };
 
 export function CustomerCombobox({
@@ -24,17 +25,18 @@ export function CustomerCombobox({
   placeholder = "Search customer...",
   className,
   disabled,
+  contactType,
 }: CustomerComboboxProps) {
   const [search, setSearch] = useState("");
   const [selectedLabel, setSelectedLabel] = useState<string | undefined>(undefined);
   const debouncedSearch = useDebounce(search, 300);
 
   // Fetch recent customers (non-blocking, cached)
-  const { data: recentData } = useRecentCustomers(entityId);
+  const { data: recentData } = useRecentCustomers(entityId, contactType);
   const recentCustomers = recentData?.data || [];
 
   // Fetch search results
-  const { data: searchData, isLoading } = useCustomerSearch(entityId, debouncedSearch);
+  const { data: searchData, isLoading } = useCustomerSearch(entityId, debouncedSearch, contactType);
   const searchResults = searchData?.data || [];
 
   // Use search results if searching, otherwise show recent customers

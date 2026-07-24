@@ -1,5 +1,8 @@
 export default {
   Name: "Nom",
+  "Contact Details": "Coordonnées",
+  "Tax Details": "Informations fiscales",
+  "Bank Account": "Compte bancaire",
   "Enter name": "Entrez le nom du client",
   Address: "Adresse",
   "Enter address": "Entrez l'adresse",

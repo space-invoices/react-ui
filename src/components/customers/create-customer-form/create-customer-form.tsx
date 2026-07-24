@@ -13,27 +13,45 @@ import {
   customerBankAccountsFormSchema,
   normalizeCustomerBankAccounts,
 } from "../customer-bank-account-fields";
+import { CustomerClassificationFields, CustomerContactFields } from "../customer-profile-fields";
+import { customerProfileTranslations } from "../customer-profile-locales";
 import { useCreateCustomer } from "../customers.hooks";
+import bg from "./locales/bg";
+import cs from "./locales/cs";
 import de from "./locales/de";
 import es from "./locales/es";
+import et from "./locales/et";
+import fi from "./locales/fi";
 import fr from "./locales/fr";
 import hr from "./locales/hr";
+import is from "./locales/is";
 import it from "./locales/it";
+import nb from "./locales/nb";
 import nl from "./locales/nl";
 import pl from "./locales/pl";
 import pt from "./locales/pt";
+import sk from "./locales/sk";
 import sl from "./locales/sl";
+import sv from "./locales/sv";
 
 const translations = {
-  sl,
-  de,
-  it,
-  fr,
-  es,
-  pt,
-  nl,
-  pl,
-  hr,
+  bg: { ...bg, ...customerProfileTranslations.bg },
+  cs: { ...cs, ...customerProfileTranslations.cs },
+  sl: { ...sl, ...customerProfileTranslations.sl },
+  de: { ...de, ...customerProfileTranslations.de },
+  it: { ...it, ...customerProfileTranslations.it },
+  fr: { ...fr, ...customerProfileTranslations.fr },
+  es: { ...es, ...customerProfileTranslations.es },
+  et: { ...et, ...customerProfileTranslations.et },
+  fi: { ...fi, ...customerProfileTranslations.fi },
+  pt: { ...pt, ...customerProfileTranslations.pt },
+  is: { ...is, ...customerProfileTranslations.is },
+  nb: { ...nb, ...customerProfileTranslations.nb },
+  nl: { ...nl, ...customerProfileTranslations.nl },
+  pl: { ...pl, ...customerProfileTranslations.pl },
+  sk: { ...sk, ...customerProfileTranslations.sk },
+  sv: { ...sv, ...customerProfileTranslations.sv },
+  hr: { ...hr, ...customerProfileTranslations.hr },
 } as const;
 
 type CreateCustomerFormProps = {
@@ -55,6 +73,15 @@ const customerFormSchema = createCustomerSchema.extend({
 type CustomerFormSchema = CreateCustomerSchema & {
   bank_accounts?: Array<Record<string, unknown>>;
 };
+
+function CustomerFormSection({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <fieldset className="min-w-0 rounded-lg border bg-muted/10 p-4">
+      <legend className="px-1 font-medium text-sm">{title}</legend>
+      <div className="space-y-4">{children}</div>
+    </fieldset>
+  );
+}
 
 export default function CreateCustomerForm({
   entityId,
@@ -89,12 +116,17 @@ export default function CreateCustomerForm({
     defaultValues: {
       name: "",
       address: "",
+      address_2: "",
       post_code: "",
       city: "",
       state: "",
       country: "",
       tax_number: "",
       company_number: "",
+      email: "",
+      contact_type: "both",
+      is_tax_subject: true,
+      is_end_consumer: false,
       bank_accounts: [{ type: "iban" }],
     },
   });
@@ -138,30 +170,43 @@ export default function CreateCustomerForm({
           </div>
         )}
 
-        <FormInput control={form.control} name="name" label={t("Name")} placeholder={t("Enter name")} />
+        <div className="grid items-start gap-4 lg:grid-cols-2" data-testid="customer-form-sections">
+          <CustomerFormSection title={t("Contact Details")}>
+            <FormInput control={form.control} name="name" label={t("Name")} placeholder={t("Enter name")} />
+            <CustomerContactFields control={form.control} t={t} />
+          </CustomerFormSection>
 
-        <FormInput control={form.control} name="address" label={t("Address")} placeholder={t("Enter address")} />
+          <CustomerFormSection title={t("Address")}>
+            <FormInput control={form.control} name="address" label={t("Address")} placeholder={t("Enter address")} />
+            <FormInput control={form.control} name="address_2" label={t("Address 2")} />
+            <div className="grid grid-cols-2 gap-4">
+              <FormInput control={form.control} name="post_code" label={t("Post Code")} />
+              <FormInput control={form.control} name="city" label={t("City")} />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <FormInput control={form.control} name="state" label={t("State")} />
+              <FormInput control={form.control} name="country" label={t("Country")} />
+            </div>
+          </CustomerFormSection>
 
-        <div className="grid grid-cols-2 gap-4">
-          <FormInput control={form.control} name="post_code" label={t("Post Code")} />
-          <FormInput control={form.control} name="city" label={t("City")} />
+          <CustomerFormSection title={t("Tax Details")}>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <FormInput control={form.control} name="tax_number" label={t("Tax Number")} />
+              <FormInput control={form.control} name="company_number" label={t("Company Number")} />
+            </div>
+            <CustomerClassificationFields control={form.control} t={t} />
+          </CustomerFormSection>
+
+          <CustomerFormSection title={t("Bank Account")}>
+            <CustomerBankAccountFields
+              control={form.control}
+              t={t}
+              locale={i18nProps.locale}
+              translationLocale={i18nProps.translationLocale}
+              compact
+            />
+          </CustomerFormSection>
         </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <FormInput control={form.control} name="state" label={t("State")} />
-          <FormInput control={form.control} name="country" label={t("Country")} />
-        </div>
-
-        <FormInput control={form.control} name="tax_number" label={t("Tax Number")} />
-
-        <FormInput control={form.control} name="company_number" label={t("Company Number")} />
-
-        <CustomerBankAccountFields
-          control={form.control}
-          t={t}
-          locale={i18nProps.locale}
-          translationLocale={i18nProps.translationLocale}
-        />
 
         {renderSubmitButton?.({
           isSubmitting: isPending || form.formState.isSubmitting,

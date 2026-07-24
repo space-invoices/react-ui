@@ -82,6 +82,7 @@ export default function EstimateListTable({
   onDuplicate,
   onChangeParams,
   disableUrlSync,
+  hideCreateNew,
   entityId,
   onDownloadStart,
   onDownloadSuccess,
@@ -338,7 +339,7 @@ export default function EstimateListTable({
       onFetch={handleFetch}
       cacheKey={cacheKey}
       resourceName="estimate"
-      createNewLink={entityId ? `/app/${entityId}/documents/add/estimate` : undefined}
+      createNewLink={!hideCreateNew && entityId ? `/app/${entityId}/documents/add/estimate` : undefined}
       onCreateNew={onCreateNew}
       entityId={entityId}
       filterConfig={filterConfig}

@@ -171,6 +171,8 @@ export type ListTableProps<T> = {
   onChangeParams?: (params: TableQueryParams) => void;
   /** When true, disables URL sync entirely (for embedded tables like dashboard) */
   disableUrlSync?: boolean;
+  /** Hides the default empty-state create link when creation is not allowed in the current context. */
+  hideCreateNew?: boolean;
   onRowClick?: (item: T) => void;
   entityId?: string;
 };

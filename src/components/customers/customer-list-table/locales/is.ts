@@ -1,4 +1,8 @@
 export default {
+  "Contact Type": "Tegund tengiliðar",
+  Customer: "Viðskiptavinur",
+  Supplier: "Birgir",
+  "Customer and supplier": "Viðskiptavinur og birgir",
   "Your list is empty": "Viðskiptavinalistinn þinn er tómur",
   "Get started by creating your first entry": "Byrjaðu á að búa til fyrsta viðskiptavininn þinn",
   "Edit customer": "Breyta viðskiptavini",

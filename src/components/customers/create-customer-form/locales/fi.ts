@@ -1,4 +1,7 @@
 export default {
+  "Contact Details": "Yhteystiedot",
+  "Tax Details": "Verotiedot",
+  "Bank Account": "Pankkitili",
   Name: "Nimi",
   "Enter name": "Kirjoita nimi",
   Address: "Osoite",

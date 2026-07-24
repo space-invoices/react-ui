@@ -1,5 +1,8 @@
 export default {
   Name: "Ime",
+  "Contact Details": "Kontaktni podatki",
+  "Tax Details": "Davčni podatki",
+  "Bank Account": "Bančni račun",
   "Enter name": "Vnesite ime stranke",
   Address: "Naslov",
   "Enter address": "Vnesite naslov",

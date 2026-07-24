@@ -1,4 +1,8 @@
 export default {
+  "Contact Type": "Typ kontaktu",
+  Customer: "Zákazník",
+  Supplier: "Dodavatel",
+  "Customer and supplier": "Zákazník a dodavatel",
   "Your list is empty": "Váš seznam zákazníků je prázdný",
   "Get started by creating your first entry": "Začněte vytvořením svého prvního zákazníka",
   "Edit customer": "Upravit zákazníka",

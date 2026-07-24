@@ -1,4 +1,8 @@
 export default {
+  "Contact Type": "Вид контакт",
+  Customer: "Клиент",
+  Supplier: "Доставчик",
+  "Customer and supplier": "Клиент и доставчик",
   "Your list is empty": "Вашият списък с клиенти е празен",
   "Get started by creating your first entry": "Започнете, като създадете първия си клиент",
   "Edit customer": "Редактиране на клиент",

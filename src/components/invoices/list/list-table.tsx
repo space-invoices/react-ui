@@ -112,6 +112,7 @@ export default function InvoiceListTable({
   onDuplicate,
   onChangeParams,
   disableUrlSync,
+  hideCreateNew,
   entityId,
   onDownloadStart,
   onDownloadSuccess,
@@ -391,7 +392,7 @@ export default function InvoiceListTable({
       queryParams={queryParams}
       resourceName="invoice"
       cacheKey={cacheKey}
-      createNewLink={entityId ? `/app/${entityId}/documents/add/invoice` : undefined}
+      createNewLink={!hideCreateNew && entityId ? `/app/${entityId}/documents/add/invoice` : undefined}
       onCreateNew={onCreateNew}
       onFetch={handleFetch}
       onChangeParams={onChangeParams}

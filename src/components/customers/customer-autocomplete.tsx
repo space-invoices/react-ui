@@ -10,7 +10,7 @@ import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
 
 import { autocompleteTranslations } from "../common/autocomplete-locales";
-import { useCustomerSearch, useRecentCustomers } from "./customers.hooks";
+import { type CustomerDirectoryRole, useCustomerSearch, useRecentCustomers } from "./customers.hooks";
 
 const MAX_TEXT_LENGTH = 100;
 
@@ -84,6 +84,8 @@ type CustomerAutocompleteProps = {
   commitOnBlurMode?: "none" | "create" | "update-inline";
   ariaInvalid?: boolean;
   companyRegistryCountryCode?: string | null;
+  /** Limits saved contacts to this role while always including contacts marked as both. */
+  contactType?: CustomerDirectoryRole;
 } & ComponentTranslationProps;
 
 export function CustomerAutocomplete({
@@ -103,6 +105,7 @@ export function CustomerAutocomplete({
   commitOnBlurMode = "none",
   ariaInvalid = false,
   companyRegistryCountryCode,
+  contactType,
   locale = "en",
   translationLocale,
   t: translationFn,
@@ -129,11 +132,11 @@ export function CustomerAutocomplete({
   };
 
   // Fetch recent customers (non-blocking, cached)
-  const { data: recentData } = useRecentCustomers(entityId);
+  const { data: recentData } = useRecentCustomers(entityId, contactType);
   const recentCustomers = recentData?.data || [];
 
   // Fetch search results
-  const { data: searchData, isLoading } = useCustomerSearch(entityId, debouncedSearch);
+  const { data: searchData, isLoading } = useCustomerSearch(entityId, debouncedSearch, contactType);
   const searchResults = searchData?.data || [];
   const normalizedRegistryCountryCode = companyRegistryCountryCode?.trim().toUpperCase() ?? "";
   const { isSupported: isCompanyRegistrySupported } = useIsCountrySupported(normalizedRegistryCountryCode, {

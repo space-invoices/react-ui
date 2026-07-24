@@ -1,4 +1,8 @@
 export default {
+  "Contact Type": "Kontakti tüüp",
+  Customer: "Klient",
+  Supplier: "Tarnija",
+  "Customer and supplier": "Klient ja tarnija",
   "Your list is empty": "Teie kliendiloend on tühi",
   "Get started by creating your first entry": "Alustage oma esimese kliendi loomisega",
   "Edit customer": "Muuda klienti",

@@ -1,5 +1,8 @@
 export default {
   Name: "Naam",
+  "Contact Details": "Contactgegevens",
+  "Tax Details": "Belastinggegevens",
+  "Bank Account": "Bankrekening",
   "Enter name": "Voer de naam van de klant in",
   Address: "Adres",
   "Enter address": "Voer het adres in",

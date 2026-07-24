@@ -1,4 +1,7 @@
 export default {
+  "Contact Details": "Kontaktní údaje",
+  "Tax Details": "Daňové údaje",
+  "Bank Account": "Bankovní účet",
   Name: "Jméno",
   "Enter name": "Zadejte jméno",
   Address: "Adresa",

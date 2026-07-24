@@ -1,4 +1,8 @@
 export default {
+  "Contact Type": "Kontakttyp",
+  Customer: "Kund",
+  Supplier: "Leverantör",
+  "Customer and supplier": "Kund och leverantör",
   "Your list is empty": "Din kundlista är tom",
   "Get started by creating your first entry": "Kom igång genom att skapa din första kund",
   "Edit customer": "Redigera kund",

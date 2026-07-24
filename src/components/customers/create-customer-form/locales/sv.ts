@@ -1,4 +1,7 @@
 export default {
+  "Contact Details": "Kontaktuppgifter",
+  "Tax Details": "Skatteuppgifter",
+  "Bank Account": "Bankkonto",
   Name: "Namn",
   "Enter name": "Ange namn",
   Address: "Adress",

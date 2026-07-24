@@ -1,4 +1,7 @@
 export default {
+  "Contact Details": "Kontaktandmed",
+  "Tax Details": "Maksuandmed",
+  "Bank Account": "Pangakonto",
   Name: "Nimi",
   "Enter name": "Sisestage nimi",
   Address: "Aadress",

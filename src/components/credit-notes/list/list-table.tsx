@@ -90,6 +90,7 @@ export default function CreditNoteListTable({
   onDuplicate,
   onChangeParams,
   disableUrlSync,
+  hideCreateNew,
   entityId,
   onDownloadStart,
   onDownloadSuccess,
@@ -357,7 +358,7 @@ export default function CreditNoteListTable({
       queryParams={queryParams}
       resourceName="credit_note"
       cacheKey={cacheKey}
-      createNewLink={entityId ? `/app/${entityId}/documents/add/credit_note` : undefined}
+      createNewLink={!hideCreateNew && entityId ? `/app/${entityId}/documents/add/credit_note` : undefined}
       onCreateNew={onCreateNew}
       onFetch={handleFetch}
       onChangeParams={onChangeParams}

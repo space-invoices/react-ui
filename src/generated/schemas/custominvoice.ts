@@ -1192,7 +1192,6 @@ const CreateFinaInvoiceData = z
       z.union([z.enum(["cash", "card", "online", "bank_transfer", "paypal", "crypto", "coupon", "other"]), z.null()]),
       z.null(),
     ]),
-    subsequent_submit: z.union([z.boolean(), z.null()]),
   })
   .partial();
 

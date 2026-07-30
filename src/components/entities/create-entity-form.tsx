@@ -3,6 +3,7 @@ import type { CompanyRegistryResult, CreateEntityBody, Entity } from "@spaceinvo
 import { useEffect, useRef, useState } from "react";
 import type { Resolver } from "react-hook-form";
 import { useForm } from "react-hook-form";
+import { z } from "zod";
 import { Autocomplete } from "@/ui/common/autocomplete";
 import { useCompanyRegistrySearch, useIsCountrySupported } from "@/ui/components/company-registry";
 import { FormInput } from "@/ui/components/form";
@@ -46,6 +47,64 @@ const translations = {
     submit: "Create entity",
   },
 } as const;
+
+const REQUIRED_CREATE_ENTITY_FIELDS = new Set<keyof CreateEntitySchema>(["name", "country"]);
+const createEntityCompanyNumberSchema = createEntitySchema.pick({ company_number: true });
+const ENTITY_NAME_MAX_LENGTH = 255;
+const registryValueCollator = new Intl.Collator("und", {
+  usage: "search",
+  sensitivity: "base",
+});
+
+function normalizeRegistryValue(value: string): string {
+  return value.normalize("NFKC").trim().replace(/\s+/gu, " ");
+}
+
+function isSafeCompanyNumberFromRegistry(company: CompanyRegistryResult): boolean {
+  const registrationNumber = company.registration_number?.trim();
+  if (!registrationNumber) return false;
+  if (!createEntityCompanyNumberSchema.safeParse({ company_number: registrationNumber }).success) return false;
+
+  return (
+    registryValueCollator.compare(normalizeRegistryValue(registrationNumber), normalizeRegistryValue(company.name)) !==
+    0
+  );
+}
+
+function normalizeCreateEntityValues(values: unknown): unknown {
+  if (!values || typeof values !== "object" || Array.isArray(values)) {
+    return values;
+  }
+
+  const normalized = { ...(values as Record<string, unknown>) };
+
+  for (const [field, value] of Object.entries(normalized)) {
+    if (typeof value !== "string") continue;
+
+    const trimmed = value.trim();
+    if (!trimmed && !REQUIRED_CREATE_ENTITY_FIELDS.has(field as keyof CreateEntitySchema)) {
+      delete normalized[field];
+      continue;
+    }
+
+    normalized[field] = trimmed;
+  }
+
+  return normalized;
+}
+
+const createEntityFormSchema = z.preprocess(
+  normalizeCreateEntityValues,
+  createEntitySchema.extend({
+    name: z
+      .string()
+      .min(1)
+      .refine((value) => Array.from(value).length <= ENTITY_NAME_MAX_LENGTH, {
+        message: `Too big: expected string to have <=${ENTITY_NAME_MAX_LENGTH} characters`,
+      }),
+    country: z.string().min(1),
+  }),
+);
 
 const ISO_COUNTRY_CODES = [
   "AD",
@@ -339,7 +398,7 @@ export function CreateEntityForm({
   });
 
   const form = useForm<CreateEntitySchema>({
-    resolver: zodResolver(createEntitySchema) as Resolver<CreateEntitySchema>,
+    resolver: zodResolver(createEntityFormSchema as any) as unknown as Resolver<CreateEntitySchema>,
     defaultValues: {
       name: defaultName || "",
       address: "",
@@ -377,7 +436,7 @@ export function CreateEntityForm({
     if (company.post_code) form.setValue("post_code", company.post_code);
     if (company.city) form.setValue("city", company.city);
     if (company.tax_number) form.setValue("tax_number", company.tax_number);
-    if (company.registration_number) form.setValue("company_number", company.registration_number);
+    form.setValue("company_number", isSafeCompanyNumberFromRegistry(company) ? company.registration_number.trim() : "");
     setNameSearch("");
   };
 
@@ -399,8 +458,10 @@ export function CreateEntityForm({
 
   const onSubmit = async (values: CreateEntitySchema) => {
     try {
-      const resolvedCountryCode = values.country_code || resolveCountryCodeFromName(values.country, locale);
-      const { country_code: _countryCode, ...rest } = values;
+      const normalizedValues = normalizeCreateEntityValues(values) as CreateEntitySchema;
+      const resolvedCountryCode =
+        normalizedValues.country_code || resolveCountryCodeFromName(normalizedValues.country, locale);
+      const { country_code: _countryCode, ...rest } = normalizedValues;
       const payload = resolvedCountryCode ? { ...rest, country_code: resolvedCountryCode } : rest;
       createEntity(payload as CreateEntityBody);
     } catch (e) {
@@ -415,7 +476,7 @@ export function CreateEntityForm({
   const nameValue = form.watch("name");
 
   return (
-    <Form {...form}>
+    <Form {...form} locale={translationLocale || locale}>
       <form onSubmit={form.handleSubmit(onSubmit as any)} className="space-y-4">
         {showAutocomplete ? (
           <FormField
@@ -504,6 +565,7 @@ export function CreateEntityForm({
             name="tax_number"
             label={translate("tax-number")}
             placeholder={translate("tax-number")}
+            disableAutofill
           />
           <FormField
             control={form.control}
@@ -524,6 +586,7 @@ export function CreateEntityForm({
           name="company_number"
           label={translate("company-number")}
           placeholder={translate("company-number")}
+          disableAutofill
         />
 
         <Button

@@ -5,11 +5,39 @@ import path from "node:path";
 const SCHEMAS_DIR = "./src/generated/schemas";
 const STAGING_SCHEMAS_DIR = "./src/generated/.schemas-staging";
 const GENERATED_DIR = "./generated";
+const STRING_LENGTH_CONSTRAINT_OPERATION_IDS = new Set(["createEntity"]);
 
 type OperationSchemaEntry = {
   alias: string;
   schemaName: string;
   groupName: string;
+};
+
+export type OpenApiSchemaObject = {
+  $ref?: string;
+  type?: string | string[];
+  minLength?: number;
+  maxLength?: number;
+  properties?: Record<string, OpenApiSchemaObject>;
+};
+
+type OpenApiOperationObject = {
+  operationId?: string;
+  requestBody?: {
+    content?: Record<string, { schema?: OpenApiSchemaObject }>;
+  };
+};
+
+export type OpenApiDocument = {
+  paths?: Record<string, Record<string, OpenApiOperationObject>>;
+  components?: {
+    schemas?: Record<string, OpenApiSchemaObject>;
+  };
+};
+
+type StringLengthConstraints = {
+  minLength?: number;
+  maxLength?: number;
 };
 
 // Helper to get group name from schema name / alias
@@ -68,6 +96,114 @@ function extractOperationSchemaEntries(fullContent: string): OperationSchemaEntr
   return [...dedupedEntries.values()];
 }
 
+function resolveOpenApiSchema(
+  schema: OpenApiSchemaObject | undefined,
+  document: OpenApiDocument,
+  seenRefs = new Set<string>(),
+): OpenApiSchemaObject | undefined {
+  if (!schema?.$ref) return schema;
+  if (seenRefs.has(schema.$ref)) return undefined;
+  seenRefs.add(schema.$ref);
+
+  const componentMatch = schema.$ref.match(/^#\/components\/schemas\/(.+)$/);
+  if (!componentMatch) return schema;
+
+  const target = document.components?.schemas?.[decodeURIComponent(componentMatch[1] || "")];
+  return resolveOpenApiSchema(target, document, seenRefs) ?? target ?? schema;
+}
+
+function isStringSchema(schema: OpenApiSchemaObject): boolean {
+  return schema.type === "string" || (Array.isArray(schema.type) && schema.type.includes("string"));
+}
+
+export function extractOperationStringLengthConstraints(
+  document: OpenApiDocument,
+): Map<string, Record<string, StringLengthConstraints>> {
+  const constraintsByOperation = new Map<string, Record<string, StringLengthConstraints>>();
+
+  for (const pathItem of Object.values(document.paths ?? {})) {
+    for (const operation of Object.values(pathItem)) {
+      if (!operation?.operationId || !STRING_LENGTH_CONSTRAINT_OPERATION_IDS.has(operation.operationId)) continue;
+
+      const requestSchema = resolveOpenApiSchema(
+        operation.requestBody?.content?.["application/json"]?.schema,
+        document,
+      );
+      if (!requestSchema?.properties) continue;
+
+      const constraints: Record<string, StringLengthConstraints> = {};
+      for (const [fieldName, propertySchema] of Object.entries(requestSchema.properties)) {
+        const resolvedProperty = resolveOpenApiSchema(propertySchema, document);
+        if (!resolvedProperty || !isStringSchema(resolvedProperty)) continue;
+
+        const { minLength, maxLength } = resolvedProperty;
+        if (typeof minLength !== "number" && typeof maxLength !== "number") continue;
+
+        constraints[fieldName] = {
+          ...(typeof minLength === "number" ? { minLength } : {}),
+          ...(typeof maxLength === "number" ? { maxLength } : {}),
+        };
+      }
+
+      if (Object.keys(constraints).length > 0) {
+        constraintsByOperation.set(operation.operationId, constraints);
+      }
+    }
+  }
+
+  return constraintsByOperation;
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function addStringLengthConstraints(zodExpression: string, constraints: StringLengthConstraints): string {
+  let nextExpression = zodExpression;
+
+  if (typeof constraints.minLength === "number" && !/\.min\(/.test(nextExpression)) {
+    nextExpression += `.min(${constraints.minLength})`;
+  }
+  if (typeof constraints.maxLength === "number" && !/\.max\(/.test(nextExpression)) {
+    nextExpression += `.max(${constraints.maxLength})`;
+  }
+
+  return nextExpression;
+}
+
+function applyStringLengthConstraints(
+  schemaDefinition: string,
+  constraints: Record<string, StringLengthConstraints> | undefined,
+): string {
+  if (!constraints) return schemaDefinition;
+
+  let nextDefinition = schemaDefinition;
+  const topLevelIndent = schemaDefinition.match(/\.object\(\{\n( +)\S/)?.[1];
+  if (!topLevelIndent) return schemaDefinition;
+  const propertyBoundary = `\\n${escapeRegExp(topLevelIndent)}`;
+
+  for (const [fieldName, fieldConstraints] of Object.entries(constraints)) {
+    const escapedFieldName = escapeRegExp(fieldName);
+    const stringExpression = String.raw`z\.string\(\)(?:\.(?:min|max)\([^)]*\))*`;
+
+    nextDefinition = nextDefinition.replace(
+      new RegExp(
+        `(${propertyBoundary})(${escapedFieldName}:\\s*z\\.union\\(\\[)(${stringExpression})(,\\s*z\\.null\\(\\)\\]\\))`,
+        "g",
+      ),
+      (_match, boundary: string, prefix: string, zodExpression: string, suffix: string) =>
+        `${boundary}${prefix}${addStringLengthConstraints(zodExpression, fieldConstraints)}${suffix}`,
+    );
+    nextDefinition = nextDefinition.replace(
+      new RegExp(`(${propertyBoundary})(${escapedFieldName}:\\s*)(${stringExpression})`, "g"),
+      (_match, boundary: string, prefix: string, zodExpression: string) =>
+        `${boundary}${prefix}${addStringLengthConstraints(zodExpression, fieldConstraints)}`,
+    );
+  }
+
+  return nextDefinition;
+}
+
 async function main() {
   // Generate into a disposable staging directory. Never remove the checked-in
   // output before every schema has been generated successfully.
@@ -112,6 +248,8 @@ async function main() {
 
   // Read and parse the generated file
   let content = await fs.readFile("./generated/schemas.ts", "utf-8");
+  const openApiDocument = JSON.parse(await fs.readFile(openApiPath, "utf-8")) as OpenApiDocument;
+  const operationStringLengthConstraints = extractOperationStringLengthConstraints(openApiDocument);
 
   // Fix common generation issues
   content = content.replace(/\.prefault\(/g, ".default(");
@@ -264,6 +402,11 @@ const ${schemaName} = ${schemaDefinitionMatch[1]};
         }
 
         let schemaDefinition = schemaDefinitionMatch[1];
+        const operationName = operationEntry.alias;
+        schemaDefinition = applyStringLengthConstraints(
+          schemaDefinition,
+          operationStringLengthConstraints.get(operationName),
+        );
 
         // Post-process: Add character limits to name and description fields
         // Add max length validation from API schema (only if not already present)
@@ -279,8 +422,6 @@ const ${schemaName} = ${schemaDefinitionMatch[1]};
 
         // Add min length to country
         schemaDefinition = schemaDefinition.replace(/country: z\.string\(\)(?!\.min)/g, "country: z.string().min(1)");
-
-        const operationName = operationEntry.alias;
 
         return `
 // Schema for ${operationName} operation
@@ -384,8 +525,10 @@ export { createInvoiceSchema as createCreditNoteSchema, type CreateInvoiceSchema
   await fs.unlink(`${GENERATED_DIR}/openapi.json`);
 }
 
-main().catch(async (error) => {
-  await fs.rm(STAGING_SCHEMAS_DIR, { recursive: true, force: true });
-  console.error(error);
-  process.exitCode = 1;
-});
+if (import.meta.main) {
+  main().catch(async (error) => {
+    await fs.rm(STAGING_SCHEMAS_DIR, { recursive: true, force: true });
+    console.error(error);
+    process.exitCode = 1;
+  });
+}

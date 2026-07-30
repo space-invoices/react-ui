@@ -14,6 +14,7 @@ type FormInputProps<
   type?: "text" | "number" | "email" | "password" | "tel" | "url";
   disabled?: boolean;
   autoComplete?: string;
+  disableAutofill?: boolean;
   onChange?: (value: any) => void;
   className?: string;
   required?: boolean;
@@ -31,12 +32,23 @@ const FormInputComponent = <
     type = "text",
     disabled,
     autoComplete,
+    disableAutofill,
     onChange,
     className,
     required = false,
   }: FormInputProps<TFieldValues, TName>,
   ref: React.Ref<HTMLInputElement>,
 ) => {
+  const autofillSuppressionProps = disableAutofill
+    ? {
+        autoComplete: autoComplete ?? "off",
+        "data-1p-ignore": "true",
+        "data-bwignore": "true",
+        "data-form-type": "other",
+        "data-lpignore": "true",
+      }
+    : { autoComplete };
+
   const applyFieldValue = (field: any, rawValue: string) => {
     if (type === "number") {
       const value = Number(rawValue);
@@ -79,7 +91,7 @@ const FormInputComponent = <
               type={type}
               placeholder={placeholder}
               disabled={disabled}
-              autoComplete={autoComplete}
+              {...autofillSuppressionProps}
               {...field}
               ref={ref}
               value={field.value ?? ""}

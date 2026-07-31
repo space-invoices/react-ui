@@ -51,6 +51,10 @@ export default {
   "Configure email settings for invoices": "Konfigurirajte nastavitve e-pošte za račune",
   "Email Address": "Naslov e-pošte",
   "Email address to send invoices to": "Naslov e-pošte za pošiljanje računov",
+  "Entity Email": "E-pošta pravne osebe",
+  "Invalid email address": "Neveljaven e-poštni naslov",
+  "Email shown for this entity on documents and template variables":
+    "E-pošta, prikazana za to pravno osebo na dokumentih in v spremenljivkah predloge",
   "Email Subject": "Zadeva e-pošte",
   "Subject line for email invoices": "Vrstica zadeve za e-pošte računov",
   "Email Body": "Vsebina e-pošte",

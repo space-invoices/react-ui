@@ -17,38 +17,63 @@ import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
 import { useFormFooterRegistration } from "@/ui/providers/form-footer-context";
 import { useUpdateEntity } from "../entities.hooks";
+import bg from "./locales/bg";
+import cs from "./locales/cs";
 import de from "./locales/de";
+import en from "./locales/en";
+import es from "./locales/es";
+import et from "./locales/et";
+import fi from "./locales/fi";
+import fr from "./locales/fr";
+import hr from "./locales/hr";
+import is from "./locales/is";
+import it from "./locales/it";
+import nb from "./locales/nb";
+import nl from "./locales/nl";
+import pl from "./locales/pl";
+import pt from "./locales/pt";
+import sk from "./locales/sk";
 import sl from "./locales/sl";
+import sv from "./locales/sv";
 
-const translations = { sl, de } as const;
+const translations = { bg, cs, de, en, es, et, fi, fr, hr, is, it, nb, nl, pl, pt, sk, sl, sv } as const;
 
-const companySettingsSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  tax_number: z.union([z.string(), z.null()]).optional(),
-  is_tax_subject: z.boolean(),
-  tax_number_2: z.union([z.string(), z.null()]).optional(),
-  address: z.union([z.string(), z.null()]).optional(),
-  address_2: z.union([z.string(), z.null()]).optional(),
-  post_code: z.union([z.string(), z.null()]).optional(),
-  city: z.union([z.string(), z.null()]).optional(),
-  state: z.union([z.string(), z.null()]).optional(),
-  // Bank account fields (stored in settings.bank_accounts array)
-  bank_account_type: z.enum(["iban", "us_domestic", "uk_domestic", "other"]),
-  bank_account_iban: z
-    .union([z.string(), z.null()])
-    .refine((val) => !val || /^[A-Z]{2}[0-9A-Z]{2,32}$/.test(val.replace(/\s/g, "")), {
-      message: "Must be a valid IBAN",
-    })
-    .optional(),
-  bank_account_account_number: z.union([z.string(), z.null()]).optional(),
-  bank_account_name: z.union([z.string(), z.null()]).optional(),
-  bank_account_bank_name: z.union([z.string(), z.null()]).optional(),
-  bank_account_bic: z.union([z.string(), z.null()]).optional(),
-  bank_account_routing_number: z.union([z.string(), z.null()]).optional(),
-  bank_account_sort_code: z.union([z.string(), z.null()]).optional(),
-});
+function createCompanySettingsSchema(t: (key: string) => string) {
+  return z.object({
+    name: z.string().min(1, "Name is required"),
+    email: z
+      .union([
+        z.string().trim().max(255, t("Invalid email address")).email(t("Invalid email address")),
+        z.literal(""),
+        z.null(),
+      ])
+      .optional(),
+    tax_number: z.union([z.string(), z.null()]).optional(),
+    is_tax_subject: z.boolean(),
+    tax_number_2: z.union([z.string(), z.null()]).optional(),
+    address: z.union([z.string(), z.null()]).optional(),
+    address_2: z.union([z.string(), z.null()]).optional(),
+    post_code: z.union([z.string(), z.null()]).optional(),
+    city: z.union([z.string(), z.null()]).optional(),
+    state: z.union([z.string(), z.null()]).optional(),
+    // Bank account fields (stored in settings.bank_accounts array)
+    bank_account_type: z.enum(["iban", "us_domestic", "uk_domestic", "other"]),
+    bank_account_iban: z
+      .union([z.string(), z.null()])
+      .refine((val) => !val || /^[A-Z]{2}[0-9A-Z]{2,32}$/.test(val.replace(/\s/g, "")), {
+        message: "Must be a valid IBAN",
+      })
+      .optional(),
+    bank_account_account_number: z.union([z.string(), z.null()]).optional(),
+    bank_account_name: z.union([z.string(), z.null()]).optional(),
+    bank_account_bank_name: z.union([z.string(), z.null()]).optional(),
+    bank_account_bic: z.union([z.string(), z.null()]).optional(),
+    bank_account_routing_number: z.union([z.string(), z.null()]).optional(),
+    bank_account_sort_code: z.union([z.string(), z.null()]).optional(),
+  });
+}
 
-type CompanySettingsSchema = z.infer<typeof companySettingsSchema>;
+type CompanySettingsSchema = z.infer<ReturnType<typeof createCompanySettingsSchema>>;
 type BankAccountType = CompanySettingsSchema["bank_account_type"];
 
 function emptyToNull(value: string | null | undefined) {
@@ -130,9 +155,10 @@ export function CompanySettingsForm({
   const bankAccountType = getDefaultBankAccountType(entity, primaryBankAccount);
 
   const form = useForm<CompanySettingsSchema>({
-    resolver: zodResolver(companySettingsSchema),
+    resolver: zodResolver(createCompanySettingsSchema(t)),
     defaultValues: {
       name: entity.name || "",
+      email: entity.email ?? null,
       tax_number: (entity as any).tax_number || null,
       is_tax_subject: entity.is_tax_subject ?? true,
       tax_number_2: (entity as any).tax_number_2 || null,
@@ -156,7 +182,7 @@ export function CompanySettingsForm({
   const { mutate: updateEntity, isPending } = useUpdateEntity({
     entityId: entity.id,
     onSuccess: (data) => {
-      form.reset(form.getValues());
+      form.reset({ ...form.getValues(), email: data.email ?? null });
       onSuccess?.(data);
     },
     onError,
@@ -173,6 +199,8 @@ export function CompanySettingsForm({
     const updatePayload: any = {};
 
     if (values.name !== entity.name) updatePayload.name = values.name;
+    const normalizedEmail = emptyToNull(values.email);
+    if (normalizedEmail !== (entity.email ?? null)) updatePayload.email = normalizedEmail;
     if (values.tax_number !== (entity as any).tax_number) updatePayload.tax_number = values.tax_number;
     if (values.is_tax_subject !== entity.is_tax_subject) updatePayload.is_tax_subject = values.is_tax_subject;
     if (values.tax_number_2 !== (entity as any).tax_number_2) updatePayload.tax_number_2 = values.tax_number_2;
@@ -224,6 +252,7 @@ export function CompanySettingsForm({
     if (Object.keys(updatePayload).length > 0) {
       updateEntity({ id: entity.id, data: updatePayload });
     } else {
+      form.reset({ ...form.getValues(), email: normalizedEmail });
       onSuccess?.(entity);
     }
   };
@@ -241,6 +270,31 @@ export function CompanySettingsForm({
                 <Input {...field} placeholder="My Company LLC" className="h-10" />
               </FormControl>
               <FormDescription className="text-xs">{t("Your company or organization name")}</FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="email"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="font-medium text-base">{t("Entity Email")}</FormLabel>
+              <FormControl>
+                <Input
+                  type="email"
+                  maxLength={255}
+                  {...field}
+                  value={field.value || ""}
+                  onChange={(e) => field.onChange(e.target.value)}
+                  placeholder="billing@example.com"
+                  className="h-10"
+                />
+              </FormControl>
+              <FormDescription className="text-xs">
+                {t("Email shown for this entity on documents and template variables")}
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}

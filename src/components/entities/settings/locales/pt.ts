@@ -51,6 +51,10 @@ export default {
   "Configure email settings for invoices": "Configurar as definições de email para as faturas",
   "Email Address": "Endereço de email",
   "Email address to send invoices to": "Endereço de email para enviar faturas",
+  "Entity Email": "Email da entidade",
+  "Invalid email address": "Endereço de e-mail inválido",
+  "Email shown for this entity on documents and template variables":
+    "Email apresentado para esta entidade em documentos e variáveis de modelo",
   "Email Subject": "Assunto do email",
   "Subject line for email invoices": "Linha de assunto para as faturas por email",
   "Email Body": "Corpo do email",

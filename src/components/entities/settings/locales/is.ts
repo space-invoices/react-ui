@@ -49,6 +49,10 @@ export default {
   "Configure email settings for invoices": "Stilla tölvupóststillingar fyrir reikninga",
   "Email Address": "Netfang",
   "Email address to send invoices to": "Netfang sem á að senda reikninga frá",
+  "Entity Email": "Netfang einingar",
+  "Invalid email address": "Ógilt netfang",
+  "Email shown for this entity on documents and template variables":
+    "Netfang sem birtist fyrir þessa einingu í skjölum og sniðmátsbreytum",
   "Email Subject": "Efni tölvupósts",
   "Subject line for email invoices": "Efnislína fyrir reikninga í tölvupósti",
   "Email Body": "Meginmál tölvupósts",

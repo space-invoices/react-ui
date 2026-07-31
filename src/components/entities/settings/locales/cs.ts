@@ -49,6 +49,10 @@ export default {
   "Configure email settings for invoices": "Nastavte e-mailové volby pro faktury",
   "Email Address": "E-mailová adresa",
   "Email address to send invoices to": "E-mailová adresa, ze které se mají odesílat faktury",
+  "Entity Email": "E-mail entity",
+  "Invalid email address": "Neplatná e-mailová adresa",
+  "Email shown for this entity on documents and template variables":
+    "E-mail zobrazovaný pro tuto entitu v dokumentech a proměnných šablon",
   "Email Subject": "Předmět e-mailu",
   "Subject line for email invoices": "Předmět e-mailů s fakturami",
   "Email Body": "Text e-mailu",

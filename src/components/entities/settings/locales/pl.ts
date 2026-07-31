@@ -51,6 +51,10 @@ export default {
   "Configure email settings for invoices": "Skonfiguruj ustawienia email dla faktur",
   "Email Address": "Adres email",
   "Email address to send invoices to": "Adres email do wysyłania faktur",
+  "Entity Email": "E-mail podmiotu",
+  "Invalid email address": "Nieprawidłowy adres e-mail",
+  "Email shown for this entity on documents and template variables":
+    "E-mail wyświetlany dla tego podmiotu w dokumentach i zmiennych szablonu",
   "Email Subject": "Temat email",
   "Subject line for email invoices": "Wiersz tematu dla faktur email",
   "Email Body": "Treść email",

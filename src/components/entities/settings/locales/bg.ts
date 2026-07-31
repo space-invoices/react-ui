@@ -49,6 +49,10 @@ export default {
   "Configure email settings for invoices": "Настройте имейл настройките за фактури",
   "Email Address": "Имейл адрес",
   "Email address to send invoices to": "Имейл адрес, от който да се изпращат фактурите",
+  "Entity Email": "Имейл на субекта",
+  "Invalid email address": "Невалиден имейл адрес",
+  "Email shown for this entity on documents and template variables":
+    "Имейл, показван за този субект в документи и променливи на шаблони",
   "Email Subject": "Тема на имейл",
   "Subject line for email invoices": "Тема на имейлите за фактури",
   "Email Body": "Съдържание на имейл",

@@ -49,6 +49,10 @@ export default {
   "Configure email settings for invoices": "Seadista arvete e-posti seaded",
   "Email Address": "E-posti aadress",
   "Email address to send invoices to": "E-posti aadress, millelt arveid saata",
+  "Entity Email": "Ettevõtte e-post",
+  "Invalid email address": "Vigane e-posti aadress",
+  "Email shown for this entity on documents and template variables":
+    "E-post, mida kuvatakse selle üksuse dokumentidel ja mallimuutujates",
   "Email Subject": "E-kirja teema",
   "Subject line for email invoices": "Arvete e-kirjade teemarida",
   "Email Body": "E-kirja sisu",

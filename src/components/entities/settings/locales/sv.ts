@@ -49,6 +49,10 @@ export default {
   "Configure email settings for invoices": "Konfigurera e-postinställningar för fakturor",
   "Email Address": "E-postadress",
   "Email address to send invoices to": "E-postadress som fakturor ska skickas från",
+  "Entity Email": "Entitetens e-post",
+  "Invalid email address": "Ogiltig e-postadress",
+  "Email shown for this entity on documents and template variables":
+    "E-post som visas för denna entitet i dokument och mallvariabler",
   "Email Subject": "E-postämne",
   "Subject line for email invoices": "Ämnesrad för fakturamejl",
   "Email Body": "E-postinnehåll",

@@ -49,6 +49,10 @@ export default {
   "Configure email settings for invoices": "Konfigurer e-postinnstillinger for fakturaer",
   "Email Address": "E-postadresse",
   "Email address to send invoices to": "E-postadresse for utsending av fakturaer",
+  "Entity Email": "Enhetens e-post",
+  "Invalid email address": "Ugyldig e-postadresse",
+  "Email shown for this entity on documents and template variables":
+    "E-post som vises for denne enheten i dokumenter og malvariabler",
   "Email Subject": "E-postemne",
   "Subject line for email invoices": "Emnelinje for e-postfakturaer",
   "Email Body": "E-postinnhold",

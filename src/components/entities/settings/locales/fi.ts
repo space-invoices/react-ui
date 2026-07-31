@@ -49,6 +49,10 @@ export default {
   "Configure email settings for invoices": "Määritä laskujen sähköpostiasetukset",
   "Email Address": "Sähköpostiosoite",
   "Email address to send invoices to": "Sähköpostiosoite, josta laskut lähetetään",
+  "Entity Email": "Entiteetin sähköposti",
+  "Invalid email address": "Virheellinen sähköpostiosoite",
+  "Email shown for this entity on documents and template variables":
+    "Sähköposti, joka näytetään tälle entiteetille asiakirjoissa ja mallimuuttujissa",
   "Email Subject": "Sähköpostin aihe",
   "Subject line for email invoices": "Laskusähköpostien aiherivi",
   "Email Body": "Sähköpostin sisältö",

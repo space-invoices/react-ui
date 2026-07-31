@@ -4,6 +4,7 @@ import { AlertTriangle } from "lucide-react";
 import type { ReactNode } from "react";
 import { useCallback, useMemo, useState } from "react";
 import { CustomerLinkCell } from "@/ui/components/documents/list/customer-link-cell";
+import { mergeColumnOverrides } from "@/ui/components/table/columns";
 import { DataTable } from "@/ui/components/table/data-table";
 import { FormattedDate } from "@/ui/components/table/date-cell";
 import { useTableFetch } from "@/ui/components/table/hooks/use-table-fetch";
@@ -11,6 +12,7 @@ import { withTableTranslations } from "@/ui/components/table/locales";
 import { SelectionToolbar } from "@/ui/components/table/selection-toolbar";
 import type {
   Column,
+  ColumnOverride,
   FilterConfig,
   ListTableProps,
   TableQueryParams,
@@ -99,6 +101,7 @@ type InvoiceListTableProps = {
   bottomPaddingClassName?: string;
   emptyState?: ReactNode;
   hiddenColumnIds?: string[];
+  columnOverrides?: Partial<Record<string, ColumnOverride<Invoice>>>;
   getCustomerHref?: (customerId: string, invoice: Invoice) => string;
   onCustomerClick?: (customerId: string, invoice: Invoice) => void;
 } & ListTableProps<Invoice>;
@@ -137,6 +140,7 @@ export default function InvoiceListTable({
   bottomPaddingClassName,
   emptyState,
   hiddenColumnIds,
+  columnOverrides,
   getCustomerHref,
   onCustomerClick,
   ...i18nProps
@@ -378,13 +382,15 @@ export default function InvoiceListTable({
   );
 
   const visibleColumns = useMemo(() => {
+    const effectiveColumns = mergeColumnOverrides(columns, columnOverrides);
+
     if (!hiddenColumnIds?.length) {
-      return columns;
+      return effectiveColumns;
     }
 
     const hidden = new Set(hiddenColumnIds);
-    return columns.filter((column) => !hidden.has(column.id));
-  }, [columns, hiddenColumnIds]);
+    return effectiveColumns.filter((column) => !hidden.has(column.id));
+  }, [columns, hiddenColumnIds, columnOverrides]);
 
   return (
     <DataTable

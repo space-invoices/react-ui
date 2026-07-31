@@ -32,6 +32,9 @@ export type Column<T> = {
   sort?: boolean | TableColumnSort;
 };
 
+/** Partial customization merged onto a canonical column definition. */
+export type ColumnOverride<T> = Partial<Omit<Column<T>, "id">>;
+
 /**
  * Query parameters for table data fetching
  */

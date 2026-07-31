@@ -13,6 +13,8 @@ const syncShopifyOrdersSchemaDefinition = z
   .object({
     updated_since: z.string().datetime({ offset: true }),
     updated_until: z.string().datetime({ offset: true }),
+    cursor: z.string().min(1).max(2048),
+    resumable: z.boolean(),
     limit: z.number().int().gte(1).lte(250),
   })
   .partial();

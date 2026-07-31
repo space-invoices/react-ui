@@ -6,6 +6,7 @@ import { Input } from "@/ui/components/ui/input";
 import { Label } from "@/ui/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui/components/ui/select";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/ui/components/ui/tooltip";
+import { formatDecimalValue } from "@/ui/lib/formatting";
 import { cn } from "@/ui/lib/utils";
 import {
   createEmptyPaymentRow,
@@ -40,6 +41,8 @@ type MarkAsPaidSectionProps = {
   documentTotal: number;
   /** Translation function */
   t: (key: string) => string;
+  /** Locale used for read-only payment totals. */
+  locale?: string;
   /** Always show payment type selector (e.g. for FINA fiscalization) */
   alwaysShowPaymentType?: boolean;
   /** Force paid state — hides the checkbox and always shows payment selectors */
@@ -62,6 +65,7 @@ export function MarkAsPaidSection({
   onPaymentRowsChange,
   documentTotal,
   t,
+  locale,
   alwaysShowPaymentType,
   forced,
   validationMessage,
@@ -205,11 +209,11 @@ export function MarkAsPaidSection({
             <div className="grid gap-1 text-muted-foreground text-sm">
               <div className="flex items-center justify-between">
                 <span>{t("Recorded now")}</span>
-                <span>{recordedTotal.toFixed(2)}</span>
+                <span>{formatDecimalValue(recordedTotal, locale)}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span>{requireFullPayment ? t("Remaining to allocate") : t("Remaining due")}</span>
-                <span>{remainingTotal.toFixed(2)}</span>
+                <span>{formatDecimalValue(remainingTotal, locale)}</span>
               </div>
             </div>
           )}

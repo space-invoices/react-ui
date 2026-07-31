@@ -20,6 +20,7 @@ import { sendPaymentReminderSchema } from "@/ui/generated/schemas/paymentreminde
 import { normalizeDateOnlyInput, toLocalDateOnlyString } from "@/ui/lib/date-only";
 import { DEFAULT_CONTENT_LOCALE, type DocumentContentLocaleMode } from "@/ui/lib/document-content-translations";
 import { getDisplayDocumentNumber } from "@/ui/lib/document-display";
+import { formatCurrencyValue, formatDecimalValue } from "@/ui/lib/formatting";
 import { getFullLocale } from "@/ui/lib/locale";
 import { replaceTemplateVariablesForMarkdownPreview } from "@/ui/lib/template-variables";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
@@ -114,17 +115,11 @@ function applyBankPlaceholders(template: string, entitySettings: Record<string, 
 }
 
 function formatCurrency(value: number | null | undefined, currency: string | null | undefined, locale: string): string {
-  return new Intl.NumberFormat(getFullLocale(locale), {
-    style: "currency",
-    currency: currency || "EUR",
-  }).format(Number(value ?? 0));
+  return formatCurrencyValue(Number(value ?? 0), currency || "EUR", getFullLocale(locale));
 }
 
 function formatAmountWithCurrencyCode(value: number, currency: string | null | undefined, locale: string): string {
-  return `${new Intl.NumberFormat(getFullLocale(locale), {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(value)} ${currency || "EUR"}`;
+  return `${formatDecimalValue(value, getFullLocale(locale))} ${currency || "EUR"}`;
 }
 
 function formatGroupedInvoiceTotals(invoicesToTotal: Invoice[], locale: string): string {

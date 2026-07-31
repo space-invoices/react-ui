@@ -1,6 +1,7 @@
 import { AlertCircle, TriangleAlert } from "lucide-react";
 import type { ChangeEvent } from "react";
 import { getDisplayDocumentNumber } from "@/ui/lib/document-display";
+import { formatCurrencyValue } from "@/ui/lib/formatting";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
@@ -77,10 +78,7 @@ type SloveniaYearlyReviewStepProps = {
 };
 
 function formatCurrency(value: number): string {
-  return new Intl.NumberFormat("sl-SI", {
-    style: "currency",
-    currency: "EUR",
-  }).format(value);
+  return formatCurrencyValue(value, "EUR", "sl-SI");
 }
 
 export function SloveniaYearlyReviewStep({

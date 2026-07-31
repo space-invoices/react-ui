@@ -10,6 +10,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/ui/components/ui/chart";
+import { formatCurrencyValue } from "@/ui/lib/formatting";
 import { createTranslation } from "@/ui/lib/translation";
 import { ChartEmptyState } from "../chart-empty-state";
 import { LoadingCard } from "../loading-card";
@@ -138,9 +139,7 @@ export function PaymentMethodsChart(props: PaymentMethodsChartProps) {
           content={
             <ChartTooltipContent
               nameKey="name"
-              formatter={(value) =>
-                new Intl.NumberFormat(locale, { style: "currency", currency: "EUR" }).format(Number(value))
-              }
+              formatter={(value) => formatCurrencyValue(Number(value), "EUR", locale)}
             />
           }
         />

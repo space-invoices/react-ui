@@ -1,5 +1,6 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/ui/components/ui/table";
 import { formatDateOnlyForDisplay } from "@/ui/lib/date-only";
+import { formatCurrencyValue, formatDecimalValue } from "@/ui/lib/formatting";
 
 export type LinkedDocumentSummary = {
   id: string;
@@ -26,12 +27,9 @@ export function LinkedDocumentsInfo({ documents, locale, t }: LinkedDocumentsInf
 
   const formatCurrency = (amount: number) => {
     try {
-      return new Intl.NumberFormat(locale, {
-        style: "currency",
-        currency: currencyCode,
-      }).format(amount);
+      return formatCurrencyValue(amount, currencyCode, locale);
     } catch {
-      return `${amount.toFixed(2)} ${currencyCode}`;
+      return `${formatDecimalValue(amount, locale)} ${currencyCode}`;
     }
   };
 

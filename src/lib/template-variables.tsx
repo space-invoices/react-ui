@@ -1,4 +1,5 @@
 import type { Entity } from "@spaceinvoices/js-sdk";
+import { formatCurrencyValue } from "@/ui/lib/formatting";
 import { cn } from "@/ui/lib/utils";
 
 type PreviewDocument = {
@@ -166,10 +167,11 @@ export function getVariableValue(
       });
     }
     if (varName === "document_total" && (document as any).total_with_tax) {
-      return new Intl.NumberFormat("en-US", {
-        style: "currency",
-        currency: (document as any).currency_code || "USD",
-      }).format(Number((document as any).total_with_tax));
+      return formatCurrencyValue(
+        Number((document as any).total_with_tax),
+        (document as any).currency_code || "USD",
+        "en-US",
+      );
     }
     if (varName === "document_currency") return (document as any).currency_code || null;
     if (varName === "invoice_list") return document.invoice_list || "INV-001 - $120.00";
@@ -178,10 +180,11 @@ export function getVariableValue(
     }
     if (varName === "total_amount" && document.total_amount != null) return String(document.total_amount);
     if (varName === "total_amount" && (document as any).total_due) {
-      return new Intl.NumberFormat("en-US", {
-        style: "currency",
-        currency: (document as any).currency_code || "USD",
-      }).format(Number((document as any).total_due));
+      return formatCurrencyValue(
+        Number((document as any).total_due),
+        (document as any).currency_code || "USD",
+        "en-US",
+      );
     }
     if (varName === "overdue_count" && document.overdue_count != null) return String(document.overdue_count);
     if (varName === "overdue_count") return "1";

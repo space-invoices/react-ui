@@ -1769,6 +1769,7 @@ export default function CreateInvoiceForm({
                 }}
                 documentTotal={paymentDocumentTotal}
                 t={t}
+                locale={locale}
                 alwaysShowPaymentType={!!fina.isActive && requiresFinaFiscalization}
                 validationMessage={paymentValidationMessage}
               />

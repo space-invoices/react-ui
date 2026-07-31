@@ -9,6 +9,7 @@ import { withTableTranslations } from "@/ui/components/table/locales";
 import type { Column, ListTableProps, TableQueryParams, TableQueryResponse } from "@/ui/components/table/types";
 import { Button } from "@/ui/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/ui/components/ui/popover";
+import { formatDecimalValue } from "@/ui/lib/formatting";
 import { getPaymentDocumentDisplay, getPaymentTypeLabel, localizePaymentNote } from "@/ui/lib/payment-display";
 import { createTranslation } from "@/ui/lib/translation";
 
@@ -103,14 +104,7 @@ export default function PaymentListTable({
         sort: {
           defaultDirection: "desc",
         },
-        cell: (payment) => (
-          <span className="font-medium">
-            {new Intl.NumberFormat(i18nProps.locale, {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            }).format(payment.amount)}
-          </span>
-        ),
+        cell: (payment) => <span className="font-medium">{formatDecimalValue(payment.amount, i18nProps.locale)}</span>,
       },
       {
         id: "type",

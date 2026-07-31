@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { Autocomplete } from "@/ui/common/autocomplete";
 import { useDebounce } from "@/ui/hooks/use-debounce";
+import { formatDecimalValue } from "@/ui/lib/formatting";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
 
@@ -80,7 +81,7 @@ export function ItemCombobox({
   const formatPrice = (item: Item) => {
     const price = item.gross_price ?? item.price;
     if (price === null || price === undefined) return "";
-    return ` - ${new Intl.NumberFormat(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(price)}`;
+    return ` - ${formatDecimalValue(price, locale)}`;
   };
 
   const options = items.map((item) => {

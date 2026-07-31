@@ -1220,6 +1220,7 @@ export default function CreateCreditNoteForm({
                 }}
                 documentTotal={paymentDocumentTotal}
                 t={t}
+                locale={locale}
                 alwaysShowPaymentType={!!fina.isActive}
                 validationMessage={paymentValidationMessage}
               />

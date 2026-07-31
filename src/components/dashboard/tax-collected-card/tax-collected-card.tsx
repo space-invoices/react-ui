@@ -2,6 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/ui/components/ui/card";
 import { Skeleton } from "@/ui/components/ui/skeleton";
+import { formatCurrencyValue } from "@/ui/lib/formatting";
 import { createTranslation } from "@/ui/lib/translation";
 import translations from "./locales";
 import type { TaxByRate } from "./use-tax-collected";
@@ -19,11 +20,7 @@ export type TaxCollectedCardProps = {
 };
 
 function formatCurrency(value: number, currency: string, locale?: string): string {
-  return new Intl.NumberFormat(locale, {
-    style: "currency",
-    currency,
-    minimumFractionDigits: 2,
-  }).format(value);
+  return formatCurrencyValue(value, currency, locale);
 }
 
 export function TaxCollectedCard({

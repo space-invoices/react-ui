@@ -5,6 +5,7 @@ import { Bar, BarChart, Cell, XAxis, YAxis } from "recharts";
 import { useRevenueByCategory } from "@/ui/components/financial-categories/financial-categories.hooks";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/ui/components/ui/card";
 import { type ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "@/ui/components/ui/chart";
+import { formatCurrencyValue } from "@/ui/lib/formatting";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
 import { ChartEmptyState } from "./chart-empty-state";
@@ -33,12 +34,7 @@ const translations = {
 } as const;
 
 function formatCurrency(value: number, currency: string, locale?: string): string {
-  return new Intl.NumberFormat(locale, {
-    style: "currency",
-    currency,
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value);
+  return formatCurrencyValue(value, currency, locale, { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 }
 
 function truncateCategoryName(name: string) {

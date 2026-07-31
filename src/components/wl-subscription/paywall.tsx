@@ -1,6 +1,7 @@
 import { Check, Crown, Loader2, Sparkles, Zap } from "lucide-react";
 import { useState } from "react";
 
+import { formatCurrencyValue } from "@/ui/lib/formatting";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
 import { useWLSubscription, type WhiteLabelPlan } from "../../providers/wl-subscription-provider";
@@ -254,12 +255,12 @@ function PaywallPlanCard({
       <CardContent className="flex-1">
         <div className="space-y-4">
           <div>
-            <span className="font-semibold text-3xl">&euro;{displayPrice.toFixed(2)}</span>
+            <span className="font-semibold text-3xl">{formatCurrencyValue(displayPrice, "EUR", locale)}</span>
             <span className="text-foreground/70 text-sm">{t("entity-billing-page.pricing.per-month")}</span>
           </div>
           {isYearly ? (
             <p className="text-foreground/70 text-sm">
-              &euro;{yearlyTotal.toFixed(2)} {t("entity-billing-page.paywall.billed-yearly")}
+              {formatCurrencyValue(yearlyTotal, "EUR", locale)} {t("entity-billing-page.paywall.billed-yearly")}
             </p>
           ) : null}
 

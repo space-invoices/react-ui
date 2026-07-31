@@ -21,6 +21,7 @@ import {
 } from "@/ui/components/ui/dropdown-menu";
 import { Skeleton } from "@/ui/components/ui/skeleton";
 import { actionMenuTooltipProps, Tooltip, TooltipContent, TooltipTrigger } from "@/ui/components/ui/tooltip";
+import { formatCurrencyValue } from "@/ui/lib/formatting";
 import { getPaymentTypeLabel } from "@/ui/lib/payment-display";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
@@ -73,10 +74,7 @@ function isAppliedCreditNotePayment(payment: Payment): boolean {
  * Format currency value
  */
 function formatCurrency(amount: number, currencyCode: string, locale: string): string {
-  return new Intl.NumberFormat(locale, {
-    style: "currency",
-    currency: currencyCode,
-  }).format(amount);
+  return formatCurrencyValue(amount, currencyCode, locale);
 }
 
 /**

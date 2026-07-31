@@ -1,6 +1,7 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/ui/components/ui/card";
+import { formatCurrencyValue } from "@/ui/lib/formatting";
 import { createTranslation } from "@/ui/lib/translation";
 import { LoadingCard } from "../loading-card";
 import bg from "./locales/bg";
@@ -68,12 +69,7 @@ export function CollectionRateCard(props: CollectionRateCardProps) {
   }
 
   const formatCurrency = (value: number) =>
-    new Intl.NumberFormat(locale, {
-      style: "currency",
-      currency,
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(value);
+    formatCurrencyValue(value, currency, locale, { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 
   const getVariantColor = (rate: number) => {
     if (rate >= 80) return "text-green-600 dark:text-green-400";

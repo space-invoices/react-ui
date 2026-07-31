@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/ui/components/ui/car
 import { Separator } from "@/ui/components/ui/separator";
 import { formatDateOnlyForDisplay } from "@/ui/lib/date-only";
 import { getDisplayDocumentNumber } from "@/ui/lib/document-display";
+import { formatCurrencyValue } from "@/ui/lib/formatting";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
 import de from "./locales/de";
@@ -29,10 +30,7 @@ interface DocumentDetailsCardProps extends ComponentTranslationProps {
 }
 
 function formatCurrency(amount: number, currencyCode: string, locale: string): string {
-  return new Intl.NumberFormat(locale, {
-    style: "currency",
-    currency: currencyCode,
-  }).format(amount);
+  return formatCurrencyValue(amount, currencyCode, locale);
 }
 
 /**

@@ -1151,6 +1151,7 @@ export default function CreateAdvanceInvoiceForm({
                 }}
                 documentTotal={paymentDocumentTotal}
                 t={t}
+                locale={locale}
                 alwaysShowPaymentType={!!fina.isActive}
                 forced
                 validationMessage={paymentValidationMessage}

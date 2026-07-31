@@ -3,6 +3,7 @@
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/ui/components/ui/card";
 import { type ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "@/ui/components/ui/chart";
+import { formatCurrencyValue } from "@/ui/lib/formatting";
 import { createTranslation } from "@/ui/lib/translation";
 import { ChartEmptyState } from "../chart-empty-state";
 import { LoadingCard } from "../loading-card";
@@ -56,12 +57,7 @@ function formatMonth(month: string, locale?: string): string {
 }
 
 function formatCurrency(value: number, currency: string, locale?: string): string {
-  return new Intl.NumberFormat(locale, {
-    style: "currency",
-    currency,
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value);
+  return formatCurrencyValue(value, currency, locale, { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 }
 
 export function PaymentTrendChart(props: PaymentTrendChartProps) {

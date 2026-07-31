@@ -3,6 +3,7 @@ import { Badge } from "@/ui/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/ui/components/ui/card";
 import { formatDateOnlyForDisplay } from "@/ui/lib/date-only";
 import { getDisplayDocumentNumber } from "@/ui/lib/document-display";
+import { formatCurrencyValue } from "@/ui/lib/formatting";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
 import { getDocumentConfig, type DocumentTypes } from "../types";
@@ -231,10 +232,7 @@ type PublicDocumentSummaryProps = ComponentTranslationProps & {
 };
 
 function formatCurrency(amount: number, currencyCode: string, locale: string): string {
-  return new Intl.NumberFormat(locale, {
-    style: "currency",
-    currency: currencyCode,
-  }).format(amount);
+  return formatCurrencyValue(amount, currencyCode, locale);
 }
 
 export function PublicDocumentSummary({

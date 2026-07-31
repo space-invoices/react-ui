@@ -2,6 +2,7 @@
 
 import { AlertTriangle, TrendingDown, TrendingUp } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/ui/components/ui/card";
+import { formatCurrencyValue } from "@/ui/lib/formatting";
 
 export type RevenueCardProps = {
   title: string;
@@ -28,11 +29,7 @@ const variantIcons = {
 
 export function RevenueCard({ title, value, currency, variant = "default", subtitle, locale }: RevenueCardProps) {
   const Icon = variantIcons[variant];
-  const formattedValue = new Intl.NumberFormat(locale, {
-    style: "currency",
-    currency,
-    minimumFractionDigits: 2,
-  }).format(value);
+  const formattedValue = formatCurrencyValue(value, currency, locale);
 
   return (
     <Card className="gap-2">

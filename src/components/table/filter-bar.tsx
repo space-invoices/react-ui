@@ -6,6 +6,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/ui/compon
 
 import { FilterPanel } from "./filter-panel";
 import { SearchInput } from "./search-input";
+import { TableRefreshButton } from "./table-refresh-button";
 import type { FilterConfig, FilterState } from "./types";
 
 type FilterBarProps = {
@@ -27,6 +28,10 @@ type FilterBarProps = {
   isOpen?: boolean;
   /** Toggle filter panel */
   onToggle?: (open: boolean) => void;
+  /** Refresh current list query */
+  onRefresh?: () => unknown;
+  /** Whether the list is currently refreshing */
+  isRefreshing?: boolean;
 };
 
 /**
@@ -42,6 +47,8 @@ export function FilterBar({
   locale,
   isOpen = false,
   onToggle,
+  onRefresh,
+  isRefreshing,
 }: FilterBarProps) {
   const hasFilters =
     filterConfig?.dateFields?.length ||
@@ -54,7 +61,7 @@ export function FilterBar({
   if (!hasFilters) {
     // No filters configured, just show search
     return (
-      <div className="flex flex-col gap-2 px-4 pt-4 sm:flex-row sm:items-center">
+      <div className="flex w-full flex-col gap-2 px-4 pt-4 sm:flex-row sm:items-center">
         <SearchInput
           initialValue={searchValue}
           onSearch={onSearch}
@@ -62,13 +69,14 @@ export function FilterBar({
           ariaLabel={t("Search")}
           clearAriaLabel={t("Clear search")}
         />
+        <TableRefreshButton onRefresh={onRefresh} isRefreshing={isRefreshing} t={t} />
       </div>
     );
   }
 
   return (
     <Collapsible open={isOpen} onOpenChange={onToggle} className="px-4 pt-4">
-      <div className="flex items-center gap-2">
+      <div className="flex w-full items-center gap-2">
         <SearchInput
           initialValue={searchValue}
           onSearch={onSearch}
@@ -87,6 +95,7 @@ export function FilterBar({
             )}
           </Button>
         </CollapsibleTrigger>
+        <TableRefreshButton onRefresh={onRefresh} isRefreshing={isRefreshing} t={t} />
       </div>
       <CollapsibleContent className="mt-3">
         <FilterPanel config={filterConfig} state={filterState} onChange={onFilterChange} t={t} locale={locale} />

@@ -12,6 +12,7 @@ import { getColumnSortDirection, getNextColumnOrderBy, isSortableColumn } from "
 import { TableEmptyState } from "./table-empty-state";
 import { TableNoResults } from "./table-no-results";
 import { Pagination } from "./table-pagination";
+import { TableRefreshButton } from "./table-refresh-button";
 import { TableSkeleton } from "./table-skeleton";
 import type { Column, FilterConfig, TableQueryParams, TableQueryResponse } from "./types";
 
@@ -87,14 +88,18 @@ function hasFilterControls(filterConfig?: FilterConfig) {
 function SearchToolbar({
   searchValue,
   onSearch,
+  onRefresh,
+  isRefreshing,
   t,
 }: {
   searchValue?: string;
   onSearch: (value: string | null) => void;
+  onRefresh?: () => unknown;
+  isRefreshing?: boolean;
   t: (key: string) => string;
 }) {
   return (
-    <div className="flex flex-col gap-2 px-4 pt-4 sm:flex-row sm:items-center">
+    <div className="flex w-full flex-col gap-2 px-4 pt-4 sm:flex-row sm:items-center">
       <SearchInput
         initialValue={searchValue}
         onSearch={onSearch}
@@ -102,6 +107,7 @@ function SearchToolbar({
         ariaLabel={t("Search")}
         clearAriaLabel={t("Clear search")}
       />
+      <TableRefreshButton onRefresh={onRefresh} isRefreshing={isRefreshing} t={t} />
     </div>
   );
 }
@@ -162,12 +168,20 @@ export function DataTable<T extends { id: string }>({
     });
 
   // Fetch table data (use apiParams which has the query JSON for API)
-  const { data: queryResult, isFetching } = useTableQuery<T>({
+  const {
+    data: queryResult,
+    isFetching,
+    refetch,
+  } = useTableQuery<T>({
     cacheKey,
     fetchFn: onFetch,
     params: apiParams,
     entityId,
   });
+
+  const handleRefresh = useCallback(() => {
+    return refetch({ throwOnError: true });
+  }, [refetch]);
 
   const data = queryResult?.data ?? [];
   const hasActiveFilters = Boolean(
@@ -224,28 +238,49 @@ export function DataTable<T extends { id: string }>({
     [onSelectionChange, selectedIds],
   );
 
+  const searchToolbar = showSearchToolbar ? (
+    hasFilters ? (
+      <Suspense
+        fallback={
+          <SearchToolbar
+            searchValue={params.search}
+            onSearch={handleSearch}
+            onRefresh={handleRefresh}
+            isRefreshing={isFetching}
+            t={t}
+          />
+        }
+      >
+        <LazyFilterBar
+          searchValue={params.search}
+          onSearch={handleSearch}
+          filterConfig={filterConfig}
+          filterState={filterState ?? undefined}
+          onFilterChange={handleFilterChange}
+          t={t}
+          locale={locale}
+          isOpen={filterPanelOpen}
+          onToggle={setFilterPanelOpen}
+          onRefresh={handleRefresh}
+          isRefreshing={isFetching}
+        />
+      </Suspense>
+    ) : (
+      <SearchToolbar
+        searchValue={params.search}
+        onSearch={handleSearch}
+        onRefresh={handleRefresh}
+        isRefreshing={isFetching}
+        t={t}
+      />
+    )
+  ) : null;
+
   // Show skeleton during initial load (with filter bar for consistency)
   if (isFetching && !queryResult) {
     return (
       <div className={cn("space-y-4", bottomPaddingClassName)}>
-        {showSearchToolbar &&
-          (hasFilters ? (
-            <Suspense fallback={<SearchToolbar searchValue={params.search} onSearch={handleSearch} t={t} />}>
-              <LazyFilterBar
-                searchValue={params.search}
-                onSearch={handleSearch}
-                filterConfig={filterConfig}
-                filterState={filterState ?? undefined}
-                onFilterChange={handleFilterChange}
-                t={t}
-                locale={locale}
-                isOpen={filterPanelOpen}
-                onToggle={setFilterPanelOpen}
-              />
-            </Suspense>
-          ) : (
-            <SearchToolbar searchValue={params.search} onSearch={handleSearch} t={t} />
-          ))}
+        {searchToolbar}
         <div className={contentInsetClassName}>
           <TableSkeleton
             columns={columns.length + (selectable ? 1 : 0)}
@@ -262,43 +297,29 @@ export function DataTable<T extends { id: string }>({
   // (this means truly empty collection, not filtered to zero results)
   if (data.length === 0 && !hasActiveFilters) {
     return (
-      <div className={cn(contentInsetClassName, bottomPaddingClassName)}>
-        {emptyState ? (
-          emptyState
-        ) : (
-          <TableEmptyState
-            resource={resourceName}
-            createNewLink={createNewLink}
-            createNewTrigger={createNewTrigger}
-            onCreateNew={onCreateNew}
-            rows={displayRows}
-            t={t}
-          />
-        )}
+      <div className={cn("space-y-4", bottomPaddingClassName)}>
+        {searchToolbar}
+        <div className={contentInsetClassName}>
+          {emptyState ? (
+            emptyState
+          ) : (
+            <TableEmptyState
+              resource={resourceName}
+              createNewLink={createNewLink}
+              createNewTrigger={createNewTrigger}
+              onCreateNew={onCreateNew}
+              rows={displayRows}
+              t={t}
+            />
+          )}
+        </div>
       </div>
     );
   }
 
   return (
     <div className={cn("space-y-4", bottomPaddingClassName)}>
-      {showSearchToolbar &&
-        (hasFilters ? (
-          <Suspense fallback={<SearchToolbar searchValue={params.search} onSearch={handleSearch} t={t} />}>
-            <LazyFilterBar
-              searchValue={params.search}
-              onSearch={handleSearch}
-              filterConfig={filterConfig}
-              filterState={filterState ?? undefined}
-              onFilterChange={handleFilterChange}
-              t={t}
-              locale={locale}
-              isOpen={filterPanelOpen}
-              onToggle={setFilterPanelOpen}
-            />
-          </Suspense>
-        ) : (
-          <SearchToolbar searchValue={params.search} onSearch={handleSearch} t={t} />
-        ))}
+      {searchToolbar}
 
       {selectable && selectedCount > 0 && selectionToolbar && (
         <div className={contentInsetClassName}>

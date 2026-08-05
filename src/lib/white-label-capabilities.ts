@@ -6,6 +6,7 @@ export type WhiteLabelControlKind = "capability" | "action";
 export type WhiteLabelCapabilityId =
   | "developer_tools"
   | "multi_entity"
+  | "email.custom_sender"
   | "documents.content_translations"
   | "documents.estimates"
   | "documents.credit_notes"
@@ -114,6 +115,14 @@ export const WHITE_LABEL_CAPABILITIES: WhiteLabelCapabilityDefinition[] = [
     description: "Hide add-entity entry points after the first entity exists.",
     group: "workspace",
     affectedSurfaces: ["entity switcher", "entities/add route"],
+  },
+  {
+    kind: "capability",
+    id: "email.custom_sender",
+    label: "Custom sender email",
+    description: "Allow entity users to configure a verified custom From email for document emails and reminders.",
+    group: "workspace",
+    affectedSurfaces: ["email settings", "embed email settings"],
   },
   {
     kind: "capability",

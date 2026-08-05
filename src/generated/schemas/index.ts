@@ -59,6 +59,7 @@ export * from './orderintegration';
 export * from './payment';
 export * from './paymentreminder';
 export * from './ptatcudseries';
+export * from './putentityemailsender';
 export * from './queryentitystats';
 export * from './recurringinvoice';
 export * from './registerfinadevice_body';

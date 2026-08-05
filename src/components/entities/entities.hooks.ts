@@ -1,6 +1,6 @@
 import type { CreateEntityBody, Entity, PatchEntityBody } from "@spaceinvoices/js-sdk";
 import { entities } from "@spaceinvoices/js-sdk";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createResourceHooks } from "@/ui/hooks/create-resource-hooks";
 
 // Cache key for entities queries
@@ -64,7 +64,106 @@ function useUpdateEntity(options: UpdateEntityOptions = {}) {
   });
 }
 
+type EmailSenderDto = {
+  email: string;
+  verification_status: "pending" | "verified" | "failed";
+  verified_at: string | null;
+  domain: string | null;
+  email_verification_status: "pending" | "verified" | "failed";
+  domain_verification_status: "pending" | "verified" | "failed";
+  domain_dkim_tokens: string[];
+  last_checked_at: string | null;
+} | null;
+
+type EntityEmailSenderResponse = {
+  configured: EmailSenderDto;
+  inherited: EmailSenderDto;
+  effective: {
+    source: "entity" | "white_label" | "default";
+    email: string | null;
+    verified: boolean;
+  };
+};
+
+type EntityEmailSenderOptions = {
+  entityId?: string | null;
+  enabled?: boolean;
+};
+
+function useEntityEmailSender(options: EntityEmailSenderOptions = {}) {
+  return useQuery<EntityEmailSenderResponse>({
+    queryKey: ["entity-email-sender", options.entityId],
+    queryFn: async () =>
+      entities.getEntityEmailSender(options.entityId!, {
+        entity_id: options.entityId ?? undefined,
+      }) as Promise<EntityEmailSenderResponse>,
+    enabled: Boolean(options.entityId && (options.enabled ?? true)),
+  });
+}
+
+type PutEntityEmailSenderOptions = {
+  entityId?: string | null;
+  onSuccess?: (
+    data: EntityEmailSenderResponse,
+    variables: { id: string; email: string | null },
+    context: unknown,
+  ) => void;
+  onError?: (error: Error, variables: { id: string; email: string | null }, context: unknown) => void;
+};
+
+function usePutEntityEmailSender(options: PutEntityEmailSenderOptions = {}) {
+  const queryClient = useQueryClient();
+
+  return useMutation<EntityEmailSenderResponse, Error, { id: string; email: string | null }>({
+    mutationFn: async (variables) =>
+      entities.putEntityEmailSender(
+        variables.id,
+        { email: variables.email },
+        {
+          entity_id: options.entityId ?? undefined,
+        },
+      ) as Promise<EntityEmailSenderResponse>,
+    onSuccess: (data, variables, context) => {
+      queryClient.setQueryData(["entity-email-sender", variables.id], data);
+      queryClient.invalidateQueries({ queryKey: ["entity-email-sender", variables.id] });
+      options.onSuccess?.(data, variables, context);
+    },
+    onError: options.onError,
+  });
+}
+
+type RecheckEntityEmailSenderOptions = {
+  entityId?: string | null;
+  onSuccess?: (data: EntityEmailSenderResponse, variables: { id: string }, context: unknown) => void;
+  onError?: (error: Error, variables: { id: string }, context: unknown) => void;
+};
+
+function useRecheckEntityEmailSender(options: RecheckEntityEmailSenderOptions = {}) {
+  const queryClient = useQueryClient();
+
+  return useMutation<EntityEmailSenderResponse, Error, { id: string }>({
+    mutationFn: async (variables) => {
+      return entities.recheckEntityEmailSender(variables.id, {
+        entity_id: options.entityId ?? undefined,
+      }) as Promise<EntityEmailSenderResponse>;
+    },
+    onSuccess: (data, variables, context) => {
+      queryClient.setQueryData(["entity-email-sender", variables.id], data);
+      queryClient.invalidateQueries({ queryKey: ["entity-email-sender", variables.id] });
+      options.onSuccess?.(data, variables, context);
+    },
+    onError: options.onError,
+  });
+}
+
 // Export the type for the create entity data for convenience
 export type CreateEntityData = CreateEntityBody;
 
-export { useCreateEntity, useDeleteEntity, useUpdateEntity };
+export {
+  useCreateEntity,
+  useDeleteEntity,
+  useEntityEmailSender,
+  usePutEntityEmailSender,
+  useRecheckEntityEmailSender,
+  useUpdateEntity,
+};

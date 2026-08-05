@@ -13,6 +13,7 @@ import { useEntitiesOptional } from "./entities-context";
 export type WhiteLabelConfig = {
   slug: string;
   name: string;
+  environment: "production" | "sandbox";
   appName: string | null;
   shortName: string | null;
   logoUrl: string | null;
@@ -37,6 +38,7 @@ export type WhiteLabelConfig = {
 const DEFAULT_CONFIG: WhiteLabelConfig = {
   slug: "space-invoices",
   name: "Space Invoices",
+  environment: "production",
   appName: "Space Invoices",
   shortName: "Space Invoices",
   logoUrl: null,
@@ -109,6 +111,7 @@ export function WhiteLabelProvider({ children, apiBaseUrl = "", isAccountUser = 
           setConfig({
             slug: data.slug,
             name: data.name,
+            environment: data.environment ?? "production",
             appName: data.app_name ?? data.name,
             shortName: data.short_name ?? data.name,
             logoUrl: data.logo_url ?? null,

@@ -1,11 +1,13 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Entity } from "@spaceinvoices/js-sdk";
-import { Mail, Sparkles } from "lucide-react";
-import { useRef, useState } from "react";
+import { Check, Copy, Mail, Sparkles } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 import { ContentLocaleButton } from "@/ui/components/document-content-translations";
 import { SmartCodeInsertButton } from "@/ui/components/documents/create/smart-code-insert-button";
+import { Badge } from "@/ui/components/ui/badge";
+import { Button } from "@/ui/components/ui/button";
 import {
   Form,
   FormControl,
@@ -28,7 +30,12 @@ import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
 import { useFormFooterRegistration } from "@/ui/providers/form-footer-context";
 import { useWhiteLabel } from "@/ui/providers/white-label-provider";
-import { useUpdateEntity } from "../entities.hooks";
+import {
+  useEntityEmailSender,
+  usePutEntityEmailSender,
+  useRecheckEntityEmailSender,
+  useUpdateEntity,
+} from "../entities.hooks";
 import bg from "./locales/bg";
 import cs from "./locales/cs";
 import de from "./locales/de";
@@ -52,6 +59,7 @@ import { InputWithPreview } from "./shared/input-with-preview";
 const translations = { bg, cs, de, en, es, et, fi, fr, hr, is, it, nb, nl, pl, pt, sk, sl, sv } as const;
 
 const localizedContentSchema = z.record(z.string(), z.string()).optional();
+const emailAddressPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const emailDefaultTranslationsSchema = z
   .object({
     invoice_subject: localizedContentSchema,
@@ -77,10 +85,11 @@ const paymentReminderTranslationsSchema = z
 const emailSettingsSchema = z.object({
   email: z
     .union([z.string(), z.null()])
-    .refine((val) => !val || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val), {
+    .refine((val) => !val || emailAddressPattern.test(val), {
       message: "Must be a valid email address",
     })
     .optional(),
+  sender_email: z.union([z.string(), z.null()]).optional(),
   invoice_email_subject: z.union([z.string(), z.null()]).optional(),
   invoice_email_body: z.union([z.string(), z.null()]).optional(),
   estimate_email_subject: z.union([z.string(), z.null()]).optional(),
@@ -107,6 +116,24 @@ type EmailTranslationFieldKey = NonNullable<NonNullable<EmailSettingsSchema["tra
 type PaymentReminderTranslationFieldKey = NonNullable<
   NonNullable<EmailSettingsSchema["translations"]>["payment_reminders"]
 >;
+
+function getSenderStatusLabel(status: "pending" | "verified" | "failed" | null | undefined) {
+  if (status === "verified") return "Verified";
+  if (status === "failed") return "Failed";
+  return "Pending";
+}
+
+function getSenderStatusBadgeClass(status: "pending" | "verified" | "failed" | null | undefined) {
+  return status === "verified" ? "border-green-600/20 bg-green-600 text-white hover:bg-green-600" : undefined;
+}
+
+function getDkimCnameRecords(domain: string | null | undefined, tokens: string[]) {
+  if (!domain) return [];
+  return tokens.map((token) => ({
+    name: `${token}._domainkey.${domain}`,
+    value: `${token}.dkim.amazonses.com`,
+  }));
+}
 
 const EMAIL_TEMPLATE_TABS = [
   {
@@ -177,6 +204,8 @@ export type EmailSettingsFormProps = {
   entity: Entity;
   onSuccess?: (data: Entity) => void;
   onError?: (error: unknown) => void;
+  templateHelpContent?: React.ReactNode;
+  senderHelpContent?: React.ReactNode;
 } & ComponentTranslationProps;
 
 export function EmailSettingsForm({
@@ -187,12 +216,17 @@ export function EmailSettingsForm({
   translationLocale,
   onSuccess,
   onError,
+  templateHelpContent,
+  senderHelpContent,
 }: EmailSettingsFormProps) {
   const t = createTranslation({ t: translateProp, namespace, locale, translationLocale, translations });
   const whiteLabel = useWhiteLabel();
   const translationsFeatureEnabled = whiteLabel.isFeatureVisible(DOCUMENT_CONTENT_TRANSLATIONS_FEATURE);
+  const customSenderEnabled = entity.environment !== "sandbox" && whiteLabel.isFeatureVisible("email.custom_sender");
+  const showInvoiceRecipientEmail = Boolean(whiteLabel.billingEnabled);
   const defaultContentLocale = entity.locale || "en-US";
   const [contentLocale, setContentLocale] = useState<DocumentContentLocaleMode>(DEFAULT_CONTENT_LOCALE);
+  const [copiedDnsValue, setCopiedDnsValue] = useState<string | null>(null);
 
   const currentSettings = (entity.settings as Record<string, any>) || {};
   const currentTranslations = (currentSettings.translations as Record<string, any> | undefined) ?? {};
@@ -231,6 +265,7 @@ export function EmailSettingsForm({
     resolver: zodResolver(emailSettingsSchema),
     defaultValues: {
       email: currentSettings.email || null,
+      sender_email: null,
       invoice_email_subject: currentSettings.email_defaults?.invoice_subject || null,
       invoice_email_body: currentSettings.email_defaults?.invoice_body || null,
       estimate_email_subject: currentSettings.email_defaults?.estimate_subject || null,
@@ -264,20 +299,56 @@ export function EmailSettingsForm({
     keyof PaymentReminderTranslationFieldKey,
     Record<string, string> | undefined
   >;
+  const watchedSenderEmail = useWatch({ control: form.control, name: "sender_email" });
 
   const { mutate: updateEntity, isPending } = useUpdateEntity({
     entityId: entity.id,
     onSuccess: (data) => {
-      form.reset(form.getValues());
+      const senderValue = form.getValues("sender_email");
+      const senderDefault = configuredSender?.email ?? null;
+      const senderWasDirty =
+        Boolean(form.formState.dirtyFields.sender_email) && (senderValue?.trim() || null) !== senderDefault;
+
+      form.reset({ ...form.getValues(), sender_email: senderDefault });
+      if (senderWasDirty) {
+        form.setValue("sender_email", senderValue, { shouldDirty: true, shouldTouch: true });
+      }
       onSuccess?.(data);
     },
     onError,
   });
 
+  const { data: emailSender } = useEntityEmailSender({
+    entityId: entity.id,
+    enabled: customSenderEnabled,
+  });
+  const configuredSender = emailSender?.configured ?? null;
+  const inheritedSender = emailSender?.inherited ?? null;
+
+  const { mutate: putEntitySender, isPending: isSavingSender } = usePutEntityEmailSender({
+    entityId: entity.id,
+    onSuccess: (data) => {
+      form.resetField("sender_email", { defaultValue: data.configured?.email ?? null });
+    },
+    onError,
+  });
+
+  const { mutate: recheckEntitySender, isPending: isRecheckingSender } = useRecheckEntityEmailSender({
+    entityId: entity.id,
+    onError,
+  });
+
+  useEffect(() => {
+    if (!customSenderEnabled || form.formState.dirtyFields.sender_email) return;
+    form.setValue("sender_email", configuredSender?.email ?? null);
+  }, [configuredSender?.email, customSenderEnabled, form]);
+
   useFormFooterRegistration({
     formId: "email-settings-form",
     isPending,
-    isDirty: form.formState.isDirty,
+    isDirty: Object.entries(form.formState.dirtyFields).some(
+      ([key, value]) => key !== "sender_email" && Boolean(value),
+    ),
     label: t("Save Settings"),
   });
 
@@ -359,6 +430,32 @@ export function EmailSettingsForm({
         } as any,
       },
     });
+  };
+
+  const handleSaveSender = () => {
+    const nextSenderEmail = watchedSenderEmail?.trim() || null;
+    if (nextSenderEmail && !emailAddressPattern.test(nextSenderEmail)) {
+      form.setError("sender_email", { type: "validate", message: "Must be a valid email address" });
+      return;
+    }
+
+    form.clearErrors("sender_email");
+    putEntitySender({ id: entity.id, email: nextSenderEmail });
+  };
+
+  const handleClearSender = () => {
+    if (configuredSender?.email) {
+      putEntitySender({ id: entity.id, email: null });
+      return;
+    }
+
+    form.resetField("sender_email", { defaultValue: null });
+  };
+
+  const handleCopyDnsValue = async (value: string) => {
+    await navigator.clipboard.writeText(value);
+    setCopiedDnsValue(value);
+    setTimeout(() => setCopiedDnsValue((current) => (current === value ? null : current)), 1600);
   };
 
   const renderSubjectField = (tab: EmailTemplateTab) => (
@@ -548,34 +645,193 @@ export function EmailSettingsForm({
     />
   );
 
-  return (
-    <Form {...form}>
-      <form id="email-settings-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+  const renderSenderField = () => {
+    if (!customSenderEnabled) return null;
+
+    const configuredSenderEmail = configuredSender?.email ?? null;
+    const nextSenderEmail = watchedSenderEmail?.trim() || null;
+    const senderEmailChanged = nextSenderEmail !== configuredSenderEmail;
+    const hasSenderValue = Boolean(watchedSenderEmail?.trim() || configuredSenderEmail);
+    const isConfiguredSenderVerified = configuredSender?.verification_status === "verified";
+    const isAwaitingDkimTokens =
+      Boolean(configuredSenderEmail) &&
+      configuredSender?.domain_verification_status !== "verified" &&
+      !configuredSender?.domain_dkim_tokens?.length;
+
+    const senderField = (
+      <div>
+        <div className="mb-4 flex items-center gap-2">
+          <Mail className="h-4 w-4 text-muted-foreground" />
+          <p className="font-medium text-muted-foreground text-xs">{t("Sender email")}</p>
+        </div>
+
         <FormField
           control={form.control}
-          name="email"
+          name="sender_email"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="font-medium text-sm">{t("Email Address")}</FormLabel>
+              <FormLabel className="font-medium text-sm">{t("Sender email")}</FormLabel>
               <FormControl>
-                <div className="relative">
-                  <Mail className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    type="email"
-                    {...field}
-                    value={field.value || ""}
-                    onChange={(e) => field.onChange(e.target.value)}
-                    placeholder="invoices@example.com"
-                    className="h-10 pl-10"
-                  />
+                <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
+                  <div className="relative">
+                    <Mail className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      type="email"
+                      {...field}
+                      value={field.value || ""}
+                      onChange={(e) => field.onChange(e.target.value)}
+                      placeholder={inheritedSender?.email || "billing@example.com"}
+                      className="h-10 pl-10"
+                    />
+                  </div>
+                  <div className="flex flex-wrap gap-2 sm:flex-nowrap">
+                    <Button
+                      type="button"
+                      className="h-10"
+                      disabled={!senderEmailChanged || isSavingSender}
+                      onClick={handleSaveSender}
+                    >
+                      {isSavingSender ? t("Saving") : configuredSenderEmail ? t("Update sender") : t("Save sender")}
+                    </Button>
+                    {hasSenderValue ? (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="h-10"
+                        disabled={isSavingSender}
+                        onClick={handleClearSender}
+                      >
+                        {t("Clear")}
+                      </Button>
+                    ) : null}
+                    {configuredSenderEmail ? (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="h-10"
+                        disabled={isRecheckingSender || isSavingSender}
+                        onClick={() => recheckEntitySender({ id: entity.id })}
+                      >
+                        {isRecheckingSender ? t("Checking") : t("Recheck")}
+                      </Button>
+                    ) : null}
+                  </div>
                 </div>
               </FormControl>
-              <FormDescription className="text-xs">{t("Email address to send invoices to")}</FormDescription>
+              <div className="flex flex-wrap items-center gap-2">
+                {configuredSender?.email ? (
+                  <>
+                    <Badge
+                      variant={configuredSender.verification_status === "verified" ? "default" : "secondary"}
+                      className={getSenderStatusBadgeClass(configuredSender.verification_status)}
+                    >
+                      {t(getSenderStatusLabel(configuredSender.verification_status))}
+                    </Badge>
+                    <span className="text-muted-foreground text-xs">
+                      {t("Email")}: {t(getSenderStatusLabel(configuredSender.email_verification_status))}
+                      {" · "}
+                      {t("Domain")}: {t(getSenderStatusLabel(configuredSender.domain_verification_status))}
+                    </span>
+                  </>
+                ) : inheritedSender?.email ? (
+                  <>
+                    <Badge
+                      variant={inheritedSender.verification_status === "verified" ? "default" : "secondary"}
+                      className={getSenderStatusBadgeClass(inheritedSender.verification_status)}
+                    >
+                      {t(getSenderStatusLabel(inheritedSender.verification_status))}
+                    </Badge>
+                    <span className="text-muted-foreground text-xs">
+                      {t("Inherited from white-label")}: {inheritedSender.email}
+                      {" · "}
+                      {t("Email")}: {t(getSenderStatusLabel(inheritedSender.email_verification_status))}
+                      {" · "}
+                      {t("Domain")}: {t(getSenderStatusLabel(inheritedSender.domain_verification_status))}
+                    </span>
+                  </>
+                ) : null}
+              </div>
+              <FormDescription className="text-xs">
+                {t("Used as the From address for document emails and payment reminders after verification passes.")}
+              </FormDescription>
+              {!isConfiguredSenderVerified && configuredSender?.domain_dkim_tokens?.length ? (
+                <div className="rounded-md border bg-muted/30 p-4 text-xs">
+                  <div className="space-y-1">
+                    <p className="font-medium text-sm">{t("DNS DKIM tokens")}</p>
+                    <p className="text-muted-foreground">
+                      {t("Add CNAME records for these tokens at your sender domain, then recheck.")}
+                    </p>
+                  </div>
+                  <div className="mt-4 space-y-3">
+                    {getDkimCnameRecords(configuredSender.domain, configuredSender.domain_dkim_tokens).map((record) => (
+                      <div key={record.name} className="rounded-md border bg-background/60 p-3">
+                        <div className="mb-3 flex items-center justify-between gap-3">
+                          <Badge variant="outline">{t("CNAME record")}</Badge>
+                        </div>
+                        <div className="grid gap-3 lg:grid-cols-2">
+                          {[
+                            { label: t("Name"), value: record.name },
+                            { label: t("Value"), value: record.value },
+                          ].map((item) => (
+                            <div key={item.label} className="space-y-1.5">
+                              <div className="flex items-center justify-between gap-2">
+                                <p className="font-medium text-[11px] text-muted-foreground uppercase tracking-wide">
+                                  {item.label}
+                                </p>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-6 px-2 text-[11px]"
+                                  onClick={() => handleCopyDnsValue(item.value)}
+                                >
+                                  {copiedDnsValue === item.value ? (
+                                    <Check className="mr-1 h-3 w-3" />
+                                  ) : (
+                                    <Copy className="mr-1 h-3 w-3" />
+                                  )}
+                                  {copiedDnsValue === item.value ? t("Copied") : t("Copy")}
+                                </Button>
+                              </div>
+                              <p className="break-all rounded-md border bg-muted/40 px-3 py-2 font-mono text-[12px] leading-relaxed">
+                                {item.value}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : isAwaitingDkimTokens ? (
+                <div className="rounded-md border bg-muted/30 p-3 text-muted-foreground text-xs">
+                  {t("DNS records are being prepared. Recheck in a moment if they do not appear.")}
+                </div>
+              ) : null}
               <FormMessage />
             </FormItem>
           )}
         />
+      </div>
+    );
 
+    if (!senderHelpContent) {
+      return <div className="border-t pt-6">{senderField}</div>;
+    }
+
+    return (
+      <div className="grid items-start gap-6 border-t pt-6 lg:grid-cols-[1fr_280px]">
+        {senderField}
+        <div className="hidden border-muted border-l-2 pl-4 lg:block">
+          <div className="space-y-3">{senderHelpContent}</div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderTemplateFields = () => {
+    const templateFields = (
+      <div className="space-y-6">
         <div className="border-t pt-6">
           <div className="mb-4 flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
@@ -649,6 +905,56 @@ export function EmailSettingsForm({
             })}
           </div>
         </div>
+      </div>
+    );
+
+    if (!templateHelpContent) return templateFields;
+
+    return (
+      <div className="grid items-start gap-6 lg:grid-cols-[1fr_280px]">
+        {templateFields}
+        <div className="hidden border-muted border-l-2 pl-4 lg:block">
+          <div className="space-y-3">{templateHelpContent}</div>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <Form {...form}>
+      <form id="email-settings-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        {showInvoiceRecipientEmail && (
+          <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="font-medium text-sm">{t("Billing email address")}</FormLabel>
+                <FormControl>
+                  <div className="relative">
+                    <Mail className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      type="email"
+                      {...field}
+                      value={field.value || ""}
+                      onChange={(e) => field.onChange(e.target.value)}
+                      placeholder="invoices@example.com"
+                      className="h-10 pl-10"
+                    />
+                  </div>
+                </FormControl>
+                <FormDescription className="text-xs">
+                  {t("Recipient for white-label subscription billing emails.")}
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
+
+        {renderTemplateFields()}
+
+        {renderSenderField()}
       </form>
     </Form>
   );

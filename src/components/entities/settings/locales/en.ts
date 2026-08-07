@@ -302,4 +302,14 @@ export default {
     "Number of days added to the document date for new invoice due dates",
   "Number of days added to the document date for new estimate valid-till dates":
     "Number of days added to the document date for new estimate valid-till dates",
+
+  // Portugal entity details
+  "Portugal Details": "Portugal Details",
+  "Portuguese law requires these details on every entity": "Portuguese law requires these details on every entity",
+  "Company Number": "Company Number",
+  "Company registration number (NIPC)": "Company registration number (NIPC)",
+  Phone: "Phone",
+  "International format, including the country code": "International format, including the country code",
+  "Share Capital": "Share Capital",
+  "Registered share capital of the company": "Registered share capital of the company",
 } as const;

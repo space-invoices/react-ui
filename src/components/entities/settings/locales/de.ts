@@ -330,4 +330,15 @@ export default {
     "Anzahl der Tage, die dem Dokumentdatum für neue Rechnungsfälligkeiten hinzugefügt werden.",
   "Number of days added to the document date for new estimate valid-till dates":
     "Anzahl der Tage, die dem Dokumentdatum für neue Angebotsgültigkeiten hinzugefügt werden.",
+
+  // Portugal entity details
+  "Portugal Details": "Portugal-Details",
+  "Portuguese law requires these details on every entity":
+    "Das portugiesische Recht verlangt diese Angaben für jede Entität",
+  "Company Number": "Handelsregisternummer",
+  "Company registration number (NIPC)": "Handelsregisternummer des Unternehmens (NIPC)",
+  Phone: "Telefon",
+  "International format, including the country code": "Internationales Format, einschließlich Ländervorwahl",
+  "Share Capital": "Stammkapital",
+  "Registered share capital of the company": "Eingetragenes Stammkapital des Unternehmens",
 } as const;

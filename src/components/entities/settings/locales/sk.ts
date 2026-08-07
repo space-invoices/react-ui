@@ -311,4 +311,14 @@ export default {
     "Počet dní pridaných k dátumu dokumentu pre nové dátumy splatnosti faktúr.",
   "Number of days added to the document date for new estimate valid-till dates":
     "Počet dní pridaných k dátumu dokumentu pre nové dátumy platnosti ponúk.",
+
+  // Portugal entity details
+  "Portugal Details": "Údaje pre Portugalsko",
+  "Portuguese law requires these details on every entity": "Portugalské právo vyžaduje tieto údaje pri každom subjekte",
+  "Company Number": "IČO",
+  "Company registration number (NIPC)": "Registračné číslo spoločnosti (NIPC)",
+  Phone: "Telefón",
+  "International format, including the country code": "Medzinárodný formát vrátane predvoľby krajiny",
+  "Share Capital": "Základné imanie",
+  "Registered share capital of the company": "Zapísané základné imanie spoločnosti",
 } as const;

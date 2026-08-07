@@ -323,4 +323,15 @@ export default {
     "Število dni, dodanih datumu dokumenta za nove datume zapadlosti računov.",
   "Number of days added to the document date for new estimate valid-till dates":
     "Število dni, dodanih datumu dokumenta za nove datume veljavnosti ponudb.",
+
+  // Portugal entity details
+  "Portugal Details": "Podatki za Portugalsko",
+  "Portuguese law requires these details on every entity":
+    "Portugalska zakonodaja zahteva te podatke za vsako entiteto",
+  "Company Number": "Matična številka",
+  "Company registration number (NIPC)": "Matična številka podjetja (NIPC)",
+  Phone: "Telefon",
+  "International format, including the country code": "Mednarodni zapis, vključno s klicno številko države",
+  "Share Capital": "Osnovni kapital",
+  "Registered share capital of the company": "Registrirani osnovni kapital podjetja",
 } as const;

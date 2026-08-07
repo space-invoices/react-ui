@@ -309,4 +309,14 @@ export default {
     "Päevade arv, mis lisatakse dokumendi kuupäevale uute arvete maksetähtaegade jaoks.",
   "Number of days added to the document date for new estimate valid-till dates":
     "Päevade arv, mis lisatakse dokumendi kuupäevale uute pakkumiste kehtivuskuupäevade jaoks.",
+
+  // Portugal entity details
+  "Portugal Details": "Portugali andmed",
+  "Portuguese law requires these details on every entity": "Portugali seadus nõuab neid andmeid iga üksuse kohta",
+  "Company Number": "Registrikood",
+  "Company registration number (NIPC)": "Ettevõtte registrikood (NIPC)",
+  Phone: "Telefon",
+  "International format, including the country code": "Rahvusvaheline vorming koos riigikoodiga",
+  "Share Capital": "Osakapital",
+  "Registered share capital of the company": "Ettevõtte registreeritud osakapital",
 } as const;

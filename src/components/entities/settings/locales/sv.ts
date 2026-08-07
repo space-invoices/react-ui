@@ -318,4 +318,14 @@ export default {
     "Antal dagar som läggs till dokumentdatumet för nya förfallodatum på fakturor.",
   "Number of days added to the document date for new estimate valid-till dates":
     "Antal dagar som läggs till dokumentdatumet för nya giltighetsdatum på offerter.",
+
+  // Portugal entity details
+  "Portugal Details": "Portugal-uppgifter",
+  "Portuguese law requires these details on every entity": "Portugisisk lag kräver dessa uppgifter för varje enhet",
+  "Company Number": "Organisationsnummer",
+  "Company registration number (NIPC)": "Företagets registreringsnummer (NIPC)",
+  Phone: "Telefon",
+  "International format, including the country code": "Internationellt format, inklusive landsnummer",
+  "Share Capital": "Aktiekapital",
+  "Registered share capital of the company": "Företagets registrerade aktiekapital",
 } as const;

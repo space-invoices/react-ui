@@ -313,4 +313,15 @@ export default {
     "Päivien määrä, joka lisätään asiakirjan päivämäärään uusien laskujen eräpäiviä varten.",
   "Number of days added to the document date for new estimate valid-till dates":
     "Päivien määrä, joka lisätään asiakirjan päivämäärään uusien tarjousten voimassaolopäiviä varten.",
+
+  // Portugal entity details
+  "Portugal Details": "Portugalin tiedot",
+  "Portuguese law requires these details on every entity":
+    "Portugalin laki edellyttää nämä tiedot jokaiselta yritykseltä",
+  "Company Number": "Y-tunnus",
+  "Company registration number (NIPC)": "Yrityksen rekisterinumero (NIPC)",
+  Phone: "Puhelin",
+  "International format, including the country code": "Kansainvälinen muoto, mukaan lukien maatunnus",
+  "Share Capital": "Osakepääoma",
+  "Registered share capital of the company": "Yrityksen rekisteröity osakepääoma",
 } as const;

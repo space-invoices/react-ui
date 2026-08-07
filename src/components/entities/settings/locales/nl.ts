@@ -330,4 +330,14 @@ export default {
     "Aantal dagen dat aan de documentdatum wordt toegevoegd voor nieuwe vervaldatums van facturen.",
   "Number of days added to the document date for new estimate valid-till dates":
     "Aantal dagen dat aan de documentdatum wordt toegevoegd voor nieuwe geldigheidsdatums van offertes.",
+
+  // Portugal entity details
+  "Portugal Details": "Portugal-gegevens",
+  "Portuguese law requires these details on every entity": "De Portugese wet vereist deze gegevens voor elke entiteit",
+  "Company Number": "Ondernemingsnummer",
+  "Company registration number (NIPC)": "Registratienummer van het bedrijf (NIPC)",
+  Phone: "Telefoon",
+  "International format, including the country code": "Internationaal formaat, inclusief landnummer",
+  "Share Capital": "Maatschappelijk kapitaal",
+  "Registered share capital of the company": "Geregistreerd maatschappelijk kapitaal van het bedrijf",
 } as const;

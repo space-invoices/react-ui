@@ -10,6 +10,10 @@ type ValidationDictionary = {
   invalidFormat: string;
   invalidValue: string;
   alphanumericRange: string;
+  invalidPortugalTaxNumber: string;
+  invalidPortugalPhone: string;
+  invalidPortugalPostCode: string;
+  latinOnly: string;
 };
 
 const dictionaries: Record<string, ValidationDictionary> = {
@@ -23,6 +27,10 @@ const dictionaries: Record<string, ValidationDictionary> = {
     invalidFormat: "Invalid format",
     invalidValue: "Invalid value",
     alphanumericRange: "Must be alphanumeric, 1-20 characters",
+    invalidPortugalTaxNumber: "Invalid Portuguese tax number",
+    invalidPortugalPhone: "Invalid international phone number",
+    invalidPortugalPostCode: "Invalid Portuguese post code",
+    latinOnly: "Must contain only Latin characters",
   },
   de: {
     required: "Erforderlich",
@@ -34,6 +42,10 @@ const dictionaries: Record<string, ValidationDictionary> = {
     invalidFormat: "Ungultiges Format",
     invalidValue: "Ungultiger Wert",
     alphanumericRange: "Muss alphanumerisch sein, 1-20 Zeichen",
+    invalidPortugalTaxNumber: "Ungultige portugiesische Steuernummer",
+    invalidPortugalPhone: "Ungultige internationale Telefonnummer",
+    invalidPortugalPostCode: "Ungultige portugiesische Postleitzahl",
+    latinOnly: "Darf nur lateinische Zeichen enthalten",
   },
   es: {
     required: "Obligatorio",
@@ -45,6 +57,10 @@ const dictionaries: Record<string, ValidationDictionary> = {
     invalidFormat: "Formato no valido",
     invalidValue: "Valor no valido",
     alphanumericRange: "Debe ser alfanumerico y tener entre 1 y 20 caracteres",
+    invalidPortugalTaxNumber: "Numero de identificacion fiscal portugues no valido",
+    invalidPortugalPhone: "Numero de telefono internacional no valido",
+    invalidPortugalPostCode: "Codigo postal portugues no valido",
+    latinOnly: "Debe contener solo caracteres latinos",
   },
   fr: {
     required: "Obligatoire",
@@ -56,6 +72,10 @@ const dictionaries: Record<string, ValidationDictionary> = {
     invalidFormat: "Format invalide",
     invalidValue: "Valeur invalide",
     alphanumericRange: "Doit etre alphanumerique, 1 a 20 caracteres",
+    invalidPortugalTaxNumber: "Numero fiscal portugais invalide",
+    invalidPortugalPhone: "Numero de telephone international invalide",
+    invalidPortugalPostCode: "Code postal portugais invalide",
+    latinOnly: "Doit contenir uniquement des caracteres latins",
   },
   hr: {
     required: "Obavezno",
@@ -67,6 +87,10 @@ const dictionaries: Record<string, ValidationDictionary> = {
     invalidFormat: "Neispravan format",
     invalidValue: "Neispravna vrijednost",
     alphanumericRange: "Mora biti alfanumericko, 1-20 znakova",
+    invalidPortugalTaxNumber: "Neispravan portugalski porezni broj",
+    invalidPortugalPhone: "Neispravan medunarodni telefonski broj",
+    invalidPortugalPostCode: "Neispravan portugalski postanski broj",
+    latinOnly: "Mora sadrzavati samo latinicne znakove",
   },
   bg: {
     required: "Zadalzhitelno",
@@ -78,6 +102,10 @@ const dictionaries: Record<string, ValidationDictionary> = {
     invalidFormat: "Nevaliden format",
     invalidValue: "Nevalidna stoinost",
     alphanumericRange: "Tryabva da e bukveno-cifrovo, 1-20 znaka",
+    invalidPortugalTaxNumber: "Nevaliden portugalski danachen nomer",
+    invalidPortugalPhone: "Nevaliden mezhdunaroden telefonen nomer",
+    invalidPortugalPostCode: "Nevaliden portugalski poshtenski kod",
+    latinOnly: "Tryabva da sadarzha samo latinski znatsi",
   },
   cs: {
     required: "Povinne",
@@ -89,6 +117,10 @@ const dictionaries: Record<string, ValidationDictionary> = {
     invalidFormat: "Neplatny format",
     invalidValue: "Neplatna hodnota",
     alphanumericRange: "Musi byt alfanumericke, 1-20 znaku",
+    invalidPortugalTaxNumber: "Neplatne portugalske danove cislo",
+    invalidPortugalPhone: "Neplatne mezinarodni telefonni cislo",
+    invalidPortugalPostCode: "Neplatne portugalske PSC",
+    latinOnly: "Musi obsahovat pouze latinske znaky",
   },
   et: {
     required: "Kohustuslik",
@@ -100,6 +132,10 @@ const dictionaries: Record<string, ValidationDictionary> = {
     invalidFormat: "Vigane vorming",
     invalidValue: "Vigane vaartus",
     alphanumericRange: "Peab olema tahe- ja numbrimarkidega, 1-20 marki",
+    invalidPortugalTaxNumber: "Vigane Portugali maksukohustuslase number",
+    invalidPortugalPhone: "Vigane rahvusvaheline telefoninumber",
+    invalidPortugalPostCode: "Vigane Portugali postiindeks",
+    latinOnly: "Tohib sisaldada ainult ladina tahemarke",
   },
   fi: {
     required: "Pakollinen",
@@ -111,6 +147,10 @@ const dictionaries: Record<string, ValidationDictionary> = {
     invalidFormat: "Virheellinen muoto",
     invalidValue: "Virheellinen arvo",
     alphanumericRange: "Taytyy olla aakkosnumeerinen, 1-20 merkkia",
+    invalidPortugalTaxNumber: "Virheellinen Portugalin verotunniste",
+    invalidPortugalPhone: "Virheellinen kansainvalinen puhelinnumero",
+    invalidPortugalPostCode: "Virheellinen Portugalin postinumero",
+    latinOnly: "Saa sisaltaa vain latinalaisia merkkeja",
   },
   it: {
     required: "Obbligatorio",
@@ -122,6 +162,10 @@ const dictionaries: Record<string, ValidationDictionary> = {
     invalidFormat: "Formato non valido",
     invalidValue: "Valore non valido",
     alphanumericRange: "Deve essere alfanumerico, 1-20 caratteri",
+    invalidPortugalTaxNumber: "Numero fiscale portoghese non valido",
+    invalidPortugalPhone: "Numero di telefono internazionale non valido",
+    invalidPortugalPostCode: "Codice postale portoghese non valido",
+    latinOnly: "Deve contenere solo caratteri latini",
   },
   nl: {
     required: "Verplicht",
@@ -133,6 +177,10 @@ const dictionaries: Record<string, ValidationDictionary> = {
     invalidFormat: "Ongeldig formaat",
     invalidValue: "Ongeldige waarde",
     alphanumericRange: "Moet alfanumeriek zijn, 1-20 tekens",
+    invalidPortugalTaxNumber: "Ongeldig Portugees fiscaal nummer",
+    invalidPortugalPhone: "Ongeldig internationaal telefoonnummer",
+    invalidPortugalPostCode: "Ongeldige Portugese postcode",
+    latinOnly: "Mag alleen Latijnse tekens bevatten",
   },
   nb: {
     required: "Obligatorisk",
@@ -144,6 +192,10 @@ const dictionaries: Record<string, ValidationDictionary> = {
     invalidFormat: "Ugyldig format",
     invalidValue: "Ugyldig verdi",
     alphanumericRange: "Må være alfanumerisk, 1-20 tegn",
+    invalidPortugalTaxNumber: "Ugyldig portugisisk skattenummer",
+    invalidPortugalPhone: "Ugyldig internasjonalt telefonnummer",
+    invalidPortugalPostCode: "Ugyldig portugisisk postnummer",
+    latinOnly: "Må bare inneholde latinske tegn",
   },
   pl: {
     required: "Wymagane",
@@ -155,6 +207,10 @@ const dictionaries: Record<string, ValidationDictionary> = {
     invalidFormat: "Nieprawidlowy format",
     invalidValue: "Nieprawidlowa wartosc",
     alphanumericRange: "Musi byc alfanumeryczne, 1-20 znakow",
+    invalidPortugalTaxNumber: "Nieprawidlowy portugalski numer podatkowy",
+    invalidPortugalPhone: "Nieprawidlowy miedzynarodowy numer telefonu",
+    invalidPortugalPostCode: "Nieprawidlowy portugalski kod pocztowy",
+    latinOnly: "Musi zawierac tylko znaki lacinskie",
   },
   pt: {
     required: "Obrigatorio",
@@ -166,6 +222,10 @@ const dictionaries: Record<string, ValidationDictionary> = {
     invalidFormat: "Formato invalido",
     invalidValue: "Valor invalido",
     alphanumericRange: "Tem de ser alfanumerico, 1-20 caracteres",
+    invalidPortugalTaxNumber: "NIF portugues invalido",
+    invalidPortugalPhone: "Numero de telefone internacional invalido",
+    invalidPortugalPostCode: "Codigo postal portugues invalido",
+    latinOnly: "Tem de conter apenas caracteres latinos",
   },
   sk: {
     required: "Povinne",
@@ -177,6 +237,10 @@ const dictionaries: Record<string, ValidationDictionary> = {
     invalidFormat: "Neplatny format",
     invalidValue: "Neplatna hodnota",
     alphanumericRange: "Musi byt alfanumericke, 1-20 znakov",
+    invalidPortugalTaxNumber: "Neplatne portugalske danove cislo",
+    invalidPortugalPhone: "Neplatne medzinarodne telefonne cislo",
+    invalidPortugalPostCode: "Neplatne portugalske PSC",
+    latinOnly: "Musi obsahovat iba latinske znaky",
   },
   sl: {
     required: "Obvezno",
@@ -188,6 +252,10 @@ const dictionaries: Record<string, ValidationDictionary> = {
     invalidFormat: "Neveljaven format",
     invalidValue: "Neveljavna vrednost",
     alphanumericRange: "Mora biti alfanumericno, 1-20 znakov",
+    invalidPortugalTaxNumber: "Neveljavna portugalska davcna stevilka",
+    invalidPortugalPhone: "Neveljavna mednarodna telefonska stevilka",
+    invalidPortugalPostCode: "Neveljavna portugalska postna stevilka",
+    latinOnly: "Vsebovati mora samo latinicne znake",
   },
   sv: {
     required: "Obligatoriskt",
@@ -199,6 +267,10 @@ const dictionaries: Record<string, ValidationDictionary> = {
     invalidFormat: "Ogiltigt format",
     invalidValue: "Ogiltigt varde",
     alphanumericRange: "Maste vara alfanumeriskt, 1-20 tecken",
+    invalidPortugalTaxNumber: "Ogiltigt portugisiskt skattenummer",
+    invalidPortugalPhone: "Ogiltigt internationellt telefonnummer",
+    invalidPortugalPostCode: "Ogiltigt portugisiskt postnummer",
+    latinOnly: "Får bara innehålla latinska tecken",
   },
   is: {
     required: "Skyldureitur",
@@ -210,6 +282,10 @@ const dictionaries: Record<string, ValidationDictionary> = {
     invalidFormat: "Ogilt snið",
     invalidValue: "Ogilt gildi",
     alphanumericRange: "Verdur ad vera bokstafa- og tolustafablandad, 1-20 stafir",
+    invalidPortugalTaxNumber: "Ogilt portugalskt skattnumer",
+    invalidPortugalPhone: "Ogilt althjodlegt simanumer",
+    invalidPortugalPostCode: "Ogilt portugalskt postnumer",
+    latinOnly: "Ma einungis innihalda latneska stafi",
   },
 };
 
@@ -249,6 +325,26 @@ export function translateZodValidationMessage(message?: string, locale?: string)
 
   if (message === "Invalid email address") {
     return dict.invalidEmail;
+  }
+
+  if (message === "Required") {
+    return dict.required;
+  }
+
+  if (message === "Invalid Portuguese tax number") {
+    return dict.invalidPortugalTaxNumber;
+  }
+
+  if (message === "Invalid international phone number") {
+    return dict.invalidPortugalPhone;
+  }
+
+  if (message === "Invalid Portuguese post code") {
+    return dict.invalidPortugalPostCode;
+  }
+
+  if (message === "Must contain only Latin characters") {
+    return dict.latinOnly;
   }
 
   if (message === "Must be alphanumeric, 1-20 characters") {

@@ -316,4 +316,15 @@ export default {
     "Брой дни, добавени към датата на документа за нови падежи на фактури.",
   "Number of days added to the document date for new estimate valid-till dates":
     "Брой дни, добавени към датата на документа за нови дати на валидност на оферти.",
+
+  // Portugal entity details
+  "Portugal Details": "Данни за Португалия",
+  "Portuguese law requires these details on every entity":
+    "Португалското законодателство изисква тези данни за всяко дружество",
+  "Company Number": "ЕИК",
+  "Company registration number (NIPC)": "Регистрационен номер на дружеството (NIPC)",
+  Phone: "Телефон",
+  "International format, including the country code": "Международен формат, включително кода на държавата",
+  "Share Capital": "Основен капитал",
+  "Registered share capital of the company": "Регистриран основен капитал на дружеството",
 } as const;

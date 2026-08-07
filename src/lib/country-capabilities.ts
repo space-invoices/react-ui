@@ -15,12 +15,21 @@ export type CountryAwareDocumentType = "invoice" | "estimate" | "credit_note" | 
 
 type CountryEntity = Pick<Entity, "country_code" | "settings" | "country_rules"> | null | undefined;
 
+/**
+ * The API stores `country_code` as the client sent it, with no case normalization, so
+ * a strict comparison would silently treat a "pt" entity as non-Portuguese and drop it
+ * out of every country-gated behaviour below.
+ */
+function isEntityInCountry(entity: CountryEntity, countryCode: string): boolean {
+  return entity?.country_code?.trim().toUpperCase() === countryCode;
+}
+
 export function isPortugalEntity(entity: CountryEntity): boolean {
-  return entity?.country_code === PORTUGAL_COUNTRY_CODE;
+  return isEntityInCountry(entity, PORTUGAL_COUNTRY_CODE);
 }
 
 export function isItalyEntity(entity: CountryEntity): boolean {
-  return entity?.country_code === ITALY_COUNTRY_CODE;
+  return isEntityInCountry(entity, ITALY_COUNTRY_CODE);
 }
 
 function hasCountryFeature(entity: CountryEntity, feature: string): boolean {
@@ -36,11 +45,11 @@ export function hasUsTaxRateLookupSupport(entity: CountryEntity): boolean {
 }
 
 function hasUpnQrSupport(entity: CountryEntity): boolean {
-  return entity?.country_code === "SI" && hasCountryFeature(entity, "upn_qr");
+  return isEntityInCountry(entity, "SI") && hasCountryFeature(entity, "upn_qr");
 }
 
 function hasHub3QrSupport(entity: CountryEntity): boolean {
-  return entity?.country_code === "HR" && hasCountryFeature(entity, "hub3_qr");
+  return isEntityInCountry(entity, "HR") && hasCountryFeature(entity, "hub3_qr");
 }
 
 function hasEpcQrSupport(entity: CountryEntity): boolean {
@@ -101,10 +110,10 @@ export function getPortugalEditBlockedReason(entity: CountryEntity): string | un
 
 export function getEntityCountryCapabilities(entity: CountryEntity) {
   const isPortugal = isPortugalEntity(entity) && hasPortugalUiAccess();
-  const isSlovenia = entity?.country_code === "SI";
+  const isSlovenia = isEntityInCountry(entity, "SI");
   const isItaly = isItalyEntity(entity);
   const hasItalyFatturaPa = hasItalyFatturaPaSupport(entity);
-  const isGermany = entity?.country_code === "DE";
+  const isGermany = isEntityInCountry(entity, "DE");
   const hasEInvoicing = hasCountryFeature(entity, "e_invoicing");
   const hasFurs = hasCountryFeature(entity, "furs");
   const hasFina = hasCountryFeature(entity, "fina");

@@ -312,4 +312,15 @@ export default {
     "Fjöldi daga sem bætist við dagsetningu skjals fyrir nýja gjalddaga reikninga.",
   "Number of days added to the document date for new estimate valid-till dates":
     "Fjöldi daga sem bætist við dagsetningu skjals fyrir nýja gildistíma tilboða.",
+
+  // Portugal entity details
+  "Portugal Details": "Upplýsingar fyrir Portúgal",
+  "Portuguese law requires these details on every entity":
+    "Portúgölsk lög krefjast þessara upplýsinga fyrir hverja einingu",
+  "Company Number": "Kennitala fyrirtækis",
+  "Company registration number (NIPC)": "Skráningarnúmer fyrirtækisins (NIPC)",
+  Phone: "Sími",
+  "International format, including the country code": "Alþjóðlegt snið, með landsnúmeri",
+  "Share Capital": "Hlutafé",
+  "Registered share capital of the company": "Skráð hlutafé fyrirtækisins",
 } as const;

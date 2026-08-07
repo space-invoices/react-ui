@@ -13,6 +13,12 @@ import {
   FormMessage,
 } from "@/ui/components/ui/form";
 import { Input } from "@/ui/components/ui/input";
+import { isPortugalEntity } from "@/ui/lib/country-capabilities";
+import {
+  applyPortugalEntityIssues,
+  portugalShareCapitalSchema,
+  toSubmittableShareCapital,
+} from "@/ui/lib/pt-entity-input";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
 import { useFormFooterRegistration } from "@/ui/providers/form-footer-context";
@@ -35,42 +41,55 @@ import pt from "./locales/pt";
 import sk from "./locales/sk";
 import sl from "./locales/sl";
 import sv from "./locales/sv";
+import { PortugalCompanyFields } from "./portugal-company-fields";
 
 const translations = { bg, cs, de, en, es, et, fi, fr, hr, is, it, nb, nl, pl, pt, sk, sl, sv } as const;
 
-function createCompanySettingsSchema(t: (key: string) => string) {
-  return z.object({
-    name: z.string().min(1, "Name is required"),
-    email: z
-      .union([
-        z.string().trim().max(255, t("Invalid email address")).email(t("Invalid email address")),
-        z.literal(""),
-        z.null(),
-      ])
-      .optional(),
-    tax_number: z.union([z.string(), z.null()]).optional(),
-    is_tax_subject: z.boolean(),
-    tax_number_2: z.union([z.string(), z.null()]).optional(),
-    address: z.union([z.string(), z.null()]).optional(),
-    address_2: z.union([z.string(), z.null()]).optional(),
-    post_code: z.union([z.string(), z.null()]).optional(),
-    city: z.union([z.string(), z.null()]).optional(),
-    state: z.union([z.string(), z.null()]).optional(),
-    // Bank account fields (stored in settings.bank_accounts array)
-    bank_account_type: z.enum(["iban", "us_domestic", "uk_domestic", "other"]),
-    bank_account_iban: z
-      .union([z.string(), z.null()])
-      .refine((val) => !val || /^[A-Z]{2}[0-9A-Z]{2,32}$/.test(val.replace(/\s/g, "")), {
-        message: "Must be a valid IBAN",
-      })
-      .optional(),
-    bank_account_account_number: z.union([z.string(), z.null()]).optional(),
-    bank_account_name: z.union([z.string(), z.null()]).optional(),
-    bank_account_bank_name: z.union([z.string(), z.null()]).optional(),
-    bank_account_bic: z.union([z.string(), z.null()]).optional(),
-    bank_account_routing_number: z.union([z.string(), z.null()]).optional(),
-    bank_account_sort_code: z.union([z.string(), z.null()]).optional(),
-  });
+/**
+ * The Portugal rules are applied to the whole form value, because the API re-runs
+ * them against the merged entity on every update: a save that blanks a required
+ * field must fail here with a localized message rather than as a raw 422. The
+ * refinement no-ops for every other country.
+ */
+function createCompanySettingsSchema(t: (key: string) => string, countryCode: string | null | undefined) {
+  return z
+    .object({
+      name: z.string().min(1, "Name is required"),
+      email: z
+        .union([
+          z.string().trim().max(255, t("Invalid email address")).email(t("Invalid email address")),
+          z.literal(""),
+          z.null(),
+        ])
+        .optional(),
+      tax_number: z.union([z.string(), z.null()]).optional(),
+      is_tax_subject: z.boolean(),
+      tax_number_2: z.union([z.string(), z.null()]).optional(),
+      address: z.union([z.string(), z.null()]).optional(),
+      address_2: z.union([z.string(), z.null()]).optional(),
+      post_code: z.union([z.string(), z.null()]).optional(),
+      city: z.union([z.string(), z.null()]).optional(),
+      state: z.union([z.string(), z.null()]).optional(),
+      // Portugal-only fields; see PortugalCompanyFields.
+      company_number: z.union([z.string(), z.null()]).optional(),
+      phone: z.union([z.string(), z.null()]).optional(),
+      starting_capital: portugalShareCapitalSchema,
+      // Bank account fields (stored in settings.bank_accounts array)
+      bank_account_type: z.enum(["iban", "us_domestic", "uk_domestic", "other"]),
+      bank_account_iban: z
+        .union([z.string(), z.null()])
+        .refine((val) => !val || /^[A-Z]{2}[0-9A-Z]{2,32}$/.test(val.replace(/\s/g, "")), {
+          message: "Must be a valid IBAN",
+        })
+        .optional(),
+      bank_account_account_number: z.union([z.string(), z.null()]).optional(),
+      bank_account_name: z.union([z.string(), z.null()]).optional(),
+      bank_account_bank_name: z.union([z.string(), z.null()]).optional(),
+      bank_account_bic: z.union([z.string(), z.null()]).optional(),
+      bank_account_routing_number: z.union([z.string(), z.null()]).optional(),
+      bank_account_sort_code: z.union([z.string(), z.null()]).optional(),
+    })
+    .superRefine((values, ctx) => applyPortugalEntityIssues({ ...values, country_code: countryCode }, ctx));
 }
 
 type CompanySettingsSchema = z.infer<ReturnType<typeof createCompanySettingsSchema>>;
@@ -153,9 +172,12 @@ export function CompanySettingsForm({
   const currentSettings = (entity.settings as any) || {};
   const primaryBankAccount = getPrimaryBankAccount(currentSettings);
   const bankAccountType = getDefaultBankAccountType(entity, primaryBankAccount);
+  // Matches the schema refinement, which normalizes country_code the same way — the two
+  // must agree or a Portugal entity gets the rules enforced without the inputs to satisfy them.
+  const showPortugalFields = isPortugalEntity(entity as any);
 
   const form = useForm<CompanySettingsSchema>({
-    resolver: zodResolver(createCompanySettingsSchema(t)),
+    resolver: zodResolver(createCompanySettingsSchema(t, entity.country_code)),
     defaultValues: {
       name: entity.name || "",
       email: entity.email ?? null,
@@ -167,6 +189,9 @@ export function CompanySettingsForm({
       post_code: (entity as any).post_code || null,
       city: (entity as any).city || null,
       state: (entity as any).state || null,
+      company_number: entity.company_number ?? null,
+      phone: entity.phone ?? null,
+      starting_capital: entity.starting_capital ?? null,
       bank_account_type: bankAccountType,
       bank_account_iban: getBankAccountValue(primaryBankAccount, "iban"),
       bank_account_account_number: getBankAccountValue(primaryBankAccount, "account_number"),
@@ -209,6 +234,18 @@ export function CompanySettingsForm({
     if (values.post_code !== (entity as any).post_code) updatePayload.post_code = values.post_code;
     if (values.city !== (entity as any).city) updatePayload.city = values.city;
     if (values.state !== (entity as any).state) updatePayload.state = values.state;
+
+    if (showPortugalFields) {
+      const portugalChanges = {
+        company_number: emptyToNull(values.company_number),
+        phone: emptyToNull(values.phone),
+        starting_capital: toSubmittableShareCapital(values.starting_capital) ?? null,
+      };
+
+      for (const [field, value] of Object.entries(portugalChanges)) {
+        if (value !== ((entity as Record<string, any>)[field] ?? null)) updatePayload[field] = value;
+      }
+    }
 
     // Check if bank account fields changed
     const currentType = getDefaultBankAccountType(entity, primaryBankAccount);
@@ -258,7 +295,7 @@ export function CompanySettingsForm({
   };
 
   return (
-    <Form {...form}>
+    <Form {...form} locale={translationLocale || locale}>
       <form id="company-settings-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <FormField
           control={form.control}
@@ -475,6 +512,8 @@ export function CompanySettingsForm({
             <FormDescription className="text-xs">{t("Country cannot be changed")}</FormDescription>
           </FormItem>
         </div>
+
+        {showPortugalFields && <PortugalCompanyFields control={form.control} t={t} inputLocale={locale ?? "en"} />}
 
         <div className="border-t pt-6">
           <p className="mb-4 font-medium text-base">{t("Bank Account")}</p>

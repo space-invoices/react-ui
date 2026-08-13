@@ -54,6 +54,8 @@ export default {
   "Sandbox email daily limit exceeded": "Този sandbox акаунт може да изпраща само {limit} имейла на ден.",
   "Email and attachment language": "Език на имейла и прикачения файл",
   "PDF Language": "Език на PDF",
+  "Attach link to PDF": "Прикачи връзка към PDF",
+  "Attach PDF as file": "Прикачи PDF като файл",
   Default: "По подразбиране",
   "English (US)": "Английски (САЩ)",
   German: "Немски",

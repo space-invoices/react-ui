@@ -55,6 +55,8 @@ export default {
   "Sandbox email daily limit exceeded": "Tämä sandbox-tili voi lähettää vain {limit} sähköpostia päivässä.",
   "Email and attachment language": "Sähköpostin ja liitteen kieli",
   "PDF Language": "PDF:n kieli",
+  "Attach link to PDF": "Liitä linkki PDF:ään",
+  "Attach PDF as file": "Liitä PDF tiedostona",
   Default: "Oletus",
   "English (US)": "Englanti (Yhdysvallat)",
   German: "Saksa",

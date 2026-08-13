@@ -53,6 +53,8 @@ export default {
   "Sandbox email daily limit exceeded": "Ta testni račun lahko pošlje največ {limit} e-poštnih sporočil na dan.",
   "Email and attachment language": "Jezik e-pošte in priloge",
   "PDF Language": "Jezik PDF-ja",
+  "Attach link to PDF": "Priloži povezavo do PDF-ja",
+  "Attach PDF as file": "Priloži PDF kot datoteko",
   Default: "Privzeto",
   "English (US)": "Angleščina (ZDA)",
   English: "Angleščina",

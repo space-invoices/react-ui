@@ -53,6 +53,8 @@ export default {
   "Sandbox email daily limit exceeded": "Denne sandbox-kontoen kan bare sende {limit} e-poster per dag.",
   "Email and attachment language": "Språk for e-post og vedlegg",
   "PDF Language": "PDF-språk",
+  "Attach link to PDF": "Legg ved lenke til PDF",
+  "Attach PDF as file": "Legg ved PDF som fil",
   Default: "Standard",
   "English (US)": "Engelsk (USA)",
   German: "Tysk",

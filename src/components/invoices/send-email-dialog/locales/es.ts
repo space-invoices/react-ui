@@ -54,6 +54,8 @@ export default {
   "Sandbox email daily limit exceeded": "Esta cuenta sandbox solo puede enviar {limit} correos al día.",
   "Email and attachment language": "Idioma del correo y del archivo adjunto",
   "PDF Language": "Idioma del PDF",
+  "Attach link to PDF": "Adjuntar enlace al PDF",
+  "Attach PDF as file": "Adjuntar PDF como archivo",
   Default: "Predeterminado",
   "English (US)": "Inglés (EE. UU.)",
   English: "Inglés",

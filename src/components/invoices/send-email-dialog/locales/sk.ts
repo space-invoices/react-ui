@@ -53,6 +53,8 @@ export default {
   "Sandbox email daily limit exceeded": "Tento sandbox účet môže odoslať iba {limit} e-mailov denne.",
   "Email and attachment language": "Jazyk e-mailu a prílohy",
   "PDF Language": "Jazyk PDF",
+  "Attach link to PDF": "Priložiť odkaz na PDF",
+  "Attach PDF as file": "Priložiť PDF ako súbor",
   Default: "Predvolená",
   "English (US)": "Angličtina (USA)",
   German: "Nemčina",

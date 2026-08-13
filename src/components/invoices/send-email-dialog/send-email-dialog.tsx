@@ -9,6 +9,7 @@ import { z } from "zod";
 import { InputWithPreview } from "@/ui/components/entities/settings/shared/input-with-preview";
 import { Alert, AlertDescription } from "@/ui/components/ui/alert";
 import { Button } from "@/ui/components/ui/button";
+import { Checkbox } from "@/ui/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -34,6 +35,7 @@ import { createTranslation } from "@/ui/lib/translation";
 import { useEntities } from "@/ui/providers/entities-context";
 import { useWhiteLabel } from "@/ui/providers/white-label-provider";
 import { getSendEmailErrorMessage, isEmailVerificationRequiredError } from "./error-utils";
+import { normalizeLegacyAttachmentBody } from "./legacy-attachment-body";
 import bg from "./locales/bg";
 import cs from "./locales/cs";
 import de from "./locales/de";
@@ -249,7 +251,8 @@ export function SendEmailDialog({
   const finalBody =
     defaultBody ||
     emailDefaults[documentConfig.bodyKey] ||
-    `Please find your ${documentConfig.label.toLowerCase()} #${documentNumber} attached.`;
+    `Please find your ${documentConfig.label.toLowerCase()} #${documentNumber} at the link below.`;
+  const linkOnlyBody = normalizeLegacyAttachmentBody(finalBody, documentConfig.bodyKey, entityLocale);
 
   const sendEmailDialogSchema = useMemo(
     () =>
@@ -308,7 +311,7 @@ export function SendEmailDialog({
     defaultValues: {
       recipients: parseRecipientInputs(defaultEmail),
       subject: finalSubject,
-      body_text: finalBody,
+      body_text: linkOnlyBody,
       attach_pdf: false,
     },
   });
@@ -325,13 +328,17 @@ export function SendEmailDialog({
     if (!translationsFeatureEnabled || nextLanguage === DEFAULT_CONTENT_LOCALE) {
       return {
         subject: finalSubject,
-        bodyText: finalBody,
+        bodyText: linkOnlyBody,
       };
     }
 
     return {
       subject: emailDefaultTranslations[documentConfig.subjectKey]?.[nextLanguage] ?? "",
-      bodyText: emailDefaultTranslations[documentConfig.bodyKey]?.[nextLanguage] ?? "",
+      bodyText: normalizeLegacyAttachmentBody(
+        emailDefaultTranslations[documentConfig.bodyKey]?.[nextLanguage] ?? "",
+        documentConfig.bodyKey,
+        nextLanguage,
+      ),
     };
   };
 
@@ -378,14 +385,14 @@ export function SendEmailDialog({
     reset({
       recipients: parseRecipientInputs(defaultEmail),
       subject: finalSubject,
-      body_text: finalBody,
+      body_text: linkOnlyBody,
       attach_pdf: false,
     });
     setLanguage(DEFAULT_LANGUAGE_VALUE);
     setDrafts({
       [DEFAULT_CONTENT_LOCALE]: {
         subject: finalSubject,
-        bodyText: finalBody,
+        bodyText: linkOnlyBody,
       },
     });
 
@@ -416,7 +423,7 @@ export function SendEmailDialog({
     };
 
     fetchCustomerEmail();
-  }, [open, defaultEmail, customerId, activeEntity?.id, reset, setValue, finalSubject, finalBody]);
+  }, [open, defaultEmail, customerId, activeEntity?.id, reset, setValue, finalSubject, linkOnlyBody]);
 
   if (!document?.id) {
     return null;
@@ -442,6 +449,7 @@ export function SendEmailDialog({
           subject: values.subject,
           body_text: values.body_text,
           document_id: document.id,
+          attach_pdf: values.attach_pdf,
           language: languageOverride,
         },
         { entity_id: activeEntity.id },
@@ -586,6 +594,33 @@ export function SendEmailDialog({
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+              <div className="mt-3 grid gap-3 border-t pt-3 sm:grid-cols-[minmax(0,1fr)_minmax(280px,1fr)] sm:items-center sm:gap-4">
+                <div className="flex items-center gap-2">
+                  <Checkbox id="attach-pdf-link" checked disabled />
+                  <label htmlFor="attach-pdf-link" className="text-muted-foreground text-sm leading-none">
+                    {t("Attach link to PDF")}
+                  </label>
+                </div>
+                <FormField
+                  control={control}
+                  name="attach_pdf"
+                  render={({ field }) => (
+                    <FormItem className="flex-row items-center gap-2">
+                      <FormControl>
+                        <Checkbox
+                          id="attach-pdf-file"
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          disabled={isLoading}
+                        />
+                      </FormControl>
+                      <FormLabel htmlFor="attach-pdf-file" className="cursor-pointer leading-none">
+                        {t("Attach PDF as file")}
+                      </FormLabel>
+                    </FormItem>
+                  )}
+                />
               </div>
             </div>
 

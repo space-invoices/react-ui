@@ -53,6 +53,8 @@ export default {
   "Sandbox email daily limit exceeded": "See liivakastikonto saab saata ainult {limit} e-kirja päevas.",
   "Email and attachment language": "E-kirja ja manuse keel",
   "PDF Language": "PDF-i keel",
+  "Attach link to PDF": "Lisa link PDF-ile",
+  "Attach PDF as file": "Lisa PDF failina",
   Default: "Vaikimisi",
   "English (US)": "Inglise (USA)",
   German: "Saksa",

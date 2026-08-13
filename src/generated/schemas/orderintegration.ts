@@ -41,6 +41,7 @@ const updateOrderIntegrationSchemaDefinition = z
     default_payment_type: z.string(),
     send_invoice_email: z.boolean(),
     send_estimate_email: z.boolean(),
+    attach_pdf_to_email: z.boolean(),
     issue_invoice_for_bank: z.boolean(),
     issue_invoice_on_complete: z.boolean(),
     auto_process_delay_seconds: z.number().int().gte(0),

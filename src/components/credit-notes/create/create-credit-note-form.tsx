@@ -16,6 +16,7 @@ import { createCreditNoteSchema } from "@/ui/generated/schemas";
 import { getInitialEslogValidationEnabled, useEslogValidation } from "@/ui/hooks/use-eslog-validation";
 import { useNextDocumentNumber } from "@/ui/hooks/use-next-document-number";
 import { usePremiseSelection } from "@/ui/hooks/use-premise-selection";
+import { useStableHeaderAction } from "@/ui/hooks/use-stable-header-action";
 import { useTransactionTypeCheck } from "@/ui/hooks/use-transaction-type-check";
 import { getEntityCountryCapabilities } from "@/ui/lib/country-capabilities";
 import {
@@ -139,7 +140,6 @@ const createCreditNoteFormSchema = withCreditNoteIssueDateValidation(
 );
 
 const CREDIT_NOTE_POSITIVE_ITEM_FIELDS = ["quantity", "price", "gross_price"] as const;
-const HEADER_ACTION_CLEARED_SIGNATURE = "__cleared__";
 
 function isSameCalendarDate(left: string | Date | undefined, right: string | Date): boolean {
   if (!left) return false;
@@ -566,83 +566,53 @@ export default function CreateCreditNoteForm({
     ? false
     : furs.isLoading || !furs.isSelectionReady || fina.isLoading || !fina.isSelectionReady || isNextNumberLoading;
 
-  const headerActionSignatureRef = useRef<string | null>(null);
-  useEffect(() => {
-    if (!onHeaderActionChange) return;
-    if (isEditMode) {
-      if (headerActionSignatureRef.current === HEADER_ACTION_CLEARED_SIGNATURE) return;
-      headerActionSignatureRef.current = HEADER_ACTION_CLEARED_SIGNATURE;
-      onHeaderActionChange(null);
-      return;
-    }
-
-    if (furs.isLoading || fina.isLoading) {
-      if (headerActionSignatureRef.current === HEADER_ACTION_CLEARED_SIGNATURE) return;
-      headerActionSignatureRef.current = HEADER_ACTION_CLEARED_SIGNATURE;
-      onHeaderActionChange(null);
-      return;
-    }
-
-    const showFursToggle = furs.isEnabled && furs.hasPremises;
-    if (!showFursToggle) {
-      if (headerActionSignatureRef.current === HEADER_ACTION_CLEARED_SIGNATURE) return;
-      headerActionSignatureRef.current = HEADER_ACTION_CLEARED_SIGNATURE;
-      onHeaderActionChange(null);
-      return;
-    }
-
-    const isFursChecked = !skipFiscalization;
-    const headerActionSignature = JSON.stringify({
-      showFursToggle,
-      isFursChecked,
-      fiscalizationLabel: t("Fiscally verify"),
-      fiscalizationEnabledDescription: t("Click to skip fiscalization for this credit note"),
-      fiscalizationDisabledDescription: t("Click to enable fiscalization"),
-    });
-
-    if (headerActionSignatureRef.current === headerActionSignature) return;
-    headerActionSignatureRef.current = headerActionSignature;
-
-    onHeaderActionChange(
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              type="button"
-              variant={isFursChecked ? "outline" : "ghost"}
-              size="sm"
-              className={cn("h-8 cursor-pointer gap-2", !isFursChecked && "text-destructive hover:text-destructive")}
-              onClick={() => setSkipFiscalization(!skipFiscalization)}
+  const showFursToggle = !isEditMode && !furs.isLoading && !fina.isLoading && furs.isEnabled && furs.hasPremises;
+  const isFursChecked = !skipFiscalization;
+  const headerActionSignature = showFursToggle
+    ? JSON.stringify({
+        showFursToggle,
+        isFursChecked,
+        fiscalizationLabel: t("Fiscally verify"),
+        fiscalizationEnabledDescription: t("Click to skip fiscalization for this credit note"),
+        fiscalizationDisabledDescription: t("Click to enable fiscalization"),
+      })
+    : null;
+  const headerAction = showFursToggle ? (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            type="button"
+            variant={isFursChecked ? "outline" : "ghost"}
+            size="sm"
+            className={cn("h-8 cursor-pointer gap-2", !isFursChecked && "text-destructive hover:text-destructive")}
+            onClick={() => setSkipFiscalization(!skipFiscalization)}
+          >
+            <div
+              className={cn(
+                "flex size-4 items-center justify-center rounded border",
+                isFursChecked
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "border-destructive bg-destructive text-destructive-foreground",
+              )}
             >
-              <div
-                className={cn(
-                  "flex size-4 items-center justify-center rounded border",
-                  isFursChecked
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "border-destructive bg-destructive text-destructive-foreground",
-                )}
-              >
-                {isFursChecked ? <Check className="size-3" /> : <X className="size-3" />}
-              </div>
-              <span>{t("Fiscally verify")}</span>
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom" className="max-w-xs">
-            {isFursChecked ? t("Click to skip fiscalization for this credit note") : t("Click to enable fiscalization")}
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>,
-    );
-  }, [
-    fina.isLoading,
-    furs.hasPremises,
-    furs.isEnabled,
-    furs.isLoading,
-    isEditMode,
-    onHeaderActionChange,
-    skipFiscalization,
-    t,
-  ]);
+              {isFursChecked ? <Check className="size-3" /> : <X className="size-3" />}
+            </div>
+            <span>{t("Fiscally verify")}</span>
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="bottom" className="max-w-xs">
+          {isFursChecked ? t("Click to skip fiscalization for this credit note") : t("Click to enable fiscalization")}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  ) : null;
+
+  useStableHeaderAction({
+    action: headerAction,
+    onChange: onHeaderActionChange,
+    signature: headerActionSignature,
+  });
 
   // Auto-populate tax_clause from entity settings when transaction type changes
   const effectiveTransactionType = transactionType ?? "domestic";

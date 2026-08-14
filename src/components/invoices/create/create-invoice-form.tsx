@@ -15,6 +15,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/ui/c
 import { createInvoiceSchema } from "@/ui/generated/schemas";
 import { getInitialEslogValidationEnabled, useEslogValidation } from "@/ui/hooks/use-eslog-validation";
 import { usePremiseSelection } from "@/ui/hooks/use-premise-selection";
+import { useStableHeaderAction } from "@/ui/hooks/use-stable-header-action";
 import { useTransactionTypeCheck } from "@/ui/hooks/use-transaction-type-check";
 import { getEntityCountryCapabilities } from "@/ui/lib/country-capabilities";
 import { normalizeDateOnlyInput, toLocalCalendarDate, toLocalDateOnlyString } from "@/ui/lib/date-only";
@@ -670,134 +671,106 @@ export default function CreateInvoiceForm({
       !fina.isSelectionReady ||
       isNextNumberLoading;
 
-  // Update header action with FURS and e-SLOG toggle buttons
-  const headerActionSignatureRef = useRef<string | null>(null);
-  useEffect(() => {
-    if (!onHeaderActionChange) return;
-
-    // In edit mode, e-SLOG validation remains editable but FURS/FINA controls are create-only.
-    if (!isEditMode && (furs.isLoading || !skipPreferenceInitialized || fina.isLoading)) {
-      if (headerActionSignatureRef.current === null) return;
-      headerActionSignatureRef.current = null;
-      onHeaderActionChange(null);
-      return;
-    }
-
-    const showFursToggle = !isEditMode && furs.isEnabled && furs.hasPremises;
-    const showEslogToggle = eslog.isAvailable;
-    const isFursChecked = !skipFiscalization;
-    const isEslogChecked = eslog.isEnabled === true;
-    const headerActionSignature =
-      showFursToggle || showEslogToggle
-        ? JSON.stringify({
-            showFursToggle,
-            showEslogToggle,
-            isFursChecked,
-            isEslogChecked,
-            eslogLabel: t("e-SLOG"),
-            eslogEnabledDescription: t("Click to skip e-SLOG validation for this invoice"),
-            eslogDisabledDescription: t("Click to enable e-SLOG validation"),
-            fiscalizationLabel: t("Fiscally verify"),
-            fiscalizationEnabledDescription: t("Click to skip fiscalization for this invoice"),
-            fiscalizationDisabledDescription: t("Click to enable fiscalization"),
-          })
-        : null;
-
-    if (headerActionSignatureRef.current === headerActionSignature) return;
-    headerActionSignatureRef.current = headerActionSignature;
-
-    if (showFursToggle || showEslogToggle) {
-      onHeaderActionChange(
-        <div className="flex items-center gap-2">
-          {/* e-SLOG toggle */}
-          {showEslogToggle && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    type="button"
-                    variant={isEslogChecked ? "outline" : "ghost"}
-                    size="sm"
-                    className={cn("h-8 cursor-pointer gap-2", !isEslogChecked && "text-muted-foreground")}
-                    onClick={() => eslog.setEnabled(!eslog.isEnabled)}
-                  >
-                    <div
-                      className={cn(
-                        "flex size-4 items-center justify-center rounded border",
-                        isEslogChecked
-                          ? "border-primary bg-primary text-primary-foreground"
-                          : "border-muted-foreground bg-background text-muted-foreground",
-                      )}
-                    >
-                      {isEslogChecked ? <Check className="size-3" /> : null}
-                    </div>
-                    <span>{t("e-SLOG")}</span>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" className="max-w-xs">
-                  {isEslogChecked
-                    ? t("Click to skip e-SLOG validation for this invoice")
-                    : t("Click to enable e-SLOG validation")}
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
-
-          {/* FURS toggle */}
-          {showFursToggle && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    type="button"
-                    variant={isFursChecked ? "outline" : "ghost"}
-                    size="sm"
+  // In edit mode, e-SLOG validation remains editable but FURS/FINA controls are create-only.
+  const headerActionUnavailable = !isEditMode && (furs.isLoading || !skipPreferenceInitialized || fina.isLoading);
+  const showFursToggle = !headerActionUnavailable && !isEditMode && furs.isEnabled && furs.hasPremises;
+  const showEslogToggle = !headerActionUnavailable && eslog.isAvailable;
+  const isFursChecked = !skipFiscalization;
+  const isEslogChecked = eslog.isEnabled === true;
+  const headerActionSignature =
+    showFursToggle || showEslogToggle
+      ? JSON.stringify({
+          showFursToggle,
+          showEslogToggle,
+          isFursChecked,
+          isEslogChecked,
+          eslogLabel: t("e-SLOG"),
+          eslogEnabledDescription: t("Click to skip e-SLOG validation for this invoice"),
+          eslogDisabledDescription: t("Click to enable e-SLOG validation"),
+          fiscalizationLabel: t("Fiscally verify"),
+          fiscalizationEnabledDescription: t("Click to skip fiscalization for this invoice"),
+          fiscalizationDisabledDescription: t("Click to enable fiscalization"),
+        })
+      : null;
+  const headerAction =
+    showFursToggle || showEslogToggle ? (
+      <div className="flex items-center gap-2">
+        {/* e-SLOG toggle */}
+        {showEslogToggle && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant={isEslogChecked ? "outline" : "ghost"}
+                  size="sm"
+                  className={cn("h-8 cursor-pointer gap-2", !isEslogChecked && "text-muted-foreground")}
+                  onClick={() => eslog.setEnabled(!eslog.isEnabled)}
+                >
+                  <div
                     className={cn(
-                      "h-8 cursor-pointer gap-2",
-                      !isFursChecked && "text-destructive hover:text-destructive",
+                      "flex size-4 items-center justify-center rounded border",
+                      isEslogChecked
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-muted-foreground bg-background text-muted-foreground",
                     )}
-                    onClick={() => setSkipFiscalization(!skipFiscalization)}
                   >
-                    <div
-                      className={cn(
-                        "flex size-4 items-center justify-center rounded border",
-                        isFursChecked
-                          ? "border-primary bg-primary text-primary-foreground"
-                          : "border-destructive bg-destructive text-destructive-foreground",
-                      )}
-                    >
-                      {isFursChecked ? <Check className="size-3" /> : <X className="size-3" />}
-                    </div>
-                    <span>{t("Fiscally verify")}</span>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" className="max-w-xs">
-                  {isFursChecked
-                    ? t("Click to skip fiscalization for this invoice")
-                    : t("Click to enable fiscalization")}
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
-        </div>,
-      );
-    } else {
-      onHeaderActionChange(null);
-    }
-  }, [
-    furs.isLoading,
-    skipPreferenceInitialized,
-    fina.isLoading,
-    furs.isEnabled,
-    furs.hasPremises,
-    skipFiscalization,
-    eslog.isAvailable,
-    eslog.isEnabled,
-    eslog.setEnabled,
-    isEditMode,
-    onHeaderActionChange,
-    t,
-  ]);
+                    {isEslogChecked ? <Check className="size-3" /> : null}
+                  </div>
+                  <span>{t("e-SLOG")}</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="max-w-xs">
+                {isEslogChecked
+                  ? t("Click to skip e-SLOG validation for this invoice")
+                  : t("Click to enable e-SLOG validation")}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
+
+        {/* FURS toggle */}
+        {showFursToggle && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant={isFursChecked ? "outline" : "ghost"}
+                  size="sm"
+                  className={cn(
+                    "h-8 cursor-pointer gap-2",
+                    !isFursChecked && "text-destructive hover:text-destructive",
+                  )}
+                  onClick={() => setSkipFiscalization(!skipFiscalization)}
+                >
+                  <div
+                    className={cn(
+                      "flex size-4 items-center justify-center rounded border",
+                      isFursChecked
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-destructive bg-destructive text-destructive-foreground",
+                    )}
+                  >
+                    {isFursChecked ? <Check className="size-3" /> : <X className="size-3" />}
+                  </div>
+                  <span>{t("Fiscally verify")}</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="max-w-xs">
+                {isFursChecked ? t("Click to skip fiscalization for this invoice") : t("Click to enable fiscalization")}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
+      </div>
+    ) : null;
+
+  useStableHeaderAction({
+    action: headerAction,
+    onChange: onHeaderActionChange,
+    signature: headerActionSignature,
+  });
 
   // Pre-fill invoice number from preview
   useEffect(() => {

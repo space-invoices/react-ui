@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { CreateCreditNote, CreditNote, Tax, UpdateCreditNote } from "@spaceinvoices/js-sdk";
 import { useQueryClient } from "@tanstack/react-query";
-import { AlertCircle, Check, X } from "lucide-react";
+import { AlertCircle, Check, Send, X } from "lucide-react";
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Resolver } from "react-hook-form";
@@ -98,37 +98,61 @@ import {
   translateEslogValidationError,
   validateEslogForm,
 } from "../../invoices/create/eslog-validation";
+import invoiceBg from "../../invoices/create/locales/bg";
+import invoiceCs from "../../invoices/create/locales/cs";
 import invoiceDe from "../../invoices/create/locales/de";
 import invoiceEs from "../../invoices/create/locales/es";
+import invoiceEt from "../../invoices/create/locales/et";
+import invoiceFi from "../../invoices/create/locales/fi";
 import invoiceFr from "../../invoices/create/locales/fr";
 import invoiceHr from "../../invoices/create/locales/hr";
+import invoiceIs from "../../invoices/create/locales/is";
 import invoiceIt from "../../invoices/create/locales/it";
+import invoiceNb from "../../invoices/create/locales/nb";
 import invoiceNl from "../../invoices/create/locales/nl";
 import invoicePl from "../../invoices/create/locales/pl";
 import invoicePt from "../../invoices/create/locales/pt";
+import invoiceSk from "../../invoices/create/locales/sk";
 import invoiceSl from "../../invoices/create/locales/sl";
+import invoiceSv from "../../invoices/create/locales/sv";
 import { useCreateCreditNote, useCreateCustomCreditNote, useUpdateCreditNote } from "../credit-notes.hooks";
+import bg from "./locales/bg";
+import cs from "./locales/cs";
 import de from "./locales/de";
 import es from "./locales/es";
+import et from "./locales/et";
+import fi from "./locales/fi";
 import fr from "./locales/fr";
 import hr from "./locales/hr";
+import is from "./locales/is";
 import it from "./locales/it";
+import nb from "./locales/nb";
 import nl from "./locales/nl";
 import pl from "./locales/pl";
 import pt from "./locales/pt";
+import sk from "./locales/sk";
 import sl from "./locales/sl";
+import sv from "./locales/sv";
 import { prepareCreditNoteSubmission, prepareCreditNoteUpdateSubmission } from "./prepare-credit-note-submission";
 
 const translations = {
+  bg: { ...invoiceBg, ...bg },
+  cs: { ...invoiceCs, ...cs },
   sl: { ...invoiceSl, ...sl },
   de: { ...invoiceDe, ...de },
   it: { ...invoiceIt, ...it },
   fr: { ...invoiceFr, ...fr },
   es: { ...invoiceEs, ...es },
+  et: { ...invoiceEt, ...et },
+  fi: { ...invoiceFi, ...fi },
   pt: { ...invoicePt, ...pt },
   nl: { ...invoiceNl, ...nl },
   pl: { ...invoicePl, ...pl },
   hr: { ...invoiceHr, ...hr },
+  is: { ...invoiceIs, ...is },
+  nb: { ...invoiceNb, ...nb },
+  sk: { ...invoiceSk, ...sk },
+  sv: { ...invoiceSv, ...sv },
 } as const;
 const createCreditNoteFormSchema = withCreditNoteIssueDateValidation(
   withRequiredDocumentItemFields(
@@ -182,6 +206,10 @@ type CreateCreditNoteFormProps = {
   disableBusinessUnitSelect?: boolean;
   /** Whether draft actions should be available in the UI */
   allowDrafts?: boolean;
+  /** Show Peppol recipient address fields for AR e-invoicing. */
+  showPeppolRecipientFields?: boolean;
+  /** Show the per-document Peppol auto-send opt-out control. */
+  showPeppolSendToggle?: boolean;
   mode?: "create" | "edit";
   documentId?: string;
   /** Optional app-level content rendered inside the details section. */
@@ -205,6 +233,8 @@ export default function CreateCreditNoteForm({
   showBusinessUnitSelect = businessUnits.length > 0 || !!(initialValues as any)?.business_unit_id,
   disableBusinessUnitSelect = false,
   allowDrafts = true,
+  showPeppolRecipientFields = false,
+  showPeppolSendToggle = false,
   mode = "create",
   documentId,
   detailsExtras,
@@ -233,6 +263,7 @@ export default function CreateCreditNoteForm({
   const translationsFeatureEnabled = whiteLabel.isFeatureVisible(DOCUMENT_CONTENT_TRANSLATIONS_FEATURE);
   const defaultContentLocale = activeEntity?.locale || "en-US";
   const [contentLocale, setContentLocale] = useState<DocumentContentLocaleMode>(DEFAULT_CONTENT_LOCALE);
+  const [peppolSendEnabled, setPeppolSendEnabled] = useState(showPeppolSendToggle);
   const initialBusinessUnit = useMemo(
     () => businessUnits.find((unit) => unit.id === ((initialValues as any)?.business_unit_id ?? null)) ?? null,
     [businessUnits, initialValues],
@@ -253,6 +284,10 @@ export default function CreateCreditNoteForm({
   eslogEntityErrorsRef.current = eslog.entityErrors;
   const [eslogSetupDialogOpen, setEslogSetupDialogOpen] = useState(false);
   const isDraftSubmitRef = useRef(false);
+
+  useEffect(() => {
+    setPeppolSendEnabled(showPeppolSendToggle);
+  }, [showPeppolSendToggle]);
   const eslogResolverStateRef = useRef({
     activeEntity,
     isEnabled: eslog.isEnabled === true,
@@ -567,46 +602,97 @@ export default function CreateCreditNoteForm({
     : furs.isLoading || !furs.isSelectionReady || fina.isLoading || !fina.isSelectionReady || isNextNumberLoading;
 
   const showFursToggle = !isEditMode && !furs.isLoading && !fina.isLoading && furs.isEnabled && furs.hasPremises;
+  const showPeppolToggle = !isEditMode && !furs.isLoading && !fina.isLoading && showPeppolSendToggle;
   const isFursChecked = !skipFiscalization;
-  const headerActionSignature = showFursToggle
-    ? JSON.stringify({
-        showFursToggle,
-        isFursChecked,
-        fiscalizationLabel: t("Fiscally verify"),
-        fiscalizationEnabledDescription: t("Click to skip fiscalization for this credit note"),
-        fiscalizationDisabledDescription: t("Click to enable fiscalization"),
-      })
-    : null;
-  const headerAction = showFursToggle ? (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            type="button"
-            variant={isFursChecked ? "outline" : "ghost"}
-            size="sm"
-            className={cn("h-8 cursor-pointer gap-2", !isFursChecked && "text-destructive hover:text-destructive")}
-            onClick={() => setSkipFiscalization(!skipFiscalization)}
-          >
-            <div
-              className={cn(
-                "flex size-4 items-center justify-center rounded border",
-                isFursChecked
-                  ? "border-primary bg-primary text-primary-foreground"
-                  : "border-destructive bg-destructive text-destructive-foreground",
-              )}
-            >
-              {isFursChecked ? <Check className="size-3" /> : <X className="size-3" />}
-            </div>
-            <span>{t("Fiscally verify")}</span>
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent side="bottom" className="max-w-xs">
-          {isFursChecked ? t("Click to skip fiscalization for this credit note") : t("Click to enable fiscalization")}
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
-  ) : null;
+  const isPeppolChecked = peppolSendEnabled;
+  const headerActionSignature =
+    showFursToggle || showPeppolToggle
+      ? JSON.stringify({
+          showFursToggle,
+          showPeppolToggle,
+          isFursChecked,
+          isPeppolChecked,
+          peppolLabel: t("Peppol"),
+          peppolEnabledDescription: t("Click to skip Peppol sending for this credit note"),
+          peppolDisabledDescription: t("Click to enable Peppol sending"),
+          fiscalizationLabel: t("Fiscally verify"),
+          fiscalizationEnabledDescription: t("Click to skip fiscalization for this credit note"),
+          fiscalizationDisabledDescription: t("Click to enable fiscalization"),
+        })
+      : null;
+  const headerAction =
+    showFursToggle || showPeppolToggle ? (
+      <div className="flex items-center gap-2">
+        {showPeppolToggle && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant={isPeppolChecked ? "outline" : "ghost"}
+                  size="sm"
+                  className={cn("h-8 cursor-pointer gap-2", !isPeppolChecked && "text-muted-foreground")}
+                  onClick={() => setPeppolSendEnabled((enabled) => !enabled)}
+                >
+                  <div
+                    className={cn(
+                      "flex size-4 items-center justify-center rounded border",
+                      isPeppolChecked
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-muted-foreground bg-background text-muted-foreground",
+                    )}
+                  >
+                    {isPeppolChecked ? <Check className="size-3" /> : <Send className="size-3" />}
+                  </div>
+                  <span>{t("Peppol")}</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="max-w-xs">
+                {isPeppolChecked
+                  ? t("Click to skip Peppol sending for this credit note")
+                  : t("Click to enable Peppol sending")}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
+
+        {showFursToggle && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant={isFursChecked ? "outline" : "ghost"}
+                  size="sm"
+                  className={cn(
+                    "h-8 cursor-pointer gap-2",
+                    !isFursChecked && "text-destructive hover:text-destructive",
+                  )}
+                  onClick={() => setSkipFiscalization(!skipFiscalization)}
+                >
+                  <div
+                    className={cn(
+                      "flex size-4 items-center justify-center rounded border",
+                      isFursChecked
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-destructive bg-destructive text-destructive-foreground",
+                    )}
+                  >
+                    {isFursChecked ? <Check className="size-3" /> : <X className="size-3" />}
+                  </div>
+                  <span>{t("Fiscally verify")}</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="max-w-xs">
+                {isFursChecked
+                  ? t("Click to skip fiscalization for this credit note")
+                  : t("Click to enable fiscalization")}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
+      </div>
+    ) : null;
 
   useStableHeaderAction({
     action: headerAction,
@@ -829,6 +915,7 @@ export default function CreateCreditNoteForm({
         eslog: eslogOptions,
         ujp: ujpOptions,
         germanEInvoicing: germanEInvoicingOptions,
+        eInvoicing: showPeppolSendToggle ? { send_enabled: peppolSendEnabled } : undefined,
       });
       const preservedExpectedTotalWithTax = getPreservedExpectedTotalWithTax(submissionValues);
       if (preservedExpectedTotalWithTax !== undefined) {
@@ -874,8 +961,10 @@ export default function CreateCreditNoteForm({
       originalCustomer,
       paymentDocumentTotal,
       paymentRows,
+      peppolSendEnabled,
       setPositiveCreditNoteItemErrors,
       showCustomerForm,
+      showPeppolSendToggle,
       skipFiscalization,
       operatorPrefill,
       customCreateTemplate,
@@ -1113,6 +1202,7 @@ export default function CreateCreditNoteForm({
             showBusinessRecipientFields={eslog.isEnabled === true && eslog.requiresUjpValidation}
             showUjpRoutingFields={eslog.isEnabled === true && eslog.requiresUjpValidation}
             showEInvoicingBuyerReference={countryCapabilities.showGermanEInvoicingExports}
+            showPeppolRecipientFields={showPeppolRecipientFields}
             t={t}
             locale={locale}
           />

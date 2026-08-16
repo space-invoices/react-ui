@@ -1,6 +1,7 @@
 export default {
   "Contact Details": "Kontaktopplysninger",
   "Tax Details": "Skatteopplysninger",
+  "E-invoicing": "E-fakturering",
   "Bank Account": "Bankkonto",
   Name: "Navn",
   "Enter name": "Skriv inn navn",
@@ -16,6 +17,8 @@ export default {
   "Enter country": "Skriv inn land",
   "Tax Number": "Skattenummer",
   "Company Number": "Organisasjonsnummer",
+  "Peppol Scheme": "Peppol-skjema",
+  "Peppol ID": "Peppol-ID",
   "Enter tax number": "Skriv inn skattenummer",
   "Create Customer": "Opprett kunde",
   Cancel: "Avbryt",

@@ -65,6 +65,20 @@ function isGermanStandardValidationRequired(entity: CountryEntity, standard: "xr
   return isGermanStandardEnabled(entity, standard);
 }
 
+export function hasPeppolSendingSupport(entity: CountryEntity): boolean {
+  return hasCountryFeature(entity, "e_invoicing");
+}
+
+export function isPeppolSendingEnabled(entity: CountryEntity): boolean {
+  const settings = (entity?.settings as Record<string, any> | undefined) ?? {};
+  return hasPeppolSendingSupport(entity) && settings.e_invoicing?.enabled === true;
+}
+
+export function isPeppolAutoSendingEnabled(entity: CountryEntity): boolean {
+  const settings = (entity?.settings as Record<string, any> | undefined) ?? {};
+  return isPeppolSendingEnabled(entity) && settings.e_invoicing?.auto_send === true;
+}
+
 function getCookieValue(name: string) {
   if (typeof document === "undefined") {
     return null;
@@ -128,6 +142,8 @@ export function getEntityCountryCapabilities(entity: CountryEntity) {
   const xrechnungEnabled = isGermany && hasEInvoicing && isGermanStandardEnabled(entity, "xrechnung");
   const zugferdEnabled = isGermany && hasEInvoicing && isGermanStandardEnabled(entity, "zugferd");
   const germanEInvoicingEnabled = xrechnungEnabled || zugferdEnabled;
+  const peppolSendingEnabled = isPeppolSendingEnabled(entity);
+  const peppolAutoSendingEnabled = isPeppolAutoSendingEnabled(entity);
 
   return {
     isPortugal,
@@ -147,6 +163,11 @@ export function getEntityCountryCapabilities(entity: CountryEntity) {
     usesFixedPdfTemplate: isPortugal,
     showPtSaftExport: isPortugal,
     showSloveniaVodExport: isSlovenia,
+    showPeppolSendingSettings: hasPeppolSendingSupport(entity),
+    showPeppolSendingControls: peppolSendingEnabled,
+    showPeppolAutoSendControls: peppolAutoSendingEnabled,
+    peppolSendingEnabled,
+    peppolAutoSendingEnabled,
     showGermanEInvoicingExports: germanEInvoicingEnabled,
     showXRechnungExport: xrechnungEnabled,
     showZugferdExport: zugferdEnabled,

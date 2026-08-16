@@ -1,4 +1,6 @@
 export default {
+  "Click to skip Peppol sending for this credit note":
+    "Napsauta ohittaaksesi Peppolin tämän hyvityslaskun lähettämisen",
   Recipient: "Vastaanottaja",
   Name: "Nimi",
   Details: "Tiedot",

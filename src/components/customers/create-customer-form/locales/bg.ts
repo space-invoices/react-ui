@@ -1,6 +1,7 @@
 export default {
   "Contact Details": "Данни за контакт",
   "Tax Details": "Данъчни данни",
+  "E-invoicing": "Електронно фактуриране",
   "Bank Account": "Банкова сметка",
   Name: "Име",
   "Enter name": "Въведете име",
@@ -16,6 +17,8 @@ export default {
   "Enter country": "Въведете държава",
   "Tax Number": "ДДС номер",
   "Company Number": "ЕИК",
+  "Peppol Scheme": "Схема Peppol",
+  "Peppol ID": "Идентификатор Peppol",
   "Enter tax number": "Въведете ДДС номер",
   "Create Customer": "Създай клиент",
   Cancel: "Отказ",

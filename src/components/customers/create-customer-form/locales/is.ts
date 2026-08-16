@@ -1,6 +1,7 @@
 export default {
   "Contact Details": "Tengiliðaupplýsingar",
   "Tax Details": "Skattaupplýsingar",
+  "E-invoicing": "Rafræn reikningagerð",
   "Bank Account": "Bankareikningur",
   Name: "Nafn",
   "Enter name": "Sláðu inn nafn",
@@ -16,6 +17,8 @@ export default {
   "Enter country": "Sláðu inn land",
   "Tax Number": "Skattnúmer",
   "Company Number": "Kennitala fyrirtækis",
+  "Peppol Scheme": "Peppol-kerfi",
+  "Peppol ID": "Peppol-auðkenni",
   "Enter tax number": "Sláðu inn skattnúmer",
   "Create Customer": "Búa til viðskiptavin",
   Cancel: "Hætta við",

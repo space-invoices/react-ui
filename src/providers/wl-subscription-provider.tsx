@@ -18,6 +18,8 @@ export type PlanLimits = {
   extra_store_price_cents: number | null;
   extra_store_annual_price_cents: number | null;
   extra_store_invoices_per_month: number | null;
+  e_invoicing_sends_included: number | null;
+  e_invoicing_send_price_cents: number | null;
 } | null;
 
 export type StoreBilling = {
@@ -52,6 +54,8 @@ export type UsageStats = {
   documents_limit: number | null;
   invoices_count: number;
   invoices_limit: number | null;
+  e_invoicing_send_count: number;
+  e_invoicing_sends_included: number | null;
   period_start: string;
   period_end: string;
 };
@@ -188,6 +192,8 @@ const DEFAULT_SUBSCRIPTION: CurrentSubscription = {
     documents_limit: null,
     invoices_count: 0,
     invoices_limit: null,
+    e_invoicing_send_count: 0,
+    e_invoicing_sends_included: null,
     period_start: new Date().toISOString(),
     period_end: new Date().toISOString(),
   },

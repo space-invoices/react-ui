@@ -1,4 +1,10 @@
 export default {
+  Peppol: "Peppol",
+  "Click to skip Peppol sending for this invoice": "Klõpsake selle arve Peppoli saatmise vahelejätmiseks",
+  "Click to enable Peppol sending": "Klõpsake Peppoli saatmise lubamiseks",
+  "Peppol Scheme": "Peppoli skeem",
+  "Peppol ID": "Peppoli ID",
+  Scheme: "Skeem",
   Recipient: "Saaja",
   Name: "Nimi",
   Details: "Üksikasjad",

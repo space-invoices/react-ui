@@ -68,6 +68,10 @@ type PrepareOptions = {
   ujp?: UjpData;
   /** German XRechnung/ZUGFeRD validation data */
   germanEInvoicing?: GermanEInvoicingData;
+  /** Per-document Peppol sending control */
+  eInvoicing?: {
+    send_enabled?: boolean;
+  };
   /** Map of item index to gross price mode (collected from component state) */
   priceModes?: PriceModesMap;
   /** Original edit form values used to omit unchanged update fields. */
@@ -136,6 +140,9 @@ export function prepareInvoiceSubmission(
     if (options.germanEInvoicing.zugferd) {
       (payload as any).zugferd = options.germanEInvoicing.zugferd;
     }
+  }
+  if (options.eInvoicing !== undefined) {
+    (payload as any).e_invoicing = options.eInvoicing;
   }
   const pt = normalizePtDocumentInput(values.pt);
   if (pt) {

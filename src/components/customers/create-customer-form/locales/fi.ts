@@ -1,6 +1,7 @@
 export default {
   "Contact Details": "Yhteystiedot",
   "Tax Details": "Verotiedot",
+  "E-invoicing": "Sähköinen laskutus",
   "Bank Account": "Pankkitili",
   Name: "Nimi",
   "Enter name": "Kirjoita nimi",
@@ -16,6 +17,8 @@ export default {
   "Enter country": "Kirjoita maa",
   "Tax Number": "ALV-numero",
   "Company Number": "Y-tunnus",
+  "Peppol Scheme": "Peppol-järjestelmä",
+  "Peppol ID": "Peppol-tunnus",
   "Enter tax number": "Kirjoita ALV-numero",
   "Create Customer": "Luo asiakas",
   Cancel: "Peruuta",

@@ -35,6 +35,9 @@ type PrepareOptions = {
       validation_required?: boolean;
     };
   };
+  eInvoicing?: {
+    send_enabled?: boolean;
+  };
 };
 
 export function prepareCreditNoteSubmission(values: any, options: PrepareOptions): CreateCreditNote {
@@ -62,6 +65,9 @@ export function prepareCreditNoteSubmission(values: any, options: PrepareOptions
     if (options.germanEInvoicing.zugferd) {
       (payload as any).zugferd = options.germanEInvoicing.zugferd;
     }
+  }
+  if (options.eInvoicing !== undefined) {
+    (payload as any).e_invoicing = options.eInvoicing;
   }
   return payload;
 }

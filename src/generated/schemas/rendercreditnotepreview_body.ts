@@ -44,6 +44,7 @@ const DocumentEntity = z
     company_number: z.union([z.string(), z.null()]),
     phone: z.union([z.string(), z.null()]),
     peppol_id: z.union([z.string(), z.null()]),
+    peppol_scheme_id: z.union([z.string(), z.null()]),
     e_invoicing: z.union([DocumentEInvoicingCustomerData, z.null()]),
     bank_accounts: z.union([z.array(z.any()), z.null()]),
     is_end_consumer: z.union([z.boolean(), z.null()]),
@@ -1039,6 +1040,12 @@ const CreateFinaInvoiceData = z
 
 
 // Dependency schema for rendercreditnotepreview_body
+const DocumentEInvoicingSendInput = z
+  .object({ send_enabled: z.union([z.boolean(), z.null()]) })
+  .partial();
+
+
+// Dependency schema for rendercreditnotepreview_body
 const GermanEInvoicingInput = z
   .object({
     validation_enabled: z.union([z.boolean(), z.null()]),
@@ -1140,6 +1147,7 @@ const PartialCreditNotePreview = z.object({
     .union([z.array(CreateDocumentCategoryAssignment), z.null()])
     .optional(),
   fina: z.union([CreateFinaInvoiceData, z.null()]).optional(),
+  e_invoicing: z.union([DocumentEInvoicingSendInput, z.null()]).optional(),
   xrechnung: z.union([GermanEInvoicingInput, z.null()]).optional(),
   zugferd: z.union([GermanEInvoicingInput, z.null()]).optional(),
   ujp: z.union([UjpInput, z.null()]).optional(),
@@ -1313,6 +1321,7 @@ const CompleteCreditNotePreview = z.object({
     .union([z.array(CreateDocumentCategoryAssignment), z.null()])
     .optional(),
   fina: z.union([CreateFinaInvoiceData, z.null()]).optional(),
+  e_invoicing: z.union([DocumentEInvoicingSendInput, z.null()]).optional(),
   xrechnung: z.union([GermanEInvoicingInput, z.null()]).optional(),
   zugferd: z.union([GermanEInvoicingInput, z.null()]).optional(),
   ujp: z.union([UjpInput, z.null()]).optional(),

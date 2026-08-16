@@ -8,6 +8,7 @@ import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "../ui/dialog";
 import { Switch } from "../ui/switch";
+import { getPeppolMeterPricing, hasPeppolPlanAccess } from "./peppol-meter";
 
 type UpgradeModalProps = {
   isOpen: boolean;
@@ -61,6 +62,8 @@ function createUpgradeTranslation({ t, namespace, locale, translationLocale }: C
           "{{invoices}} invoices per month and {{stores}} connected stores included",
         "entity-billing-page.plan-description.invoices-only": "{{invoices}} invoices per month included",
         "entity-billing-page.plan-description.stores-only": "{{stores}} connected stores included",
+        "entity-billing-page.paywall.features.e-invoicing-meter":
+          "{{included}} Peppol sends included, then €{{price}}/send",
         "entity-billing-page.pricing.per-month": "/mo",
         "entity-billing-page.plan-names.simple": "Simple",
         "entity-billing-page.plan-names.advanced": "Advanced",
@@ -281,7 +284,11 @@ function PlanCard({
 
   const displayPrice = isYearly ? yearlyMonthly : monthlyPrice;
   const planName = t(`entity-billing-page.plan-names.${plan.slug}`, { defaultValue: plan.name });
-  const featureItems = getPlanFeatures(plan.slug, highlightFeature, t);
+  const featureItems = getPlanFeatures(plan, highlightFeature, t);
+  const peppolMeterFeature = getPeppolMeterFeature(plan, t);
+  if (peppolMeterFeature) {
+    featureItems.push(peppolMeterFeature);
+  }
   const invoiceLimit = plan.limits?.invoices_per_month ?? plan.limits?.documents_per_month;
   const includedStores = plan.limits?.included_store_count ?? null;
   let planDescription = t("entity-billing-page.plan-description.unlimited", { defaultValue: "Unlimited usage" });
@@ -383,6 +390,17 @@ function PlanIcon({ slug }: { slug: string }) {
   }
 }
 
+function getPeppolMeterFeature(plan: WhiteLabelPlan, t: ReturnType<typeof createUpgradeTranslation>) {
+  const pricing = getPeppolMeterPricing(plan);
+  if (!pricing) return null;
+
+  return t("entity-billing-page.paywall.features.e-invoicing-meter", {
+    included: pricing.includedSends,
+    price: (pricing.sendPriceCents / 100).toFixed(2),
+    defaultValue: "{{included}} Peppol sends included, then €{{price}}/send",
+  });
+}
+
 function getFeatureDisplayName(feature: GatedFeature, t: ReturnType<typeof createUpgradeTranslation>): string {
   const defaultNames: Record<GatedFeature, string> = {
     furs: "FURS Fiscalization",
@@ -405,7 +423,7 @@ function getFeatureDisplayName(feature: GatedFeature, t: ReturnType<typeof creat
 }
 
 function getPlanFeatures(
-  slug: string,
+  plan: WhiteLabelPlan,
   highlightFeature: GatedFeature | undefined,
   t: ReturnType<typeof createUpgradeTranslation>,
 ): string[] {
@@ -456,14 +474,16 @@ function getPlanFeatures(
     "pro.overage": "Overage billed at €0.01/invoice",
   };
 
-  const features = (featureKeysByPlan[slug] ?? []).map((featureKey) =>
-    t(`entity-billing-page.paywall.features.${featureKey}`, {
-      defaultValue: featureDefaults[featureKey] ?? featureKey,
-    }),
-  );
+  const features = (featureKeysByPlan[plan.slug] ?? [])
+    .filter((featureKey) => featureKey !== "advanced.e-invoicing" || hasPeppolPlanAccess(plan))
+    .map((featureKey) =>
+      t(`entity-billing-page.paywall.features.${featureKey}`, {
+        defaultValue: featureDefaults[featureKey] ?? featureKey,
+      }),
+    );
   if (highlightFeature) {
     const featureLabel = getFeatureDisplayName(highlightFeature, t);
-    if (!features.includes(featureLabel) && planSupportsFeature(slug, highlightFeature)) {
+    if (!features.includes(featureLabel) && planSupportsFeature(plan, highlightFeature)) {
       features.unshift(featureLabel);
     }
   }
@@ -471,9 +491,10 @@ function getPlanFeatures(
   return features;
 }
 
-function planSupportsFeature(slug: string, feature: GatedFeature) {
-  if (slug === "pro") return true;
-  if (slug === "advanced") {
+function planSupportsFeature(plan: WhiteLabelPlan, feature: GatedFeature) {
+  if (feature === "e_invoicing") return hasPeppolPlanAccess(plan);
+  if (plan.slug === "pro") return true;
+  if (plan.slug === "advanced") {
     return !["custom_templates", "api_access", "webhooks"].includes(feature);
   }
   return false;

@@ -1,6 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { CompanyRegistryResult, Customer, UpdateCustomerBody } from "@spaceinvoices/js-sdk";
 import { useForm } from "react-hook-form";
+import { z } from "zod";
 import { CompanyRegistryAutocomplete } from "@/ui/components/company-registry";
 import { FormInput } from "@/ui/components/form";
 import { Form } from "@/ui/components/ui/form";
@@ -11,6 +12,7 @@ import { createTranslation } from "@/ui/lib/translation";
 import createBg from "../create-customer-form/locales/bg";
 import createCs from "../create-customer-form/locales/cs";
 import createDe from "../create-customer-form/locales/de";
+import createEn from "../create-customer-form/locales/en";
 import createEs from "../create-customer-form/locales/es";
 import createEt from "../create-customer-form/locales/et";
 import createFi from "../create-customer-form/locales/fi";
@@ -36,6 +38,7 @@ import { useUpdateCustomer } from "../customers.hooks";
 import bg from "./locales/bg";
 import cs from "./locales/cs";
 import de from "./locales/de";
+import en from "./locales/en";
 import es from "./locales/es";
 import et from "./locales/et";
 import fi from "./locales/fi";
@@ -52,6 +55,7 @@ import sl from "./locales/sl";
 import sv from "./locales/sv";
 
 const translations = {
+  en: { ...createEn, ...en },
   bg: { ...createBg, ...bg, ...customerProfileTranslations.bg },
   cs: { ...createCs, ...cs, ...customerProfileTranslations.cs },
   sl: { ...createSl, ...sl, ...customerProfileTranslations.sl },
@@ -79,6 +83,7 @@ type EditCustomerFormProps = {
    * Used to enable company registry autocomplete for supported countries
    */
   entityCountryCode?: string;
+  eInvoicingEnabled?: boolean;
   onSuccess?: (customer: Customer) => void;
   onError?: (error: Error) => void;
   renderSubmitButton?: (props: { isSubmitting: boolean; submit: () => void }) => React.ReactNode;
@@ -86,10 +91,14 @@ type EditCustomerFormProps = {
 
 const customerFormSchema = createCustomerSchema.extend({
   bank_accounts: customerBankAccountsFormSchema,
+  peppol_id: z.string().optional().nullable(),
+  peppol_scheme_id: z.string().max(10).optional().nullable(),
 });
 
 type CustomerFormSchema = CreateCustomerSchema & {
   bank_accounts?: Array<Record<string, unknown>>;
+  peppol_id?: string | null;
+  peppol_scheme_id?: string | null;
 };
 
 function CustomerFormSection({ title, children }: { title: string; children: React.ReactNode }) {
@@ -105,6 +114,7 @@ export default function EditCustomerForm({
   entityId,
   customer,
   entityCountryCode,
+  eInvoicingEnabled = false,
   onSuccess,
   onError,
   renderSubmitButton,
@@ -148,11 +158,16 @@ export default function EditCustomerForm({
       contact_type: contactType,
       is_tax_subject: customer.is_tax_subject ?? true,
       is_end_consumer: customer.is_end_consumer ?? false,
+      peppol_id: customer.peppol_id ?? "",
+      peppol_scheme_id: customer.peppol_scheme_id ?? "",
       bank_accounts: (customer.bank_accounts as Array<Record<string, unknown>> | null | undefined) ?? [
         { type: "iban" },
       ],
     },
   });
+  const taxNumber = form.watch("tax_number");
+  const companyNumber = form.watch("company_number");
+  const showPeppolFields = eInvoicingEnabled && (!!taxNumber || !!companyNumber);
 
   const { mutate: updateCustomer, isPending } = useUpdateCustomer({
     entityId,
@@ -225,6 +240,15 @@ export default function EditCustomerForm({
             </div>
             <CustomerClassificationFields control={form.control} t={t} />
           </CustomerFormSection>
+
+          {showPeppolFields && (
+            <CustomerFormSection title={t("E-invoicing")}>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <FormInput control={form.control} name="peppol_scheme_id" label={t("Peppol Scheme")} />
+                <FormInput control={form.control} name="peppol_id" label={t("Peppol ID")} />
+              </div>
+            </CustomerFormSection>
+          )}
 
           <CustomerFormSection title={t("Bank Account")}>
             <CustomerBankAccountFields

@@ -32,6 +32,7 @@ const createCustomerSchemaDefinition = z.object({
   tax_number: z.union([z.string(), z.null()]).optional(),
   company_number: z.union([z.string(), z.null()]).optional(),
   peppol_id: z.union([z.string(), z.null()]).optional(),
+  peppol_scheme_id: z.union([z.string(), z.null()]).optional(),
   bank_accounts: z.union([z.array(z.any()), z.null()]).optional(),
   email: z.union([z.string(), z.null()]).optional(),
   contact_type: z
@@ -58,6 +59,7 @@ const updateCustomerSchemaDefinition = z
     tax_number: z.union([z.string(), z.null()]),
     company_number: z.union([z.string(), z.null()]),
     peppol_id: z.union([z.string(), z.null()]),
+    peppol_scheme_id: z.union([z.string(), z.null()]),
     bank_accounts: z.union([z.array(z.any()), z.null()]),
     email: z.union([z.string(), z.null()]),
     contact_type: z.union([

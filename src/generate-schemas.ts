@@ -6,6 +6,12 @@ const SCHEMAS_DIR = "./src/generated/schemas";
 const STAGING_SCHEMAS_DIR = "./src/generated/.schemas-staging";
 const GENERATED_DIR = "./generated";
 const STRING_LENGTH_CONSTRAINT_OPERATION_IDS = new Set(["createEntity"]);
+const DEPRECATED_E_INVOICING_OPERATION_IDS = new Set([
+  "registerEInvoicingSupplier",
+  "updateEInvoicingSupplier",
+  "searchEInvoicingCustomer",
+  "sendEInvoice",
+]);
 
 type OperationSchemaEntry = {
   alias: string;
@@ -94,6 +100,23 @@ function extractOperationSchemaEntries(fullContent: string): OperationSchemaEntr
   }
 
   return [...dedupedEntries.values()];
+}
+
+export function extractOpenApiOperationSchemaEntries(document: OpenApiDocument): OperationSchemaEntry[] {
+  const entries: OperationSchemaEntry[] = [];
+
+  for (const pathItem of Object.values(document.paths ?? {})) {
+    for (const operation of Object.values(pathItem)) {
+      const alias = operation?.operationId;
+      const schemaRef = operation?.requestBody?.content?.["application/json"]?.schema?.$ref;
+      const schemaName = schemaRef?.match(/^#\/components\/schemas\/(.+)$/)?.[1];
+      if (!alias || !DEPRECATED_E_INVOICING_OPERATION_IDS.has(alias) || !schemaName) continue;
+
+      entries.push({ alias, schemaName, groupName: getGroupName(schemaName, alias) });
+    }
+  }
+
+  return entries;
 }
 
 function resolveOpenApiSchema(
@@ -316,7 +339,16 @@ async function main() {
     return dependencies;
   }
 
-  const operationEntries = extractOperationSchemaEntries(content);
+  // openapi-zod-client omits deprecated operations from its endpoint list. Merge
+  // request schemas from the source document so deprecated form-schema exports
+  // remain available for consumers while their compatibility routes exist.
+  const operationEntriesByAlias = new Map(extractOperationSchemaEntries(content).map((entry) => [entry.alias, entry]));
+  for (const entry of extractOpenApiOperationSchemaEntries(openApiDocument)) {
+    if (!operationEntriesByAlias.has(entry.alias)) {
+      operationEntriesByAlias.set(entry.alias, entry);
+    }
+  }
+  const operationEntries = [...operationEntriesByAlias.values()];
   if (operationEntries.length === 0) {
     throw new Error("Could not find endpoint body schemas in generated file");
   }

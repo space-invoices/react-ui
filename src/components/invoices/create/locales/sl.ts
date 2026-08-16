@@ -1,4 +1,10 @@
 export default {
+  Peppol: "Peppol",
+  "Click to skip Peppol sending for this invoice": "Kliknite, če želite preskočiti pošiljanje Peppol za ta račun",
+  "Click to enable Peppol sending": "Kliknite, da omogočite pošiljanje Peppol",
+  "Peppol Scheme": "Shema Peppol",
+  "Peppol ID": "Identifikator Peppol",
+  Scheme: "Shema",
   Recipient: "Prejemnik",
   Name: "Ime",
   Details: "Podrobnosti",

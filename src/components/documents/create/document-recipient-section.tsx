@@ -36,6 +36,8 @@ type DocumentRecipientSectionProps = {
   showUjpRoutingFields?: boolean;
   /** Show EN 16931 buyer reference field for German XRechnung/ZUGFeRD. */
   showEInvoicingBuyerReference?: boolean;
+  /** Show Peppol address fields for AR sending. */
+  showPeppolRecipientFields?: boolean;
   t: (key: string) => string;
   locale?: string;
 };
@@ -112,6 +114,7 @@ export function DocumentRecipientSection({
   showBusinessRecipientFields,
   showUjpRoutingFields,
   showEInvoicingBuyerReference,
+  showPeppolRecipientFields,
   t,
   locale = "en",
 }: DocumentRecipientSectionProps) {
@@ -135,8 +138,10 @@ export function DocumentRecipientSection({
     control: control as any,
     name: "customer.tax_number" as any,
   });
-  const showBusinessFields = showCustomerForm && showBusinessRecipientFields;
+  const isBusinessRecipient = endConsumerController.field.value !== true;
+  const showBusinessFields = showCustomerForm && showBusinessRecipientFields && isBusinessRecipient;
   const showBankRoutingFields = showUjpRoutingFields || !!taxNumberController.field.value?.trim();
+  const showPeppolAddressFields = showCustomerForm && showPeppolRecipientFields && isBusinessRecipient;
 
   useEffect(() => {
     if (showCustomerForm && shouldFocusName) {
@@ -290,6 +295,28 @@ export function DocumentRecipientSection({
                 />
               )}
             </div>
+          )}
+
+          {showPeppolAddressFields && (
+            <fieldset className="space-y-1 rounded-md border bg-muted/20 p-3">
+              <legend className="px-1 font-medium text-sm">{t("Peppol")}</legend>
+              <div className="grid grid-cols-[120px_1fr] gap-4">
+                <FormInput
+                  control={control}
+                  name="customer.peppol_scheme_id"
+                  placeholder={t("Peppol Scheme")}
+                  label=""
+                  onChange={onCustomerEdit}
+                />
+                <FormInput
+                  control={control}
+                  name="customer.peppol_id"
+                  placeholder={t("Peppol ID")}
+                  label=""
+                  onChange={onCustomerEdit}
+                />
+              </div>
+            </fieldset>
           )}
 
           {showEInvoicingBuyerReference && (

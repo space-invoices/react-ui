@@ -1,4 +1,10 @@
 export default {
+  Peppol: "Peppol",
+  "Click to skip Peppol sending for this invoice": "Kliknutím preskočíte odosielanie Peppol pre túto faktúru",
+  "Click to enable Peppol sending": "Kliknutím povolíte odosielanie Peppol",
+  "Peppol Scheme": "Schéma Peppol",
+  "Peppol ID": "Identifikátor Peppol",
+  Scheme: "Schéma",
   Recipient: "Príjemca",
   Name: "Meno",
   Details: "Údaje",

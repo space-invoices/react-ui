@@ -9,6 +9,7 @@ import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../ui/card";
 import { Switch } from "../ui/switch";
+import { getPeppolMeterPricing, hasPeppolPlanAccess } from "./peppol-meter";
 
 type TranslateValues = Record<string, string | number>;
 
@@ -22,7 +23,57 @@ function interpolateTranslation(template: string, values?: TranslateValues) {
 }
 
 function createPaywallTranslation({ t, namespace, locale, translationLocale }: ComponentTranslationProps) {
-  const fallbackTranslation = createTranslation({ t, namespace, locale, translationLocale });
+  const fallbackTranslation = createTranslation({
+    t,
+    namespace,
+    locale,
+    translationLocale,
+    translations: {
+      en: {
+        "entity-billing-page.paywall.checkout-failed": "Failed to start checkout",
+        "entity-billing-page.paywall.title.expired": "Your trial has expired",
+        "entity-billing-page.paywall.title.choose": "Choose a plan",
+        "entity-billing-page.paywall.description.expired": "Select a plan to continue using this workspace.",
+        "entity-billing-page.paywall.description.choose": "Select the plan that fits your workflow.",
+        "entity-billing-page.plans.monthly": "Monthly",
+        "entity-billing-page.plans.yearly": "Yearly",
+        "entity-billing-page.paywall.yearly-discount": "2 months free",
+        "entity-billing-page.paywall.no-plans": "No plans available. Contact support for more information.",
+        "entity-billing-page.plan-description.unlimited": "Unlimited usage",
+        "entity-billing-page.plan-description.invoices-and-stores":
+          "{{invoices}} invoices per month and {{stores}} connected stores included",
+        "entity-billing-page.plan-description.invoices-only": "{{invoices}} invoices per month included",
+        "entity-billing-page.plan-description.stores-only": "{{stores}} connected stores included",
+        "entity-billing-page.paywall.features.e-invoicing-meter":
+          "{{included}} Peppol sends included, then €{{price}}/send",
+        "entity-billing-page.paywall.popular": "Popular",
+        "entity-billing-page.pricing.per-month": "/mo",
+        "entity-billing-page.paywall.billed-yearly": "billed yearly",
+        "entity-billing-page.paywall.redirecting": "Redirecting...",
+        "entity-billing-page.paywall.get-plan": "Choose {{plan}}",
+        "entity-billing-page.plan-names.simple": "Simple",
+        "entity-billing-page.plan-names.advanced": "Advanced",
+        "entity-billing-page.plan-names.pro": "Pro",
+        "entity-billing-page.paywall.features.simple.estimates-and-delivery-notes":
+          "Unlimited estimates and delivery notes",
+        "entity-billing-page.paywall.features.simple.email-sending": "Email sending",
+        "entity-billing-page.paywall.features.simple.users": "1 user",
+        "entity-billing-page.paywall.features.simple.templates": "Clean invoice templates",
+        "entity-billing-page.paywall.features.advanced.fiscalization": "FURS and FINA fiscalization",
+        "entity-billing-page.paywall.features.advanced.e-invoicing": "eSlog and Peppol e-invoicing",
+        "entity-billing-page.paywall.features.advanced.recurring": "Recurring invoices",
+        "entity-billing-page.paywall.features.advanced.email-sending": "Email sending",
+        "entity-billing-page.paywall.features.advanced.priority-support": "Priority support",
+        "entity-billing-page.paywall.features.advanced.users": "3 users",
+        "entity-billing-page.paywall.features.pro.connected-store": "1 connected store included",
+        "entity-billing-page.paywall.features.pro.extra-stores": "Extra stores at €5.99/month",
+        "entity-billing-page.paywall.features.pro.integrations": "Shopify and WooCommerce integrations",
+        "entity-billing-page.paywall.features.pro.api-and-webhooks": "API access and webhooks",
+        "entity-billing-page.paywall.features.pro.custom-templates": "Custom templates",
+        "entity-billing-page.paywall.features.pro.overage": "Overage billed at €0.01/invoice",
+      },
+    },
+  });
 
   return (key: string, options?: { defaultValue?: string } & TranslateValues) => {
     const fullKey = namespace ? `${namespace}.${key}` : key;
@@ -43,8 +94,8 @@ function createPaywallTranslation({ t, namespace, locale, translationLocale }: C
   };
 }
 
-function getPaywallFeatureKeys(slug: string): string[] {
-  switch (slug) {
+function getPaywallFeatureKeys(plan: WhiteLabelPlan): string[] {
+  switch (plan.slug) {
     case "simple":
       return ["simple.estimates-and-delivery-notes", "simple.email-sending", "simple.users", "simple.templates"];
     case "advanced":
@@ -55,7 +106,7 @@ function getPaywallFeatureKeys(slug: string): string[] {
         "advanced.email-sending",
         "advanced.priority-support",
         "advanced.users",
-      ];
+      ].filter((featureKey) => featureKey !== "advanced.e-invoicing" || hasPeppolPlanAccess(plan));
     case "pro":
       return [
         "pro.connected-store",
@@ -68,6 +119,16 @@ function getPaywallFeatureKeys(slug: string): string[] {
     default:
       return [];
   }
+}
+
+function getPeppolMeterFeature(plan: WhiteLabelPlan, t: ReturnType<typeof createPaywallTranslation>) {
+  const pricing = getPeppolMeterPricing(plan);
+  if (!pricing) return null;
+
+  return t("entity-billing-page.paywall.features.e-invoicing-meter", {
+    included: pricing.includedSends,
+    price: (pricing.sendPriceCents / 100).toFixed(2),
+  });
 }
 
 /**
@@ -230,9 +291,13 @@ function PaywallPlanCard({
   } else if (includedStores != null) {
     planDescription = t("entity-billing-page.plan-description.stores-only", { stores: includedStores });
   }
-  const featureItems = getPaywallFeatureKeys(plan.slug).map((featureKey) =>
+  const featureItems = getPaywallFeatureKeys(plan).map((featureKey) =>
     t(`entity-billing-page.paywall.features.${featureKey}`),
   );
+  const peppolMeterFeature = getPeppolMeterFeature(plan, t);
+  if (peppolMeterFeature) {
+    featureItems.push(peppolMeterFeature);
+  }
 
   return (
     <Card

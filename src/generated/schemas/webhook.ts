@@ -100,6 +100,8 @@ const createWebhookSchemaDefinition = z.object({
         "e_invoicing.submission.created",
         "e_invoicing.submission.delivered",
         "e_invoicing.submission.failed",
+        "e_invoicing.enrollment.verified",
+        "e_invoicing.enrollment.rejected",
         "e_invoicing.supplier.onboarded",
         "e_invoicing.supplier.rejected",
       ])
@@ -203,6 +205,8 @@ const updateWebhookSchemaDefinition = z
           "e_invoicing.submission.created",
           "e_invoicing.submission.delivered",
           "e_invoicing.submission.failed",
+          "e_invoicing.enrollment.verified",
+          "e_invoicing.enrollment.rejected",
           "e_invoicing.supplier.onboarded",
           "e_invoicing.supplier.rejected",
         ])

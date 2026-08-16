@@ -44,6 +44,7 @@ const DocumentEntity = z
     company_number: z.union([z.string(), z.null()]),
     phone: z.union([z.string(), z.null()]),
     peppol_id: z.union([z.string(), z.null()]),
+    peppol_scheme_id: z.union([z.string(), z.null()]),
     e_invoicing: z.union([DocumentEInvoicingCustomerData, z.null()]),
     bank_accounts: z.union([z.array(z.any()), z.null()]),
     is_end_consumer: z.union([z.boolean(), z.null()]),

@@ -6,10 +6,10 @@
 
 import { z } from 'zod';
 
-// Schemas for einvoice endpoints
+// Schemas for einvoicingdocument endpoints
 
-// Schema for sendEInvoice operation
-const sendEInvoiceSchemaDefinition = z
+// Schema for sendEInvoicingDocument operation
+const sendEInvoicingDocumentSchemaDefinition = z
   .object({
     recipient_peppol_id: z.string().min(1),
     recipient_scheme_id: z.string().min(1).max(10),
@@ -17,5 +17,5 @@ const sendEInvoiceSchemaDefinition = z
   })
   .partial();
 
-export type SendEInvoiceSchema = z.infer<typeof sendEInvoiceSchemaDefinition>;
-export const sendEInvoiceSchema = sendEInvoiceSchemaDefinition;
+export type SendEInvoicingDocumentSchema = z.infer<typeof sendEInvoicingDocumentSchemaDefinition>;
+export const sendEInvoicingDocumentSchema = sendEInvoicingDocumentSchemaDefinition;

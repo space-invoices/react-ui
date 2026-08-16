@@ -1,4 +1,10 @@
 export default {
+  Peppol: "Peppol",
+  "Click to skip Peppol sending for this invoice": "Smelltu til að sleppa því að Peppol sendi fyrir þennan reikning",
+  "Click to enable Peppol sending": "Smelltu til að virkja Peppol sendingu",
+  "Peppol Scheme": "Peppol áætlun",
+  "Peppol ID": "Peppol auðkenni",
+  Scheme: "Skipulag",
   Recipient: "Viðtakandi",
   Name: "Nafn",
   Details: "Upplýsingar",

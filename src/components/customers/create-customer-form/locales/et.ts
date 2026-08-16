@@ -1,6 +1,7 @@
 export default {
   "Contact Details": "Kontaktandmed",
   "Tax Details": "Maksuandmed",
+  "E-invoicing": "E-arved",
   "Bank Account": "Pangakonto",
   Name: "Nimi",
   "Enter name": "Sisestage nimi",
@@ -16,6 +17,8 @@ export default {
   "Enter country": "Sisestage riik",
   "Tax Number": "KMKR number",
   "Company Number": "Registrikood",
+  "Peppol Scheme": "Peppoli skeem",
+  "Peppol ID": "Peppoli ID",
   "Enter tax number": "Sisestage KMKR number",
   "Create Customer": "Loo klient",
   Cancel: "Tühista",

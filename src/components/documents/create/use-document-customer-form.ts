@@ -18,6 +18,8 @@ export type CustomerData = {
   country_code?: string | null;
   tax_number?: string | null;
   company_number?: string | null;
+  peppol_id?: string | null;
+  peppol_scheme_id?: string | null;
   bank_accounts?: Array<Record<string, unknown>> | null;
   is_end_consumer?: boolean | null;
   ujp?: {
@@ -142,6 +144,8 @@ export function useDocumentCustomerForm<TForm extends DocumentFormWithCustomer>(
       "customer.country_code",
       "customer.tax_number",
       "customer.company_number",
+      "customer.peppol_id",
+      "customer.peppol_scheme_id",
       "customer.bank_accounts",
       "customer.is_end_consumer",
       "customer.ujp.receiver_name",
@@ -207,6 +211,14 @@ export function useDocumentCustomerForm<TForm extends DocumentFormWithCustomer>(
         toFormValue(customer.company_number) as PathValue<TForm, Path<TForm>>,
       );
       setCustomerFieldValue(
+        "customer.peppol_id" as Path<TForm>,
+        toFormValue(customer.peppol_id) as PathValue<TForm, Path<TForm>>,
+      );
+      setCustomerFieldValue(
+        "customer.peppol_scheme_id" as Path<TForm>,
+        toFormValue(customer.peppol_scheme_id) as PathValue<TForm, Path<TForm>>,
+      );
+      setCustomerFieldValue(
         "customer.bank_accounts" as Path<TForm>,
         (customer.bank_accounts ?? undefined) as PathValue<TForm, Path<TForm>>,
       );
@@ -252,6 +264,8 @@ export function useDocumentCustomerForm<TForm extends DocumentFormWithCustomer>(
         country_code: toFormValue(customer.country_code),
         tax_number: toFormValue(customer.tax_number),
         company_number: toFormValue(customer.company_number),
+        peppol_id: toFormValue(customer.peppol_id),
+        peppol_scheme_id: toFormValue(customer.peppol_scheme_id),
         bank_accounts: customer.bank_accounts ?? undefined,
         is_end_consumer: customer.is_end_consumer ?? undefined,
         ujp: {
@@ -289,6 +303,14 @@ export function useDocumentCustomerForm<TForm extends DocumentFormWithCustomer>(
       setCustomerFieldValue(
         "customer.company_number" as Path<TForm>,
         customerData.company_number as PathValue<TForm, Path<TForm>>,
+      );
+      setCustomerFieldValue(
+        "customer.peppol_id" as Path<TForm>,
+        customerData.peppol_id as PathValue<TForm, Path<TForm>>,
+      );
+      setCustomerFieldValue(
+        "customer.peppol_scheme_id" as Path<TForm>,
+        customerData.peppol_scheme_id as PathValue<TForm, Path<TForm>>,
       );
       setCustomerFieldValue(
         "customer.bank_accounts" as Path<TForm>,
@@ -346,6 +368,8 @@ export function useDocumentCustomerForm<TForm extends DocumentFormWithCustomer>(
         country_code: undefined,
         tax_number: undefined,
         company_number: undefined,
+        peppol_id: undefined,
+        peppol_scheme_id: undefined,
         bank_accounts: undefined,
         is_end_consumer: true,
         ujp: undefined,

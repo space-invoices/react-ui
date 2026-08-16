@@ -1,4 +1,6 @@
 export default {
+  "Click to skip Peppol sending for this credit note":
+    "Smelltu til að sleppa því að Peppol sendi fyrir þessa kreditnótu",
   Recipient: "Viðtakandi",
   Name: "Nafn",
   Details: "Upplýsingar",

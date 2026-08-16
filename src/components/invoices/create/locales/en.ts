@@ -1,4 +1,10 @@
 export default {
+  Peppol: "Peppol",
+  "Click to skip Peppol sending for this invoice": "Click to skip Peppol sending for this invoice",
+  "Click to enable Peppol sending": "Click to enable Peppol sending",
+  "Peppol Scheme": "Peppol Scheme",
+  "Peppol ID": "Peppol ID",
+  Scheme: "Scheme",
   Recipient: "Recipient",
   Name: "Name",
   Details: "Details",

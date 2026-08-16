@@ -1,4 +1,6 @@
 export default {
+  "Click to skip Peppol sending for this credit note":
+    "Кликнете, за да пропуснете изпращането на Peppol за това кредитно известие",
   Recipient: "Получател",
   Name: "Име",
   Details: "Детайли",

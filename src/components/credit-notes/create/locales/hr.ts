@@ -1,4 +1,5 @@
 export default {
+  "Click to skip Peppol sending for this credit note": "Kliknite da biste preskočili slanje Peppola za ovo odobrenje",
   Recipient: "Primatelj",
   Name: "Naziv",
   Details: "Pojedinosti",

@@ -1,4 +1,5 @@
 export default {
+  "Click to skip Peppol sending for this credit note": "Klõpsake Peppolile selle kreeditarve saatmise vahelejätmiseks",
   Recipient: "Saaja",
   Name: "Nimi",
   Details: "Üksikasjad",

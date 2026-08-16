@@ -1,4 +1,10 @@
 export default {
+  Peppol: "Peppol",
+  "Click to skip Peppol sending for this invoice": "Napsauta ohittaaksesi Peppolin lähettämisen tälle laskulle",
+  "Click to enable Peppol sending": "Napsauta ottaaksesi Peppol-lähetyksen käyttöön",
+  "Peppol Scheme": "Peppol-järjestelmä",
+  "Peppol ID": "Peppol-tunnus",
+  Scheme: "Kaavio",
   Recipient: "Vastaanottaja",
   Name: "Nimi",
   Details: "Tiedot",

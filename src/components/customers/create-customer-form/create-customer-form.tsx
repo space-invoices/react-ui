@@ -1,6 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { CompanyRegistryResult, CreateCustomerBody, Customer } from "@spaceinvoices/js-sdk";
 import { useForm } from "react-hook-form";
+import { z } from "zod";
 import { CompanyRegistryAutocomplete } from "@/ui/components/company-registry";
 import { FormInput } from "@/ui/components/form";
 import { Form } from "@/ui/components/ui/form";
@@ -19,6 +20,7 @@ import { useCreateCustomer } from "../customers.hooks";
 import bg from "./locales/bg";
 import cs from "./locales/cs";
 import de from "./locales/de";
+import en from "./locales/en";
 import es from "./locales/es";
 import et from "./locales/et";
 import fi from "./locales/fi";
@@ -35,6 +37,7 @@ import sl from "./locales/sl";
 import sv from "./locales/sv";
 
 const translations = {
+  en,
   bg: { ...bg, ...customerProfileTranslations.bg },
   cs: { ...cs, ...customerProfileTranslations.cs },
   sl: { ...sl, ...customerProfileTranslations.sl },
@@ -61,6 +64,7 @@ type CreateCustomerFormProps = {
    * Used to enable company registry autocomplete for supported countries
    */
   entityCountryCode?: string;
+  eInvoicingEnabled?: boolean;
   onSuccess?: (customer: Customer) => void;
   onError?: (error: Error) => void;
   renderSubmitButton?: (props: { isSubmitting: boolean; submit: () => void }) => React.ReactNode;
@@ -68,10 +72,14 @@ type CreateCustomerFormProps = {
 
 const customerFormSchema = createCustomerSchema.extend({
   bank_accounts: customerBankAccountsFormSchema,
+  peppol_id: z.string().optional().nullable(),
+  peppol_scheme_id: z.string().max(10).optional().nullable(),
 });
 
 type CustomerFormSchema = CreateCustomerSchema & {
   bank_accounts?: Array<Record<string, unknown>>;
+  peppol_id?: string | null;
+  peppol_scheme_id?: string | null;
 };
 
 function CustomerFormSection({ title, children }: { title: string; children: React.ReactNode }) {
@@ -86,6 +94,7 @@ function CustomerFormSection({ title, children }: { title: string; children: Rea
 export default function CreateCustomerForm({
   entityId,
   entityCountryCode,
+  eInvoicingEnabled = false,
   onSuccess,
   onError,
   renderSubmitButton,
@@ -130,6 +139,9 @@ export default function CreateCustomerForm({
       bank_accounts: [{ type: "iban" }],
     },
   });
+  const taxNumber = form.watch("tax_number");
+  const companyNumber = form.watch("company_number");
+  const showPeppolFields = eInvoicingEnabled && (!!taxNumber || !!companyNumber);
 
   const { mutate: createCustomer, isPending } = useCreateCustomer({
     entityId,
@@ -196,6 +208,15 @@ export default function CreateCustomerForm({
             </div>
             <CustomerClassificationFields control={form.control} t={t} />
           </CustomerFormSection>
+
+          {showPeppolFields && (
+            <CustomerFormSection title={t("E-invoicing")}>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <FormInput control={form.control} name="peppol_scheme_id" label={t("Peppol Scheme")} />
+                <FormInput control={form.control} name="peppol_id" label={t("Peppol ID")} />
+              </div>
+            </CustomerFormSection>
+          )}
 
           <CustomerFormSection title={t("Bank Account")}>
             <CustomerBankAccountFields

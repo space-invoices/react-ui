@@ -1,6 +1,7 @@
 export default {
   "Contact Details": "Kontaktné údaje",
   "Tax Details": "Daňové údaje",
+  "E-invoicing": "Elektronická fakturácia",
   "Bank Account": "Bankový účet",
   Name: "Meno",
   "Enter name": "Zadajte meno",
@@ -16,6 +17,8 @@ export default {
   "Enter country": "Zadajte krajinu",
   "Tax Number": "Daňové číslo",
   "Company Number": "IČO",
+  "Peppol Scheme": "Schéma Peppol",
+  "Peppol ID": "Identifikátor Peppol",
   "Enter tax number": "Zadajte daňové číslo",
   "Create Customer": "Vytvoriť zákazníka",
   Cancel: "Zrušiť",

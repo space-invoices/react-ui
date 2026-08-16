@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { CreateInvoice, Invoice, Tax } from "@spaceinvoices/js-sdk";
 import { useQueryClient } from "@tanstack/react-query";
-import { AlertCircle, Check, X } from "lucide-react";
+import { AlertCircle, Check, Send, X } from "lucide-react";
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Resolver } from "react-hook-form";
@@ -97,15 +97,23 @@ import {
   translateEslogValidationError,
   validateEslogForm,
 } from "./eslog-validation";
+import bg from "./locales/bg";
+import cs from "./locales/cs";
 import de from "./locales/de";
 import es from "./locales/es";
+import et from "./locales/et";
+import fi from "./locales/fi";
 import fr from "./locales/fr";
 import hr from "./locales/hr";
+import is from "./locales/is";
 import it from "./locales/it";
+import nb from "./locales/nb";
 import nl from "./locales/nl";
 import pl from "./locales/pl";
 import pt from "./locales/pt";
+import sk from "./locales/sk";
 import sl from "./locales/sl";
+import sv from "./locales/sv";
 import { prepareInvoiceSubmission, prepareInvoiceUpdateSubmission } from "./prepare-invoice-submission";
 import { useInvoiceCustomerForm } from "./use-invoice-customer-form";
 
@@ -131,15 +139,23 @@ function isSameCalendarDate(left: string | Date | undefined, right: string | Dat
 const DUE_DAYS_PRESETS = [0, 7, 14, 30, 60, 90] as const;
 
 const translations = {
+  bg,
+  cs,
   sl,
   de,
   it,
   fr,
   es,
+  et,
+  fi,
   pt,
   nl,
   pl,
   hr,
+  is,
+  nb,
+  sk,
+  sv,
 } as const;
 
 const DUPLICATE_PREVIEW_SETTLE_MS = 120;
@@ -197,6 +213,10 @@ type DocumentAddFormProps = {
   documentId?: string;
   /** Whether draft actions should be available in the UI */
   allowDrafts?: boolean;
+  /** Show Peppol recipient address fields for AR e-invoicing. */
+  showPeppolRecipientFields?: boolean;
+  /** Show the per-document Peppol auto-send opt-out control. */
+  showPeppolSendToggle?: boolean;
   /** Optional app-level content rendered inside the details section. */
   detailsExtras?: ReactNode;
   /** Request-scoped operator override for embed fiscalization flows. */
@@ -303,6 +323,8 @@ export default function CreateInvoiceForm({
   mode = "create",
   documentId,
   allowDrafts = true,
+  showPeppolRecipientFields = false,
+  showPeppolSendToggle = false,
   detailsExtras,
   operatorPrefill,
   translationLocale,
@@ -329,6 +351,7 @@ export default function CreateInvoiceForm({
   const translationsFeatureEnabled = whiteLabel.isFeatureVisible(DOCUMENT_CONTENT_TRANSLATIONS_FEATURE);
   const defaultContentLocale = activeEntity?.locale || "en-US";
   const [contentLocale, setContentLocale] = useState<DocumentContentLocaleMode>(DEFAULT_CONTENT_LOCALE);
+  const [peppolSendEnabled, setPeppolSendEnabled] = useState(showPeppolSendToggle);
   const initialBusinessUnit = useMemo(
     () => businessUnits.find((unit) => unit.id === ((initialValues as any)?.business_unit_id ?? null)) ?? null,
     [businessUnits, initialValues],
@@ -358,6 +381,10 @@ export default function CreateInvoiceForm({
   const eslogEntityErrorsRef = useRef(eslog.entityErrors);
   eslogEntityErrorsRef.current = eslog.entityErrors;
   const [eslogSetupDialogOpen, setEslogSetupDialogOpen] = useState(false);
+
+  useEffect(() => {
+    setPeppolSendEnabled(showPeppolSendToggle);
+  }, [showPeppolSendToggle]);
   const isDraftSubmitRef = useRef(false);
 
   // UI-only state (not part of API schema)
@@ -675,26 +702,66 @@ export default function CreateInvoiceForm({
   const headerActionUnavailable = !isEditMode && (furs.isLoading || !skipPreferenceInitialized || fina.isLoading);
   const showFursToggle = !headerActionUnavailable && !isEditMode && furs.isEnabled && furs.hasPremises;
   const showEslogToggle = !headerActionUnavailable && eslog.isAvailable;
+  const showPeppolToggle = !headerActionUnavailable && showPeppolSendToggle;
   const isFursChecked = !skipFiscalization;
   const isEslogChecked = eslog.isEnabled === true;
+  const isPeppolChecked = peppolSendEnabled;
   const headerActionSignature =
-    showFursToggle || showEslogToggle
+    showFursToggle || showEslogToggle || showPeppolToggle
       ? JSON.stringify({
           showFursToggle,
           showEslogToggle,
+          showPeppolToggle,
           isFursChecked,
           isEslogChecked,
+          isPeppolChecked,
           eslogLabel: t("e-SLOG"),
           eslogEnabledDescription: t("Click to skip e-SLOG validation for this invoice"),
           eslogDisabledDescription: t("Click to enable e-SLOG validation"),
+          peppolLabel: t("Peppol"),
+          peppolEnabledDescription: t("Click to skip Peppol sending for this invoice"),
+          peppolDisabledDescription: t("Click to enable Peppol sending"),
           fiscalizationLabel: t("Fiscally verify"),
           fiscalizationEnabledDescription: t("Click to skip fiscalization for this invoice"),
           fiscalizationDisabledDescription: t("Click to enable fiscalization"),
         })
       : null;
   const headerAction =
-    showFursToggle || showEslogToggle ? (
+    showFursToggle || showEslogToggle || showPeppolToggle ? (
       <div className="flex items-center gap-2">
+        {showPeppolToggle && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant={isPeppolChecked ? "outline" : "ghost"}
+                  size="sm"
+                  className={cn("h-8 cursor-pointer gap-2", !isPeppolChecked && "text-muted-foreground")}
+                  onClick={() => setPeppolSendEnabled((enabled) => !enabled)}
+                >
+                  <div
+                    className={cn(
+                      "flex size-4 items-center justify-center rounded border",
+                      isPeppolChecked
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-muted-foreground bg-background text-muted-foreground",
+                    )}
+                  >
+                    {isPeppolChecked ? <Check className="size-3" /> : <Send className="size-3" />}
+                  </div>
+                  <span>{t("Peppol")}</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="max-w-xs">
+                {isPeppolChecked
+                  ? t("Click to skip Peppol sending for this invoice")
+                  : t("Click to enable Peppol sending")}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
+
         {/* e-SLOG toggle */}
         {showEslogToggle && (
           <TooltipProvider>
@@ -1104,6 +1171,7 @@ export default function CreateInvoiceForm({
           eslog: eslogOptions,
           ujp: ujpOptions,
           germanEInvoicing: germanEInvoicingOptions,
+          eInvoicing: showPeppolSendToggle ? { send_enabled: peppolSendEnabled } : undefined,
           priceModes: priceModesRef.current,
           isDraft,
         });
@@ -1148,7 +1216,9 @@ export default function CreateInvoiceForm({
       originalCustomer,
       paymentDocumentTotal,
       paymentRows,
+      peppolSendEnabled,
       showCustomerForm,
+      showPeppolSendToggle,
       skipFiscalization,
       operatorPrefill,
       financialInputsMatchSource,
@@ -1659,6 +1729,7 @@ export default function CreateInvoiceForm({
             showBusinessRecipientFields={eslog.isEnabled === true && eslog.requiresUjpValidation}
             showUjpRoutingFields={eslog.isEnabled === true && eslog.requiresUjpValidation}
             showEInvoicingBuyerReference={countryCapabilities.showGermanEInvoicingExports}
+            showPeppolRecipientFields={showPeppolRecipientFields}
             t={t}
             locale={locale}
           />

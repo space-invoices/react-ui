@@ -938,7 +938,6 @@ const EInvoicingEntitySettings = z
   .object({
     enabled: z.boolean().default(false),
     auto_send: z.boolean().default(false),
-    default_scheme_id: z.string(),
   })
   .partial()
   .passthrough();

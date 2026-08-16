@@ -1,4 +1,6 @@
 export default {
+  "Click to skip Peppol sending for this credit note":
+    "Klik om het verzenden van Peppol voor deze creditnota over te slaan",
   Recipient: "Ontvanger",
   Name: "Naam",
   Details: "Details",

@@ -1,14 +1,15 @@
 import { Check, Crown, Loader2, Sparkles, Zap } from "lucide-react";
 import { useState } from "react";
 
+import { formatCurrencyValue } from "@/ui/lib/formatting";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
 import { type GatedFeature, useWLSubscription, type WhiteLabelPlan } from "../../providers/wl-subscription-provider";
-import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "../ui/dialog";
 import { Switch } from "../ui/switch";
 import { getPeppolMeterPricing, hasPeppolPlanAccess } from "./peppol-meter";
+import { getPlanPriceCents } from "./pricing";
 
 type UpgradeModalProps = {
   isOpen: boolean;
@@ -194,7 +195,6 @@ export function UpgradeModal({
           </DialogDescription>
         </DialogHeader>
 
-        {/* Monthly/Yearly toggle */}
         <div className="flex items-center justify-center gap-3">
           <span className={`text-sm ${!isYearly ? "font-medium" : "text-muted-foreground"}`}>
             {t("entity-billing-page.plans.monthly", { defaultValue: "Monthly" })}
@@ -203,11 +203,6 @@ export function UpgradeModal({
           <span className={`text-sm ${isYearly ? "font-medium" : "text-muted-foreground"}`}>
             {t("entity-billing-page.plans.yearly", { defaultValue: "Yearly" })}
           </span>
-          {isYearly && (
-            <Badge variant="secondary" className="ml-1">
-              {t("entity-billing-page.paywall.yearly-discount", { defaultValue: "2 months free" })}
-            </Badge>
-          )}
         </div>
 
         {checkoutError && (
@@ -277,9 +272,7 @@ function PlanCard({
 }: PlanCardProps) {
   const t = createUpgradeTranslation({ t: translateFn, namespace, locale, translationLocale });
   const monthlyPrice = plan.base_price_cents ? plan.base_price_cents / 100 : 0;
-  const annualPriceCents = plan.limits?.annual_price_cents;
-  const yearlyTotal =
-    annualPriceCents != null ? annualPriceCents / 100 : Math.round(monthlyPrice * 12 * 0.8 * 100) / 100;
+  const yearlyTotal = (getPlanPriceCents(plan, "yearly") ?? 0) / 100;
   const yearlyMonthly = Math.round((yearlyTotal / 12) * 100) / 100;
 
   const displayPrice = isYearly ? yearlyMonthly : monthlyPrice;
@@ -329,7 +322,9 @@ function PlanCard({
       </div>
 
       <div className="mb-1">
-        <span className="font-bold text-2xl">&euro;{displayPrice.toFixed(0)}</span>
+        <span className="font-bold text-2xl">
+          {formatCurrencyValue(displayPrice, plan.currency_code ?? "EUR", locale)}
+        </span>
         <span className="text-muted-foreground">
           {t("entity-billing-page.pricing.per-month", { defaultValue: "/mo" })}
         </span>
@@ -337,7 +332,7 @@ function PlanCard({
 
       {isYearly && (
         <p className="mb-1 text-muted-foreground text-xs">
-          &euro;{yearlyTotal.toFixed(0)}{" "}
+          {formatCurrencyValue(yearlyTotal, plan.currency_code ?? "EUR", locale)}{" "}
           {t("entity-billing-page.paywall.billed-yearly", { defaultValue: "billed yearly" })}
         </p>
       )}

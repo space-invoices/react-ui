@@ -2,15 +2,12 @@ import type { CreateCustomerBody, Customer, UpdateCustomerBody } from "@spaceinv
 import { customers } from "@spaceinvoices/js-sdk";
 import { useQuery } from "@tanstack/react-query";
 import { createResourceHooks } from "@/ui/hooks/create-resource-hooks";
+import type { CustomerDirectoryRole } from "./customer-roles";
+
+export { type CustomerDirectoryRole, canUseCustomerAsBuyer } from "./customer-roles";
 
 // Define a constant for the customers cache key
 export const CUSTOMERS_CACHE_KEY = "customers";
-
-export type CustomerDirectoryRole = "buyer" | "supplier";
-
-export function canUseCustomerAsBuyer(customer: { contact_type?: string | null } | null | undefined) {
-  return customer?.contact_type !== "supplier";
-}
 
 function buildContactTypeQuery(role?: CustomerDirectoryRole) {
   return role ? JSON.stringify({ contact_type: { in: [role, "both"] } }) : undefined;

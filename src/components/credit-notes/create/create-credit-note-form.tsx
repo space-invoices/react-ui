@@ -71,6 +71,7 @@ import {
 } from "../../documents/create/document-item-validation";
 import { DocumentItemsSection, type PriceModesMap } from "../../documents/create/document-items-section";
 import { DocumentRecipientSection } from "../../documents/create/document-recipient-section";
+import { type LinkedDocumentSummary, LinkedDocumentsInfo } from "../../documents/create/linked-documents-info";
 import { MarkAsPaidSection } from "../../documents/create/mark-as-paid-section";
 import {
   calculateDocumentTotal,
@@ -201,6 +202,8 @@ type CreateCreditNoteFormProps = {
   onHeaderActionChange?: (action: ReactNode | null) => void;
   /** Initial values for form fields (used for document duplication) */
   initialValues?: Partial<CreateCreditNote> & { business_unit_id?: string | null };
+  /** Source documents this credit note is created from (populated for conversions) */
+  sourceDocuments?: LinkedDocumentSummary[];
   businessUnits?: BusinessUnitOption[];
   showBusinessUnitSelect?: boolean;
   disableBusinessUnitSelect?: boolean;
@@ -229,6 +232,7 @@ export default function CreateCreditNoteForm({
   onFindEstimatedTax,
   onHeaderActionChange,
   initialValues,
+  sourceDocuments,
   businessUnits = [],
   showBusinessUnitSelect = businessUnits.length > 0 || !!(initialValues as any)?.business_unit_id,
   disableBusinessUnitSelect = false,
@@ -465,6 +469,7 @@ export default function CreateCreditNoteForm({
               footer: initialDocumentDefaults.translations.footer,
               signature: initialDocumentDefaults.translations.signature,
             }),
+      linked_documents: (initialValues as any)?.linked_documents,
       pt: ((initialValues as any)?.pt as PtDocumentInputForm | undefined) ?? undefined,
     },
   });
@@ -917,6 +922,15 @@ export default function CreateCreditNoteForm({
         germanEInvoicing: germanEInvoicingOptions,
         eInvoicing: showPeppolSendToggle ? { send_enabled: peppolSendEnabled } : undefined,
       });
+      if (isDraft) {
+        // Credit note create links documents and settles the linked invoice in one step, and
+        // unlike the invoice service it does not skip that for drafts. Sending links from a
+        // draft would reduce a finalized invoice's balance before the credit note exists, so the
+        // link is established when the document is actually issued.
+        delete (payload as any).linked_documents;
+        delete (payload as any).force_linked_documents;
+      }
+
       const preservedExpectedTotalWithTax = getPreservedExpectedTotalWithTax(submissionValues);
       if (preservedExpectedTotalWithTax !== undefined) {
         (payload as any).expected_total_with_tax = preservedExpectedTotalWithTax;
@@ -1064,6 +1078,7 @@ export default function CreateCreditNoteForm({
         payment_terms: values.payment_terms,
         signature: values.signature,
         footer: values.footer,
+        linked_documents: (values as any).linked_documents,
         ...(preservedExpectedTotalWithTax !== undefined
           ? { expected_total_with_tax: preservedExpectedTotalWithTax }
           : {}),
@@ -1426,6 +1441,10 @@ export default function CreateCreditNoteForm({
             form.setValue("translations", { ...(form.getValues("translations") ?? {}), footer: next })
           }
         />
+
+        {sourceDocuments && sourceDocuments.length > 0 && (
+          <LinkedDocumentsInfo documents={sourceDocuments} locale={locale || "en"} t={t} />
+        )}
       </form>
     </Form>
   );

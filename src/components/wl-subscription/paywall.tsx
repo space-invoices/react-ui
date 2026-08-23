@@ -10,6 +10,7 @@ import { Button } from "../ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../ui/card";
 import { Switch } from "../ui/switch";
 import { getPeppolMeterPricing, hasPeppolPlanAccess } from "./peppol-meter";
+import { getPlanPriceCents } from "./pricing";
 
 type TranslateValues = Record<string, string | number>;
 
@@ -188,7 +189,6 @@ export function Paywall({ t: translateFn, namespace, locale, translationLocale, 
             : t("entity-billing-page.paywall.description.choose")}
         </p>
 
-        {/* Monthly/Yearly toggle */}
         <div className="mb-8 flex items-center justify-center gap-3">
           <span className={`text-sm ${!isYearly ? "font-medium text-foreground" : "text-foreground/70"}`}>
             {t("entity-billing-page.plans.monthly")}
@@ -197,11 +197,6 @@ export function Paywall({ t: translateFn, namespace, locale, translationLocale, 
           <span className={`text-sm ${isYearly ? "font-medium text-foreground" : "text-foreground/70"}`}>
             {t("entity-billing-page.plans.yearly")}
           </span>
-          {isYearly && (
-            <Badge variant="secondary" className="ml-1">
-              {t("entity-billing-page.paywall.yearly-discount")}
-            </Badge>
-          )}
         </div>
 
         {checkoutError && (
@@ -270,9 +265,7 @@ function PaywallPlanCard({
 }: PaywallPlanCardProps) {
   const t = createPaywallTranslation({ t: translateFn, namespace, locale, translationLocale });
   const monthlyPrice = plan.base_price_cents ? plan.base_price_cents / 100 : 0;
-  const annualPriceCents = plan.limits?.annual_price_cents;
-  const yearlyTotal =
-    annualPriceCents != null ? annualPriceCents / 100 : Math.round(monthlyPrice * 12 * 0.8 * 100) / 100;
+  const yearlyTotal = (getPlanPriceCents(plan, "yearly") ?? 0) / 100;
   const yearlyMonthly = Math.round((yearlyTotal / 12) * 100) / 100;
 
   const displayPrice = isYearly ? yearlyMonthly : monthlyPrice;
@@ -320,12 +313,15 @@ function PaywallPlanCard({
       <CardContent className="flex-1">
         <div className="space-y-4">
           <div>
-            <span className="font-semibold text-3xl">{formatCurrencyValue(displayPrice, "EUR", locale)}</span>
+            <span className="font-semibold text-3xl">
+              {formatCurrencyValue(displayPrice, plan.currency_code ?? "EUR", locale)}
+            </span>
             <span className="text-foreground/70 text-sm">{t("entity-billing-page.pricing.per-month")}</span>
           </div>
           {isYearly ? (
             <p className="text-foreground/70 text-sm">
-              {formatCurrencyValue(yearlyTotal, "EUR", locale)} {t("entity-billing-page.paywall.billed-yearly")}
+              {formatCurrencyValue(yearlyTotal, plan.currency_code ?? "EUR", locale)}{" "}
+              {t("entity-billing-page.paywall.billed-yearly")}
             </p>
           ) : null}
 

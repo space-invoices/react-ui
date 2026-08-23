@@ -11,12 +11,24 @@ import type {
   Estimate,
   Invoice,
 } from "@spaceinvoices/js-sdk";
-import { advanceInvoices, creditNotes, deliveryNotes, documents, estimates, invoices } from "@spaceinvoices/js-sdk";
+import {
+  advanceInvoices,
+  creditNotes,
+  customers,
+  deliveryNotes,
+  documents,
+  estimates,
+  invoices,
+} from "@spaceinvoices/js-sdk";
 import { useQuery } from "@tanstack/react-query";
+import { canUseCustomerAsBuyer } from "@/ui/components/customers/customer-roles";
+import { mergeEntityAndBusinessUnitSettings } from "@/ui/components/documents/create/business-unit-utils";
 import { buildCustomCreateTemplateFromDocument } from "@/ui/components/documents/create/custom-create-template";
 import { toDocumentFormItem } from "@/ui/components/documents/create/document-form-item";
 import { totalsDifferByCents } from "@/ui/components/documents/create/preserved-expected-total";
+import { toLocalDateOnlyString } from "@/ui/lib/date-only";
 import { useEntities } from "@/ui/providers/entities-context";
+import { resolveDuplicateDates, stripSourceTypeDefaultText } from "./duplicate-document-carry-over";
 
 const DUPLICATE_TIMING_EVENT = "si:duplicate-timing";
 
@@ -78,7 +90,6 @@ function buildCalculatePayload(values: Partial<CreateRequestWithBusinessUnit>): 
     customer_id: (values as any).customer_id,
     customer: (values as any).customer,
     business_unit_id: values.business_unit_id,
-    business_unit: values.business_unit,
     currency_code: (values as any).currency_code,
     date: (values as any).date,
     calculation_mode: (values as any).calculation_mode,
@@ -118,50 +129,163 @@ export function getAllowedDuplicateTargets(sourceType: DocumentType): DocumentTy
 }
 
 /**
+ * Customer fields a document snapshot carries; also the fields refreshed from the live record.
+ *
+ * Includes the e-invoicing routing data (`peppol_scheme_id`, `e_invoicing` with its buyer
+ * reference, `ujp`) and bank accounts: document create does not backfill an explicitly supplied
+ * customer snapshot, so anything omitted here is dropped from the duplicated document and can
+ * fail mandatory e-invoice validation.
+ */
+const CUSTOMER_SNAPSHOT_FIELDS = [
+  "name",
+  "email",
+  "address",
+  "address_2",
+  "post_code",
+  "city",
+  "state",
+  "country",
+  "country_code",
+  "tax_number",
+  "tax_number_2",
+  "company_number",
+  "phone",
+  "peppol_id",
+  "peppol_scheme_id",
+  "is_end_consumer",
+  "bank_account",
+  "bank_accounts",
+  "e_invoicing",
+  "ujp",
+] as const;
+
+export function pickCustomerSnapshotFields(customer: Record<string, any> | null | undefined) {
+  if (!customer) return undefined;
+  const picked: Record<string, unknown> = {};
+  for (const field of CUSTOMER_SNAPSHOT_FIELDS) {
+    picked[field] = customer[field];
+  }
+  return picked;
+}
+
+/**
+ * Overlay the live customer record on the document's frozen snapshot.
+ *
+ * The new document should be issued to the customer's current details, but a field the live
+ * record does not expose keeps the snapshot value so nothing is silently dropped.
+ */
+function mergeCustomerWithLiveRecord(
+  snapshot: Record<string, unknown> | undefined,
+  live: Record<string, any> | null | undefined,
+) {
+  if (!live) return snapshot;
+  const merged: Record<string, unknown> = { ...(snapshot ?? {}) };
+  for (const field of CUSTOMER_SNAPSHOT_FIELDS) {
+    if (Object.hasOwn(live, field)) {
+      merged[field] = live[field];
+    }
+  }
+  return merged;
+}
+
+export type ResolvedDuplicateCustomer = {
+  customer?: Record<string, unknown>;
+  customerId?: string;
+};
+
+/**
+ * Resolve which customer details a duplicate should start from.
+ *
+ * A linked customer is refreshed from the live record so re-issues do not carry an address or
+ * tax number the customer has since changed.
+ *
+ * Re-issuing to an archived client should still reach that client. Document create rejects an
+ * archived `customer_id` outright ("Customer <id> not found"), so an archived, removed, or
+ * no-longer-buyer customer keeps the snapshot for display and drops the id, which is what lets
+ * the document be created at all. Do not "fix" this by passing the id back through until the
+ * API accepts archived customer ids.
+ *
+ * Whether the archived record is then re-attached is the API's decision, and it is only
+ * guaranteed when the snapshot carries a tax or company number: create's customer matching keys
+ * on those and does not filter archived rows. Without either identifier a new customer record is
+ * created instead, and a supplier-only contact can still be matched despite being rejected here.
+ * Closing that gap needs the API to accept (and restore) an archived customer id.
+ *
+ * Transient fetch failures keep the existing link and snapshot untouched.
+ */
+export async function resolveDuplicateCustomer(
+  source: Record<string, any>,
+  entityId: string,
+): Promise<ResolvedDuplicateCustomer> {
+  const snapshot = pickCustomerSnapshotFields(source.customer);
+  const customerId = source.customer_id as string | undefined;
+
+  if (!customerId) {
+    return { customer: snapshot };
+  }
+
+  try {
+    const response = await customers.list({ query: JSON.stringify({ id: customerId }), entity_id: entityId });
+    const live = (response?.data?.[0] ?? null) as Record<string, any> | null;
+
+    // The list excludes archived customers, so a missing row means archived or gone; both
+    // cases drop the id and let document create re-attach the customer from the snapshot.
+    if (!live || live.deleted_at || !canUseCustomerAsBuyer(live)) {
+      return { customer: snapshot };
+    }
+
+    return { customerId, customer: mergeCustomerWithLiveRecord(snapshot, live) };
+  } catch {
+    // A transient lookup failure must not silently unlink the customer, so the document's own
+    // snapshot is used. Submission then saves it like any other recipient, which can write
+    // historical values back over the live customer - pre-existing behaviour for every
+    // duplicate, tracked separately rather than papered over with a form-level marker that a
+    // later recipient change would carry into unrelated submissions.
+    return { customerId, customer: snapshot };
+  }
+}
+
+/**
  * Transform a source document into form-compatible initial values
  * Copies relevant fields and resets computed/generated ones
  */
 function transformDocumentForDuplication(
   source: Document,
   targetType: DocumentType,
+  options: {
+    customer?: ResolvedDuplicateCustomer;
+    settings?: Record<string, any> | null;
+  } = {},
 ): Partial<CreateRequestWithBusinessUnit> {
   const items = source.items?.map((item) => toDocumentFormItem(item as any));
 
-  // Build customer data - always copy if available (form needs this for display)
-  const customerData = source.customer
-    ? {
-        name: source.customer.name,
-        email: source.customer.email,
-        address: source.customer.address,
-        address_2: source.customer.address_2,
-        post_code: source.customer.post_code,
-        city: source.customer.city,
-        state: source.customer.state,
-        country: source.customer.country,
-        country_code: source.customer.country_code,
-        tax_number: source.customer.tax_number,
-        tax_number_2: source.customer.tax_number_2,
-        company_number: source.customer.company_number,
-        phone: source.customer.phone,
-        peppol_id: source.customer.peppol_id,
-        is_end_consumer: source.customer.is_end_consumer,
-        bank_account: source.customer.bank_account,
-      }
-    : undefined;
+  const resolvedCustomer = options.customer ?? {
+    customer: pickCustomerSnapshotFields(source.customer as Record<string, any> | null | undefined),
+    customerId: source.customer_id ?? undefined,
+  };
+  const customerData = resolvedCustomer.customer;
 
   // When converting to a different type, link back to the source document
   const sourceType = getDocumentTypeFromId(source.id);
-  const isConversion = sourceType && sourceType !== targetType;
+  const isConversion = !!sourceType && sourceType !== targetType;
+
+  const date = toLocalDateOnlyString(new Date());
+  const carriedDates = resolveDuplicateDates({
+    source: source as any,
+    sourceType,
+    targetType,
+    newDate: date,
+  });
 
   // Build base duplicate data
   const baseData: Partial<CreateRequestWithBusinessUnit> = {
     _duplicate_source_id: source.id,
     _duplicate_target_type: targetType,
+    // Only the id: the unit snapshot is re-taken at create so it cannot go stale.
     business_unit_id: (source as any).business_unit_id ?? undefined,
-    business_unit: (source as any).business_unit ?? undefined,
     // Customer - always pass both customer_id AND customer data when available
     // The form needs customer data for display, even when customer_id is set
-    ...(source.customer_id ? { customer_id: source.customer_id } : {}),
+    ...(resolvedCustomer.customerId ? { customer_id: resolvedCustomer.customerId } : {}),
     ...(customerData ? { customer: customerData } : {}),
     // Items (cast needed: separator items omit financial fields like quantity)
     items: items as any,
@@ -171,45 +295,44 @@ function transformDocumentForDuplication(
     // Notes
     note: source.note,
     payment_terms: source.payment_terms,
+    // A reference is often an order/PO number for that one document, but it is just as often
+    // a standing contract or cost centre. Carry it either way and leave removing it to the
+    // user, who can see the field, rather than silently clearing something they would have
+    // to retype from the source document.
     reference: (source as any).reference,
     signature: (source as any).signature,
     tax_clause: (source as any).tax_clause,
     footer: (source as any).footer,
     translations: (source as any).translations ?? undefined,
-    // Date - use today's date as ISO string
-    date: new Date().toISOString(),
+    date,
+    ...carriedDates,
     // Number - leave empty for auto-generation
     // Do NOT copy: number, totals, taxes, payments, furs, eslog, vies, shareable_id
     // Link back to source document when converting (e.g., delivery note → invoice)
     // Skip linking if source is a draft (drafts have no number/fiscalization)
     ...(isConversion && !(source as any).is_draft ? { linked_documents: [source.id] } : {}),
   };
-  // Copy service dates when source is an invoice (available on invoices and credit notes)
-  if (sourceType === "invoice" || sourceType === "credit_note") {
-    const sourceDoc = source as any;
-    if (sourceDoc.date_service) {
-      (baseData as any).date_service = sourceDoc.date_service;
-    }
-    if (sourceDoc.date_service_to) {
-      (baseData as any).date_service_to = sourceDoc.date_service_to;
-    }
-  }
 
-  if (sourceType === "estimate") {
+  // Type-specific presentation fields only apply when the target is that same type.
+  if (sourceType === "estimate" && targetType === "estimate") {
     const sourceDoc = source as Estimate & { title_type?: "estimate" | "proforma_invoice" | null };
     if (sourceDoc.title_type) {
       (baseData as CreateEstimate).title_type = sourceDoc.title_type;
     }
   }
 
-  if (sourceType === "delivery_note") {
+  if (sourceType === "delivery_note" && targetType === "delivery_note") {
     const sourceDoc = source as DeliveryNote & { hide_prices?: boolean | null };
     if (sourceDoc.hide_prices !== undefined && sourceDoc.hide_prices !== null) {
       (baseData as CreateDeliveryNote).hide_prices = sourceDoc.hide_prices;
     }
   }
 
-  return baseData;
+  return stripSourceTypeDefaultText(baseData, {
+    sourceType,
+    targetType,
+    settings: options.settings,
+  });
 }
 
 export type UseDuplicateDocumentOptions = {
@@ -296,7 +419,13 @@ export function useDuplicateDocument({
         throw new Error("Source document not found");
       }
 
-      const initialValues = transformDocumentForDuplication(source, targetType);
+      const customer = await resolveDuplicateCustomer(source as any, activeEntity.id);
+      const settings = mergeEntityAndBusinessUnitSettings(
+        (activeEntity as any)?.settings,
+        (source as any).business_unit ?? null,
+      );
+
+      const initialValues = transformDocumentForDuplication(source, targetType, { customer, settings });
       if ((source as any).creation_source === "custom") {
         const customCreateTemplate = buildCustomCreateTemplateFromDocument(source);
         customCreateTemplate.items = normalizeCustomTemplateItems(

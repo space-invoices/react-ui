@@ -852,7 +852,7 @@ function BusinessUnitSettingsEditor({
               value={activeTab}
               onValueChange={(value) => setActiveTab(value as (typeof sectionTabs)[number]["value"])}
             >
-              <TabsList className="flex h-auto w-full flex-wrap justify-start">
+              <TabsList className="flex h-auto! w-full flex-wrap justify-start">
                 {sectionTabs.map(({ value, label, icon: Icon }) => (
                   <TabsTrigger key={value} value={value} className="gap-2">
                     <Icon className="h-4 w-4" />
@@ -1027,7 +1027,7 @@ function BusinessUnitSettingsEditor({
                         {t("Document type defaults")}
                       </div>
                       <Tabs defaultValue="invoice" className="w-full">
-                        <TabsList className="h-auto w-full flex-wrap justify-start">
+                        <TabsList className="flex h-auto! w-full flex-wrap justify-start">
                           {documentDefaultsTabs.map((tab) => (
                             <TabsTrigger key={tab.value} value={tab.value} className="cursor-pointer">
                               {t(tab.label)}
@@ -1335,7 +1335,7 @@ function BusinessUnitSettingsEditor({
                 <TabsContent value="email" className="mt-0 space-y-6">
                   <div className="border-t pt-6">
                     <Tabs defaultValue="invoice" className="w-full">
-                      <TabsList className="h-auto w-full justify-start">
+                      <TabsList className="flex h-auto! w-full flex-wrap justify-start">
                         {emailTemplateTabs.map((tab) => (
                           <TabsTrigger key={tab.value} value={tab.value} className="cursor-pointer">
                             {t(tab.label)}

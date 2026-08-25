@@ -422,7 +422,7 @@ export function DefaultsSettingsForm({
       </div>
 
       <Tabs defaultValue="invoice" className="w-full">
-        <TabsList className="w-full">
+        <TabsList className="flex h-auto! w-full flex-wrap justify-start">
           <TabsTrigger value="invoice" className="cursor-pointer">
             {t("Invoice")}
           </TabsTrigger>

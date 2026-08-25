@@ -439,7 +439,7 @@ export function NumberFormatSettingsForm({
     <Form {...form}>
       <form id="number-format-settings-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <Tabs defaultValue="invoice" className="w-full">
-          <TabsList className="flex h-auto w-full flex-wrap justify-start">
+          <TabsList className="flex h-auto! w-full flex-wrap justify-start">
             {DOCUMENT_FORMAT_TYPES.map((type) => (
               <TabsTrigger key={type} value={type} className="cursor-pointer">
                 {getDocumentLabel(type, t)}

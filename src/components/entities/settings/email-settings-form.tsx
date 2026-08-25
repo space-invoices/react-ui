@@ -850,7 +850,7 @@ export function EmailSettingsForm({
           </div>
 
           <Tabs defaultValue="invoice" className="w-full">
-            <TabsList className="w-full">
+            <TabsList className="flex h-auto! w-full flex-wrap justify-start">
               {EMAIL_TEMPLATE_TABS.map((tab) => (
                 <TabsTrigger key={tab.value} value={tab.value} className="cursor-pointer">
                   {t(tab.label)}

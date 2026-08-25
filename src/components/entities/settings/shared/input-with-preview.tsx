@@ -92,7 +92,10 @@ export const InputWithPreview = forwardRef<HTMLInputElement | HTMLTextAreaElemen
 
     if (multiline) {
       return (
-        <div className="relative">
+        // `isolate` keeps the preview overlay's `z-10` inside this wrapper. Without a stacking
+        // context here the overlay competes with the app header, which is `sticky top-0 z-10` —
+        // the tie breaks on DOM order, so the overlay paints over the header and the top banner.
+        <div className="relative isolate">
           <Textarea
             ref={textareaRef}
             value={value}
@@ -125,7 +128,8 @@ export const InputWithPreview = forwardRef<HTMLInputElement | HTMLTextAreaElemen
     }
 
     return (
-      <div className="relative">
+      // Same stacking-context containment as the multiline branch above.
+      <div className="relative isolate">
         <Input
           ref={inputRef}
           value={value}

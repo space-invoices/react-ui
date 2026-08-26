@@ -45,6 +45,8 @@ export default {
   "Mark as Paid": "Marcar como pago",
   Paid: "Pago",
   "Invoice will be marked as fully paid upon creation": "A fatura será marcada como totalmente paga na criação",
+  "Advance payments are applied automatically. Record any remaining payment after creating the invoice.":
+    "Os adiantamentos são aplicados automaticamente. Registe qualquer pagamento restante depois de criar a fatura.",
   "Payment Type": "Tipo de pagamento",
   "Select payment type": "Selecionar tipo de pagamento",
   Cash: "Dinheiro",

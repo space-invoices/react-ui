@@ -45,6 +45,8 @@ export default {
   "Mark as Paid": "Märgi tasutuks",
   Paid: "Tasutud",
   "Invoice will be marked as fully paid upon creation": "Arve märgitakse loomisel täielikult tasutuks",
+  "Advance payments are applied automatically. Record any remaining payment after creating the invoice.":
+    "Ettemaksed rakendatakse automaatselt. Registreeri ülejäänud makse pärast arve loomist.",
   "Payment Type": "Makseviis",
   "Select payment type": "Vali makseviis",
   Cash: "Sularaha",

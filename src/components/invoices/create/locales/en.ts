@@ -43,6 +43,8 @@ export default {
   "Mark as Paid": "Mark as Paid",
   Paid: "Paid",
   "Invoice will be marked as fully paid upon creation": "Invoice will be marked as fully paid upon creation",
+  "Advance payments are applied automatically. Record any remaining payment after creating the invoice.":
+    "Advance payments are applied automatically. Record any remaining payment after creating the invoice.",
   "Payment Type": "Payment Type",
   "Select payment type": "Select payment type",
   Cash: "Cash",

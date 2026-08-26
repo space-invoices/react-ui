@@ -45,6 +45,8 @@ export default {
   "Mark as Paid": "Označi kot plačano",
   Paid: "Plačano",
   "Invoice will be marked as fully paid upon creation": "Račun bo označen kot plačan ob ustvarjanju",
+  "Advance payments are applied automatically. Record any remaining payment after creating the invoice.":
+    "Predplačila se upoštevajo samodejno. Preostalo plačilo zabeležite po ustvarjanju računa.",
   "Payment Type": "Vrsta plačila",
   "Select payment type": "Izberi vrsto plačila",
   Cash: "Gotovina",

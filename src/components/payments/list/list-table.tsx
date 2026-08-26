@@ -41,7 +41,6 @@ const translations = withTableTranslations({
 type PaymentWithDocument = Payment & {
   Invoice?: { id: string; number: string } | null;
   CreditNote?: { id: string; number: string } | null;
-  AdvanceInvoice?: { id: string; number: string } | null;
   Expense?: { id: string; supplier_document_number?: string | null } | null;
 };
 

@@ -205,7 +205,7 @@ type DocumentAddFormProps = {
   disableBusinessUnitSelect?: boolean;
   /** Source documents linked to this invoice (e.g., delivery notes merged into this invoice) */
   sourceDocuments?: LinkedDocumentSummary[];
-  /** Force linking documents even if an advance invoice is already applied to another invoice */
+  /** Force linking an estimate or delivery note already linked to another invoice. */
   forceLinkedDocuments?: boolean;
   /** Mode: create (default) or edit */
   mode?: "create" | "edit";
@@ -539,6 +539,7 @@ export default function CreateInvoiceForm({
     () => calculateDocumentTotal((watchedItems as any[]) ?? [], priceModesRef.current),
     [watchedItems],
   );
+  const hasLinkedAdvanceInvoice = sourceDocuments?.some((document) => document.type === "advance_invoice") ?? false;
   const hasExplicitNonBankTransferPayment =
     markAsPaid && paymentRows.some((row) => row.type != null && row.type !== "bank_transfer");
   const skipPreferenceInitializedRef = useRef(isEditMode);
@@ -1131,7 +1132,7 @@ export default function CreateInvoiceForm({
         ? { ...values, calculation_mode: "b2b_standard" as const }
         : values;
 
-      if (!isDraft && !isEditMode && markAsPaid) {
+      if (!isDraft && !isEditMode && markAsPaid && !hasLinkedAdvanceInvoice) {
         const paymentValidation = validatePaymentRows(paymentRows, paymentDocumentTotal, "partial_allowed");
         const paymentMessage =
           paymentValidation.typeError ?? paymentValidation.amountError ?? paymentValidation.totalError;
@@ -1164,7 +1165,7 @@ export default function CreateInvoiceForm({
         const payload = prepareInvoiceSubmission(submissionValues as any, {
           originalCustomer,
           wasCustomerFormShown: showCustomerForm,
-          markAsPaid: isDraft ? false : markAsPaid,
+          markAsPaid: isDraft || hasLinkedAdvanceInvoice ? false : markAsPaid,
           payments: serializePaymentRows(paymentRows, paymentDocumentTotal),
           furs: fursOptions,
           fina: finaOptions,
@@ -1213,6 +1214,7 @@ export default function CreateInvoiceForm({
       isEditMode,
       useFinaNumbering,
       markAsPaid,
+      hasLinkedAdvanceInvoice,
       originalCustomer,
       paymentDocumentTotal,
       paymentRows,
@@ -1424,6 +1426,7 @@ export default function CreateInvoiceForm({
         return rest;
       });
       const previewPayload = {
+        id: isEditMode ? documentId : undefined,
         number: isNextNumberLoading ? undefined : formValues.number,
         business_unit_id: formValues.business_unit_id ?? null,
         date: formValues.date,
@@ -1479,6 +1482,7 @@ export default function CreateInvoiceForm({
       getPreservedExpectedTotalWithTax,
       isEditMode,
       isNextNumberLoading,
+      documentId,
       selectedCustomerId,
       skipFiscalization,
     ],
@@ -1799,7 +1803,7 @@ export default function CreateInvoiceForm({
             )}
             {/* Invoice-specific: Mark as paid section (UI-only state, not in form schema) */}
             {/* Hide in edit mode - payments are managed separately */}
-            {!isEditMode && (
+            {!isEditMode && !hasLinkedAdvanceInvoice && (
               <MarkAsPaidSection
                 checked={markAsPaid}
                 onCheckedChange={(checked) => {
@@ -1817,6 +1821,13 @@ export default function CreateInvoiceForm({
                 alwaysShowPaymentType={!!fina.isActive && requiresFinaFiscalization}
                 validationMessage={paymentValidationMessage}
               />
+            )}
+            {!isEditMode && hasLinkedAdvanceInvoice && (
+              <p className="text-muted-foreground text-sm">
+                {t(
+                  "Advance payments are applied automatically. Record any remaining payment after creating the invoice.",
+                )}
+              </p>
             )}
             {detailsExtras}
           </DocumentDetailsSection>

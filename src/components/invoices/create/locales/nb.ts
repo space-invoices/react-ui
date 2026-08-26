@@ -45,6 +45,8 @@ export default {
   "Mark as Paid": "Merk som betalt",
   Paid: "Betalt",
   "Invoice will be marked as fully paid upon creation": "Fakturaen blir markert som fullt betalt ved opprettelse",
+  "Advance payments are applied automatically. Record any remaining payment after creating the invoice.":
+    "Forskuddsbetalinger brukes automatisk. Registrer eventuell gjenstående betaling etter at fakturaen er opprettet.",
   "Payment Type": "Betalingstype",
   "Select payment type": "Velg betalingstype",
   Cash: "Kontant",

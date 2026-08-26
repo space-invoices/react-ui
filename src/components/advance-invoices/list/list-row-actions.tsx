@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/ui/components/ui/dropdown-menu";
 import { actionMenuTooltipProps, Tooltip, TooltipContent, TooltipTrigger } from "@/ui/components/ui/tooltip";
+import { getAdvanceInvoiceApplicationBlockReason } from "@/ui/lib/advance-invoice-application-state";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
 import { useAdvanceInvoiceDownload } from "./use-advance-invoice-download";
@@ -58,9 +59,15 @@ export default function AdvanceInvoiceListRowActions({
     onDownloadError,
     ...i18nProps,
   });
-  const createInvoiceDisabledReason = (advanceInvoice as any).voided_at
-    ? t("documents-list-page.copy-to-invoice-voided-not-allowed")
-    : undefined;
+  const applicationBlockReason = getAdvanceInvoiceApplicationBlockReason(advanceInvoice);
+  const createInvoiceDisabledReason =
+    applicationBlockReason === "draft"
+      ? t("documents-list-page.copy-to-invoice-draft-not-allowed")
+      : applicationBlockReason === "voided"
+        ? t("documents-list-page.copy-to-invoice-voided-not-allowed")
+        : applicationBlockReason === "unpaid"
+          ? t("documents-list-page.copy-to-invoice-unpaid-advance-not-allowed")
+          : undefined;
   const voidDisabledReason = (advanceInvoice as any).voided_at ? t("This document is already voided.") : undefined;
   const createInvoiceItem = onDuplicate ? (
     <DropdownMenuItem

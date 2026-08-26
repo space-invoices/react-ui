@@ -46,6 +46,8 @@ export default {
   Paid: "Opłacone",
   "Invoice will be marked as fully paid upon creation":
     "Faktura zostanie oznaczona jako w pełni opłacona przy tworzeniu",
+  "Advance payments are applied automatically. Record any remaining payment after creating the invoice.":
+    "Przedpłaty są rozliczane automatycznie. Pozostałą płatność zarejestruj po utworzeniu faktury.",
   "Payment Type": "Rodzaj płatności",
   "Select payment type": "Wybierz rodzaj płatności",
   Cash: "Gotówka",

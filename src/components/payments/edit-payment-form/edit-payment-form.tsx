@@ -59,6 +59,7 @@ type EditPaymentFormProps = {
   onSuccess?: (payment: Payment) => void;
   onError?: (error: Error) => void;
   renderSubmitButton?: (props: { isSubmitting: boolean; submit: () => void }) => React.ReactNode;
+  amountReadOnly?: boolean;
 } & ComponentTranslationProps;
 
 export default function EditPaymentForm({
@@ -67,6 +68,7 @@ export default function EditPaymentForm({
   onSuccess,
   onError,
   renderSubmitButton,
+  amountReadOnly = false,
   ...i18nProps
 }: EditPaymentFormProps) {
   const t = createTranslation({
@@ -138,6 +140,7 @@ export default function EditPaymentForm({
                   type="number"
                   step="0.01"
                   min="0"
+                  disabled={amountReadOnly}
                   placeholder={t("Enter amount")}
                   {...field}
                   onChange={(e) => field.onChange(Number(e.target.value))}

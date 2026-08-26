@@ -45,6 +45,8 @@ export default {
   "Mark as Paid": "Označit jako zaplacené",
   Paid: "Zaplaceno",
   "Invoice will be marked as fully paid upon creation": "Faktura bude při vytvoření označena jako plně uhrazená",
+  "Advance payments are applied automatically. Record any remaining payment after creating the invoice.":
+    "Zálohy se použijí automaticky. Zbývající platbu zaznamenejte po vytvoření faktury.",
   "Payment Type": "Typ platby",
   "Select payment type": "Vyberte typ platby",
   Cash: "Hotovost",

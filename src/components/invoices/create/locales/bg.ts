@@ -46,6 +46,8 @@ export default {
   Paid: "Платено",
   "Invoice will be marked as fully paid upon creation":
     "Фактурата ще бъде маркирана като напълно платена при създаване",
+  "Advance payments are applied automatically. Record any remaining payment after creating the invoice.":
+    "Авансовите плащания се прилагат автоматично. Запишете оставащото плащане след създаването на фактурата.",
   "Payment Type": "Вид плащане",
   "Select payment type": "Изберете тип плащане",
   Cash: "В брой",

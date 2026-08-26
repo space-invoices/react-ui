@@ -46,6 +46,8 @@ export default {
   Paid: "Greitt",
   "Invoice will be marked as fully paid upon creation":
     "Reikningurinn verður merktur sem að fullu greiddur við stofnun",
+  "Advance payments are applied automatically. Record any remaining payment after creating the invoice.":
+    "Fyrirframgreiðslur eru færðar sjálfkrafa. Skráðu eftirstöðvar greiðslu eftir að reikningurinn er stofnaður.",
   "Payment Type": "Greiðslumáti",
   "Select payment type": "Veldu greiðslutegund",
   Cash: "Reiðufé",

@@ -47,6 +47,8 @@ export default {
   Paid: "Bezahlt",
   "Invoice will be marked as fully paid upon creation":
     "Die Rechnung wird bei der Erstellung als vollständig bezahlt markiert",
+  "Advance payments are applied automatically. Record any remaining payment after creating the invoice.":
+    "Vorauszahlungen werden automatisch angerechnet. Erfassen Sie eine verbleibende Zahlung nach dem Erstellen der Rechnung.",
   "Payment Type": "Zahlungsart",
   "Select payment type": "Zahlungsart auswählen",
   Cash: "Bargeld",

@@ -45,6 +45,8 @@ export default {
   "Mark as Paid": "Merkitse maksetuksi",
   Paid: "Maksettu",
   "Invoice will be marked as fully paid upon creation": "Lasku merkitään luotaessa kokonaan maksetuksi",
+  "Advance payments are applied automatically. Record any remaining payment after creating the invoice.":
+    "Ennakkomaksut kohdistetaan automaattisesti. Kirjaa mahdollinen jäljellä oleva maksu laskun luomisen jälkeen.",
   "Payment Type": "Maksutapa",
   "Select payment type": "Valitse maksutapa",
   Cash: "Käteinen",

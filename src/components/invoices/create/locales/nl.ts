@@ -46,6 +46,8 @@ export default {
   Paid: "Betaald",
   "Invoice will be marked as fully paid upon creation":
     "De factuur wordt bij het aanmaken als volledig betaald gemarkeerd",
+  "Advance payments are applied automatically. Record any remaining payment after creating the invoice.":
+    "Vooruitbetalingen worden automatisch toegepast. Registreer een resterende betaling nadat de factuur is aangemaakt.",
   "Payment Type": "Betaaltype",
   "Select payment type": "Betaalmethode selecteren",
   Cash: "Contant",

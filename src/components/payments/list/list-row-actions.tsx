@@ -10,6 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/ui/components/ui/dropdown-menu";
+import { isActiveIssuedDirectAdvancePayment } from "@/ui/lib/payment-mutation-state";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
 
@@ -76,6 +77,7 @@ export default function PaymentListRowActions({
   const isAppliedAdvancePayment = payment.type === "advance" && !!payment.invoice_id && !!payment.advance_invoice_id;
   const isAppliedCreditNotePayment = payment.type === "credit_note" && !!payment.invoice_id && !!payment.credit_note_id;
   const isManagedSettlementPayment = isAppliedAdvancePayment || isAppliedCreditNotePayment;
+  const isIssuedAdvancePayment = isActiveIssuedDirectAdvancePayment(payment);
 
   return (
     <DropdownMenu>
@@ -108,7 +110,7 @@ export default function PaymentListRowActions({
           <DropdownMenuItem
             className="cursor-pointer text-destructive focus:text-destructive"
             onClick={handleDelete}
-            disabled={isDeleting || isManagedSettlementPayment}
+            disabled={isDeleting || isManagedSettlementPayment || isIssuedAdvancePayment}
           >
             <Trash2 className="h-4 w-4" />
             {isDeleting ? t("Deleting...") : t("Delete payment")}

@@ -28,7 +28,7 @@ const createAccountWebhookSchemaDefinition = z.object({
     )
     .min(1),
   active: z.boolean().optional().default(true),
-  metadata: z.union([z.record(z.string(), z.any()), z.null()]).optional(),
+  metadata: z.union([z.record(z.string(), z.string()).refine((value) => Object.keys(value).length <= 50, { message: "Metadata can have maximum 50 properties" }), z.null()]).optional(),
 });
 
 
@@ -53,7 +53,7 @@ const updateAccountWebhookSchemaDefinition = z
       )
       .min(1),
     active: z.boolean(),
-    metadata: z.union([z.record(z.string(), z.any()), z.null()]),
+    metadata: z.union([z.record(z.string(), z.string()).refine((value) => Object.keys(value).length <= 50, { message: "Metadata can have maximum 50 properties" }), z.null()]),
   })
   .partial();
 

@@ -55,7 +55,7 @@ const translations = {
     "kir-export.quarters.4": "Q4",
     "kir-export.file-preview": "File preview",
     "kir-export.exporting": "Exporting...",
-    "kir-export.export-button": "Export KIR ZIP",
+    "kir-export.export-button": "Export KIR/KPR ZIP",
   },
 } as const;
 
@@ -98,7 +98,7 @@ export function KirExportForm({
       );
 
       // Generate filename
-      const fileName = `KIR_${year}_${periodType === "month" ? `M${month}` : `Q${quarter}`}.zip`;
+      const fileName = `DDV_KIR_KPR_${year}_${periodType === "month" ? `M${month}` : `Q${quarter}`}.zip`;
 
       triggerBlobDownload(blob, fileName);
 
@@ -112,7 +112,7 @@ export function KirExportForm({
     }
   };
 
-  const fileName = `KIR_${year}_${periodType === "month" ? `M${month}` : `Q${quarter}`}.zip`;
+  const fileName = `DDV_KIR_KPR_${year}_${periodType === "month" ? `M${month}` : `Q${quarter}`}.zip`;
 
   return (
     <div className="space-y-4">

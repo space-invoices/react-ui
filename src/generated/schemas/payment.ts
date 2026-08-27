@@ -31,7 +31,7 @@ const createPaymentSchemaDefinition = z.object({
   tag: z.union([z.string(), z.null()]).optional(),
   reference: z.union([z.string(), z.null()]).optional(),
   note: z.union([z.string(), z.null()]).optional(),
-  metadata: z.union([z.record(z.string(), z.any()), z.null()]).optional(),
+  metadata: z.union([z.record(z.string(), z.string()).refine((value) => Object.keys(value).length <= 50, { message: "Metadata can have maximum 50 properties" }), z.null()]).optional(),
   document_id: z.union([z.string(), z.null()]).optional(),
 });
 
@@ -55,7 +55,7 @@ const updatePaymentSchemaDefinition = z
     tag: z.union([z.string(), z.null()]),
     reference: z.union([z.string(), z.null()]),
     note: z.union([z.string(), z.null()]),
-    metadata: z.union([z.record(z.string(), z.any()), z.null()]),
+    metadata: z.union([z.record(z.string(), z.string()).refine((value) => Object.keys(value).length <= 50, { message: "Metadata can have maximum 50 properties" }), z.null()]),
   })
   .partial();
 

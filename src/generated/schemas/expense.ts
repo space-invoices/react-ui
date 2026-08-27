@@ -143,7 +143,7 @@ const CreateExpenseItem = z
     total: z.union([z.number(), z.null()]),
     total_with_tax: z.union([z.number(), z.null()]),
     total_tax: z.union([z.number(), z.null()]),
-    metadata: z.union([z.record(z.string(), z.any()), z.null()]),
+    metadata: z.union([z.record(z.string(), z.string()).refine((value) => Object.keys(value).length <= 50, { message: "Metadata can have maximum 50 properties" }), z.null()]),
     translations: z.union([
       DocumentItemTranslations.and(z.unknown()),
       z.null(),
@@ -218,7 +218,7 @@ const createExpenseSchemaDefinition = z
           tag: z.union([z.string(), z.null()]).optional(),
           reference: z.union([z.string(), z.null()]).optional(),
           note: z.union([z.string(), z.null()]).optional(),
-          metadata: z.union([z.record(z.string(), z.any()), z.null()]).optional(),
+          metadata: z.union([z.record(z.string(), z.string()).refine((value) => Object.keys(value).length <= 50, { message: "Metadata can have maximum 50 properties" }), z.null()]).optional(),
           type: z.enum([
             "cash",
             "bank_transfer",
@@ -239,7 +239,7 @@ const createExpenseSchemaDefinition = z
     ]),
     exchange_rate: z.union([ExchangeRate, z.null()]),
     summary_classification: z.union([ExpenseSummaryClassification, z.null()]),
-    metadata: z.union([z.record(z.string(), z.any()), z.null()]),
+    metadata: z.union([z.record(z.string(), z.string()).refine((value) => Object.keys(value).length <= 50, { message: "Metadata can have maximum 50 properties" }), z.null()]),
   })
   .partial();
 
@@ -276,7 +276,7 @@ const updateExpenseSchemaDefinition = z
     ]),
     exchange_rate: z.union([ExchangeRate, z.null()]),
     summary_classification: z.union([ExpenseSummaryClassification, z.null()]),
-    metadata: z.union([z.record(z.string(), z.any()), z.null()]),
+    metadata: z.union([z.record(z.string(), z.string()).refine((value) => Object.keys(value).length <= 50, { message: "Metadata can have maximum 50 properties" }), z.null()]),
     type: z.literal("invoice"),
   })
   .partial();

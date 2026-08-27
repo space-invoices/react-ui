@@ -48,6 +48,7 @@ const DocumentEntity = z
     e_invoicing: z.union([DocumentEInvoicingCustomerData, z.null()]),
     bank_accounts: z.union([z.array(z.any()), z.null()]),
     is_end_consumer: z.union([z.boolean(), z.null()]),
+    is_tax_subject: z.union([z.boolean(), z.null()]),
     ujp: z.union([UjpCustomerData, z.null()]),
     bank_account: z.union([
       z
@@ -1062,7 +1063,7 @@ const PartialEstimatePreview = z.object({
     .union([z.union([z.enum(["b2b_standard", "b2c_gross_discount"]), z.null()]), z.null()])
     .optional(),
   currency_code: z.string().max(3).optional(),
-  metadata: z.union([z.record(z.string(), z.any()), z.null()]).optional(),
+  metadata: z.union([z.record(z.string(), z.string()).refine((value) => Object.keys(value).length <= 50, { message: "Metadata can have maximum 50 properties" }), z.null()]).optional(),
   reference: z.union([z.string(), z.null()]).optional(),
   pt: z.union([PtDocumentInput, z.null()]).optional(),
   date_valid_till: z.union([z.string(), z.null()]).optional(),
@@ -1099,7 +1100,7 @@ const PartialEstimatePreview = z.object({
           ),
           total: z.number(),
           total_with_tax: z.number(),
-          metadata: z.record(z.string(), z.any()),
+          metadata: z.union([z.record(z.string(), z.string()).refine((value) => Object.keys(value).length <= 50, { message: "Metadata can have maximum 50 properties" }), z.null()]),
         })
         .partial()
         .passthrough()
@@ -1230,7 +1231,7 @@ const CreateDocumentItem = z
     taxes: z.array(DocumentItemTax),
     discounts: z.array(LineDiscount).max(5),
     item_id: z.union([z.string(), z.null()]),
-    metadata: z.union([z.record(z.string(), z.any()), z.null()]),
+    metadata: z.union([z.record(z.string(), z.string()).refine((value) => Object.keys(value).length <= 50, { message: "Metadata can have maximum 50 properties" }), z.null()]),
     revenue_recognition: z.union([DocumentItemRevenueRecognition, z.null()]),
     translations: z.union([
       DocumentItemTranslations.and(z.unknown()),
@@ -1266,7 +1267,7 @@ const CompleteEstimatePreview = z.object({
     .union([z.union([z.enum(["b2b_standard", "b2c_gross_discount"]), z.null()]), z.null()])
     .optional(),
   currency_code: z.string().max(3).optional(),
-  metadata: z.union([z.record(z.string(), z.any()), z.null()]).optional(),
+  metadata: z.union([z.record(z.string(), z.string()).refine((value) => Object.keys(value).length <= 50, { message: "Metadata can have maximum 50 properties" }), z.null()]).optional(),
   reference: z.union([z.string(), z.null()]).optional(),
   pt: z.union([PtDocumentInput, z.null()]).optional(),
   date_valid_till: z.union([z.string(), z.null()]).optional(),

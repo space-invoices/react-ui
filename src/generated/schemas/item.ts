@@ -80,7 +80,7 @@ const createItemSchemaDefinition = z.object({
   e_invoicing: z.union([DocumentItemEInvoicingData, z.null()]).optional(),
   tax_ids: z.array(z.string().max(36)).optional(),
   financial_category_id: z.union([z.string(), z.null()]).optional(),
-  metadata: z.union([z.record(z.string(), z.any()), z.null()]).optional(),
+  metadata: z.union([z.record(z.string(), z.string()).refine((value) => Object.keys(value).length <= 50, { message: "Metadata can have maximum 50 properties" }), z.null()]).optional(),
   translations: z
     .union([DocumentItemTranslations.and(z.unknown()), z.null()])
     .optional(),
@@ -116,7 +116,7 @@ const updateItemSchemaDefinition = z
     e_invoicing: z.union([DocumentItemEInvoicingData, z.null()]),
     tax_ids: z.array(z.string().max(36)),
     financial_category_id: z.union([z.string(), z.null()]),
-    metadata: z.union([z.record(z.string(), z.any()), z.null()]),
+    metadata: z.union([z.record(z.string(), z.string()).refine((value) => Object.keys(value).length <= 50, { message: "Metadata can have maximum 50 properties" }), z.null()]),
     translations: z.union([
       DocumentItemTranslations.and(z.unknown()),
       z.null(),

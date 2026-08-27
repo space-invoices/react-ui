@@ -88,7 +88,7 @@ const createOrderSchemaDefinition = z.object({
   payment_method: z.union([z.string(), z.null()]).optional(),
   payment_gateway: z.union([z.string(), z.null()]).optional(),
   ordered_at: z.union([z.string(), z.null()]).optional(),
-  metadata: z.union([z.record(z.string(), z.any()), z.null()]).optional(),
+  metadata: z.union([z.record(z.string(), z.string()).refine((value) => Object.keys(value).length <= 50, { message: "Metadata can have maximum 50 properties" }), z.null()]).optional(),
 });
 
 
@@ -111,7 +111,7 @@ const updateOrderSchemaDefinition = z
     payment_method: z.union([z.string(), z.null()]),
     payment_gateway: z.union([z.string(), z.null()]),
     ordered_at: z.union([z.string(), z.null()]),
-    metadata: z.union([z.record(z.string(), z.any()), z.null()]),
+    metadata: z.union([z.record(z.string(), z.string()).refine((value) => Object.keys(value).length <= 50, { message: "Metadata can have maximum 50 properties" }), z.null()]),
   })
   .partial();
 

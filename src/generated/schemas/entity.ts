@@ -839,6 +839,7 @@ const SloveniaEntitySettings = z
       z.union([z.enum(["standard", "special_vat_identified", "non_vat_subject"]), z.null()]),
       z.null(),
     ]),
+    calculates_deduction_ratio: z.union([z.boolean(), z.null()]),
     tax_residency: z.union([
       z.union([z.enum(["resident", "non_resident"]), z.null()]),
       z.null(),
@@ -1153,7 +1154,7 @@ const createEntitySchemaDefinition = z.object({
     .partial()
     .passthrough()
     .optional(),
-  metadata: z.union([z.record(z.string(), z.any()), z.null()]).optional(),
+  metadata: z.union([z.record(z.string(), z.string()).refine((value) => Object.keys(value).length <= 50, { message: "Metadata can have maximum 50 properties" }), z.null()]).optional(),
 });
 
 
@@ -1366,7 +1367,7 @@ const patchEntitySchemaDefinition = z
       })
       .partial()
       .passthrough(),
-    metadata: z.union([z.record(z.string(), z.any()), z.null()]),
+    metadata: z.union([z.record(z.string(), z.string()).refine((value) => Object.keys(value).length <= 50, { message: "Metadata can have maximum 50 properties" }), z.null()]),
   })
   .partial();
 

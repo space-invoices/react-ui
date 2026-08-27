@@ -21,7 +21,7 @@ const createOrderIntegrationSchemaDefinition = z.object({
   business_unit_id: z.union([z.string(), z.null()]).optional(),
   business_premise_id: z.union([z.string(), z.null()]).optional(),
   electronic_device_id: z.union([z.string(), z.null()]).optional(),
-  metadata: z.union([z.record(z.string(), z.any()), z.null()]).optional(),
+  metadata: z.union([z.record(z.string(), z.string()).refine((value) => Object.keys(value).length <= 50, { message: "Metadata can have maximum 50 properties" }), z.null()]).optional(),
 });
 
 
@@ -35,7 +35,7 @@ const updateOrderIntegrationSchemaDefinition = z
     business_unit_id: z.union([z.string(), z.null()]),
     business_premise_id: z.union([z.string(), z.null()]),
     electronic_device_id: z.union([z.string(), z.null()]),
-    metadata: z.union([z.record(z.string(), z.any()), z.null()]),
+    metadata: z.union([z.record(z.string(), z.string()).refine((value) => Object.keys(value).length <= 50, { message: "Metadata can have maximum 50 properties" }), z.null()]),
     is_active: z.boolean(),
     auto_process_on: z.enum(["created", "paid", "fulfilled"]),
     default_payment_type: z.string(),

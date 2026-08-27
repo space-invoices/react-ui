@@ -227,6 +227,16 @@ function applyStringLengthConstraints(
   return nextDefinition;
 }
 
+export function applyMetadataRecordContract(content: string): string {
+  const metadataRecord =
+    'z.record(z.string(), z.string()).refine((value) => Object.keys(value).length <= 50, { message: "Metadata can have maximum 50 properties" })';
+
+  return content.replace(
+    /(\bmetadata:\s*(?:z\.union\(\[\s*)?)z\.record\(z\.string\(\), z\.any\(\)\)/g,
+    `$1${metadataRecord}`,
+  );
+}
+
 async function main() {
   // Generate into a disposable staging directory. Never remove the checked-in
   // output before every schema has been generated successfully.
@@ -283,6 +293,7 @@ async function main() {
     /z\.record\(z\.union\(\[z\.number\(\), z\.null\(\)\]\)\)/g,
     "z.record(z.string(), z.union([z.number(), z.null()]))",
   );
+  content = applyMetadataRecordContract(content);
 
   // Fix nullable enums emitted as z.enum([... , null]), which newer Zod typings reject.
   content = content.replace(/z\.enum\(\[([\s\S]*?)\]\)/g, (match, values) => {

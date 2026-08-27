@@ -23,7 +23,7 @@ const signupSchemaDefinition = z.object({
       z.array(z.unknown()),
     ])
     .optional(),
-  metadata: z.union([z.record(z.string(), z.any()), z.null()]).optional(),
+  metadata: z.union([z.record(z.string(), z.string()).refine((value) => Object.keys(value).length <= 50, { message: "Metadata can have maximum 50 properties" }), z.null()]).optional(),
   company_name: z.string().min(1).optional(),
   account_invitation_token: z.string().min(1).optional(),
 });

@@ -41,7 +41,7 @@ const createCustomerSchemaDefinition = z.object({
   is_tax_subject: z.boolean().optional(),
   is_end_consumer: z.union([z.boolean(), z.null()]).optional(),
   ujp: z.union([UjpCustomerData, z.null()]).optional(),
-  metadata: z.union([z.record(z.string(), z.any()), z.null()]).optional(),
+  metadata: z.union([z.record(z.string(), z.string()).refine((value) => Object.keys(value).length <= 50, { message: "Metadata can have maximum 50 properties" }), z.null()]).optional(),
 });
 
 
@@ -69,7 +69,7 @@ const updateCustomerSchemaDefinition = z
     is_tax_subject: z.boolean(),
     is_end_consumer: z.union([z.boolean(), z.null()]),
     ujp: z.union([UjpCustomerData, z.null()]),
-    metadata: z.union([z.record(z.string(), z.any()), z.null()]),
+    metadata: z.union([z.record(z.string(), z.string()).refine((value) => Object.keys(value).length <= 50, { message: "Metadata can have maximum 50 properties" }), z.null()]),
   })
   .partial();
 

@@ -25,7 +25,7 @@ const createExpensePaymentSchemaDefinition = z.object({
   tag: z.union([z.string(), z.null()]).optional(),
   reference: z.union([z.string(), z.null()]).optional(),
   note: z.union([z.string(), z.null()]).optional(),
-  metadata: z.union([z.record(z.string(), z.any()), z.null()]).optional(),
+  metadata: z.union([z.record(z.string(), z.string()).refine((value) => Object.keys(value).length <= 50, { message: "Metadata can have maximum 50 properties" }), z.null()]).optional(),
 });
 
 export type CreateExpensePaymentSchema = z.infer<typeof createExpensePaymentSchemaDefinition>;

@@ -27,7 +27,7 @@ const createRecurringInvoiceSchemaDefinition = z.object({
   send_to: z.union([z.string(), z.null()]).optional(),
   payment_terms_days: z.union([z.number(), z.null()]).optional(),
   notify_owner: z.boolean().optional(),
-  metadata: z.union([z.record(z.string(), z.any()), z.null()]).optional(),
+  metadata: z.union([z.record(z.string(), z.string()).refine((value) => Object.keys(value).length <= 50, { message: "Metadata can have maximum 50 properties" }), z.null()]).optional(),
 });
 
 
@@ -47,7 +47,7 @@ const updateRecurringInvoiceSchemaDefinition = z
     send_to: z.union([z.string(), z.null()]),
     payment_terms_days: z.union([z.number(), z.null()]),
     notify_owner: z.boolean(),
-    metadata: z.union([z.record(z.string(), z.any()), z.null()]),
+    metadata: z.union([z.record(z.string(), z.string()).refine((value) => Object.keys(value).length <= 50, { message: "Metadata can have maximum 50 properties" }), z.null()]),
   })
   .partial();
 

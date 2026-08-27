@@ -23,6 +23,7 @@ const updateSloveniaTaxProfileSchemaDefinition = z
       z.union([z.enum(["standard", "special_vat_identified", "non_vat_subject"]), z.null()]),
       z.null(),
     ]),
+    calculates_deduction_ratio: z.union([z.boolean(), z.null()]),
     tax_residency: z.union([
       z.union([z.enum(["resident", "non_resident"]), z.null()]),
       z.null(),

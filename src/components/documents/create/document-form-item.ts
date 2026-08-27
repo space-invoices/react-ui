@@ -32,6 +32,37 @@ type SourceDocumentItem = {
   metadata?: Record<string, unknown> | null;
 };
 
+function toMetadataString(value: unknown): string | undefined {
+  if (typeof value === "string") return value;
+  if (typeof value === "undefined") return undefined;
+  if (typeof value === "bigint") return value.toString();
+
+  try {
+    const serialized = JSON.stringify(value);
+    return typeof serialized === "string" ? serialized : String(value);
+  } catch {
+    return String(value);
+  }
+}
+
+function normalizeMetadataForSubmission(metadata: Record<string, unknown> | null | undefined) {
+  if (!metadata) return metadata ?? undefined;
+
+  const normalizedMetadata: Record<string, string> = {};
+  let propertyCount = 0;
+
+  for (const [key, value] of Object.entries(metadata)) {
+    const normalized = toMetadataString(value);
+    if (normalized === undefined) continue;
+
+    normalizedMetadata[key] = normalized;
+    propertyCount += 1;
+    if (propertyCount >= 50) break;
+  }
+
+  return normalizedMetadata;
+}
+
 export function toDocumentFormTaxes(taxes: SourceDocumentTax[] | null | undefined) {
   return (taxes ?? []).map((tax) => ({
     tax_id: tax?.tax_id ?? undefined,
@@ -68,7 +99,7 @@ export function toDocumentFormItem(item: SourceDocumentItem) {
           classification: item.classification ?? undefined,
           taxes: toDocumentFormTaxes(item.taxes),
           discounts: toDocumentFormDiscounts(item.discounts),
-          metadata: item.metadata ?? undefined,
+          metadata: normalizeMetadataForSubmission(item.metadata),
         }
       : {}),
   };

@@ -3,8 +3,8 @@
  * Handles customer selection and inline customer form
  */
 import { X } from "lucide-react";
-import { useEffect, useRef } from "react";
-import { useController } from "react-hook-form";
+import { useEffect, useRef, useState } from "react";
+import { useController, useWatch } from "react-hook-form";
 import { FormInput } from "@/ui/components/form";
 import { Button } from "@/ui/components/ui/button";
 import { Checkbox } from "@/ui/components/ui/checkbox";
@@ -28,16 +28,18 @@ type DocumentRecipientSectionProps = {
   entityCountryCode?: string | null;
   /** Initial customer name for display (used when duplicating documents) */
   initialCustomerName?: string;
-  /** Show end consumer (B2C) toggle next to tax number (Croatian entity + domestic transaction) */
+  /** Show end consumer (B2C) toggle next to the tax number for country flows that distinguish consumers. */
   showEndConsumerToggle?: boolean;
   /** Show business recipient routing fields, e.g. when UJP validation is active. */
   showBusinessRecipientFields?: boolean;
   /** Show customer bank account routing fields for UJP validation. */
   showUjpRoutingFields?: boolean;
-  /** Show EN 16931 buyer reference field for German XRechnung/ZUGFeRD. */
+  /** Show the EN 16931 buyer reference required by the active country profile. */
   showEInvoicingBuyerReference?: boolean;
   /** Show Peppol address fields for AR sending. */
   showPeppolRecipientFields?: boolean;
+  /** Show the French legal delivery-address snapshot fields. */
+  showDeliveryAddressFields?: boolean;
   t: (key: string) => string;
   locale?: string;
 };
@@ -45,57 +47,75 @@ type DocumentRecipientSectionProps = {
 const documentRecipientFieldTranslations = {
   bg: {
     "Company Number": "Фирмен номер",
+    "SIREN (French businesses, 9 digits)": "SIREN (френски фирми, 9 цифри)",
   },
   cs: {
     "Company Number": "IČO",
+    "SIREN (French businesses, 9 digits)": "SIREN (francouzské firmy, 9 číslic)",
   },
   de: {
     "Company Number": "Unternehmensnummer",
+    "SIREN (French businesses, 9 digits)": "SIREN (französische Unternehmen, 9 Ziffern)",
   },
   en: {
     "Company Number": "Company Number",
+    "SIREN (French businesses, 9 digits)": "SIREN (French businesses, 9 digits)",
   },
   es: {
     "Company Number": "Número de empresa",
+    "SIREN (French businesses, 9 digits)": "SIREN (empresas francesas, 9 dígitos)",
   },
   et: {
     "Company Number": "Ettevõtte registrikood",
+    "SIREN (French businesses, 9 digits)": "SIREN (Prantsuse ettevõtted, 9 numbrit)",
   },
   fi: {
     "Company Number": "Yritystunnus",
+    "SIREN (French businesses, 9 digits)": "SIREN (ranskalaiset yritykset, 9 numeroa)",
   },
   fr: {
     "Company Number": "Numéro d'entreprise",
+    "SIREN (French businesses, 9 digits)": "SIREN (entreprises françaises, 9 chiffres)",
   },
   hr: {
     "Company Number": "Matični broj tvrtke",
+    "SIREN (French businesses, 9 digits)": "SIREN (francuske tvrtke, 9 znamenki)",
   },
   is: {
     "Company Number": "Fyrirtækjanúmer",
+    "SIREN (French businesses, 9 digits)": "SIREN (frönsk fyrirtæki, 9 tölustafir)",
   },
   it: {
     "Company Number": "Numero aziendale",
+    "SIREN (French businesses, 9 digits)": "SIREN (aziende francesi, 9 cifre)",
   },
   nb: {
     "Company Number": "Organisasjonsnummer",
+    "SIREN (French businesses, 9 digits)": "SIREN (franske selskaper, 9 sifre)",
   },
   nl: {
     "Company Number": "Bedrijfsnummer",
+    "SIREN (French businesses, 9 digits)": "SIREN (Franse bedrijven, 9 cijfers)",
   },
   pl: {
     "Company Number": "Numer firmy",
+    "SIREN (French businesses, 9 digits)": "SIREN (francuskie firmy, 9 cyfr)",
   },
   pt: {
     "Company Number": "Número da empresa",
+    "SIREN (French businesses, 9 digits)": "SIREN (empresas francesas, 9 dígitos)",
   },
   sk: {
     "Company Number": "IČO",
+    "SIREN (French businesses, 9 digits)": "SIREN (francúzske firmy, 9 číslic)",
   },
   sl: {
     "Company Number": "Matična številka",
+    "SIREN (French businesses, 9 digits)": "SIREN (francoska podjetja, 9 števk)",
   },
   sv: {
     "Company Number": "Företagsnummer",
+    "SIREN (French businesses, 9 digits)": "SIREN (franska företag, 9 siffror)",
   },
 } as const;
 
@@ -115,6 +135,7 @@ export function DocumentRecipientSection({
   showUjpRoutingFields,
   showEInvoicingBuyerReference,
   showPeppolRecipientFields,
+  showDeliveryAddressFields,
   t,
   locale = "en",
 }: DocumentRecipientSectionProps) {
@@ -123,6 +144,10 @@ export function DocumentRecipientSection({
     locale,
     translations: documentRecipientFieldTranslations,
   });
+  const isFrenchEntity = entityCountryCode?.toUpperCase() === "FR";
+  const companyNumberLabel = translateRecipientField(
+    isFrenchEntity ? "SIREN (French businesses, 9 digits)" : "Company Number",
+  );
   const nameInputRef = useRef<HTMLInputElement>(null);
 
   const endConsumerController = useController({
@@ -138,6 +163,11 @@ export function DocumentRecipientSection({
     control: control as any,
     name: "customer.tax_number" as any,
   });
+  const deliveryAddress = useWatch({
+    control: control as any,
+    name: "customer.delivery_address.address" as any,
+  });
+  const [showDeliveryAddress, setShowDeliveryAddress] = useState(Boolean(deliveryAddress));
   const isBusinessRecipient = endConsumerController.field.value !== true;
   const showBusinessFields = showCustomerForm && showBusinessRecipientFields && isBusinessRecipient;
   const showBankRoutingFields = showUjpRoutingFields || !!taxNumberController.field.value?.trim();
@@ -151,6 +181,10 @@ export function DocumentRecipientSection({
       }, 0);
     }
   }, [showCustomerForm, shouldFocusName]);
+
+  useEffect(() => {
+    if (deliveryAddress) setShowDeliveryAddress(true);
+  }, [deliveryAddress]);
 
   return (
     <div className="flex-1 space-y-4">
@@ -281,8 +315,8 @@ export function DocumentRecipientSection({
               <FormInput
                 control={control}
                 name="customer.company_number"
-                placeholder={translateRecipientField("Company Number")}
-                label=""
+                placeholder={companyNumberLabel}
+                label={isFrenchEntity ? companyNumberLabel : ""}
                 onChange={onCustomerEdit}
               />
               {showBankRoutingFields && (
@@ -323,10 +357,71 @@ export function DocumentRecipientSection({
             <FormInput
               control={control}
               name="customer.e_invoicing.buyer_reference"
-              placeholder={t("Buyer reference / Leitweg-ID")}
-              label=""
+              placeholder={t(
+                entityCountryCode?.toUpperCase() === "FR" ? "Buyer reference" : "Buyer reference / Leitweg-ID",
+              )}
+              label={t(entityCountryCode?.toUpperCase() === "FR" ? "Buyer reference" : "Buyer reference / Leitweg-ID")}
             />
           )}
+
+          {showDeliveryAddressFields ? (
+            <div className="space-y-3">
+              {!showDeliveryAddress ? (
+                <Button
+                  type="button"
+                  variant="link"
+                  className="h-auto px-0"
+                  onClick={() => setShowDeliveryAddress(true)}
+                >
+                  {t("Add a different delivery address")}
+                </Button>
+              ) : (
+                <fieldset className="space-y-3 rounded-md border bg-muted/20 p-3">
+                  <legend className="px-1 font-medium text-sm">{t("Delivery address")}</legend>
+                  <p className="text-muted-foreground text-xs">
+                    {t("Complete this only when goods are delivered somewhere other than the billing address.")}
+                  </p>
+                  <FormInput
+                    control={control}
+                    name="customer.delivery_address.address"
+                    placeholder={t("Address")}
+                    label={t("Address")}
+                    onChange={onCustomerEdit}
+                  />
+                  <FormInput
+                    control={control}
+                    name="customer.delivery_address.address_2"
+                    placeholder={t("Address 2")}
+                    label={t("Address 2")}
+                    onChange={onCustomerEdit}
+                  />
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormInput
+                      control={control}
+                      name="customer.delivery_address.post_code"
+                      placeholder={t("Post Code")}
+                      label={t("Post Code")}
+                      onChange={onCustomerEdit}
+                    />
+                    <FormInput
+                      control={control}
+                      name="customer.delivery_address.city"
+                      placeholder={t("City")}
+                      label={t("City")}
+                      onChange={onCustomerEdit}
+                    />
+                  </div>
+                  <FormInput
+                    control={control}
+                    name="customer.delivery_address.country_code"
+                    placeholder={t("Country code")}
+                    label={t("Country code")}
+                    onChange={onCustomerEdit}
+                  />
+                </fieldset>
+              )}
+            </div>
+          ) : null}
         </>
       )}
     </div>

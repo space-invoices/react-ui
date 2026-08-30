@@ -1,7 +1,14 @@
 export default {
   Peppol: "Peppol",
+  "French e-invoice": "Facture électronique française",
   "Click to skip Peppol sending for this invoice": "Cliquez pour ignorer l'envoi de Peppol pour cette facture",
   "Click to enable Peppol sending": "Cliquez pour activer l'envoi Peppol",
+  "French electronic delivery or reporting is required for this invoice":
+    "La transmission ou la déclaration électronique française est obligatoire pour cette facture",
+  "Click to skip French electronic delivery or reporting for this invoice":
+    "Cliquez pour ignorer la transmission ou la déclaration électronique française pour cette facture",
+  "Click to enable French electronic delivery or reporting":
+    "Cliquez pour activer la transmission ou la déclaration électronique française",
   "Peppol Scheme": "Schéma Peppol",
   "Peppol ID": "Identifiant Peppol",
   Scheme: "Schème",
@@ -84,6 +91,13 @@ export default {
   Clear: "Effacer",
   Address: "Adresse",
   "Address 2": "Adresse 2",
+  "Buyer reference": "Référence acheteur",
+  Required: "Obligatoire",
+  "Add a different delivery address": "Ajouter une adresse de livraison différente",
+  "Delivery address": "Adresse de livraison",
+  "Complete this only when goods are delivered somewhere other than the billing address.":
+    "À renseigner uniquement si les biens sont livrés à une adresse différente de l'adresse de facturation.",
+  "Country code": "Code pays",
   "Post Code": "Code postal",
   City: "Ville",
   State: "Région",

@@ -240,4 +240,18 @@ export default {
     "IBAN viðskiptavinar er nauðsynlegt fyrir staðfestingu UJP-pakka.",
   "Customer BIC is required for UJP package validation.":
     "BIC viðskiptavinar er nauðsynlegt fyrir staðfestingu UJP-pakka.",
+  "French e-invoice": "Franskur rafrænn reikningur",
+  "French electronic delivery or reporting is required for this invoice":
+    "Frönsk rafræn afhending eða skýrslugjöf er áskilin fyrir þennan reikning",
+  "Click to skip French electronic delivery or reporting for this invoice":
+    "Smelltu til að sleppa franskri rafrænni afhendingu eða skýrslugjöf fyrir þennan reikning",
+  "Click to enable French electronic delivery or reporting":
+    "Smelltu til að virkja franska rafræna afhendingu eða skýrslugjöf",
+  "Buyer reference": "Tilvísun kaupanda",
+  Required: "Áskilið",
+  "Add a different delivery address": "Bæta við öðru afhendingarheimilisfangi",
+  "Delivery address": "Afhendingarheimilisfang",
+  "Complete this only when goods are delivered somewhere other than the billing address.":
+    "Fylltu aðeins út þegar vörur eru afhentar á annað heimilisfang en reikningsfang.",
+  "Country code": "Landskóði",
 } as const;

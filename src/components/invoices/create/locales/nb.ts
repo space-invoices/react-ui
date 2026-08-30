@@ -233,4 +233,18 @@ export default {
     "Kundens IBAN og BIC kreves for validering av UJP-pakken.",
   "Customer IBAN is required for UJP package validation.": "Kundens IBAN kreves for validering av UJP-pakken.",
   "Customer BIC is required for UJP package validation.": "Kundens BIC kreves for validering av UJP-pakken.",
+  "French e-invoice": "Fransk e-faktura",
+  "French electronic delivery or reporting is required for this invoice":
+    "Fransk elektronisk levering eller rapportering er påkrevd for denne fakturaen",
+  "Click to skip French electronic delivery or reporting for this invoice":
+    "Klikk for å hoppe over fransk elektronisk levering eller rapportering for denne fakturaen",
+  "Click to enable French electronic delivery or reporting":
+    "Klikk for å aktivere fransk elektronisk levering eller rapportering",
+  "Buyer reference": "Kjøperreferanse",
+  Required: "Påkrevd",
+  "Add a different delivery address": "Legg til en annen leveringsadresse",
+  "Delivery address": "Leveringsadresse",
+  "Complete this only when goods are delivered somewhere other than the billing address.":
+    "Fyll bare ut dette når varer leveres til en annen adresse enn fakturaadressen.",
+  "Country code": "Landskode",
 } as const;

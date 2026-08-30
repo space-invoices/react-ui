@@ -241,4 +241,18 @@ export default {
     "L’IBAN del cliente è obbligatorio per la validazione del pacchetto UJP.",
   "Customer BIC is required for UJP package validation.":
     "Il BIC del cliente è obbligatorio per la validazione del pacchetto UJP.",
+  "French e-invoice": "Fattura elettronica francese",
+  "French electronic delivery or reporting is required for this invoice":
+    "La consegna elettronica o la comunicazione francese è obbligatoria per questa fattura",
+  "Click to skip French electronic delivery or reporting for this invoice":
+    "Fai clic per saltare la consegna elettronica o la comunicazione francese per questa fattura",
+  "Click to enable French electronic delivery or reporting":
+    "Fai clic per attivare la consegna elettronica o la comunicazione francese",
+  "Buyer reference": "Riferimento acquirente",
+  Required: "Obbligatorio",
+  "Add a different delivery address": "Aggiungi un indirizzo di consegna diverso",
+  "Delivery address": "Indirizzo di consegna",
+  "Complete this only when goods are delivered somewhere other than the billing address.":
+    "Compila solo se le merci vengono consegnate a un indirizzo diverso da quello di fatturazione.",
+  "Country code": "Codice paese",
 } as const;

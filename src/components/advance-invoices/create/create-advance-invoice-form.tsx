@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { AdvanceInvoice, CreateAdvanceInvoice, Tax, UpdateAdvanceInvoice } from "@spaceinvoices/js-sdk";
 import { useQueryClient } from "@tanstack/react-query";
-import { AlertCircle, Check, FileCode2, X } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Resolver } from "react-hook-form";
@@ -508,6 +508,7 @@ export default function CreateAdvanceInvoiceForm({
                   variant={isEslogChecked ? "outline" : "ghost"}
                   size="sm"
                   className={cn("h-8 cursor-pointer gap-2", !isEslogChecked && "text-muted-foreground")}
+                  aria-pressed={isEslogChecked}
                   onClick={() => eslog.setEnabled(!eslog.isEnabled)}
                 >
                   <div
@@ -517,9 +518,7 @@ export default function CreateAdvanceInvoiceForm({
                         ? "border-primary bg-primary text-primary-foreground"
                         : "border-muted-foreground bg-background text-muted-foreground",
                     )}
-                  >
-                    {isEslogChecked ? <Check className="size-3" /> : <FileCode2 className="size-3" />}
-                  </div>
+                  />
                   <span>{t("e-SLOG")}</span>
                 </Button>
               </TooltipTrigger>
@@ -545,6 +544,7 @@ export default function CreateAdvanceInvoiceForm({
                     "h-8 cursor-pointer gap-2",
                     !isFursChecked && "text-destructive hover:text-destructive",
                   )}
+                  aria-pressed={isFursChecked}
                   onClick={() => setSkipFiscalization(!skipFiscalization)}
                 >
                   <div
@@ -552,11 +552,9 @@ export default function CreateAdvanceInvoiceForm({
                       "flex size-4 items-center justify-center rounded border",
                       isFursChecked
                         ? "border-primary bg-primary text-primary-foreground"
-                        : "border-destructive bg-destructive text-destructive-foreground",
+                        : "border-destructive bg-background text-destructive",
                     )}
-                  >
-                    {isFursChecked ? <Check className="size-3" /> : <X className="size-3" />}
-                  </div>
+                  />
                   <span>{t("Fiscally verify")}</span>
                 </Button>
               </TooltipTrigger>

@@ -31,6 +31,13 @@ export type CustomerData = {
   e_invoicing?: {
     buyer_reference?: string | null;
   } | null;
+  delivery_address?: {
+    address?: string | null;
+    address_2?: string | null;
+    post_code?: string | null;
+    city?: string | null;
+    country_code?: string | null;
+  } | null;
 };
 
 /**

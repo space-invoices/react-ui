@@ -233,4 +233,18 @@ export default {
     "IBAN in BIC stranke sta obvezna za validacijo UJP paketa.",
   "Customer IBAN is required for UJP package validation.": "IBAN stranke je obvezen za validacijo UJP paketa.",
   "Customer BIC is required for UJP package validation.": "BIC stranke je obvezen za validacijo UJP paketa.",
+  "French e-invoice": "Francoski e-račun",
+  "French electronic delivery or reporting is required for this invoice":
+    "Francoska elektronska dostava ali poročanje je obvezno za ta račun",
+  "Click to skip French electronic delivery or reporting for this invoice":
+    "Kliknite, če želite preskočiti francosko elektronsko dostavo ali poročanje za ta račun",
+  "Click to enable French electronic delivery or reporting":
+    "Kliknite, da omogočite francosko elektronsko dostavo ali poročanje",
+  "Buyer reference": "Referenca kupca",
+  Required: "Obvezno",
+  "Add a different delivery address": "Dodaj drug naslov za dostavo",
+  "Delivery address": "Naslov za dostavo",
+  "Complete this only when goods are delivered somewhere other than the billing address.":
+    "Izpolnite samo, kadar je blago dostavljeno na naslov, ki se razlikuje od naslova za račun.",
+  "Country code": "Koda države",
 } as const;

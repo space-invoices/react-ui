@@ -14,6 +14,18 @@ const sendEInvoicingDocumentSchemaDefinition = z
     recipient_peppol_id: z.string().min(1),
     recipient_scheme_id: z.string().min(1).max(10),
     recipient_name: z.string().min(1).max(255),
+    recipient_company_number: z.union([z.string(), z.null()]),
+    recipient_routing_identifier: z.union([z.string(), z.null()]),
+    delivery_address: z.union([
+      z.object({
+        address: z.string().min(1).max(500),
+        address_2: z.union([z.string(), z.null()]).optional(),
+        post_code: z.string().min(1).max(20),
+        city: z.string().min(1).max(100),
+        country_code: z.union([z.string(), z.null()]).optional().default("FR"),
+      }),
+      z.null(),
+    ]),
   })
   .partial();
 

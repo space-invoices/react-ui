@@ -28,6 +28,7 @@ type FinalizeDocumentVariables = {
   documentType: DocumentType;
   furs?: { business_premise_name: string; electronic_device_name: string } | { skip: true };
   fina?: { business_premise_name: string; electronic_device_name: string; payment_type?: string };
+  eInvoicing?: { send_enabled: boolean };
 };
 
 /**
@@ -38,10 +39,11 @@ export function useFinalizeDocument(options: FinalizeDocumentOptions) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ documentId, documentType, furs, fina }: FinalizeDocumentVariables) => {
+    mutationFn: async ({ documentId, documentType, furs, fina, eInvoicing }: FinalizeDocumentVariables) => {
       const body: Record<string, unknown> = {};
       if (furs) body.furs = furs;
       if (fina) body.fina = fina;
+      if (eInvoicing) body.e_invoicing = eInvoicing;
       return documents.finalizeDocument(documentId, body, { type: documentType });
     },
     onSuccess: (data, variables) => {

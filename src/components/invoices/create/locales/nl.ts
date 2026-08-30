@@ -240,4 +240,18 @@ export default {
     "De IBAN van de klant is vereist voor validatie van het UJP-pakket.",
   "Customer BIC is required for UJP package validation.":
     "De BIC van de klant is vereist voor validatie van het UJP-pakket.",
+  "French e-invoice": "Franse e-factuur",
+  "French electronic delivery or reporting is required for this invoice":
+    "Franse elektronische levering of rapportage is verplicht voor deze factuur",
+  "Click to skip French electronic delivery or reporting for this invoice":
+    "Klik om Franse elektronische levering of rapportage voor deze factuur over te slaan",
+  "Click to enable French electronic delivery or reporting":
+    "Klik om Franse elektronische levering of rapportage in te schakelen",
+  "Buyer reference": "Referentie van koper",
+  Required: "Verplicht",
+  "Add a different delivery address": "Afwijkend afleveradres toevoegen",
+  "Delivery address": "Afleveradres",
+  "Complete this only when goods are delivered somewhere other than the billing address.":
+    "Vul dit alleen in als goederen op een ander adres dan het factuuradres worden geleverd.",
+  "Country code": "Landcode",
 } as const;

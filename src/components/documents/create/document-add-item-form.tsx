@@ -273,6 +273,7 @@ export default function DocumentAddItemForm({
   });
   const lockPortugalSavedItemFields = countryCapabilities.isPortugal && !!selectedSavedItemId;
   const unitCodeFieldState = form?.getFieldState?.(unitCodeFieldName, form.formState);
+  const taxesFieldState = form?.getFieldState?.(`items.${index}.taxes`, form.formState);
   const hasEInvoicingUnitCodeError = !!unitCodeFieldState?.error;
   const showEInvoicingUnitCodeControl =
     countryCapabilities.hasEInvoicing ||
@@ -601,8 +602,8 @@ export default function DocumentAddItemForm({
           />
         </div>
 
-        {countryCapabilities.isPortugal && (
-          <div className="w-40">
+        {(countryCapabilities.isPortugal || countryCapabilities.isFrance) && (
+          <div className="w-40 pt-3">
             <FormField
               control={control}
               name={`items.${index}.classification`}
@@ -625,7 +626,9 @@ export default function DocumentAddItemForm({
                       <option value="service" disabled={documentType === "advance_invoice"}>
                         {t("Service")}
                       </option>
-                      <option value="advance">{t("Advance")}</option>
+                      <option value="advance" disabled={countryCapabilities.isFrance}>
+                        {t("Advance")}
+                      </option>
                     </select>
                   </FormControl>
                   <FormMessage />
@@ -845,6 +848,9 @@ export default function DocumentAddItemForm({
                     <PlusIcon className="h-4 w-4" />
                     {t("Add tax")}
                   </Button>
+                )}
+                {taxesFieldState?.error?.message && (
+                  <p className="font-normal text-destructive text-xs">{taxesFieldState.error.message}</p>
                 )}
               </>
             )}

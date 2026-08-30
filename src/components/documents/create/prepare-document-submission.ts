@@ -23,6 +23,13 @@ type CustomerData = {
   e_invoicing?: {
     buyer_reference?: string | null;
   } | null;
+  delivery_address?: {
+    address?: string | null;
+    address_2?: string | null;
+    post_code?: string | null;
+    city?: string | null;
+    country_code?: string | null;
+  } | null;
   save_customer?: boolean | null;
 };
 
@@ -127,6 +134,18 @@ function cleanCustomerPayload(customer: CustomerData, originalCustomer?: Custome
       );
       if (Object.keys(cleanedEInvoicing).length > 0) {
         cleanedCustomer.e_invoicing = cleanedEInvoicing;
+      }
+      continue;
+    }
+
+    if (key === "delivery_address" && typeof value === "object" && !Array.isArray(value)) {
+      const cleanedDeliveryAddress = Object.fromEntries(
+        Object.entries(value).filter(
+          ([, nestedValue]) => nestedValue !== "" && nestedValue !== null && nestedValue !== undefined,
+        ),
+      );
+      if (Object.keys(cleanedDeliveryAddress).length > 0) {
+        cleanedCustomer.delivery_address = cleanedDeliveryAddress;
       }
       continue;
     }

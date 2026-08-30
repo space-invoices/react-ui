@@ -16,6 +16,16 @@ const DocumentEInvoicingCustomerData = z
 
 
 // Dependency schema for custominvoice
+const EInvoiceDeliveryAddress = z.object({
+  address: z.string().min(1).max(500),
+  address_2: z.union([z.string(), z.null()]).optional(),
+  post_code: z.string().min(1).max(20),
+  city: z.string().min(1).max(100),
+  country_code: z.union([z.string(), z.null()]).optional().default("FR"),
+});
+
+
+// Dependency schema for custominvoice
 const UjpCustomerData = z
   .object({
     receiver_name: z.union([z.string(), z.null()]),
@@ -46,6 +56,7 @@ const DocumentEntity = z
     peppol_id: z.union([z.string(), z.null()]),
     peppol_scheme_id: z.union([z.string(), z.null()]),
     e_invoicing: z.union([DocumentEInvoicingCustomerData, z.null()]),
+    delivery_address: z.union([EInvoiceDeliveryAddress, z.null()]),
     bank_accounts: z.union([z.array(z.any()), z.null()]),
     is_end_consumer: z.union([z.boolean(), z.null()]),
     is_tax_subject: z.union([z.boolean(), z.null()]),

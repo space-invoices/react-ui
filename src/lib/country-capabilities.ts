@@ -5,6 +5,7 @@ import type { Entity } from "@/ui/providers/entities-context";
 
 export const PORTUGAL_COUNTRY_CODE = "PT";
 export const ITALY_COUNTRY_CODE = "IT";
+export const FRANCE_COUNTRY_CODE = "FR";
 export const PORTUGAL_PDF_LOCALE = "pt-PT";
 export const PORTUGAL_CANONICAL_PDF_TEMPLATE: PdfTemplateId = "classic";
 const ACTIVE_ACCOUNT_COOKIE = "l.account";
@@ -30,6 +31,10 @@ export function isPortugalEntity(entity: CountryEntity): boolean {
 
 export function isItalyEntity(entity: CountryEntity): boolean {
   return isEntityInCountry(entity, ITALY_COUNTRY_CODE);
+}
+
+export function isFranceEntity(entity: CountryEntity): boolean {
+  return isEntityInCountry(entity, FRANCE_COUNTRY_CODE);
 }
 
 function hasCountryFeature(entity: CountryEntity, feature: string): boolean {
@@ -76,7 +81,28 @@ export function isPeppolSendingEnabled(entity: CountryEntity): boolean {
 
 export function isPeppolAutoSendingEnabled(entity: CountryEntity): boolean {
   const settings = (entity?.settings as Record<string, any> | undefined) ?? {};
-  return isPeppolSendingEnabled(entity) && settings.e_invoicing?.auto_send === true;
+  return (
+    isPeppolSendingEnabled(entity) &&
+    (settings.e_invoicing?.auto_send === true || isFranceEmissionRequiredForUi(entity))
+  );
+}
+
+export function isFranceEmissionRequiredForUi(entity: CountryEntity, now = new Date()): boolean {
+  if (!isFranceEntity(entity)) return false;
+  const settings = (entity?.settings as Record<string, any> | undefined) ?? {};
+  const dateParts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Europe/Paris",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  })
+    .formatToParts(now)
+    .reduce<Record<string, string>>((parts, part) => {
+      parts[part.type] = part.value;
+      return parts;
+    }, {});
+  const dateInFrance = `${dateParts.year}-${dateParts.month}-${dateParts.day}`;
+  return settings.e_invoicing?.france_2026_emission_applicable === true || dateInFrance >= "2027-09-01";
 }
 
 function getCookieValue(name: string) {
@@ -126,6 +152,7 @@ export function getEntityCountryCapabilities(entity: CountryEntity) {
   const isPortugal = isPortugalEntity(entity) && hasPortugalUiAccess();
   const isSlovenia = isEntityInCountry(entity, "SI");
   const isItaly = isItalyEntity(entity);
+  const isFrance = isFranceEntity(entity);
   const hasItalyFatturaPa = hasItalyFatturaPaSupport(entity);
   const isGermany = isEntityInCountry(entity, "DE");
   const hasEInvoicing = hasCountryFeature(entity, "e_invoicing");
@@ -144,11 +171,13 @@ export function getEntityCountryCapabilities(entity: CountryEntity) {
   const germanEInvoicingEnabled = xrechnungEnabled || zugferdEnabled;
   const peppolSendingEnabled = isPeppolSendingEnabled(entity);
   const peppolAutoSendingEnabled = isPeppolAutoSendingEnabled(entity);
+  const franceEmissionRequired = isFranceEmissionRequiredForUi(entity);
 
   return {
     isPortugal,
     isSlovenia,
     isItaly,
+    isFrance,
     isGermany,
     hasFurs,
     hasFina,
@@ -168,6 +197,7 @@ export function getEntityCountryCapabilities(entity: CountryEntity) {
     showPeppolAutoSendControls: peppolAutoSendingEnabled,
     peppolSendingEnabled,
     peppolAutoSendingEnabled,
+    franceEmissionRequired,
     showGermanEInvoicingExports: germanEInvoicingEnabled,
     showXRechnungExport: xrechnungEnabled,
     showZugferdExport: zugferdEnabled,

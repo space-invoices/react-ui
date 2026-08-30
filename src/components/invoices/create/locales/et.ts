@@ -234,4 +234,18 @@ export default {
     "Kliendi IBAN ja BIC on UJP paketi valideerimiseks kohustuslikud.",
   "Customer IBAN is required for UJP package validation.": "Kliendi IBAN on UJP paketi valideerimiseks kohustuslik.",
   "Customer BIC is required for UJP package validation.": "Kliendi BIC on UJP paketi valideerimiseks kohustuslik.",
+  "French e-invoice": "Prantsuse e-arve",
+  "French electronic delivery or reporting is required for this invoice":
+    "Prantsuse elektrooniline edastamine või aruandlus on selle arve puhul nõutav",
+  "Click to skip French electronic delivery or reporting for this invoice":
+    "Klõpsake, et jätta selle arve Prantsuse elektrooniline edastamine või aruandlus vahele",
+  "Click to enable French electronic delivery or reporting":
+    "Klõpsake Prantsuse elektroonilise edastamise või aruandluse lubamiseks",
+  "Buyer reference": "Ostja viide",
+  Required: "Kohustuslik",
+  "Add a different delivery address": "Lisa teine tarneaadress",
+  "Delivery address": "Tarneaadress",
+  "Complete this only when goods are delivered somewhere other than the billing address.":
+    "Täitke ainult siis, kui kaup tarnitakse arveldusaadressist erinevale aadressile.",
+  "Country code": "Riigikood",
 } as const;

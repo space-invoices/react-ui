@@ -7,6 +7,7 @@ import type {
   Invoice,
   Payment,
 } from "@spaceinvoices/js-sdk";
+import type { ReactNode } from "react";
 import { Card, CardContent } from "@/ui/components/ui/card";
 import { Separator } from "@/ui/components/ui/separator";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
@@ -45,6 +46,7 @@ interface DocumentSidebarProps extends ComponentTranslationProps {
   finaFiscalizationData?: any;
   onRetryFiscalization?: () => void;
   isRetryingFiscalization?: boolean;
+  complianceStatus?: ReactNode;
 }
 
 export function DocumentSidebar({
@@ -69,6 +71,7 @@ export function DocumentSidebar({
   finaFiscalizationData,
   onRetryFiscalization,
   isRetryingFiscalization,
+  complianceStatus,
   ...i18nProps
 }: DocumentSidebarProps) {
   const subscription = useWLSubscriptionOptional();
@@ -140,6 +143,13 @@ export function DocumentSidebar({
             />
           </>
         )}
+
+        {complianceStatus ? (
+          <>
+            <Separator />
+            {complianceStatus}
+          </>
+        ) : null}
 
         <Separator />
         <DocumentActivitiesList

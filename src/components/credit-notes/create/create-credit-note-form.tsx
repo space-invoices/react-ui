@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { CreateCreditNote, CreditNote, Tax, UpdateCreditNote } from "@spaceinvoices/js-sdk";
 import { useQueryClient } from "@tanstack/react-query";
-import { AlertCircle, Check, Send, X } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Resolver } from "react-hook-form";
@@ -71,6 +71,7 @@ import {
 } from "../../documents/create/document-item-validation";
 import { DocumentItemsSection, type PriceModesMap } from "../../documents/create/document-items-section";
 import { DocumentRecipientSection } from "../../documents/create/document-recipient-section";
+import { getEInvoicingSendValidationIssues } from "../../documents/create/e-invoicing-send-validation";
 import { type LinkedDocumentSummary, LinkedDocumentsInfo } from "../../documents/create/linked-documents-info";
 import { MarkAsPaidSection } from "../../documents/create/mark-as-paid-section";
 import {
@@ -87,6 +88,7 @@ import {
   financialInputsMatchInitial,
   resolvePreservedExpectedTotal,
 } from "../../documents/create/preserved-expected-total";
+import { scrollToFirstInvalidField } from "../../documents/create/scroll-to-first-invalid-field";
 import { useDocumentCustomerForm } from "../../documents/create/use-document-customer-form";
 import type { DocumentTypes } from "../../documents/types";
 import { EslogSetupErrorsDialog } from "../../invoices/create/eslog-setup-errors-dialog";
@@ -155,6 +157,7 @@ const translations = {
   sk: { ...invoiceSk, ...sk },
   sv: { ...invoiceSv, ...sv },
 } as const;
+const FORM_ID = "create-credit-note-form";
 const createCreditNoteFormSchema = withCreditNoteIssueDateValidation(
   withRequiredDocumentItemFields(
     createCreditNoteSchema.extend({
@@ -211,8 +214,10 @@ type CreateCreditNoteFormProps = {
   allowDrafts?: boolean;
   /** Show Peppol recipient address fields for AR e-invoicing. */
   showPeppolRecipientFields?: boolean;
-  /** Show the per-document Peppol auto-send opt-out control. */
+  /** Show the per-document electronic sending control. */
   showPeppolSendToggle?: boolean;
+  /** Initial state for the per-document Peppol send control. Defaults to the control visibility for compatibility. */
+  peppolSendDefaultEnabled?: boolean;
   mode?: "create" | "edit";
   documentId?: string;
   /** Optional app-level content rendered inside the details section. */
@@ -239,6 +244,7 @@ export default function CreateCreditNoteForm({
   allowDrafts = true,
   showPeppolRecipientFields = false,
   showPeppolSendToggle = false,
+  peppolSendDefaultEnabled = showPeppolSendToggle,
   mode = "create",
   documentId,
   detailsExtras,
@@ -267,7 +273,7 @@ export default function CreateCreditNoteForm({
   const translationsFeatureEnabled = whiteLabel.isFeatureVisible(DOCUMENT_CONTENT_TRANSLATIONS_FEATURE);
   const defaultContentLocale = activeEntity?.locale || "en-US";
   const [contentLocale, setContentLocale] = useState<DocumentContentLocaleMode>(DEFAULT_CONTENT_LOCALE);
-  const [peppolSendEnabled, setPeppolSendEnabled] = useState(showPeppolSendToggle);
+  const [peppolSendEnabled, setPeppolSendEnabled] = useState(peppolSendDefaultEnabled);
   const initialBusinessUnit = useMemo(
     () => businessUnits.find((unit) => unit.id === ((initialValues as any)?.business_unit_id ?? null)) ?? null,
     [businessUnits, initialValues],
@@ -290,8 +296,8 @@ export default function CreateCreditNoteForm({
   const isDraftSubmitRef = useRef(false);
 
   useEffect(() => {
-    setPeppolSendEnabled(showPeppolSendToggle);
-  }, [showPeppolSendToggle]);
+    setPeppolSendEnabled(peppolSendDefaultEnabled);
+  }, [peppolSendDefaultEnabled]);
   const eslogResolverStateRef = useRef({
     activeEntity,
     isEnabled: eslog.isEnabled === true,
@@ -608,8 +614,10 @@ export default function CreateCreditNoteForm({
 
   const showFursToggle = !isEditMode && !furs.isLoading && !fina.isLoading && furs.isEnabled && furs.hasPremises;
   const showPeppolToggle = !isEditMode && !furs.isLoading && !fina.isLoading && showPeppolSendToggle;
+  const isFranceEInvoicing = countryCapabilities.isFrance;
+  const forceEInvoicingSend = isFranceEInvoicing && countryCapabilities.franceEmissionRequired;
   const isFursChecked = !skipFiscalization;
-  const isPeppolChecked = peppolSendEnabled;
+  const isPeppolChecked = forceEInvoicingSend || peppolSendEnabled;
   const headerActionSignature =
     showFursToggle || showPeppolToggle
       ? JSON.stringify({
@@ -617,9 +625,19 @@ export default function CreateCreditNoteForm({
           showPeppolToggle,
           isFursChecked,
           isPeppolChecked,
-          peppolLabel: t("Peppol"),
-          peppolEnabledDescription: t("Click to skip Peppol sending for this credit note"),
-          peppolDisabledDescription: t("Click to enable Peppol sending"),
+          peppolLabel: t(isFranceEInvoicing ? "French e-invoice" : "Peppol"),
+          peppolEnabledDescription: t(
+            isFranceEInvoicing
+              ? forceEInvoicingSend
+                ? "French electronic delivery or reporting is required for this credit note"
+                : "Click to skip French electronic delivery or reporting for this credit note"
+              : "Click to skip Peppol sending for this credit note",
+          ),
+          peppolDisabledDescription: t(
+            isFranceEInvoicing
+              ? "Click to enable French electronic delivery or reporting"
+              : "Click to enable Peppol sending",
+          ),
           fiscalizationLabel: t("Fiscally verify"),
           fiscalizationEnabledDescription: t("Click to skip fiscalization for this credit note"),
           fiscalizationDisabledDescription: t("Click to enable fiscalization"),
@@ -637,6 +655,8 @@ export default function CreateCreditNoteForm({
                   variant={isPeppolChecked ? "outline" : "ghost"}
                   size="sm"
                   className={cn("h-8 cursor-pointer gap-2", !isPeppolChecked && "text-muted-foreground")}
+                  aria-pressed={isPeppolChecked}
+                  disabled={forceEInvoicingSend}
                   onClick={() => setPeppolSendEnabled((enabled) => !enabled)}
                 >
                   <div
@@ -646,16 +666,24 @@ export default function CreateCreditNoteForm({
                         ? "border-primary bg-primary text-primary-foreground"
                         : "border-muted-foreground bg-background text-muted-foreground",
                     )}
-                  >
-                    {isPeppolChecked ? <Check className="size-3" /> : <Send className="size-3" />}
-                  </div>
-                  <span>{t("Peppol")}</span>
+                  />
+                  <span>{t(isFranceEInvoicing ? "French e-invoice" : "Peppol")}</span>
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="bottom" className="max-w-xs">
                 {isPeppolChecked
-                  ? t("Click to skip Peppol sending for this credit note")
-                  : t("Click to enable Peppol sending")}
+                  ? t(
+                      isFranceEInvoicing
+                        ? forceEInvoicingSend
+                          ? "French electronic delivery or reporting is required for this credit note"
+                          : "Click to skip French electronic delivery or reporting for this credit note"
+                        : "Click to skip Peppol sending for this credit note",
+                    )
+                  : t(
+                      isFranceEInvoicing
+                        ? "Click to enable French electronic delivery or reporting"
+                        : "Click to enable Peppol sending",
+                    )}
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
@@ -673,6 +701,7 @@ export default function CreateCreditNoteForm({
                     "h-8 cursor-pointer gap-2",
                     !isFursChecked && "text-destructive hover:text-destructive",
                   )}
+                  aria-pressed={isFursChecked}
                   onClick={() => setSkipFiscalization(!skipFiscalization)}
                 >
                   <div
@@ -680,11 +709,9 @@ export default function CreateCreditNoteForm({
                       "flex size-4 items-center justify-center rounded border",
                       isFursChecked
                         ? "border-primary bg-primary text-primary-foreground"
-                        : "border-destructive bg-destructive text-destructive-foreground",
+                        : "border-destructive bg-background text-destructive",
                     )}
-                  >
-                    {isFursChecked ? <Check className="size-3" /> : <X className="size-3" />}
-                  </div>
+                  />
                   <span>{t("Fiscally verify")}</span>
                 </Button>
               </TooltipTrigger>
@@ -841,6 +868,28 @@ export default function CreateCreditNoteForm({
         return;
       }
 
+      const eInvoicingSendEnabled = showPeppolSendToggle && (forceEInvoicingSend || peppolSendEnabled);
+      if (!isDraft && eInvoicingSendEnabled) {
+        const validationIssues = getEInvoicingSendValidationIssues(values as any, {
+          sendEnabled: true,
+          isFrance: isFranceEInvoicing,
+          requiresBuyerReference:
+            !isFranceEInvoicing ||
+            ((transactionType ?? "domestic") === "domestic" && (values.customer as any)?.is_end_consumer !== true),
+        });
+
+        if (validationIssues.length > 0) {
+          if (validationIssues.some((issue) => issue.path.startsWith("customer."))) {
+            setShowCustomerForm(true);
+          }
+          for (const issue of validationIssues) {
+            form.setError(issue.path as any, { type: "manual", message: t(issue.message) });
+          }
+          setTimeout(() => scrollToFirstInvalidField(FORM_ID), 0);
+          return;
+        }
+      }
+
       const submissionValues: CreateCreditNoteFormValues = eslog.isEnabled
         ? { ...values, calculation_mode: "b2b_standard" as const }
         : values;
@@ -920,7 +969,8 @@ export default function CreateCreditNoteForm({
         eslog: eslogOptions,
         ujp: ujpOptions,
         germanEInvoicing: germanEInvoicingOptions,
-        eInvoicing: showPeppolSendToggle ? { send_enabled: peppolSendEnabled } : undefined,
+        eInvoicing:
+          !isDraft && showPeppolSendToggle ? { send_enabled: forceEInvoicingSend || peppolSendEnabled } : undefined,
       });
       if (isDraft) {
         // Credit note create links documents and settles the linked invoice in one step, and
@@ -986,6 +1036,12 @@ export default function CreateCreditNoteForm({
       getPreservedExpectedTotalWithTax,
       updateCreditNote,
       useFinaNumbering,
+      forceEInvoicingSend,
+      form,
+      isFranceEInvoicing,
+      setShowCustomerForm,
+      t,
+      transactionType,
     ],
   );
 
@@ -1006,7 +1062,7 @@ export default function CreateCreditNoteForm({
   }, [form, submitCreditNote]);
 
   useFormFooterRegistration({
-    formId: "create-credit-note-form",
+    formId: FORM_ID,
     isPending: isPending || isCreateCustomPending || isUpdatePending,
     isDirty: form.formState.isDirty || !!initialValues,
     label: isEditMode ? t("Update") : t("Save"),
@@ -1123,6 +1179,7 @@ export default function CreateCreditNoteForm({
     if (eslog.requiresUjpValidation && hasCustomerFieldErrors(errors)) {
       setShowCustomerForm(true);
     }
+    scrollToFirstInvalidField(FORM_ID);
   };
 
   // Show skeleton while loading
@@ -1177,7 +1234,7 @@ export default function CreateCreditNoteForm({
 
   return (
     <Form {...form}>
-      <form id="create-credit-note-form" onSubmit={form.handleSubmit(onSubmit, onInvalidSubmit)} className="space-y-8">
+      <form id={FORM_ID} onSubmit={form.handleSubmit(onSubmit, onInvalidSubmit)} className="space-y-8">
         <EslogSetupErrorsDialog
           open={eslogSetupDialogOpen}
           onOpenChange={setEslogSetupDialogOpen}
@@ -1216,7 +1273,10 @@ export default function CreateCreditNoteForm({
             initialCustomerName={initialCustomerName}
             showBusinessRecipientFields={eslog.isEnabled === true && eslog.requiresUjpValidation}
             showUjpRoutingFields={eslog.isEnabled === true && eslog.requiresUjpValidation}
-            showEInvoicingBuyerReference={countryCapabilities.showGermanEInvoicingExports}
+            showEInvoicingBuyerReference={
+              countryCapabilities.showGermanEInvoicingExports ||
+              (countryCapabilities.isFrance && countryCapabilities.showPeppolSendingControls)
+            }
             showPeppolRecipientFields={showPeppolRecipientFields}
             t={t}
             locale={locale}

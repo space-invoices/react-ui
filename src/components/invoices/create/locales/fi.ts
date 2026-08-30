@@ -233,4 +233,18 @@ export default {
     "Asiakkaan IBAN ja BIC vaaditaan UJP-paketin validointiin.",
   "Customer IBAN is required for UJP package validation.": "Asiakkaan IBAN vaaditaan UJP-paketin validointiin.",
   "Customer BIC is required for UJP package validation.": "Asiakkaan BIC vaaditaan UJP-paketin validointiin.",
+  "French e-invoice": "Ranskalainen verkkolasku",
+  "French electronic delivery or reporting is required for this invoice":
+    "Ranskalainen sähköinen toimitus tai raportointi vaaditaan tälle laskulle",
+  "Click to skip French electronic delivery or reporting for this invoice":
+    "Ohita ranskalainen sähköinen toimitus tai raportointi tälle laskulle napsauttamalla",
+  "Click to enable French electronic delivery or reporting":
+    "Ota ranskalainen sähköinen toimitus tai raportointi käyttöön napsauttamalla",
+  "Buyer reference": "Ostajan viite",
+  Required: "Pakollinen",
+  "Add a different delivery address": "Lisää eri toimitusosoite",
+  "Delivery address": "Toimitusosoite",
+  "Complete this only when goods are delivered somewhere other than the billing address.":
+    "Täytä vain, kun tavarat toimitetaan muuhun osoitteeseen kuin laskutusosoitteeseen.",
+  "Country code": "Maakoodi",
 } as const;

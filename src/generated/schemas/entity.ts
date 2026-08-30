@@ -939,6 +939,9 @@ const EInvoicingEntitySettings = z
   .object({
     enabled: z.boolean().default(false),
     auto_send: z.boolean().default(false),
+    france_2026_emission_applicable: z
+      .union([z.boolean(), z.null()])
+      .default(false),
   })
   .partial()
   .passthrough();

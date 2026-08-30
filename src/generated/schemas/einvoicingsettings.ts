@@ -13,6 +13,7 @@ const updateEInvoicingSettingsSchemaDefinition = z
   .object({
     enabled: z.boolean(),
     auto_send: z.boolean(),
+    france_2026_emission_applicable: z.union([z.boolean(), z.null()]),
     default_scheme_id: z.string().max(10),
   })
   .partial();

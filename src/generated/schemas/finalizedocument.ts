@@ -35,11 +35,18 @@ const CreateFinaInvoiceData = z
   .partial();
 
 
+// Dependency schema for finalizedocument
+const DocumentEInvoicingSendInput = z
+  .object({ send_enabled: z.union([z.boolean(), z.null()]) })
+  .partial();
+
+
 // Schema for finalizeDocument operation
 const finalizeDocumentSchemaDefinition = z
   .object({
     furs: z.union([CreateFursDocumentData, z.null()]),
     fina: z.union([CreateFinaInvoiceData, z.null()]),
+    e_invoicing: z.union([DocumentEInvoicingSendInput, z.null()]),
   })
   .partial()
   .passthrough();

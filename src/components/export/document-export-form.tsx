@@ -8,6 +8,7 @@ import { Checkbox } from "../ui/checkbox";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import { getPreviousMonthRange, isDateRangeValid } from "./export-date-range";
 import { buildExportUrl, downloadExportFile } from "./export-download";
 
 export type DocumentType = "invoice" | "estimate" | "credit_note" | "advance_invoice" | "delivery_note";
@@ -17,33 +18,6 @@ export type ExportFormat = "xlsx" | "csv" | AsyncArchiveExportFormat;
 
 const ALL_DOCUMENT_TYPES: DocumentType[] = ["invoice", "estimate", "credit_note", "advance_invoice", "delivery_note"];
 const ESLOG_DOCUMENT_TYPES: EslogDocumentType[] = ["invoice", "estimate", "credit_note", "advance_invoice"];
-
-// Maximum date range for export (1 year in milliseconds)
-const MAX_DATE_RANGE_MS = 365 * 24 * 60 * 60 * 1000;
-
-function formatDateLocal(date: Date): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
-
-function getPreviousMonthRange(): { from: string; to: string } {
-  const now = new Date();
-  const firstDayPrevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-  const lastDayPrevMonth = new Date(now.getFullYear(), now.getMonth(), 0);
-  return {
-    from: formatDateLocal(firstDayPrevMonth),
-    to: formatDateLocal(lastDayPrevMonth),
-  };
-}
-
-function isDateRangeValid(dateFrom: string, dateTo: string): boolean {
-  if (!dateFrom || !dateTo) return true;
-  const from = new Date(dateFrom);
-  const to = new Date(dateTo);
-  return to.getTime() - from.getTime() <= MAX_DATE_RANGE_MS;
-}
 
 export type DocumentExportFormProps = {
   entityId: string;
@@ -225,7 +199,7 @@ export function DocumentExportForm({
   const toastIdRef = useRef<string | number | null>(null);
   const isAsyncArchiveFormat = exportFormat === "pdf_zip" || exportFormat === "eslog_zip";
   const isMultiTypeSelection = exportFormat === "xlsx" || isAsyncArchiveFormat;
-  const visibleDocumentTypes = exportFormat === "eslog_zip" ? ESLOG_DOCUMENT_TYPES : ALL_DOCUMENT_TYPES;
+  const visibleDocumentTypes: DocumentType[] = exportFormat === "eslog_zip" ? ESLOG_DOCUMENT_TYPES : ALL_DOCUMENT_TYPES;
   const asyncExportInProgress =
     exportFormat === "pdf_zip" ? pdfExportInProgress : exportFormat === "eslog_zip" ? eslogExportInProgress : false;
   const hasNoSelectedTypes = isMultiTypeSelection && selectedTypes.length === 0;
@@ -244,6 +218,7 @@ export function DocumentExportForm({
         setDocumentType(next[0] ?? "invoice");
         return next;
       }
+
       const next = [...prev, type];
       setDocumentType(next[0] ?? type);
       return next;
@@ -267,6 +242,13 @@ export function DocumentExportForm({
 
     if (value === "csv") {
       setSelectedTypes([documentType]);
+      return;
+    }
+
+    if (value === "pdf_zip") {
+      setSelectedTypes((prev) => {
+        return prev.length > 0 ? prev : [documentType];
+      });
       return;
     }
 

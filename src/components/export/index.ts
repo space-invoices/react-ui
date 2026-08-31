@@ -1,5 +1,7 @@
 export type { DocumentExportFormProps, DocumentType, ExportFormat } from "./document-export-form";
 export { DocumentExportForm } from "./document-export-form";
+export type { ExpenseExportFormProps } from "./expense-export-form";
+export { ExpenseExportForm } from "./expense-export-form";
 export {
   buildExportUrl,
   downloadExportFile,

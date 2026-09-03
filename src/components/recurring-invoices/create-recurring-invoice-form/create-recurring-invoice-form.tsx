@@ -434,7 +434,7 @@ export default function CreateRecurringInvoiceForm({
                     mode="single"
                     selected={field.value ? new Date(`${field.value}T00:00:00`) : undefined}
                     onSelect={(date) => field.onChange(date ? formatDateToYMD(date) : undefined)}
-                    initialFocus
+                    autoFocus
                   />
                 </PopoverContent>
               </Popover>
@@ -466,7 +466,7 @@ export default function CreateRecurringInvoiceForm({
                     mode="single"
                     selected={field.value ? new Date(`${field.value}T00:00:00`) : undefined}
                     onSelect={(date) => field.onChange(date ? formatDateToYMD(date) : undefined)}
-                    initialFocus
+                    autoFocus
                   />
                 </PopoverContent>
               </Popover>

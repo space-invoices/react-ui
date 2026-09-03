@@ -144,11 +144,10 @@ export function PaymentMethodsChart(props: PaymentMethodsChartProps) {
           }
         />
         <ChartLegend
-          content={<ChartLegendContent nameKey="name" />}
+          content={<ChartLegendContent nameKey="name" className="flex-col gap-1 [&>*]:justify-start" />}
           layout="vertical"
           verticalAlign="middle"
           align="right"
-          className="flex-col gap-1 [&>*]:justify-start"
         />
       </PieChart>
     </ChartContainer>

@@ -345,7 +345,7 @@ export function DocumentDetailsSection({
                       defaultMonth={toLocalCalendarDate(field.value)}
                       onSelect={(date) => field.onChange(date ? toLocalDateOnlyString(date) : undefined)}
                       disabled={(date) => date > new Date() || date < MIN_DOCUMENT_DATE}
-                      initialFocus
+                      autoFocus
                     />
                   </PopoverContent>
                 </Popover>
@@ -408,7 +408,7 @@ export function DocumentDetailsSection({
                         defaultMonth={toLocalCalendarDate(field.value)}
                         onSelect={(date) => field.onChange(date ? toLocalDateOnlyString(date) : undefined)}
                         disabled={(date) => date < MIN_DOCUMENT_DATE}
-                        initialFocus
+                        autoFocus
                       />
                     </PopoverContent>
                   </Popover>
@@ -434,7 +434,7 @@ export function DocumentDetailsSection({
                           defaultMonth={toLocalCalendarDate(field.value)}
                           onSelect={(date) => field.onChange(date ? toLocalDateOnlyString(date) : undefined)}
                           disabled={(date) => date < MIN_DOCUMENT_DATE}
-                          initialFocus
+                          autoFocus
                         />
                       </PopoverContent>
                     </Popover>
@@ -473,7 +473,7 @@ export function DocumentDetailsSection({
                                 disabled={(date) =>
                                   date < MIN_DOCUMENT_DATE || isBeforeDateOnly(date, serviceStartDateOnly)
                                 }
-                                initialFocus
+                                autoFocus
                               />
                             </PopoverContent>
                           </Popover>
@@ -547,7 +547,7 @@ export function DocumentDetailsSection({
                         }
                       }}
                       disabled={(date) => date < MIN_DOCUMENT_DATE || isBeforeDateOnly(date, issueDateOnly)}
-                      initialFocus
+                      autoFocus
                     />
                   </PopoverContent>
                 </Popover>

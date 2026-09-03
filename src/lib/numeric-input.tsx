@@ -33,7 +33,7 @@ export function parseNumericFormValue(rawValue: string, locale: string) {
   const hasDecimal = compactValue.includes(decimal);
   const groupCount = group ? compactValue.split(group).length - 1 : 0;
   let normalizedValue: string;
-  if (!!group && groupCount === 1 && !hasDecimal && group !== decimal && !looksLikeGrouping(compactValue, group)) {
+  if (group && groupCount === 1 && !hasDecimal && group !== decimal && !looksLikeGrouping(compactValue, group)) {
     // "12,5" in en / "12.5" in sl \u2014 a single separator that can't be grouping is a decimal point.
     normalizedValue = compactValue.replace(group, ".");
   } else {

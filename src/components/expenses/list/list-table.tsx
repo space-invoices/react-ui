@@ -6,7 +6,6 @@ import { useMemo } from "react";
 import { DataTable } from "@/ui/components/table/data-table";
 import { FormattedDate } from "@/ui/components/table/date-cell";
 import { useTableFetch } from "@/ui/components/table/hooks/use-table-fetch";
-import { withTableTranslations } from "@/ui/components/table/locales";
 import type {
   Column,
   FilterConfig,
@@ -14,7 +13,6 @@ import type {
   TableQueryParams,
   TableQueryResponse,
 } from "@/ui/components/table/types";
-import { Badge } from "@/ui/components/ui/badge";
 import { Button } from "@/ui/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/ui/components/ui/tooltip";
 import { formatDateOnlyForDisplay, toLocalCalendarDate, toLocalDateOnlyString } from "@/ui/lib/date-only";
@@ -22,46 +20,9 @@ import { formatCurrencyValue } from "@/ui/lib/formatting";
 import { createTranslation } from "@/ui/lib/translation";
 import { cn } from "@/ui/lib/utils";
 
+import { ExpenseStatusBadge } from "./expense-status-badge";
 import ExpenseListRowActions from "./list-row-actions";
-import bg from "./locales/bg";
-import cs from "./locales/cs";
-import de from "./locales/de";
-import en from "./locales/en";
-import es from "./locales/es";
-import et from "./locales/et";
-import fi from "./locales/fi";
-import fr from "./locales/fr";
-import hr from "./locales/hr";
-import is from "./locales/is";
-import it from "./locales/it";
-import nb from "./locales/nb";
-import nl from "./locales/nl";
-import pl from "./locales/pl";
-import pt from "./locales/pt";
-import sk from "./locales/sk";
-import sl from "./locales/sl";
-import sv from "./locales/sv";
-
-export const expenseListTranslations = withTableTranslations({
-  en,
-  sl,
-  de,
-  it,
-  fr,
-  es,
-  pt,
-  nl,
-  pl,
-  hr,
-  sv,
-  fi,
-  et,
-  bg,
-  cs,
-  sk,
-  nb,
-  is,
-} as const);
+import { expenseListTranslations } from "./translations";
 
 function MissingValuePlaceholder() {
   return <span className="inline-flex min-h-8 min-w-12 items-center text-muted-foreground">—</span>;
@@ -336,62 +297,6 @@ export default function ExpenseListTable({
       bottomPaddingClassName={bottomPaddingClassName}
       emptyState={emptyState ?? defaultEmptyState}
     />
-  );
-}
-
-export type ExpenseStatusLike = Pick<Expense, "is_draft" | "paid_in_full" | "total_paid" | "total_due" | "voided_at">;
-
-export type ExpenseStatus = "draft" | "open" | "partially_paid" | "paid" | "voided";
-
-export function getExpenseStatus(expense: ExpenseStatusLike): ExpenseStatus {
-  if (expense.voided_at) return "voided";
-  if (expense.is_draft) return "draft";
-  if (expense.paid_in_full) return "paid";
-  if (expense.total_paid > 0 && expense.total_due > 0) return "partially_paid";
-  return "open";
-}
-
-/** Status badge for expenses (accounts payable) */
-export function ExpenseStatusBadge({ expense, t }: { expense: ExpenseStatusLike; t: (key: string) => string }) {
-  const status = getExpenseStatus(expense);
-  if (status === "voided") {
-    return (
-      <Badge variant="outline" className="border-red-500 bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-400">
-        {t("Voided")}
-      </Badge>
-    );
-  }
-  if (status === "draft") {
-    return (
-      <Badge
-        variant="outline"
-        className="border-amber-500 bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-400"
-      >
-        {t("Draft")}
-      </Badge>
-    );
-  }
-  if (status === "paid") {
-    return (
-      <Badge
-        variant="outline"
-        className="border-green-500 bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-400"
-      >
-        {t("Paid")}
-      </Badge>
-    );
-  }
-  if (status === "partially_paid") {
-    return (
-      <Badge variant="outline" className="border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300">
-        {t("Partially Paid")}
-      </Badge>
-    );
-  }
-  return (
-    <Badge variant="outline" className="border-gray-500 bg-gray-50 text-gray-700 dark:bg-gray-800 dark:text-gray-400">
-      {t("Open")}
-    </Badge>
   );
 }
 

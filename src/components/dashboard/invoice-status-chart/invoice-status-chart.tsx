@@ -128,8 +128,12 @@ export function InvoiceStatusChart(props: InvoiceStatusChartProps) {
           content={<ChartTooltipContent nameKey="name" formatter={(value) => `${value} ${t("Invoices")}`} />}
         />
         <ChartLegend
-          content={<ChartLegendContent nameKey="name" />}
-          className="-translate-y-2 flex-wrap gap-2 [&>*]:basis-1/4 [&>*]:justify-center"
+          content={
+            <ChartLegendContent
+              nameKey="name"
+              className="-translate-y-2 flex-wrap gap-2 [&>*]:basis-1/4 [&>*]:justify-center"
+            />
+          }
         />
       </PieChart>
     </ChartContainer>

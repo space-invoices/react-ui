@@ -196,7 +196,7 @@ export default function CreatePaymentForm({
                     selected={toLocalCalendarDate(field.value)}
                     onSelect={(date) => field.onChange(date ? toLocalDateOnlyString(date) : undefined)}
                     disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
-                    initialFocus
+                    autoFocus
                   />
                 </PopoverContent>
               </Popover>

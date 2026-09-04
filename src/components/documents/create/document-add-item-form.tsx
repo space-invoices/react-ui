@@ -1,6 +1,17 @@
 import { normalizeEInvoicingUnitCodeOverride } from "@space-invoices/e-invoicing/unit-codes";
 import type { Item, Tax } from "@spaceinvoices/js-sdk";
-import { ChevronDown, ChevronUp, DollarSign, FileCode2, Minus, Percent, Plus, PlusIcon, Trash2 } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronUp,
+  DollarSign,
+  FileCode2,
+  Info,
+  Minus,
+  Percent,
+  Plus,
+  PlusIcon,
+  Trash2,
+} from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useWatch } from "react-hook-form";
 
@@ -285,6 +296,9 @@ export default function DocumentAddItemForm({
     control,
     name: `items.${index}.taxes`,
   });
+  // Rendered inline as a single-line hint with the full explanation in a tooltip so
+  // long rules (reverse charge, VIES warnings) do not grow every item row.
+  const taxesDisabledText = taxesDisabledMessage || t("Taxes disabled");
   const itemTranslations = useWatch({
     control,
     name: `items.${index}.translations`,
@@ -823,9 +837,28 @@ export default function DocumentAddItemForm({
           <div className="col-span-2 space-y-2 lg:col-span-3">
             <FormLabel>{t("Tax")}</FormLabel>
             {taxesDisabled ? (
-              <div className="rounded-md border border-muted-foreground/50 border-dashed bg-muted/50 p-2 text-muted-foreground text-sm">
-                {taxesDisabledMessage || t("Taxes disabled")}
-              </div>
+              // Hover shows the tooltip; tap/click opens the popover, because Base UI tooltips
+              // never open on touch and mobile browsers do not surface `title`.
+              <Popover>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <PopoverTrigger asChild>
+                      <button
+                        type="button"
+                        aria-label={taxesDisabledText}
+                        className="flex h-8 w-full cursor-pointer items-center gap-1.5 rounded-md border border-muted-foreground/50 border-dashed bg-muted/50 px-2 text-left text-muted-foreground text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                      >
+                        <Info className="size-4 shrink-0" />
+                        <span className="min-w-0 truncate">{taxesDisabledText}</span>
+                      </button>
+                    </PopoverTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">{taxesDisabledText}</TooltipContent>
+                </Tooltip>
+                <PopoverContent side="top" className="w-72 p-3 text-sm">
+                  {taxesDisabledText}
+                </PopoverContent>
+              </Popover>
             ) : (
               <>
                 {taxes?.map((_tax: any, taxIndex: number) => (

@@ -1190,6 +1190,7 @@ const CreateFursDocumentData = z
     operator_tax_number: z.union([z.string(), z.null()]),
     operator_label: z.union([z.string(), z.null()]),
     skip: z.union([z.boolean(), z.null()]),
+    payment_amount: z.union([z.number(), z.null()]),
   })
   .partial();
 

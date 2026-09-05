@@ -248,4 +248,10 @@ export default {
   "Complete this only when goods are delivered somewhere other than the billing address.":
     "Täitke ainult siis, kui kaup tarnitakse arveldusaadressist erinevale aadressile.",
   "Country code": "Riigikood",
+  // Slovenian Article 76.a
+  "Article 76.a": "Artikkel 76.a",
+  "Click to disable Article 76.a reverse charge for this invoice":
+    "Klõpsake artikli 76.a pöördmaksustamise keelamiseks sellel arvel",
+  "Click to enable Article 76.a reverse charge for this invoice":
+    "Klõpsake artikli 76.a pöördmaksustamise lubamiseks sellel arvel",
 } as const;

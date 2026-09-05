@@ -124,4 +124,5 @@ export default {
   "Service Period": "Obdobje storitve",
   From: "Od",
   To: "Do",
+  "Original invoice cannot be credited": "Izvirnega računa ni mogoče dobropisati",
 } as const;

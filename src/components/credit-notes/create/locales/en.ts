@@ -113,4 +113,5 @@ export default {
   "Service Period": "Service Period",
   From: "From",
   To: "To",
+  "Original invoice cannot be credited": "Original invoice cannot be credited",
 } as const;

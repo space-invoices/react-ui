@@ -72,6 +72,7 @@ export function useDocumentDownload({
           translationLocale: filenameLocale,
           t,
         },
+        document.customer?.name,
       );
 
       await invoices.downloadPdf(document.id, fileName, params, { entity_id: activeEntity.id });
@@ -164,10 +165,24 @@ export function useDocumentDownload({
           : format === "xrechnung"
             ? await creditNotes.downloadCreditNoteXRechnung(document.id, { entity_id: activeEntity.id })
             : await creditNotes.downloadCreditNoteZugferd(document.id, { entity_id: activeEntity.id });
-      const suffix = format === "xrechnung" ? "XRechnung.xml" : "ZUGFeRD.pdf";
+      const fileName =
+        format === "xrechnung"
+          ? `${document.number} XRechnung.xml`
+          : getDocumentPdfFileName(
+              documentType,
+              document.number,
+              undefined,
+              {
+                locale: activeEntity.locale ?? locale ?? translationLocale,
+                translationLocale: activeEntity.locale ?? locale ?? translationLocale,
+                t,
+              },
+              document.customer?.name,
+              "ZUGFeRD",
+            );
       const download = typeof blob === "string" ? new Blob([blob], { type: "application/xml" }) : blob;
-      downloadBlob(download, `${document.number} ${suffix}`);
-      onDownloadSuccess?.(`${document.number} ${suffix}`);
+      downloadBlob(download, fileName);
+      onDownloadSuccess?.(fileName);
     } catch (error) {
       console.error("Error downloading German e-invoice:", error);
       onDownloadError?.(format === "xrechnung" ? "XRechnung download failed" : "ZUGFeRD download failed");

@@ -18,7 +18,8 @@ export type WhiteLabelCapabilityId =
   | "compliance.furs"
   | "compliance.fina"
   | "compliance.eslog"
-  | "compliance.e_invoicing";
+  | "compliance.e_invoicing"
+  | "compliance.si_article_76a";
 
 export type WhiteLabelActionControlId =
   | "actions.multi_entity.add_entity_entry_points"
@@ -69,7 +70,7 @@ export type WhiteLabelPayableDocumentType = Extract<
   "invoice" | "credit_note" | "advance_invoice" | "expense"
 >;
 
-type CountryFeatureDependency = "furs" | "fina" | "eslog" | "e_invoicing";
+type CountryFeatureDependency = "furs" | "fina" | "eslog" | "e_invoicing" | "si_article_76a";
 
 export type WhiteLabelCapabilityDefinition = {
   kind: "capability";
@@ -225,6 +226,15 @@ export const WHITE_LABEL_CAPABILITIES: WhiteLabelCapabilityDefinition[] = [
     group: "compliance",
     affectedSurfaces: ["sidebar settings", "settings routes"],
     countryFeatureDependency: "e_invoicing",
+  },
+  {
+    kind: "capability",
+    id: "compliance.si_article_76a",
+    label: "Slovenian Article 76.a",
+    description: "Hide Article 76.a settings and invoice controls for Slovenian entities.",
+    group: "compliance",
+    affectedSurfaces: ["tax settings", "invoice create and edit forms"],
+    countryFeatureDependency: "si_article_76a",
   },
 ];
 

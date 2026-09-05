@@ -114,4 +114,5 @@ export default {
   "Service Period": "Tjänsteperiod",
   From: "Från",
   To: "Till",
+  "Original invoice cannot be credited": "Originalfakturan kan inte krediteras",
 } as const;

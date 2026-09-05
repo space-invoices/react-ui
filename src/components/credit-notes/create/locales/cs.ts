@@ -113,4 +113,5 @@ export default {
   "Service Period": "Období služby",
   From: "Od",
   To: "Do",
+  "Original invoice cannot be credited": "K původní faktuře nelze vystavit dobropis",
 } as const;

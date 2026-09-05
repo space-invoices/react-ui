@@ -62,6 +62,7 @@ import {
 import { withRequiredDocumentItemFields } from "../../documents/create/document-item-validation";
 import { DocumentItemsSection, type PriceModesMap } from "../../documents/create/document-items-section";
 import { DocumentRecipientSection } from "../../documents/create/document-recipient-section";
+import { HeaderActionIndicator } from "../../documents/create/header-action-indicator";
 import { MarkAsPaidSection } from "../../documents/create/mark-as-paid-section";
 import {
   calculateDocumentTotal,
@@ -511,14 +512,7 @@ export default function CreateAdvanceInvoiceForm({
                   aria-pressed={isEslogChecked}
                   onClick={() => eslog.setEnabled(!eslog.isEnabled)}
                 >
-                  <div
-                    className={cn(
-                      "flex size-4 items-center justify-center rounded border",
-                      isEslogChecked
-                        ? "border-primary bg-primary text-primary-foreground"
-                        : "border-muted-foreground bg-background text-muted-foreground",
-                    )}
-                  />
+                  <HeaderActionIndicator checked={isEslogChecked} />
                   <span>{t("e-SLOG")}</span>
                 </Button>
               </TooltipTrigger>
@@ -547,13 +541,9 @@ export default function CreateAdvanceInvoiceForm({
                   aria-pressed={isFursChecked}
                   onClick={() => setSkipFiscalization(!skipFiscalization)}
                 >
-                  <div
-                    className={cn(
-                      "flex size-4 items-center justify-center rounded border",
-                      isFursChecked
-                        ? "border-primary bg-primary text-primary-foreground"
-                        : "border-destructive bg-background text-destructive",
-                    )}
+                  <HeaderActionIndicator
+                    checked={isFursChecked}
+                    uncheckedClassName="border-destructive bg-background text-destructive"
                   />
                   <span>{t("Fiscally verify")}</span>
                 </Button>

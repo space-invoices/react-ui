@@ -148,6 +148,11 @@ export function prepareInvoiceSubmission(
   if (pt) {
     (payload as any).pt = pt;
   }
+  payload.tax_rules = {
+    slovenia: {
+      article_76a: values.tax_rules?.slovenia?.article_76a === true,
+    },
+  };
   return payload;
 }
 
@@ -173,6 +178,11 @@ function buildInvoiceUpdatePayload(
     includeCalculationMode: false,
   });
   delete payload.calculation_mode;
+  payload.tax_rules = {
+    slovenia: {
+      article_76a: values.tax_rules?.slovenia?.article_76a === true,
+    },
+  };
 
   if (Array.isArray(nextValues.linked_documents)) {
     payload.linked_documents = nextValues.linked_documents;

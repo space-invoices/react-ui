@@ -65,6 +65,7 @@ const DEFAULT_CONTEXT: WhiteLabelContextType = {
   isCapabilityVisible: () => true,
   isUiControlVisible: () => true,
   isLoading: false,
+  isResolved: false,
 };
 
 type WhiteLabelContextType = WhiteLabelConfig & {
@@ -75,6 +76,12 @@ type WhiteLabelContextType = WhiteLabelConfig & {
   /** Check if a standalone UI control is visible after white-label and parent capability rules are applied */
   isUiControlVisible: (control: WhiteLabelActionControlId) => boolean;
   isLoading: boolean;
+  /**
+   * True only after the white-label config was fetched and parsed successfully.
+   * Stays false when the request fails, so `slug` may still be the default
+   * "space-invoices" placeholder; brand-specific UI must check this flag.
+   */
+  isResolved: boolean;
 };
 
 const WhiteLabelContext = createContext<WhiteLabelContextType | undefined>(undefined);
@@ -98,6 +105,7 @@ export function WhiteLabelProvider({ children, apiBaseUrl = "", isAccountUser = 
   const entitiesContext = useEntitiesOptional();
   const [config, setConfig] = useState<WhiteLabelConfig>(DEFAULT_CONFIG);
   const [isLoading, setIsLoading] = useState(true);
+  const [isResolved, setIsResolved] = useState(false);
 
   useEffect(() => {
     const fetchConfig = async () => {
@@ -131,6 +139,7 @@ export function WhiteLabelProvider({ children, apiBaseUrl = "", isAccountUser = 
             supportEmail: data.support_email ?? null,
             googleTagId: data.google_tag_id ?? null,
           });
+          setIsResolved(true);
         }
       } catch {
         // Use default config if fetch fails
@@ -199,8 +208,9 @@ export function WhiteLabelProvider({ children, apiBaseUrl = "", isAccountUser = 
       isCapabilityVisible,
       isUiControlVisible,
       isLoading,
+      isResolved,
     }),
-    [config, isLoading, isFeatureVisible, isCapabilityVisible, isUiControlVisible],
+    [config, isLoading, isResolved, isFeatureVisible, isCapabilityVisible, isUiControlVisible],
   );
 
   return <WhiteLabelContext.Provider value={value}>{children}</WhiteLabelContext.Provider>;

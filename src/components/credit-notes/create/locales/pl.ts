@@ -125,4 +125,5 @@ export default {
   "Service Period": "Okres usługi",
   From: "Od",
   To: "Do",
+  "Original invoice cannot be credited": "Nie można wystawić korekty do faktury pierwotnej",
 } as const;

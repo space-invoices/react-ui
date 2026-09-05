@@ -56,6 +56,40 @@ const DOCUMENT_TYPE_LABELS: Record<DownloadDocumentType, string> = {
   delivery_note: "Delivery Note",
 };
 
+const MAX_FILENAME_BYTES = 240;
+const UTF8_ENCODER = new TextEncoder();
+
+function sanitizeFilename(filename: string): string {
+  const controlCharacterRanges = "\\x00-\\x1F";
+  const unsafeCharacters = new RegExp(`[<>:"/\\\\|?*${controlCharacterRanges}]`, "g");
+  const cleaned = filename
+    .replace(unsafeCharacters, " ")
+    .replace(/\s+/g, " ")
+    .replace(/\s+(\.[^.]+)$/u, "$1")
+    .trim();
+  if (cleaned.length === 0) {
+    return "document.pdf";
+  }
+
+  const extensionIndex = cleaned.lastIndexOf(".");
+  const extension = extensionIndex > 0 ? cleaned.slice(extensionIndex) : "";
+  const baseName = extensionIndex > 0 ? cleaned.slice(0, extensionIndex) : cleaned;
+  const byteBudget = MAX_FILENAME_BYTES - UTF8_ENCODER.encode(extension).byteLength;
+  let byteLength = 0;
+  let truncatedBaseName = "";
+
+  for (const character of baseName) {
+    const characterByteLength = UTF8_ENCODER.encode(character).byteLength;
+    if (byteLength + characterByteLength > byteBudget) {
+      break;
+    }
+    truncatedBaseName += character;
+    byteLength += characterByteLength;
+  }
+
+  return `${truncatedBaseName.trimEnd()}${extension}`;
+}
+
 export function getLocalizedDocumentLabel(
   documentType: DownloadDocumentType,
   titleType: EstimateTitleType | undefined,
@@ -75,6 +109,12 @@ export function getDocumentPdfFileName(
   number: string,
   titleType: EstimateTitleType | undefined,
   i18nProps: DocumentFilenameI18nProps,
+  customerName?: string | null,
+  pdfVariant?: string,
 ): string {
-  return `${getLocalizedDocumentLabel(documentType, titleType, i18nProps)} ${number}.pdf`;
+  const customerSuffix = customerName?.trim() ? ` - ${customerName.trim()}` : "";
+  const variantSuffix = pdfVariant?.trim() ? ` ${pdfVariant.trim()}` : "";
+  return sanitizeFilename(
+    `${getLocalizedDocumentLabel(documentType, titleType, i18nProps)} ${number}${customerSuffix}${variantSuffix}.pdf`,
+  );
 }

@@ -425,6 +425,32 @@ const TaxClauseDefaultTranslations = z
       })
       .partial()
       .passthrough(),
+    article_76a: z.union([
+      z
+        .object({
+          "en-US": z.union([z.string(), z.null()]),
+          "de-DE": z.union([z.string(), z.null()]),
+          "it-IT": z.union([z.string(), z.null()]),
+          "fr-FR": z.union([z.string(), z.null()]),
+          "es-ES": z.union([z.string(), z.null()]),
+          "sl-SI": z.union([z.string(), z.null()]),
+          "pt-PT": z.union([z.string(), z.null()]),
+          "nl-NL": z.union([z.string(), z.null()]),
+          "pl-PL": z.union([z.string(), z.null()]),
+          "hr-HR": z.union([z.string(), z.null()]),
+          "sv-SE": z.union([z.string(), z.null()]),
+          "fi-FI": z.union([z.string(), z.null()]),
+          "et-EE": z.union([z.string(), z.null()]),
+          "bg-BG": z.union([z.string(), z.null()]),
+          "cs-CZ": z.union([z.string(), z.null()]),
+          "sk-SK": z.union([z.string(), z.null()]),
+          "nb-NO": z.union([z.string(), z.null()]),
+          "is-IS": z.union([z.string(), z.null()]),
+        })
+        .partial()
+        .passthrough(),
+      z.null(),
+    ]),
     intra_eu_b2b: z
       .object({
         "en-US": z.string().max(2000),
@@ -790,6 +816,7 @@ const EntitySettingsTranslations = z
 const TaxClauseDefaults = z
   .object({
     domestic: z.union([z.string(), z.null()]),
+    article_76a: z.union([z.string(), z.null()]),
     intra_eu_b2b: z.union([z.string(), z.null()]),
     intra_eu_b2c: z.union([z.string(), z.null()]),
     "3w_b2b": z.union([z.string(), z.null()]),
@@ -1078,6 +1105,18 @@ const UjpInput = z
 
 
 // Dependency schema for renderinvoicepreview_body
+const DocumentSloveniaTaxRulesInput = z
+  .object({ article_76a: z.union([z.boolean(), z.null()]) })
+  .partial();
+
+
+// Dependency schema for renderinvoicepreview_body
+const DocumentTaxRulesInput = z
+  .object({ slovenia: z.union([DocumentSloveniaTaxRulesInput, z.null()]) })
+  .partial();
+
+
+// Dependency schema for renderinvoicepreview_body
 const CreateFursDocumentData = z
   .object({
     business_premise_name: z.union([z.string(), z.null()]),
@@ -1176,6 +1215,7 @@ const PartialInvoicePreview = z.object({
   xrechnung: z.union([GermanEInvoicingInput, z.null()]).optional(),
   zugferd: z.union([GermanEInvoicingInput, z.null()]).optional(),
   ujp: z.union([UjpInput, z.null()]).optional(),
+  tax_rules: z.union([DocumentTaxRulesInput, z.null()]).optional(),
   expected_total_with_tax: z.union([z.number(), z.null()]).optional(),
   force_linked_documents: z.union([z.boolean(), z.null()]).optional(),
   id: z.string().optional(),
@@ -1353,6 +1393,7 @@ const CompleteInvoicePreview = z.object({
   xrechnung: z.union([GermanEInvoicingInput, z.null()]).optional(),
   zugferd: z.union([GermanEInvoicingInput, z.null()]).optional(),
   ujp: z.union([UjpInput, z.null()]).optional(),
+  tax_rules: z.union([DocumentTaxRulesInput, z.null()]).optional(),
   expected_total_with_tax: z.union([z.number(), z.null()]).optional(),
   force_linked_documents: z.union([z.boolean(), z.null()]).optional(),
   id: z.string().optional(),

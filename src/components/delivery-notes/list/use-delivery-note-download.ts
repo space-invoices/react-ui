@@ -33,11 +33,17 @@ export function useDeliveryNoteDownload({
 
     try {
       const filenameLocale = activeEntity.locale ?? i18nProps.locale ?? i18nProps.translationLocale;
-      const fileName = getDocumentPdfFileName("delivery_note", deliveryNote.number, undefined, {
-        ...i18nProps,
-        locale: filenameLocale,
-        translationLocale: filenameLocale,
-      });
+      const fileName = getDocumentPdfFileName(
+        "delivery_note",
+        deliveryNote.number,
+        undefined,
+        {
+          ...i18nProps,
+          locale: filenameLocale,
+          translationLocale: filenameLocale,
+        },
+        deliveryNote.customer?.name,
+      );
       await invoices.downloadPdf(deliveryNote.id, fileName, {}, { entity_id: activeEntity.id });
 
       onDownloadSuccess?.(fileName);

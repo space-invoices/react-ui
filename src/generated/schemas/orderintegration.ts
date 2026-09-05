@@ -48,7 +48,20 @@ const updateOrderIntegrationSchemaDefinition = z
   })
   .partial();
 
+
+// Schema for syncOrderIntegration operation
+const syncOrderIntegrationSchemaDefinition = z
+  .object({
+    updated_since: z.union([z.string(), z.null()]),
+    updated_until: z.union([z.string(), z.null()]),
+    cursor: z.union([z.string(), z.null()]),
+    limit: z.union([z.number(), z.null()]),
+  })
+  .partial();
+
 export type CreateOrderIntegrationSchema = z.infer<typeof createOrderIntegrationSchemaDefinition>;
 export const createOrderIntegrationSchema = createOrderIntegrationSchemaDefinition;
 export type UpdateOrderIntegrationSchema = z.infer<typeof updateOrderIntegrationSchemaDefinition>;
 export const updateOrderIntegrationSchema = updateOrderIntegrationSchemaDefinition;
+export type SyncOrderIntegrationSchema = z.infer<typeof syncOrderIntegrationSchemaDefinition>;
+export const syncOrderIntegrationSchema = syncOrderIntegrationSchemaDefinition;

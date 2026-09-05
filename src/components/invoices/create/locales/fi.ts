@@ -247,4 +247,10 @@ export default {
   "Complete this only when goods are delivered somewhere other than the billing address.":
     "Täytä vain, kun tavarat toimitetaan muuhun osoitteeseen kuin laskutusosoitteeseen.",
   "Country code": "Maakoodi",
+  // Slovenian Article 76.a
+  "Article 76.a": "76.a artikla",
+  "Click to disable Article 76.a reverse charge for this invoice":
+    "Poista 76.a artiklan käännetty verovelvollisuus käytöstä tällä laskulla napsauttamalla",
+  "Click to enable Article 76.a reverse charge for this invoice":
+    "Ota 76.a artiklan käännetty verovelvollisuus käyttöön tällä laskulla napsauttamalla",
 } as const;

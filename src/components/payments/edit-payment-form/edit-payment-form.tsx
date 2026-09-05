@@ -11,6 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/ui/components/ui/popo
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui/components/ui/select";
 import { Textarea } from "@/ui/components/ui/textarea";
 import { type UpdatePaymentSchema, updatePaymentSchema } from "@/ui/generated/schemas/payment";
+import { useOrphanedClickGuard } from "@/ui/hooks/use-orphaned-click-guard";
 import {
   formatDateOnlyForDisplay,
   normalizeDateOnlyInput,
@@ -83,6 +84,8 @@ export default function EditPaymentForm({
         ? (payment.date as unknown as Date).toISOString()
         : String(payment.date),
     ) ?? "";
+
+  const orphanedClickGuard = useOrphanedClickGuard();
 
   const form = useForm<EditFormSchema>({
     resolver: zodResolver(editFormSchema),
@@ -160,7 +163,7 @@ export default function EditPaymentForm({
                 {t("Payment Type")}
                 <span className="ml-1 text-red-500">*</span>
               </FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select {...orphanedClickGuard} onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder={t("Select payment type")}>

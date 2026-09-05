@@ -209,7 +209,9 @@ export function BrandingSettingsForm({
             control={form.control}
             name="has_logo"
             render={({ field }) => (
-              <FormItem>
+              // Anchors the branding walkthrough. Renaming it breaks that guide; see
+              // scripts/check-guide-selectors.ts.
+              <FormItem data-demo="marketing-demo-branding-logo">
                 <FormLabel className="font-medium text-base">{t("Logo")}</FormLabel>
                 <FormControl>
                   <ImageUploadWithCrop

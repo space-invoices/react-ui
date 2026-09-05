@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/ui/components/ui/textarea";
 import type { CreatePaymentSchema } from "@/ui/generated/schemas/payment";
 import { createPaymentSchema } from "@/ui/generated/schemas/payment";
+import { useOrphanedClickGuard } from "@/ui/hooks/use-orphaned-click-guard";
 import {
   formatDateOnlyForDisplay,
   normalizeDateOnlyInput,
@@ -68,12 +69,14 @@ export default function CreatePaymentForm({
     translations,
   });
 
+  const orphanedClickGuard = useOrphanedClickGuard();
+
   const form = useForm<CreatePaymentSchema>({
     resolver: zodResolver(createPaymentSchema),
     defaultValues: {
       document_id: documentId,
       amount: documentTotal,
-      type: "cash",
+      type: "bank_transfer",
       date: toLocalDateOnlyString(new Date()),
       reference: "",
       note: "",
@@ -142,7 +145,7 @@ export default function CreatePaymentForm({
                 {t("Payment Type")}
                 <span className="ml-1 text-red-500">*</span>
               </FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select {...orphanedClickGuard} onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder={t("Select payment type")}>

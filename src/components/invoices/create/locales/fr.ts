@@ -253,4 +253,10 @@ export default {
     "L’IBAN du client est requis pour la validation du paquet UJP.",
   "Customer BIC is required for UJP package validation.":
     "Le BIC du client est requis pour la validation du paquet UJP.",
+  // Slovenian Article 76.a
+  "Article 76.a": "Art. 76.a",
+  "Click to disable Article 76.a reverse charge for this invoice":
+    "Cliquez pour désactiver l’autoliquidation selon l’article 76.a pour cette facture",
+  "Click to enable Article 76.a reverse charge for this invoice":
+    "Cliquez pour activer l’autoliquidation selon l’article 76.a pour cette facture",
 } as const;

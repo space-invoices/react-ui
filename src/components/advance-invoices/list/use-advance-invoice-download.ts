@@ -33,11 +33,17 @@ export function useAdvanceInvoiceDownload({
 
     try {
       const filenameLocale = activeEntity.locale ?? i18nProps.locale ?? i18nProps.translationLocale;
-      const fileName = getDocumentPdfFileName("advance_invoice", advanceInvoice.number, undefined, {
-        ...i18nProps,
-        locale: filenameLocale,
-        translationLocale: filenameLocale,
-      });
+      const fileName = getDocumentPdfFileName(
+        "advance_invoice",
+        advanceInvoice.number,
+        undefined,
+        {
+          ...i18nProps,
+          locale: filenameLocale,
+          translationLocale: filenameLocale,
+        },
+        advanceInvoice.customer?.name,
+      );
       await invoices.downloadPdf(advanceInvoice.id, fileName, {}, { entity_id: activeEntity.id });
 
       onDownloadSuccess?.(fileName);

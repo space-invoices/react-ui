@@ -117,4 +117,5 @@ export default {
   "Service Period": "Период на услугата",
   From: "От",
   To: "До",
+  "Original invoice cannot be credited": "Оригиналната фактура не може да бъде кредитирана",
 } as const;

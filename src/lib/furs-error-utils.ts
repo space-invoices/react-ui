@@ -63,3 +63,25 @@ export function isPtOperatorError(error: unknown): boolean {
     message.includes("PT operator tax number is required")
   );
 }
+
+const PT_CREDIT_NOTE_REFERENCE_MESSAGE_PREFIX = "PT credit note";
+
+/**
+ * Return the API's message when a Portugal credit note was rejected because of its linked
+ * original invoice (missing, draft, deleted, voided, or from another entity) so the form can
+ * show that reason inline instead of a generic failure toast. Matched on the message prefix
+ * because the API has no machine-readable code for these 422s.
+ */
+export function getPtCreditNoteReferenceErrorMessage(error: unknown): string | null {
+  if (!error || typeof error !== "object") return null;
+
+  const candidate = error as { status?: unknown; data?: { message?: unknown; code?: unknown } };
+  const status = typeof candidate.status === "number" ? candidate.status : undefined;
+  if (status !== undefined && status !== 422) return null;
+  if (candidate.data?.code !== undefined && candidate.data.code !== "unprocessable_entity") return null;
+
+  const message = candidate.data?.message;
+  if (typeof message !== "string" || !message.startsWith(PT_CREDIT_NOTE_REFERENCE_MESSAGE_PREFIX)) return null;
+
+  return message;
+}

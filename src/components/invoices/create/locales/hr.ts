@@ -247,4 +247,10 @@ export default {
   "Complete this only when goods are delivered somewhere other than the billing address.":
     "Ispunite samo kada se roba dostavlja na adresu različitu od adrese za naplatu.",
   "Country code": "Oznaka države",
+  // Slovenian Article 76.a
+  "Article 76.a": "Članak 76.a",
+  "Click to disable Article 76.a reverse charge for this invoice":
+    "Kliknite kako biste isključili prijenos porezne obveze prema članku 76.a za ovaj račun",
+  "Click to enable Article 76.a reverse charge for this invoice":
+    "Kliknite kako biste uključili prijenos porezne obveze prema članku 76.a za ovaj račun",
 } as const;

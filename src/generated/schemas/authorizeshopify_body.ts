@@ -13,6 +13,9 @@ const authorizeShopifySchemaDefinition = z.object({
   shop_domain: z.string().min(1),
   name: z.string().optional(),
   auto_process: z.boolean().optional(),
+  auto_process_on: z
+    .union([z.union([z.enum(["created", "paid", "fulfilled"]), z.null()]), z.null()])
+    .optional(),
   send_invoice_email: z.boolean().optional(),
   issue_invoice_for_bank: z.boolean().optional(),
   issue_invoice_on_complete: z.boolean().optional(),

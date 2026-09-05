@@ -127,4 +127,5 @@ export default {
   "Service Period": "Periodo de servicio",
   From: "Desde",
   To: "Hasta",
+  "Original invoice cannot be credited": "La factura original no se puede abonar",
 } as const;

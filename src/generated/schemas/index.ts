@@ -102,6 +102,7 @@ export * from './userptsettings';
 export * from './voidinvoice_body';
 export * from './webhook';
 export * from './wlsubscriptionbillingemail';
+export * from './woocommerce';
 
 // Re-export invoice create schema as credit note create schema (same body structure)
 // Placed here (after invoice is exported) to avoid circular dependency issues

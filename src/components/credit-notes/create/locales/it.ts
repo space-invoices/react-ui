@@ -128,4 +128,5 @@ export default {
   "Service Period": "Periodo di servizio",
   From: "Da",
   To: "A",
+  "Original invoice cannot be credited": "La fattura originale non può essere stornata",
 } as const;

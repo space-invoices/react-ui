@@ -125,4 +125,5 @@ export default {
   "Service Period": "Período de serviço",
   From: "De",
   To: "Até",
+  "Original invoice cannot be credited": "A fatura original não pode ser creditada",
 } as const;

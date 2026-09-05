@@ -126,4 +126,5 @@ export default {
   "Service Period": "Période de service",
   From: "Du",
   To: "Au",
+  "Original invoice cannot be credited": "La facture d'origine ne peut pas faire l'objet d'un avoir",
 } as const;

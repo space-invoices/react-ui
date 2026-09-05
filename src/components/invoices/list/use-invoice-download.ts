@@ -33,11 +33,17 @@ export function useInvoiceDownload({
 
     try {
       const filenameLocale = activeEntity.locale ?? i18nProps.locale ?? i18nProps.translationLocale;
-      const fileName = getDocumentPdfFileName("invoice", invoice.number, undefined, {
-        ...i18nProps,
-        locale: filenameLocale,
-        translationLocale: filenameLocale,
-      });
+      const fileName = getDocumentPdfFileName(
+        "invoice",
+        invoice.number,
+        undefined,
+        {
+          ...i18nProps,
+          locale: filenameLocale,
+          translationLocale: filenameLocale,
+        },
+        invoice.customer?.name,
+      );
       await invoices.downloadPdf(invoice.id, fileName, {}, { entity_id: activeEntity.id });
 
       onDownloadSuccess?.(fileName);

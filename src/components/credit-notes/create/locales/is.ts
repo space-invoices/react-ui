@@ -117,4 +117,5 @@ export default {
   "Service Period": "Þjónustutímabil",
   From: "Frá",
   To: "Til",
+  "Original invoice cannot be credited": "Ekki er hægt að gefa út kreditreikning fyrir upprunalega reikninginn",
 } as const;

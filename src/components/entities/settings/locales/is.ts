@@ -323,4 +323,22 @@ export default {
   "International format, including the country code": "Alþjóðlegt snið, með landsnúmeri",
   "Share Capital": "Hlutafé",
   "Registered share capital of the company": "Skráð hlutafé fyrirtækisins",
+  // Tax rule sections and Slovenian Article 76.a
+  "Calculation settings": "Útreikningsstillingar",
+  "Choose how prices, discounts, and taxes are calculated on documents.":
+    "Veldu hvernig verð, afslættir og skattar eru reiknuð á skjölum.",
+  "EU cross border rules": "Reglur ESB um viðskipti yfir landamæri",
+  "Validate VAT numbers and automate reverse charge for eligible EU transactions.":
+    "Staðfestu VSK-númer og sjálfvirknivæddu öfuga skattskyldu fyrir gjaldgeng viðskipti innan ESB.",
+  "Export rules": "Útflutningsreglur",
+  "Configure automatic tax handling for transactions outside the EU.":
+    "Stilltu sjálfvirka skattameðferð fyrir viðskipti utan ESB.",
+  "Configure domestic Slovenian tax treatments.": "Stilltu innlenda slóvenska skattameðferð.",
+  "Slovenian Article 76.a": "Slóvensk grein 76.a",
+  "Allow eligible domestic business invoices to report VAT under reverse charge.":
+    "Leyfðu gjaldgengum innlendum fyrirtækjareikningum að sýna VSK samkvæmt öfugri skattskyldu.",
+  "Article 76.a tax clause": "Skattaákvæði samkvæmt grein 76.a",
+  "Default legal clause added when Article 76.a is selected on an invoice.":
+    "Sjálfgefið lagaákvæði sem er bætt við þegar grein 76.a er valin á reikningi.",
+  "Obrnjena davčna obveznost po 76.a členu ZDDV-1.": "Obrnjena davčna obveznost po 76.a členu ZDDV-1.",
 } as const;

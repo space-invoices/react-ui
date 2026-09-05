@@ -52,7 +52,7 @@ const OrderItem = z
     source_id: z.string().optional(),
     discount: z.number().optional(),
     unit: z.string().optional(),
-    kind: z.enum(["line_item", "shipping"]).optional(),
+    kind: z.enum(["line_item", "shipping", "fee"]).optional(),
   })
   .passthrough();
 
@@ -63,6 +63,7 @@ const createOrderSchemaDefinition = z.object({
   source: z.enum(["shopify", "woocommerce", "manual"]),
   source_id: z.string().max(255),
   source_order_number: z.union([z.string(), z.null()]).optional(),
+  document_locale: z.union([z.string(), z.null()]).optional(),
   customer_name: z.union([z.string(), z.null()]).optional(),
   customer_email: z.union([z.string(), z.null()]).optional(),
   customer: z.union([OrderCustomer, z.null()]).optional(),
@@ -96,6 +97,7 @@ const createOrderSchemaDefinition = z.object({
 const updateOrderSchemaDefinition = z
   .object({
     source_order_number: z.union([z.string(), z.null()]),
+    document_locale: z.union([z.string(), z.null()]),
     customer_name: z.union([z.string(), z.null()]),
     customer_email: z.union([z.string(), z.null()]),
     customer: z.union([OrderCustomer, z.null()]),

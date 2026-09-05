@@ -33,11 +33,17 @@ export function useEstimateDownload({
 
     try {
       const filenameLocale = activeEntity.locale ?? i18nProps.locale ?? i18nProps.translationLocale;
-      const fileName = getDocumentPdfFileName("estimate", estimate.number, estimate.title_type, {
-        ...i18nProps,
-        locale: filenameLocale,
-        translationLocale: filenameLocale,
-      });
+      const fileName = getDocumentPdfFileName(
+        "estimate",
+        estimate.number,
+        estimate.title_type,
+        {
+          ...i18nProps,
+          locale: filenameLocale,
+          translationLocale: filenameLocale,
+        },
+        estimate.customer?.name,
+      );
       await invoices.downloadPdf(estimate.id, fileName, {}, { entity_id: activeEntity.id });
 
       onDownloadSuccess?.(fileName);

@@ -259,4 +259,10 @@ export default {
   "Complete this only when goods are delivered somewhere other than the billing address.":
     "Nur ausfüllen, wenn die Waren an eine andere Adresse als die Rechnungsadresse geliefert werden.",
   "Country code": "Ländercode",
+  // Slovenian Article 76.a
+  "Article 76.a": "Artikel 76.a",
+  "Click to disable Article 76.a reverse charge for this invoice":
+    "Klicken Sie, um die Umkehrung der Steuerschuldnerschaft nach Artikel 76.a für diese Rechnung zu deaktivieren",
+  "Click to enable Article 76.a reverse charge for this invoice":
+    "Klicken Sie, um die Umkehrung der Steuerschuldnerschaft nach Artikel 76.a für diese Rechnung zu aktivieren",
 } as const;

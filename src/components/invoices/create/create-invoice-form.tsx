@@ -69,6 +69,7 @@ import { withRequiredDocumentItemFields } from "../../documents/create/document-
 import { DocumentItemsSection, type PriceModesMap } from "../../documents/create/document-items-section";
 import { DocumentRecipientSection } from "../../documents/create/document-recipient-section";
 import { getEInvoicingSendValidationIssues } from "../../documents/create/e-invoicing-send-validation";
+import { HeaderActionIndicator } from "../../documents/create/header-action-indicator";
 import { type LinkedDocumentSummary, LinkedDocumentsInfo } from "../../documents/create/linked-documents-info";
 import { MarkAsPaidSection } from "../../documents/create/mark-as-paid-section";
 import {
@@ -286,6 +287,11 @@ function buildInvoiceFormValues({
     reference: (initialValues as any)?.reference ?? "",
     note: initialValues?.note ?? (isEditMode ? "" : documentDefaults.note),
     tax_clause: (initialValues as any)?.tax_clause ?? "",
+    tax_rules: {
+      slovenia: {
+        article_76a: initialValues?.tax_rules?.slovenia?.article_76a ?? false,
+      },
+    },
     payment_terms: initialValues?.payment_terms ?? (isEditMode ? "" : documentDefaults.payment_terms),
     footer: (initialValues as any)?.footer ?? (isEditMode ? "" : documentDefaults.footer),
     signature: (initialValues as any)?.signature ?? (isEditMode ? "" : documentDefaults.signature),
@@ -348,6 +354,10 @@ export default function CreateInvoiceForm({
   const { activeEntity } = useEntities();
   const countryCapabilities = useMemo(() => getEntityCountryCapabilities(activeEntity), [activeEntity]);
   const whiteLabel = useWhiteLabel();
+  const showArticle76aControl =
+    countryCapabilities.hasSiArticle76a &&
+    whiteLabel.isFeatureVisible("compliance.si_article_76a") &&
+    (activeEntity?.settings as any)?.tax_rules?.slovenia?.article_76a_enabled === true;
   const queryClient = useQueryClient();
   const invalidateRevenueRecognitionReports = useCallback(() => {
     invalidateRevenueRecognitionQueries(queryClient);
@@ -708,20 +718,24 @@ export default function CreateInvoiceForm({
   const showFursToggle = !headerActionUnavailable && !isEditMode && furs.isEnabled && furs.hasPremises;
   const showEslogToggle = !headerActionUnavailable && eslog.isAvailable;
   const showPeppolToggle = !headerActionUnavailable && showPeppolSendToggle;
+  const showArticle76aToggle = !headerActionUnavailable && showArticle76aControl;
   const isFranceEInvoicing = countryCapabilities.isFrance;
   const forceEInvoicingSend = isFranceEInvoicing && countryCapabilities.franceEmissionRequired;
   const isFursChecked = !skipFiscalization;
   const isEslogChecked = eslog.isEnabled === true;
   const isPeppolChecked = forceEInvoicingSend || peppolSendEnabled;
+  const article76aSelected = useWatch({ control: form.control, name: "tax_rules.slovenia.article_76a" }) === true;
   const headerActionSignature =
-    showFursToggle || showEslogToggle || showPeppolToggle
+    showFursToggle || showEslogToggle || showPeppolToggle || showArticle76aToggle
       ? JSON.stringify({
           showFursToggle,
           showEslogToggle,
           showPeppolToggle,
+          showArticle76aToggle,
           isFursChecked,
           isEslogChecked,
           isPeppolChecked,
+          article76aSelected,
           eslogLabel: t("e-SLOG"),
           eslogEnabledDescription: t("Click to skip e-SLOG validation for this invoice"),
           eslogDisabledDescription: t("Click to enable e-SLOG validation"),
@@ -741,10 +755,13 @@ export default function CreateInvoiceForm({
           fiscalizationLabel: t("Fiscally verify"),
           fiscalizationEnabledDescription: t("Click to skip fiscalization for this invoice"),
           fiscalizationDisabledDescription: t("Click to enable fiscalization"),
+          article76aLabel: t("Article 76.a"),
+          article76aEnabledDescription: t("Click to disable Article 76.a reverse charge for this invoice"),
+          article76aDisabledDescription: t("Click to enable Article 76.a reverse charge for this invoice"),
         })
       : null;
   const headerAction =
-    showFursToggle || showEslogToggle || showPeppolToggle ? (
+    showFursToggle || showEslogToggle || showPeppolToggle || showArticle76aToggle ? (
       <div className="flex items-center gap-2">
         {showPeppolToggle && (
           <TooltipProvider>
@@ -759,14 +776,7 @@ export default function CreateInvoiceForm({
                   disabled={forceEInvoicingSend}
                   onClick={() => setPeppolSendEnabled((enabled) => !enabled)}
                 >
-                  <div
-                    className={cn(
-                      "flex size-4 items-center justify-center rounded border",
-                      isPeppolChecked
-                        ? "border-primary bg-primary text-primary-foreground"
-                        : "border-muted-foreground bg-background text-muted-foreground",
-                    )}
-                  />
+                  <HeaderActionIndicator checked={isPeppolChecked} />
                   <span>{t(isFranceEInvoicing ? "French e-invoice" : "Peppol")}</span>
                 </Button>
               </TooltipTrigger>
@@ -802,14 +812,7 @@ export default function CreateInvoiceForm({
                   aria-pressed={isEslogChecked}
                   onClick={() => eslog.setEnabled(!eslog.isEnabled)}
                 >
-                  <div
-                    className={cn(
-                      "flex size-4 items-center justify-center rounded border",
-                      isEslogChecked
-                        ? "border-primary bg-primary text-primary-foreground"
-                        : "border-muted-foreground bg-background text-muted-foreground",
-                    )}
-                  />
+                  <HeaderActionIndicator checked={isEslogChecked} />
                   <span>{t("e-SLOG")}</span>
                 </Button>
               </TooltipTrigger>
@@ -817,6 +820,37 @@ export default function CreateInvoiceForm({
                 {isEslogChecked
                   ? t("Click to skip e-SLOG validation for this invoice")
                   : t("Click to enable e-SLOG validation")}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
+
+        {/* Slovenian Article 76.a reverse-charge toggle */}
+        {showArticle76aToggle && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant={article76aSelected ? "outline" : "ghost"}
+                  size="sm"
+                  className={cn("h-8 cursor-pointer gap-2", !article76aSelected && "text-muted-foreground")}
+                  aria-pressed={article76aSelected}
+                  onClick={() =>
+                    form.setValue("tax_rules.slovenia.article_76a", !article76aSelected, {
+                      shouldDirty: true,
+                      shouldTouch: true,
+                    })
+                  }
+                >
+                  <HeaderActionIndicator checked={article76aSelected} />
+                  <span>{t("Article 76.a")}</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="max-w-xs">
+                {article76aSelected
+                  ? t("Click to disable Article 76.a reverse charge for this invoice")
+                  : t("Click to enable Article 76.a reverse charge for this invoice")}
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
@@ -838,13 +872,9 @@ export default function CreateInvoiceForm({
                   aria-pressed={isFursChecked}
                   onClick={() => setSkipFiscalization(!skipFiscalization)}
                 >
-                  <div
-                    className={cn(
-                      "flex size-4 items-center justify-center rounded border",
-                      isFursChecked
-                        ? "border-primary bg-primary text-primary-foreground"
-                        : "border-destructive bg-background text-destructive",
-                    )}
+                  <HeaderActionIndicator
+                    checked={isFursChecked}
+                    uncheckedClassName="border-destructive bg-background text-destructive"
                   />
                   <span>{t("Fiscally verify")}</span>
                 </Button>
@@ -1013,23 +1043,29 @@ export default function CreateInvoiceForm({
   // Auto-populate tax_clause from entity settings when transaction type changes
   const effectiveTransactionType = transactionType ?? "domestic";
   const prevTransactionTypeRef = useRef<string | undefined>(undefined);
+  const prevArticle76aSelectedRef = useRef<boolean | undefined>(undefined);
   const prevTaxClauseHydrationVersionRef = useRef<number | undefined>(undefined);
   const [taxClauseHydrationVersion, setTaxClauseHydrationVersion] = useState(0);
   useEffect(() => {
-    if (isEditMode) return;
     const transactionTypeChanged = effectiveTransactionType !== prevTransactionTypeRef.current;
+    const article76aSelectionChanged =
+      prevArticle76aSelectedRef.current !== undefined && article76aSelected !== prevArticle76aSelectedRef.current;
     const hydrationVersionChanged = taxClauseHydrationVersion !== prevTaxClauseHydrationVersionRef.current;
-    if (!transactionTypeChanged && !hydrationVersionChanged) return;
 
     prevTransactionTypeRef.current = effectiveTransactionType;
+    prevArticle76aSelectedRef.current = article76aSelected;
     prevTaxClauseHydrationVersionRef.current = taxClauseHydrationVersion;
+    if (isEditMode && !article76aSelectionChanged) return;
+    if (!transactionTypeChanged && !article76aSelectionChanged && !hydrationVersionChanged) return;
 
     const taxClauseDefaults = (activeEntity?.settings as any)?.tax_clause_defaults;
     if (!taxClauseDefaults) return;
 
-    const clause = taxClauseDefaults[effectiveTransactionType] ?? "";
+    const clause = article76aSelected
+      ? (taxClauseDefaults.article_76a ?? "")
+      : (taxClauseDefaults[effectiveTransactionType] ?? "");
     form.setValue("tax_clause", clause);
-  }, [activeEntity, effectiveTransactionType, form, isEditMode, taxClauseHydrationVersion]);
+  }, [activeEntity, article76aSelected, effectiveTransactionType, form, isEditMode, taxClauseHydrationVersion]);
 
   // Extract customer management logic into a custom hook
   const {
@@ -1497,6 +1533,11 @@ export default function CreateInvoiceForm({
         note: formValues.note,
         payment_terms: formValues.payment_terms,
         tax_clause: formValues.tax_clause,
+        tax_rules: {
+          slovenia: {
+            article_76a: formValues.tax_rules?.slovenia?.article_76a === true,
+          },
+        },
         footer: formValues.footer,
         signature: formValues.signature,
         ...(!isEditMode && furs.isEnabled && furs.hasPremises

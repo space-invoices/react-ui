@@ -14,6 +14,7 @@ import { Input } from "@/ui/components/ui/input";
 import { Label } from "@/ui/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/ui/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui/components/ui/select";
+import { useOrphanedClickGuard } from "@/ui/hooks/use-orphaned-click-guard";
 import { formatDateOnlyForDisplay, toLocalCalendarDate, toLocalDateOnlyString } from "@/ui/lib/date-only";
 import { formatCurrencyValue } from "@/ui/lib/formatting";
 import { DOCUMENT_PAYMENT_FORM_TYPES } from "@/ui/lib/payment-types";
@@ -65,6 +66,7 @@ export function ExpenseRecordPaymentDialog({
   pending = false,
   initialPayment,
 }: ExpenseRecordPaymentDialogProps) {
+  const orphanedClickGuard = useOrphanedClickGuard();
   const [amount, setAmount] = useState("");
   const [paymentType, setPaymentType] = useState("bank_transfer");
   const [paymentDate, setPaymentDate] = useState("");
@@ -111,7 +113,11 @@ export function ExpenseRecordPaymentDialog({
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="expense-payment-type">{copy.paymentType}</Label>
-            <Select value={paymentType} onValueChange={(value) => setPaymentType(value ?? "bank_transfer")}>
+            <Select
+              {...orphanedClickGuard}
+              value={paymentType}
+              onValueChange={(value) => setPaymentType(value ?? "bank_transfer")}
+            >
               <SelectTrigger id="expense-payment-type" aria-label={copy.paymentType}>
                 <SelectValue />
               </SelectTrigger>

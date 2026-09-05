@@ -244,4 +244,10 @@ export default {
   "Record one or more payments on creation": "Record one or more payments on creation",
   "Entity bank account is required for e-SLOG payment instructions. Update in Settings > Company.":
     "Entity bank account is required for e-SLOG payment instructions. Update in Settings > Company.",
+  // Slovenian Article 76.a
+  "Article 76.a": "Article 76.a",
+  "Click to disable Article 76.a reverse charge for this invoice":
+    "Click to disable Article 76.a reverse charge for this invoice",
+  "Click to enable Article 76.a reverse charge for this invoice":
+    "Click to enable Article 76.a reverse charge for this invoice",
 } as const;

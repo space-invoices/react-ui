@@ -32,6 +32,7 @@ import {
   buildUjpOptions,
   type FiscalizationOperatorOverride,
 } from "@/ui/lib/fiscalization-options";
+import { getPtCreditNoteReferenceErrorMessage } from "@/ui/lib/furs-error-utils";
 import {
   normalizePtDocumentInput,
   type PtDocumentInputForm,
@@ -72,6 +73,7 @@ import {
 import { DocumentItemsSection, type PriceModesMap } from "../../documents/create/document-items-section";
 import { DocumentRecipientSection } from "../../documents/create/document-recipient-section";
 import { getEInvoicingSendValidationIssues } from "../../documents/create/e-invoicing-send-validation";
+import { HeaderActionIndicator } from "../../documents/create/header-action-indicator";
 import { type LinkedDocumentSummary, LinkedDocumentsInfo } from "../../documents/create/linked-documents-info";
 import { MarkAsPaidSection } from "../../documents/create/mark-as-paid-section";
 import {
@@ -659,14 +661,7 @@ export default function CreateCreditNoteForm({
                   disabled={forceEInvoicingSend}
                   onClick={() => setPeppolSendEnabled((enabled) => !enabled)}
                 >
-                  <div
-                    className={cn(
-                      "flex size-4 items-center justify-center rounded border",
-                      isPeppolChecked
-                        ? "border-primary bg-primary text-primary-foreground"
-                        : "border-muted-foreground bg-background text-muted-foreground",
-                    )}
-                  />
+                  <HeaderActionIndicator checked={isPeppolChecked} />
                   <span>{t(isFranceEInvoicing ? "French e-invoice" : "Peppol")}</span>
                 </Button>
               </TooltipTrigger>
@@ -704,13 +699,9 @@ export default function CreateCreditNoteForm({
                   aria-pressed={isFursChecked}
                   onClick={() => setSkipFiscalization(!skipFiscalization)}
                 >
-                  <div
-                    className={cn(
-                      "flex size-4 items-center justify-center rounded border",
-                      isFursChecked
-                        ? "border-primary bg-primary text-primary-foreground"
-                        : "border-destructive bg-background text-destructive",
-                    )}
+                  <HeaderActionIndicator
+                    checked={isFursChecked}
+                    uncheckedClassName="border-destructive bg-background text-destructive"
                   />
                   <span>{t("Fiscally verify")}</span>
                 </Button>
@@ -799,6 +790,22 @@ export default function CreateCreditNoteForm({
     });
   }, [form, isEditMode, isFiscalizationDateLocked]);
 
+  // A Portugal credit note rejected because of its linked original invoice (draft, voided,
+  // deleted, or another entity's) is shown inline: the remedy is choosing another original,
+  // so the API's reason replaces the generic failure toast.
+  const [linkedInvoiceError, setLinkedInvoiceError] = useState<string | null>(null);
+  const handleCreateError = useCallback(
+    (error: unknown) => {
+      const linkedInvoiceMessage = getPtCreditNoteReferenceErrorMessage(error);
+      if (linkedInvoiceMessage) {
+        setLinkedInvoiceError(linkedInvoiceMessage);
+        return;
+      }
+      onError?.(error);
+    },
+    [onError],
+  );
+
   const { mutate: createCreditNote, isPending } = useCreateCreditNote({
     entityId,
     onSuccess: (data) => {
@@ -812,7 +819,7 @@ export default function CreateCreditNoteForm({
       invalidateRevenueRecognitionReports();
       onSuccess?.(data);
     },
-    onError,
+    onError: handleCreateError,
   });
   const { mutate: createCustomCreditNote, isPending: isCreateCustomPending } = useCreateCustomCreditNote({
     entityId,
@@ -825,7 +832,7 @@ export default function CreateCreditNoteForm({
       invalidateRevenueRecognitionReports();
       onSuccess?.(data);
     },
-    onError,
+    onError: handleCreateError,
   });
   const { mutate: updateCreditNote, isPending: isUpdatePending } = useUpdateCreditNote({
     entityId,
@@ -1173,6 +1180,7 @@ export default function CreateCreditNoteForm({
   }, [buildPreviewPayload, emitPreviewPayload, form]);
 
   const onSubmit = (values: CreateCreditNoteFormValues) => {
+    setLinkedInvoiceError(null);
     submitCreditNote(values, false);
   };
   const onInvalidSubmit = (errors: any) => {
@@ -1256,6 +1264,14 @@ export default function CreateCreditNoteForm({
                 ))}
               </ul>
             </AlertDescription>
+          </Alert>
+        )}
+
+        {linkedInvoiceError && (
+          <Alert variant="destructive" data-form-error-summary="true" data-testid="linked-invoice-error">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>{t("Original invoice cannot be credited")}</AlertTitle>
+            <AlertDescription>{linkedInvoiceError}</AlertDescription>
           </Alert>
         )}
 

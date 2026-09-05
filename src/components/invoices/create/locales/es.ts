@@ -253,4 +253,10 @@ export default {
   "Complete this only when goods are delivered somewhere other than the billing address.":
     "Complétalo solo si los bienes se entregan en una dirección distinta de la dirección de facturación.",
   "Country code": "Código de país",
+  // Slovenian Article 76.a
+  "Article 76.a": "Artículo 76.a",
+  "Click to disable Article 76.a reverse charge for this invoice":
+    "Haz clic para desactivar la inversión del sujeto pasivo del artículo 76.a en esta factura",
+  "Click to enable Article 76.a reverse charge for this invoice":
+    "Haz clic para activar la inversión del sujeto pasivo del artículo 76.a en esta factura",
 } as const;

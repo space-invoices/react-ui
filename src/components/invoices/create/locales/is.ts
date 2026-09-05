@@ -254,4 +254,10 @@ export default {
   "Complete this only when goods are delivered somewhere other than the billing address.":
     "Fylltu aðeins út þegar vörur eru afhentar á annað heimilisfang en reikningsfang.",
   "Country code": "Landskóði",
+  // Slovenian Article 76.a
+  "Article 76.a": "Grein 76.a",
+  "Click to disable Article 76.a reverse charge for this invoice":
+    "Smelltu til að slökkva á öfugri skattskyldu samkvæmt grein 76.a fyrir þennan reikning",
+  "Click to enable Article 76.a reverse charge for this invoice":
+    "Smelltu til að virkja öfuga skattskyldu samkvæmt grein 76.a fyrir þennan reikning",
 } as const;

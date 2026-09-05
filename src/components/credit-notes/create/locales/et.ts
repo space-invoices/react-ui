@@ -113,4 +113,5 @@ export default {
   "Service Period": "Teenuse periood",
   From: "Alates",
   To: "Kuni",
+  "Original invoice cannot be credited": "Algset arvet ei saa krediteerida",
 } as const;

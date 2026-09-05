@@ -124,4 +124,5 @@ export default {
   "Service Period": "Razdoblje usluge",
   From: "Od",
   To: "Do",
+  "Original invoice cannot be credited": "Izvorni račun ne može se odobriti",
 } as const;

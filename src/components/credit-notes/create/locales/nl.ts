@@ -127,4 +127,5 @@ export default {
   "Service Period": "Serviceperiode",
   From: "Van",
   To: "Tot",
+  "Original invoice cannot be credited": "De oorspronkelijke factuur kan niet worden gecrediteerd",
 } as const;

@@ -345,4 +345,22 @@ export default {
   "International format, including the country code": "Format international, indicatif du pays inclus",
   "Share Capital": "Capital social",
   "Registered share capital of the company": "Capital social enregistré de la société",
+  // Tax rule sections and Slovenian Article 76.a
+  "Calculation settings": "Paramètres de calcul",
+  "Choose how prices, discounts, and taxes are calculated on documents.":
+    "Choisissez comment les prix, les remises et les taxes sont calculés sur les documents.",
+  "EU cross border rules": "Règles de l’UE pour les opérations transfrontalières",
+  "Validate VAT numbers and automate reverse charge for eligible EU transactions.":
+    "Validez les numéros de TVA et automatisez l’autoliquidation pour les opérations européennes éligibles.",
+  "Export rules": "Règles d’exportation",
+  "Configure automatic tax handling for transactions outside the EU.":
+    "Configurez le traitement fiscal automatique des opérations hors de l’UE.",
+  "Configure domestic Slovenian tax treatments.": "Configurez les traitements fiscaux nationaux slovènes.",
+  "Slovenian Article 76.a": "Article 76.a slovène",
+  "Allow eligible domestic business invoices to report VAT under reverse charge.":
+    "Autorisez les factures nationales B2B éligibles à déclarer la TVA en autoliquidation.",
+  "Article 76.a tax clause": "Clause fiscale de l’article 76.a",
+  "Default legal clause added when Article 76.a is selected on an invoice.":
+    "Clause juridique par défaut ajoutée lorsque l’article 76.a est sélectionné sur une facture.",
+  "Obrnjena davčna obveznost po 76.a členu ZDDV-1.": "Obrnjena davčna obveznost po 76.a členu ZDDV-1.",
 } as const;

@@ -128,4 +128,5 @@ export default {
   "Service Period": "Leistungszeitraum",
   From: "Von",
   To: "Bis",
+  "Original invoice cannot be credited": "Die Originalrechnung kann nicht gutgeschrieben werden",
 } as const;

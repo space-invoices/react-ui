@@ -27,6 +27,7 @@ import { buildCustomCreateTemplateFromDocument } from "@/ui/components/documents
 import { toDocumentFormItem } from "@/ui/components/documents/create/document-form-item";
 import { totalsDifferByCents } from "@/ui/components/documents/create/preserved-expected-total";
 import { toLocalDateOnlyString } from "@/ui/lib/date-only";
+import { isPortugalCountryCode } from "@/ui/lib/pt-entity-input";
 import { useEntities } from "@/ui/providers/entities-context";
 import { resolveDuplicateDates, stripSourceTypeDefaultText } from "./duplicate-document-carry-over";
 
@@ -106,6 +107,28 @@ export function getDocumentTypeFromId(id: string): DocumentType | null {
   if (id.startsWith("adv_")) return "advance_invoice";
   if (id.startsWith("del_")) return "delivery_note";
   return null;
+}
+
+/**
+ * Whether a conversion target may be offered for a specific source document.
+ *
+ * A Portugal credit note must link an issued original invoice: the API rejects a link to a
+ * draft or voided invoice before anything is persisted, and the conversion would send exactly
+ * that link, so the action is not offered for those invoices in Portuguese entities.
+ * Every other combination keeps the type-level answer from `getAllowedDuplicateTargets`.
+ */
+export function isDuplicateTargetOfferedForDocument(params: {
+  sourceType: DocumentType;
+  targetType: DocumentType;
+  countryCode?: string | null;
+  document?: { is_draft?: boolean | null; voided_at?: string | null } | null;
+}): boolean {
+  const { sourceType, targetType, countryCode, document } = params;
+  if (sourceType !== "invoice" || targetType !== "credit_note" || !isPortugalCountryCode(countryCode)) {
+    return true;
+  }
+
+  return !(document?.is_draft === true || !!document?.voided_at);
 }
 
 /**

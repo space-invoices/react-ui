@@ -115,4 +115,5 @@ export default {
   "Service Period": "Palvelujakso",
   From: "Alkaen",
   To: "Asti",
+  "Original invoice cannot be credited": "Alkuperäistä laskua ei voi hyvittää",
 } as const;

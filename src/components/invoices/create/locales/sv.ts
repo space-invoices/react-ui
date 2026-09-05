@@ -247,4 +247,10 @@ export default {
   "Complete this only when goods are delivered somewhere other than the billing address.":
     "Fyll bara i detta när varorna levereras till en annan adress än faktureringsadressen.",
   "Country code": "Landskod",
+  // Slovenian Article 76.a
+  "Article 76.a": "Artikel 76.a",
+  "Click to disable Article 76.a reverse charge for this invoice":
+    "Klicka för att inaktivera omvänd skattskyldighet enligt artikel 76.a för den här fakturan",
+  "Click to enable Article 76.a reverse charge for this invoice":
+    "Klicka för att aktivera omvänd skattskyldighet enligt artikel 76.a för den här fakturan",
 } as const;

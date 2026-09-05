@@ -159,6 +159,7 @@ export function getEntityCountryCapabilities(entity: CountryEntity) {
   const hasFurs = hasCountryFeature(entity, "furs");
   const hasFina = hasCountryFeature(entity, "fina");
   const hasEslog = hasCountryFeature(entity, "eslog");
+  const hasSiArticle76a = isSlovenia && hasCountryFeature(entity, "si_article_76a");
   const hasEuTaxRules = hasCountryFeature(entity, "eu_tax_rules");
   const hasTaxClauseDefaults = hasCountryFeature(entity, "tax_clause_defaults");
   const hasUsTaxRateLookup = hasUsTaxRateLookupSupport(entity);
@@ -182,6 +183,7 @@ export function getEntityCountryCapabilities(entity: CountryEntity) {
     hasFurs,
     hasFina,
     hasEslog,
+    hasSiArticle76a,
     hasEInvoicing,
     hasEuTaxRules,
     hasTaxClauseDefaults,

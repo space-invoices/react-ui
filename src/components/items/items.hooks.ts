@@ -32,13 +32,14 @@ export { useCreateItem, useDeleteItem, usePermanentDeleteItem, useRestoreItem, u
 export const useItemSearch = (entityId: string, search: string) => {
   return useQuery({
     queryKey: [ITEMS_CACHE_KEY, "search", entityId, search],
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       if (!search) return { data: [] };
 
       const response = await items.list({
         entity_id: entityId,
         search,
         limit: 10,
+        signal,
       });
 
       return response;
@@ -53,11 +54,12 @@ export const useItemSearch = (entityId: string, search: string) => {
 export const useRecentItems = (entityId: string) => {
   return useQuery({
     queryKey: [ITEMS_CACHE_KEY, "recent", entityId],
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       const response = await items.list({
         entity_id: entityId,
         limit: 5,
         order_by: "-created_at",
+        signal,
       });
 
       return response;

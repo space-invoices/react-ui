@@ -70,7 +70,7 @@ export default function PaymentListTable({
     ...i18nProps,
     translations,
   });
-  const handleFetch = useTableFetch(async (params: TableQueryParams) => {
+  const handleFetch = useTableFetch(async (params: TableQueryParams, options) => {
     if (!params.entity_id) throw new Error("Entity ID required");
 
     const response = await payments.list({
@@ -82,6 +82,7 @@ export default function PaymentListTable({
       search: params.search,
       query: params.query,
       include: "Invoice,CreditNote,AdvanceInvoice,Expense",
+      signal: options?.signal,
     });
     return response as unknown as TableQueryResponse<PaymentWithDocument>;
   }, entityId);
@@ -94,7 +95,7 @@ export default function PaymentListTable({
         sort: {
           defaultDirection: "desc",
         },
-        cell: (payment) => <FormattedDate date={payment.date} locale={i18nProps.locale} />,
+        cell: (payment) => <FormattedDate date={payment.date} locale={i18nProps.locale} calendar />,
       },
       {
         id: "amount",

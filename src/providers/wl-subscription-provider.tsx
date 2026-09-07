@@ -1,6 +1,6 @@
 import { getClientHeaders } from "@spaceinvoices/js-sdk";
 import type { ReactNode } from "react";
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useEntitiesOptional } from "./entities-context";
 import { useAccessToken } from "./space-invoices-provider";
 import { useWhiteLabel } from "./white-label-provider";
@@ -67,6 +67,7 @@ export type CurrentSubscription = {
   current_period_start: string;
   current_period_end: string;
   payment_provider: "stripe" | "paypal" | "bank" | "braintree";
+  shopify_managed?: boolean;
   bank_reference: string | null;
   currency_code?: WLBillingCurrencyCode;
   billing_profile?: WLBillingProfile;
@@ -225,8 +226,20 @@ export function WLSubscriptionProvider({ children, apiBaseUrl }: WLSubscriptionP
   const [availablePlans, setAvailablePlans] = useState<WhiteLabelPlan[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const scope = useMemo(
+    () => ({ apiBaseUrl, entityId, accessToken, isLoading: whiteLabel.isLoading, slug: whiteLabel.slug }),
+    [apiBaseUrl, entityId, accessToken, whiteLabel.isLoading, whiteLabel.slug],
+  );
+  const activeScopeRef = useRef<object | null>(scope);
+  const requestRef = useRef<AbortController | null>(null);
 
   const fetchSubscription = useCallback(async () => {
+    if (activeScopeRef.current !== scope) return;
+    requestRef.current?.abort();
+    const request = new AbortController();
+    requestRef.current = request;
+    const isCurrent = () =>
+      activeScopeRef.current === scope && requestRef.current === request && !request.signal.aborted;
     if (whiteLabel.isLoading) {
       setIsLoading(true);
       return;
@@ -252,10 +265,12 @@ export function WLSubscriptionProvider({ children, apiBaseUrl }: WLSubscriptionP
       };
 
       // Fetch current subscription
-      const subResponse = await fetch(`${apiBaseUrl}/white-label-subscriptions`, { headers });
+      const subResponse = await fetch(`${apiBaseUrl}/white-label-subscriptions`, { headers, signal: request.signal });
+      if (!isCurrent()) return;
 
       if (subResponse.ok) {
         const subData = await subResponse.json();
+        if (!isCurrent()) return;
         setSubscription(subData);
       } else if (subResponse.status === 404) {
         // No WL subscription = use default (unlimited)
@@ -267,23 +282,32 @@ export function WLSubscriptionProvider({ children, apiBaseUrl }: WLSubscriptionP
       // Fetch available plans
       const plansResponse = await fetch(`${apiBaseUrl}/white-label-subscriptions/plans`, {
         headers,
+        signal: request.signal,
       });
+      if (!isCurrent()) return;
 
       if (plansResponse.ok) {
         const plansData = await plansResponse.json();
+        if (!isCurrent()) return;
         setAvailablePlans(plansData.plans || []);
       }
     } catch (err) {
+      if (!isCurrent()) return;
       setError(err instanceof Error ? err.message : "Failed to fetch subscription");
       setSubscription(DEFAULT_SUBSCRIPTION);
     } finally {
-      setIsLoading(false);
+      if (isCurrent()) setIsLoading(false);
     }
-  }, [apiBaseUrl, entityId, accessToken, whiteLabel.isLoading, whiteLabel.slug]);
+  }, [apiBaseUrl, entityId, accessToken, whiteLabel.isLoading, whiteLabel.slug, scope]);
 
   useEffect(() => {
-    fetchSubscription();
-  }, [fetchSubscription]);
+    activeScopeRef.current = scope;
+    void fetchSubscription();
+    return () => {
+      activeScopeRef.current = null;
+      requestRef.current?.abort();
+    };
+  }, [fetchSubscription, scope]);
 
   // Check if feature is available on current plan
   const hasFeature = useCallback(

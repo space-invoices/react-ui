@@ -32,6 +32,11 @@ export function createTranslation({
   translationLocale,
   translations = {},
 }: ComponentTranslationProps = {}) {
+  const normalizedLocale = resolveTranslationLocale(translationLocale, locale);
+  const baseLocale = getLocaleLanguage(normalizedLocale);
+  const localeTranslations = translations[normalizedLocale] ?? translations[baseLocale];
+  const englishTranslations = translations.en;
+
   return (key: string): string => {
     // 1. If external translation function provided, use it
     if (t) {
@@ -45,17 +50,12 @@ export function createTranslation({
       }
     }
 
-    const normalizedLocale = resolveTranslationLocale(translationLocale, locale);
-    const baseLocale = getLocaleLanguage(normalizedLocale);
-
     // 2. Look up in local translations for current locale, then base language
-    const localeTranslations = translations[normalizedLocale] ?? translations[baseLocale];
     if (localeTranslations) {
       const translation = localeTranslations[key];
       if (translation) return translation;
     }
 
-    const englishTranslations = translations.en;
     if (englishTranslations) {
       const translation = englishTranslations[key];
       if (translation) return translation;

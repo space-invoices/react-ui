@@ -7,6 +7,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Resolver } from "react-hook-form";
 import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
+import { createPreviewChangeScheduler } from "@/ui/components/documents/create/preview-change-scheduler";
 import { Alert, AlertDescription, AlertTitle } from "@/ui/components/ui/alert";
 import { Button } from "@/ui/components/ui/button";
 import { Form, FormRoot } from "@/ui/components/ui/form";
@@ -37,7 +38,7 @@ import {
 import { invalidateRevenueRecognitionQueries } from "@/ui/lib/revenue-recognition-cache";
 import { normalizeLineItemDiscountsForForm } from "@/ui/lib/schemas/shared";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
-import { createTranslation } from "@/ui/lib/translation";
+import { useLazyTranslation } from "@/ui/lib/use-lazy-translation";
 import { cn } from "@/ui/lib/utils";
 import { useEntities } from "@/ui/providers/entities-context";
 import { useFormFooterRegistration } from "@/ui/providers/form-footer-context";
@@ -70,6 +71,7 @@ import {
   createEmptyPaymentRow,
   type DraftPaymentRow,
   getFirstValidPaymentType,
+  getPaymentCalculationItems,
   serializePaymentRowsForApi,
   validatePaymentRows,
 } from "../../documents/create/payment-rows";
@@ -90,44 +92,53 @@ import {
   translateEslogValidationError,
   validateEslogForm,
 } from "../../invoices/create/eslog-validation";
-import invoiceDe from "../../invoices/create/locales/de";
-import invoiceEs from "../../invoices/create/locales/es";
-import invoiceFr from "../../invoices/create/locales/fr";
-import invoiceHr from "../../invoices/create/locales/hr";
-import invoiceIt from "../../invoices/create/locales/it";
-import invoiceNl from "../../invoices/create/locales/nl";
-import invoicePl from "../../invoices/create/locales/pl";
-import invoicePt from "../../invoices/create/locales/pt";
-import invoiceSl from "../../invoices/create/locales/sl";
 import {
   useCreateAdvanceInvoice,
   useCreateCustomAdvanceInvoice,
   useUpdateAdvanceInvoice,
 } from "../advance-invoices.hooks";
-import de from "./locales/de";
-import es from "./locales/es";
-import fr from "./locales/fr";
-import hr from "./locales/hr";
-import it from "./locales/it";
-import nl from "./locales/nl";
-import pl from "./locales/pl";
-import pt from "./locales/pt";
-import sl from "./locales/sl";
 import {
   prepareAdvanceInvoiceSubmission,
   prepareAdvanceInvoiceUpdateSubmission,
 } from "./prepare-advance-invoice-submission";
 
-const translations = {
-  sl: { ...invoiceSl, ...sl },
-  de: { ...invoiceDe, ...de },
-  it: { ...invoiceIt, ...it },
-  fr: { ...invoiceFr, ...fr },
-  es: { ...invoiceEs, ...es },
-  pt: { ...invoicePt, ...pt },
-  nl: { ...invoiceNl, ...nl },
-  pl: { ...invoicePl, ...pl },
-  hr: { ...invoiceHr, ...hr },
+const translationLoaders = {
+  de: async () => {
+    const [base, local] = await Promise.all([import("../../invoices/create/locales/de"), import("./locales/de")]);
+    return { default: { ...base.default, ...local.default } };
+  },
+  es: async () => {
+    const [base, local] = await Promise.all([import("../../invoices/create/locales/es"), import("./locales/es")]);
+    return { default: { ...base.default, ...local.default } };
+  },
+  fr: async () => {
+    const [base, local] = await Promise.all([import("../../invoices/create/locales/fr"), import("./locales/fr")]);
+    return { default: { ...base.default, ...local.default } };
+  },
+  hr: async () => {
+    const [base, local] = await Promise.all([import("../../invoices/create/locales/hr"), import("./locales/hr")]);
+    return { default: { ...base.default, ...local.default } };
+  },
+  it: async () => {
+    const [base, local] = await Promise.all([import("../../invoices/create/locales/it"), import("./locales/it")]);
+    return { default: { ...base.default, ...local.default } };
+  },
+  nl: async () => {
+    const [base, local] = await Promise.all([import("../../invoices/create/locales/nl"), import("./locales/nl")]);
+    return { default: { ...base.default, ...local.default } };
+  },
+  pl: async () => {
+    const [base, local] = await Promise.all([import("../../invoices/create/locales/pl"), import("./locales/pl")]);
+    return { default: { ...base.default, ...local.default } };
+  },
+  pt: async () => {
+    const [base, local] = await Promise.all([import("../../invoices/create/locales/pt"), import("./locales/pt")]);
+    return { default: { ...base.default, ...local.default } };
+  },
+  sl: async () => {
+    const [base, local] = await Promise.all([import("../../invoices/create/locales/sl"), import("./locales/sl")]);
+    return { default: { ...base.default, ...local.default } };
+  },
 } as const;
 const FORM_ID = "create-advance-invoice-form";
 const createAdvanceInvoiceFormSchema = withRequiredDocumentItemFields(
@@ -197,13 +208,15 @@ export default function CreateAdvanceInvoiceForm({
   namespace,
   locale,
 }: CreateAdvanceInvoiceFormProps) {
-  const t = createTranslation({
-    t: translateProp,
-    namespace,
-    locale,
-    translationLocale,
-    translations,
-  });
+  const t = useLazyTranslation(
+    {
+      t: translateProp,
+      namespace,
+      locale,
+      translationLocale,
+    },
+    translationLoaders,
+  );
 
   const { activeEntity } = useEntities();
   const whiteLabel = useWhiteLabel();
@@ -401,7 +414,6 @@ export default function CreateAdvanceInvoiceForm({
   });
 
   const documentTranslations = useWatch({ control: form.control, name: "translations" });
-  const watchedItems = useWatch({ control: form.control, name: "items" });
   const selectedBusinessUnitId = useWatch({ control: form.control, name: "business_unit_id" as any });
   const selectedBusinessUnit = useMemo(
     () => businessUnits.find((unit) => unit.id === selectedBusinessUnitId) ?? null,
@@ -416,10 +428,14 @@ export default function CreateAdvanceInvoiceForm({
     [mergedSettings],
   );
   const appliedDerivedDefaultsRef = useRef(derivedDocumentDefaults);
-  const paymentDocumentTotal = useMemo(
-    () => calculateDocumentTotal((watchedItems as any[]) ?? [], priceModesRef.current),
-    [watchedItems],
-  );
+  const watchedPaymentItems = useWatch({
+    control: form.control,
+    name: "items",
+    compute: getPaymentCalculationItems,
+  });
+  const [, setPriceModesVersion] = useState(0);
+  // Price modes update after field events; calculate during render with the final ref.
+  const paymentDocumentTotal = calculateDocumentTotal(watchedPaymentItems, priceModesRef.current);
   const hasExplicitNonBankTransferPayment =
     markAsPaid && paymentRows.some((row) => row.type != null && row.type !== "bank_transfer");
   const skipPreferenceInitializedRef = useRef(false);
@@ -561,19 +577,22 @@ export default function CreateAdvanceInvoiceForm({
 
   useStableHeaderAction({ action: headerAction, onChange: onHeaderActionChange, signature: headerActionSignature });
 
-  const formValues = useWatch({
+  const [previewCurrency_code, previewCustomer, previewDate, previewNumber] = useWatch({
     control: form.control,
+    name: ["currency_code", "customer", "date", "number"],
   });
-  const watchedValidationSnapshot = useMemo(
-    () =>
-      JSON.stringify({
-        date: formValues.date,
-        currency_code: formValues.currency_code,
-        customer: formValues.customer,
-        items: formValues.items,
-      }),
-    [formValues.customer, formValues.currency_code, formValues.date, formValues.items],
-  );
+  const formValues = {
+    currency_code: previewCurrency_code,
+    customer: previewCustomer,
+    date: previewDate,
+    number: previewNumber,
+  };
+  const watchedValidationSnapshot = useWatch({
+    control: form.control,
+    name: ["date", "currency_code", "customer", "items"],
+    disabled: !form.formState.isSubmitted,
+    compute: (values) => JSON.stringify(values),
+  });
   const lastRevalidatedSnapshotRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -953,10 +972,18 @@ export default function CreateAdvanceInvoiceForm({
   }, []);
 
   useEffect(() => {
-    emitPreviewPayload(buildPreviewPayload(formValues as CreateAdvanceInvoiceFormValues));
-  }, [buildPreviewPayload, emitPreviewPayload, formValues]);
+    const scheduler = createPreviewChangeScheduler();
+    const emit = () => emitPreviewPayload(buildPreviewPayload(form.getValues()));
+    emit();
+    const subscription = form.watch((_values, { name }) => scheduler.schedule(emit, name));
+    return () => {
+      scheduler.cancel();
+      subscription.unsubscribe();
+    };
+  }, [buildPreviewPayload, emitPreviewPayload, form]);
 
   const emitCurrentPreviewPayload = useCallback(() => {
+    setPriceModesVersion((version) => version + 1);
     emitPreviewPayload(buildPreviewPayload(form.getValues()));
   }, [buildPreviewPayload, emitPreviewPayload, form]);
 

@@ -74,8 +74,9 @@ export default function ItemListTable({
     ...i18nProps,
     translations,
   });
-  const handleFetch = useTableFetch((params: TableQueryParams) => {
-    return items.list(params as any);
+  const handleFetch = useTableFetch(async (params: TableQueryParams, options) => {
+    if (!params.entity_id) throw new Error("Entity ID required");
+    return items.list({ ...params, entity_id: params.entity_id, signal: options?.signal });
   }, entityId);
 
   const columns: Column<Item>[] = useMemo(

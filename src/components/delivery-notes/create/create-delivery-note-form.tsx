@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Resolver } from "react-hook-form";
 import { useForm, useWatch } from "react-hook-form";
 import type { z } from "zod";
+import { createPreviewChangeScheduler } from "@/ui/components/documents/create/preview-change-scheduler";
 import { Checkbox } from "@/ui/components/ui/checkbox";
 import { Form } from "@/ui/components/ui/form";
 import { Label } from "@/ui/components/ui/label";
@@ -18,7 +19,7 @@ import {
 } from "@/ui/lib/document-content-translations";
 import { normalizeLineItemDiscountsForForm } from "@/ui/lib/schemas/shared";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
-import { createTranslation } from "@/ui/lib/translation";
+import { useLazyTranslation } from "@/ui/lib/use-lazy-translation";
 import { useEntities } from "@/ui/providers/entities-context";
 import { useFormFooterRegistration } from "@/ui/providers/form-footer-context";
 import { useWhiteLabel } from "@/ui/providers/white-label-provider";
@@ -50,28 +51,19 @@ import {
 } from "../../documents/create/preserved-expected-total";
 import type { DocumentTypes } from "../../documents/types";
 import { useCreateCustomDeliveryNote, useCreateDeliveryNote, useUpdateDeliveryNote } from "../delivery-notes.hooks";
-import de from "./locales/de";
-import es from "./locales/es";
-import fr from "./locales/fr";
-import hr from "./locales/hr";
-import it from "./locales/it";
-import nl from "./locales/nl";
-import pl from "./locales/pl";
-import pt from "./locales/pt";
-import sl from "./locales/sl";
 import { prepareDeliveryNoteSubmission, prepareDeliveryNoteUpdateSubmission } from "./prepare-delivery-note-submission";
 import { useDeliveryNoteCustomerForm } from "./use-delivery-note-customer-form";
 
-const translations = {
-  sl,
-  de,
-  it,
-  fr,
-  es,
-  pt,
-  nl,
-  pl,
-  hr,
+const translationLoaders = {
+  de: () => import("./locales/de"),
+  es: () => import("./locales/es"),
+  fr: () => import("./locales/fr"),
+  hr: () => import("./locales/hr"),
+  it: () => import("./locales/it"),
+  nl: () => import("./locales/nl"),
+  pl: () => import("./locales/pl"),
+  pt: () => import("./locales/pt"),
+  sl: () => import("./locales/sl"),
 } as const;
 
 // Form values: extend schema with local-only fields (number is for display, not sent to API)
@@ -126,13 +118,15 @@ export default function CreateDeliveryNoteForm({
   namespace,
   locale,
 }: CreateDeliveryNoteFormProps) {
-  const t = createTranslation({
-    t: translateProp,
-    namespace,
-    locale,
-    translationLocale,
-    translations,
-  });
+  const t = useLazyTranslation(
+    {
+      t: translateProp,
+      namespace,
+      locale,
+      translationLocale,
+    },
+    translationLoaders,
+  );
 
   const { activeEntity } = useEntities();
   const whiteLabel = useWhiteLabel();
@@ -357,9 +351,16 @@ export default function CreateDeliveryNoteForm({
     }
   }, [activeEntity, form, isEditMode]);
 
-  const formValues = useWatch({
+  const [previewCurrency_code, previewCustomer, previewDate, previewNumber] = useWatch({
     control: form.control,
+    name: ["currency_code", "customer", "date", "number"],
   });
+  const formValues = {
+    currency_code: previewCurrency_code,
+    customer: previewCustomer,
+    date: previewDate,
+    number: previewNumber,
+  };
   const prevPayloadRef = useRef("");
 
   // ============================================================================
@@ -573,8 +574,15 @@ export default function CreateDeliveryNoteForm({
   }, []);
 
   useEffect(() => {
-    emitPreviewPayload(buildPreviewPayload(formValues as CreateDeliveryNoteFormValues));
-  }, [buildPreviewPayload, emitPreviewPayload, formValues]);
+    const scheduler = createPreviewChangeScheduler();
+    const emit = () => emitPreviewPayload(buildPreviewPayload(form.getValues()));
+    emit();
+    const subscription = form.watch((_values, { name }) => scheduler.schedule(emit, name));
+    return () => {
+      scheduler.cancel();
+      subscription.unsubscribe();
+    };
+  }, [buildPreviewPayload, emitPreviewPayload, form]);
 
   const emitCurrentPreviewPayload = useCallback(() => {
     emitPreviewPayload(buildPreviewPayload(form.getValues()));

@@ -1,8 +1,9 @@
 import { type FocusEvent, type KeyboardEvent, useEffect, useRef, useState } from "react";
 import { Input } from "../components/ui/input";
+import { getNumberFormatter } from "./formatting";
 
 export function getLocaleNumberSeparators(locale: string) {
-  const parts = new Intl.NumberFormat(locale).formatToParts(1234567.8);
+  const parts = getNumberFormatter(locale).formatToParts(1234567.8);
 
   return {
     decimal: parts.find((part) => part.type === "decimal")?.value ?? ".",
@@ -48,7 +49,7 @@ export function formatNumericDisplayValue(value: unknown, locale: string) {
   if (value == null || value === "") return "";
   if (typeof value !== "number" || Number.isNaN(value)) return String(value);
 
-  return new Intl.NumberFormat(locale, {
+  return getNumberFormatter(locale, {
     maximumFractionDigits: 20,
   }).format(value);
 }
@@ -74,7 +75,7 @@ export function NumericInput({
   onKeyDown,
   ...props
 }: NumericInputProps) {
-  const [displayValue, setDisplayValue] = useState(formatNumericDisplayValue(value, inputLocale));
+  const [displayValue, setDisplayValue] = useState(() => formatNumericDisplayValue(value, inputLocale));
   const isFocusedRef = useRef(false);
 
   useEffect(() => {

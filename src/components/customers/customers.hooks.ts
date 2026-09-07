@@ -16,7 +16,7 @@ function buildContactTypeQuery(role?: CustomerDirectoryRole) {
 export const useCustomerSearch = (entityId: string, search: string, role?: CustomerDirectoryRole) => {
   return useQuery({
     queryKey: [CUSTOMERS_CACHE_KEY, "search", entityId, search, role ?? "all"],
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       if (!search) return { data: [] };
 
       const response = await customers.list({
@@ -24,6 +24,7 @@ export const useCustomerSearch = (entityId: string, search: string, role?: Custo
         search,
         limit: 10,
         ...(role ? { query: buildContactTypeQuery(role) } : {}),
+        signal,
       });
 
       return response;
@@ -35,12 +36,13 @@ export const useCustomerSearch = (entityId: string, search: string, role?: Custo
 export const useRecentCustomers = (entityId: string, role?: CustomerDirectoryRole) => {
   return useQuery({
     queryKey: [CUSTOMERS_CACHE_KEY, "recent", entityId, role ?? "all"],
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       const response = await customers.list({
         entity_id: entityId,
         limit: 5,
         order_by: "-created_at", // Sort by most recently created
         ...(role ? { query: buildContactTypeQuery(role) } : {}),
+        signal,
       });
 
       return response;

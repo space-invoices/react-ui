@@ -198,13 +198,14 @@ export const ScaledDocumentPreview: FC<ScaledDocumentPreviewProps> = ({
     const shadowRoot = shadowRootRef.current;
     shadowRoot.innerHTML = hoistFontFaces(htmlContent);
 
-    const measurementTarget = findPreviewMeasurementTarget(shadowRoot);
+    let measurementTarget = findPreviewMeasurementTarget(shadowRoot);
     if (!measurementTarget) {
       setContentHeight(A4_HEIGHT_PX);
       return;
     }
 
     const measureHeight = () => {
+      if (!measurementTarget) return;
       setContentHeight(Math.max(getMeasuredHeight(measurementTarget), A4_HEIGHT_PX));
     };
 
@@ -220,6 +221,8 @@ export const ScaledDocumentPreview: FC<ScaledDocumentPreviewProps> = ({
     void document.fonts?.ready?.then(measureHeight);
 
     return () => {
+      // Font promises can outlive this HTML revision; release its detached DOM and ignore late completion.
+      measurementTarget = null;
       window.clearTimeout(timeoutId);
       window.cancelAnimationFrame(rafId);
       resizeObserverRef.current?.disconnect();

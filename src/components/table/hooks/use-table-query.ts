@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import type { TableQueryParams, TableQueryResponse } from "../types";
+import type { TableFetchOptions, TableQueryParams, TableQueryResponse } from "../types";
 
 // Re-export types for backward compatibility with tests
 export type { TableQueryParams, TableQueryResponse };
@@ -8,7 +8,7 @@ type UseTableQueryOptions<T> = {
   /** Unique cache key for the query */
   cacheKey: string;
   /** Fetch function that returns table data */
-  fetchFn: (params: TableQueryParams) => Promise<TableQueryResponse<T>>;
+  fetchFn: (params: TableQueryParams, options?: TableFetchOptions) => Promise<TableQueryResponse<T>>;
   /** Current query parameters */
   params: TableQueryParams;
   /** Optional entity ID for multi-tenant filtering */
@@ -26,7 +26,7 @@ export function useTableQuery<T>({ cacheKey, fetchFn, params, entityId, enabled 
 
   return useQuery({
     queryKey,
-    queryFn: () => fetchFn({ ...params, entity_id: entityId }),
+    queryFn: ({ signal }) => fetchFn({ ...params, entity_id: entityId }, { signal }),
     staleTime: 1000 * 60 * 2, // Data is fresh for 2 minutes (unless invalidated)
     gcTime: 1000 * 60 * 10, // Keep table variants around for a short session without retaining them all day
     refetchOnMount: true, // Refetch when mounting if data is stale (including when invalidated)

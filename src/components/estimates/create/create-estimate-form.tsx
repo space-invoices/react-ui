@@ -7,6 +7,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Resolver } from "react-hook-form";
 import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
+import { createPreviewChangeScheduler } from "@/ui/components/documents/create/preview-change-scheduler";
 import { Alert, AlertDescription, AlertTitle } from "@/ui/components/ui/alert";
 import { Form } from "@/ui/components/ui/form";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/ui/components/ui/tooltip";
@@ -27,7 +28,7 @@ import {
 } from "@/ui/lib/pt-document-input";
 import { normalizeLineItemDiscountsForForm } from "@/ui/lib/schemas/shared";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
-import { createTranslation } from "@/ui/lib/translation";
+import { useLazyTranslation } from "@/ui/lib/use-lazy-translation";
 import { useEntities } from "@/ui/providers/entities-context";
 import { useFormFooterRegistration } from "@/ui/providers/form-footer-context";
 import { useWhiteLabel } from "@/ui/providers/white-label-provider";
@@ -70,15 +71,6 @@ import {
   validateEslogForm,
 } from "../../invoices/create/eslog-validation";
 import { useCreateCustomEstimate, useCreateEstimate, useUpdateEstimate } from "../estimates.hooks";
-import de from "./locales/de";
-import es from "./locales/es";
-import fr from "./locales/fr";
-import hr from "./locales/hr";
-import it from "./locales/it";
-import nl from "./locales/nl";
-import pl from "./locales/pl";
-import pt from "./locales/pt";
-import sl from "./locales/sl";
 import { prepareEstimateSubmission, prepareEstimateUpdateSubmission } from "./prepare-estimate-submission";
 import { useEstimateCustomerForm } from "./use-estimate-customer-form";
 
@@ -88,16 +80,16 @@ function calculateDueDate(dateIso: string, days: number): string {
   return date.toISOString();
 }
 
-const translations = {
-  sl,
-  de,
-  it,
-  fr,
-  es,
-  pt,
-  nl,
-  pl,
-  hr,
+const translationLoaders = {
+  de: () => import("./locales/de"),
+  es: () => import("./locales/es"),
+  fr: () => import("./locales/fr"),
+  hr: () => import("./locales/hr"),
+  it: () => import("./locales/it"),
+  nl: () => import("./locales/nl"),
+  pl: () => import("./locales/pl"),
+  pt: () => import("./locales/pt"),
+  sl: () => import("./locales/sl"),
 } as const;
 const createEstimateFormSchema = withEstimateIssueDateValidation(
   withRequiredDocumentItemFields(
@@ -170,13 +162,15 @@ export default function CreateEstimateForm({
   namespace,
   locale,
 }: CreateEstimateFormProps) {
-  const t = createTranslation({
-    t: translateProp,
-    namespace,
-    locale,
-    translationLocale,
-    translations,
-  });
+  const t = useLazyTranslation(
+    {
+      t: translateProp,
+      namespace,
+      locale,
+      translationLocale,
+    },
+    translationLoaders,
+  );
 
   const { activeEntity } = useEntities();
   const whiteLabel = useWhiteLabel();
@@ -528,9 +522,17 @@ export default function CreateEstimateForm({
     };
   }, []);
 
-  const formValues = useWatch({
+  const [previewCurrency_code, previewCustomer, previewDate, previewDate_valid_till, previewNumber] = useWatch({
     control: form.control,
+    name: ["currency_code", "customer", "date", "date_valid_till", "number"],
   });
+  const formValues = {
+    currency_code: previewCurrency_code,
+    customer: previewCustomer,
+    date: previewDate,
+    date_valid_till: previewDate_valid_till,
+    number: previewNumber,
+  };
   const prevPayloadRef = useRef("");
 
   // ============================================================================
@@ -792,8 +794,15 @@ export default function CreateEstimateForm({
   }, []);
 
   useEffect(() => {
-    emitPreviewPayload(buildPreviewPayload(formValues as CreateEstimateFormValues));
-  }, [buildPreviewPayload, emitPreviewPayload, formValues]);
+    const scheduler = createPreviewChangeScheduler();
+    const emit = () => emitPreviewPayload(buildPreviewPayload(form.getValues()));
+    emit();
+    const subscription = form.watch((_values, { name }) => scheduler.schedule(emit, name));
+    return () => {
+      scheduler.cancel();
+      subscription.unsubscribe();
+    };
+  }, [buildPreviewPayload, emitPreviewPayload, form]);
 
   const emitCurrentPreviewPayload = useCallback(() => {
     emitPreviewPayload(buildPreviewPayload(form.getValues()));

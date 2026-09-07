@@ -24,7 +24,7 @@
   "utils": {
     "translation": {
       "name": "Translation",
-      "files": ["lib/translation.ts"],
+      "files": ["lib/translation.ts", "lib/locale.ts", "lib/use-lazy-translation.ts"],
       "description": "i18n helper for component-level translations"
     },
     "hooks": {

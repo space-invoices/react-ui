@@ -1,7 +1,7 @@
 import { entities as entitiesApi } from "@spaceinvoices/js-sdk";
 import { useQuery } from "@tanstack/react-query";
 import type { ReactNode } from "react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useCookies } from "react-cookie";
 import { ENTITIES_CACHE_KEY } from "@/ui/components/entities/entities.hooks";
 import { ACTIVE_ENTITY_COOKIE, ACTIVE_ENVIRONMENT_COOKIE } from "@/ui/components/entities/keys";
@@ -119,15 +119,42 @@ export function EntitiesProvider({
   const hasTriedFallback = useRef(false);
   const resolvingUrlEntityRef = useRef<string | null>(null);
   const emptyUrlEntityRefetchKeyRef = useRef<string | null>(null);
+  const urlEntityFallbackAttempted = useRef<string | null>(null);
+  const entityNotFoundCallbackFired = useRef<string | null>(null);
+  const fallbackScope = useMemo(
+    () => ({ accountId: resolvedAccountId, urlEntityId, isSandbox, onEntityNotFound }),
+    [resolvedAccountId, urlEntityId, isSandbox, onEntityNotFound],
+  );
+
+  const fallbackRunRef = useRef<{ scope: typeof fallbackScope } | null>(null);
+
+  // A resolver change can represent a new session even when the URL entity is unchanged.
+  // Keep internal environment fallback out of this scope so it remains a single bounded attempt.
+  useLayoutEffect(() => {
+    fallbackRunRef.current = { scope: fallbackScope };
+    hasCalledNoEntities.current = false;
+    hasTriedFallback.current = false;
+    resolvingUrlEntityRef.current = null;
+    emptyUrlEntityRefetchKeyRef.current = null;
+    urlEntityFallbackAttempted.current = null;
+    entityNotFoundCallbackFired.current = null;
+    return () => {
+      fallbackRunRef.current = null;
+    };
+  }, [fallbackScope]);
+
   useEffect(() => {
     if (isLoading || isFetching || entities.length > 0 || hasCalledNoEntities.current) return;
+    const run = fallbackRunRef.current;
+    if (run?.scope !== fallbackScope) return;
+    const isCurrent = () => fallbackRunRef.current === run;
 
     if (urlEntityId) {
       const refetchKey = `${urlEntityId}:${environment}`;
       if (emptyUrlEntityRefetchKeyRef.current !== refetchKey) {
         emptyUrlEntityRefetchKeyRef.current = refetchKey;
         void refetch().then((result) => {
-          if ((result.data?.length ?? 0) > 0 || hasCalledNoEntities.current) return;
+          if (!isCurrent() || (result.data?.length ?? 0) > 0 || hasCalledNoEntities.current) return;
           if (resolvingUrlEntityRef.current === urlEntityId) return;
           resolvingUrlEntityRef.current = urlEntityId;
 
@@ -139,11 +166,12 @@ export function EntitiesProvider({
 
           void Promise.resolve(onEntityNotFound(urlEntityId))
             .then((resolved) => {
-              if (resolved) return;
+              if (!isCurrent() || resolved) return;
               hasCalledNoEntities.current = true;
               onNoEntities?.();
             })
             .catch(() => {
+              if (!isCurrent()) return;
               hasCalledNoEntities.current = true;
               onNoEntities?.();
             });
@@ -162,11 +190,12 @@ export function EntitiesProvider({
 
       void Promise.resolve(onEntityNotFound(urlEntityId))
         .then((resolved) => {
-          if (resolved) return;
+          if (!isCurrent() || resolved) return;
           hasCalledNoEntities.current = true;
           onNoEntities?.();
         })
         .catch(() => {
+          if (!isCurrent()) return;
           hasCalledNoEntities.current = true;
           onNoEntities?.();
         });
@@ -187,6 +216,7 @@ export function EntitiesProvider({
       entitiesApi
         .list({ limit: 1, environment: altEnv, ...(resolvedAccountId ? { account_id: resolvedAccountId } : {}) })
         .then((res) => {
+          if (!isCurrent()) return;
           if (res.data.length > 0) {
             // Other environment has entities — auto-switch
             setEnvironmentState(altEnv as EntityEnvironment);
@@ -196,6 +226,7 @@ export function EntitiesProvider({
           }
         })
         .catch(() => {
+          if (!isCurrent()) return;
           hasCalledNoEntities.current = true;
           onNoEntities?.();
         });
@@ -217,6 +248,7 @@ export function EntitiesProvider({
     environment,
     isSandbox,
     urlEntityId,
+    fallbackScope,
   ]);
 
   // Memoize entities to prevent unnecessary re-renders
@@ -291,9 +323,8 @@ export function EntitiesProvider({
   }, [memoizedEntities, urlEntityId]); // Re-run when URL entity changes
 
   // When urlEntityId is provided but not found in current environment, auto-switch
-  const urlEntityFallbackAttempted = useRef<string | null>(null);
   useEffect(() => {
-    if (!urlEntityId || isLoading) return;
+    if (!urlEntityId || isLoading || fallbackRunRef.current?.scope !== fallbackScope) return;
     if (memoizedEntities.length === 0) return;
 
     const found = memoizedEntities.some((e) => e.id === urlEntityId);
@@ -309,12 +340,11 @@ export function EntitiesProvider({
     // URL entity not in current environment — try the other
     const altEnv: EntityEnvironment = environment === "live" ? "sandbox" : "live";
     setEnvironmentState(altEnv);
-  }, [urlEntityId, memoizedEntities, isLoading, environment]);
+  }, [urlEntityId, memoizedEntities, isLoading, environment, fallbackScope]);
 
   // After environment fallback has been attempted and entity is still not found, notify parent
-  const entityNotFoundCallbackFired = useRef<string | null>(null);
   useEffect(() => {
-    if (!urlEntityId || !onEntityNotFound || isLoading) return;
+    if (!urlEntityId || !onEntityNotFound || isLoading || fallbackRunRef.current?.scope !== fallbackScope) return;
     if (memoizedEntities.length === 0) return;
 
     const found = memoizedEntities.some((e) => e.id === urlEntityId);
@@ -329,7 +359,7 @@ export function EntitiesProvider({
 
     entityNotFoundCallbackFired.current = urlEntityId;
     onEntityNotFound(urlEntityId);
-  }, [urlEntityId, memoizedEntities, isLoading, onEntityNotFound]);
+  }, [urlEntityId, memoizedEntities, isLoading, onEntityNotFound, fallbackScope]);
 
   const cookieOpts = useMemo(
     () => ({

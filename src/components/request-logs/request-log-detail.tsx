@@ -2,10 +2,11 @@
 
 import { format, formatDistanceToNow } from "date-fns";
 import { Check, Copy } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Button } from "@/ui/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/ui/components/ui/tabs";
 import { getDateFnsLocale } from "@/ui/lib/date-fns-locale";
+import { JsonHighlight } from "@/ui/lib/json-highlight";
 import { cn } from "../../lib/utils";
 import type { RequestLogResponse } from "./request-log-list-table";
 
@@ -45,8 +46,10 @@ function unwrapResponseData(data: unknown): unknown {
 function JsonViewer({ data, noDataLabel, t }: { data: unknown; noDataLabel: string; t: TranslationFn }) {
   const [copied, setCopied] = useState(false);
   // Unwrap { text: "json" } format if present
-  const unwrappedData = unwrapResponseData(data);
-  const jsonString = unwrappedData ? JSON.stringify(unwrappedData, null, 2) : null;
+  const { unwrappedData, jsonString } = useMemo(() => {
+    const unwrappedData = unwrapResponseData(data);
+    return { unwrappedData, jsonString: unwrappedData ? JSON.stringify(unwrappedData, null, 2) : null };
+  }, [data]);
 
   const handleCopy = async () => {
     if (jsonString) {
@@ -82,70 +85,6 @@ function JsonViewer({ data, noDataLabel, t }: { data: unknown; noDataLabel: stri
         <JsonHighlight json={jsonString ?? ""} />
       </pre>
     </div>
-  );
-}
-
-function JsonHighlight({ json }: { json: string }) {
-  // Parse JSON into tokens for safe rendering
-  const tokens: { key: string; type: string; value: string }[] = [];
-  const lines = json.split("\n");
-  let tokenKey = 0;
-
-  const pushToken = (type: string, value: string) => {
-    tokens.push({ key: `${type}:${tokenKey}`, type, value });
-    tokenKey += 1;
-  };
-
-  for (const line of lines) {
-    // Match key-value patterns
-    const keyMatch = line.match(/^(\s*)"([^"]+)":/);
-    if (keyMatch) {
-      const [, indent, key] = keyMatch;
-      const rest = line.slice(keyMatch[0].length);
-      pushToken("indent", indent);
-      pushToken("key", `"${key}"`);
-      pushToken("punctuation", ":");
-
-      // Parse value
-      const valueMatch = rest.match(/^\s*(.+?)(,?)$/);
-      if (valueMatch) {
-        const [, value, comma] = valueMatch;
-        pushToken("space", " ");
-        if (value.startsWith('"')) {
-          pushToken("string", value.replace(/,$/, ""));
-        } else if (value === "true" || value === "false") {
-          pushToken("boolean", value);
-        } else if (value === "null") {
-          pushToken("null", value);
-        } else if (!Number.isNaN(Number(value.replace(/,$/, "")))) {
-          pushToken("number", value.replace(/,$/, ""));
-        } else {
-          pushToken("other", value.replace(/,$/, ""));
-        }
-        if (comma) pushToken("punctuation", comma);
-      }
-    } else {
-      pushToken("other", line);
-    }
-    pushToken("newline", "\n");
-  }
-
-  const colorMap: Record<string, string> = {
-    key: "text-blue-600 dark:text-blue-400",
-    string: "text-green-600 dark:text-green-400",
-    number: "text-orange-600 dark:text-orange-400",
-    boolean: "text-purple-600 dark:text-purple-400",
-    null: "text-gray-500",
-  };
-
-  return (
-    <code>
-      {tokens.map((token) => (
-        <span key={token.key} className={colorMap[token.type] || ""}>
-          {token.value}
-        </span>
-      ))}
-    </code>
   );
 }
 

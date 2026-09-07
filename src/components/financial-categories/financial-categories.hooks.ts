@@ -58,12 +58,13 @@ export function useUpdateDocumentItemFinancialCategories(entityId: string | unde
 export function useFinancialCategories(entityId: string | undefined, includeArchived = false) {
   return useQuery({
     queryKey: [FINANCIAL_CATEGORIES_CACHE_KEY, entityId, includeArchived],
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       if (!entityId) throw new Error("Missing entity");
 
       return financialCategories.list({
         entity_id: entityId,
         ...(includeArchived ? { include_archived: true } : {}),
+        signal,
       });
     },
     enabled: !!entityId,
@@ -85,14 +86,14 @@ export function useRevenueByCategory(entityId: string | undefined) {
 
   return useQuery({
     queryKey: [REVENUE_BY_CATEGORY_CACHE_KEY, entityId, dateFrom, dateTo],
-    queryFn: async (): Promise<RevenueByCategoryResponse> => {
+    queryFn: async ({ signal }): Promise<RevenueByCategoryResponse> => {
       if (!entityId) throw new Error("Missing entity");
       return financialCategories.getRevenueByFinancialCategory(
         {
           date_from: dateFrom,
           date_to: dateTo,
         },
-        { entity_id: entityId },
+        { entity_id: entityId, signal },
       );
     },
     enabled: !!entityId,

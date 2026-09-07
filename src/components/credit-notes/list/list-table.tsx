@@ -122,7 +122,7 @@ export default function CreditNoteListTable({
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-  const handleFetch = useTableFetch(async (params: TableQueryParams) => {
+  const handleFetch = useTableFetch(async (params: TableQueryParams, options) => {
     if (!params.entity_id) throw new Error("Entity ID required");
 
     const response = await creditNotes.list({
@@ -134,6 +134,7 @@ export default function CreditNoteListTable({
       search: params.search,
       query: params.query,
       include: "document_relations",
+      signal: options?.signal,
     });
     return response as unknown as TableQueryResponse<CreditNote>;
   }, entityId);
@@ -279,7 +280,7 @@ export default function CreditNoteListTable({
         sort: {
           defaultDirection: "desc",
         },
-        cell: (creditNote) => <FormattedDate date={creditNote.date} locale={i18nProps.locale} />,
+        cell: (creditNote) => <FormattedDate date={creditNote.date} locale={i18nProps.locale} calendar />,
       },
       {
         id: "total",

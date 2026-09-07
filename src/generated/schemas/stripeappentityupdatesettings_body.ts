@@ -6,7 +6,7 @@
 
 import { z } from 'zod';
 
-// Schemas for stripeappupdatesettings_body endpoints
+// Schemas for stripeappentityupdatesettings_body endpoints
 
 // Schema for stripeAppEntityUpdateSettings operation
 const stripeAppEntityUpdateSettingsSchemaDefinition = z
@@ -15,12 +15,10 @@ const stripeAppEntityUpdateSettingsSchemaDefinition = z
     auto_invoice_events: z.array(
       z.enum(["payment_intent.succeeded", "invoice.paid"])
     ),
-    default_note: z.string().max(500),
+    default_note: z.union([z.string(), z.null()]),
     default_tax_rate: z.union([z.number(), z.null()]),
   })
   .partial();
 
 export type StripeAppEntityUpdateSettingsSchema = z.infer<typeof stripeAppEntityUpdateSettingsSchemaDefinition>;
 export const stripeAppEntityUpdateSettingsSchema = stripeAppEntityUpdateSettingsSchemaDefinition;
-export type StripeAppUpdateSettingsSchema = z.infer<typeof stripeAppEntityUpdateSettingsSchemaDefinition>;
-export const stripeAppUpdateSettingsSchema = stripeAppEntityUpdateSettingsSchemaDefinition;

@@ -35,9 +35,12 @@ export type Column<T> = {
 /** Partial customization merged onto a canonical column definition. */
 export type ColumnOverride<T> = Partial<Omit<Column<T>, "id">>;
 
-/**
- * Query parameters for table data fetching
- */
+/** Request options kept separate from query keys and filters. */
+export type TableFetchOptions = {
+  signal?: AbortSignal;
+};
+
+/** Query parameters for table data fetching. */
 export type TableQueryParams = {
   search?: string;
   prev_cursor?: string;

@@ -94,7 +94,7 @@ export default function RecurringInvoiceListTable({
     translations,
   });
 
-  const handleFetch = useTableFetch(async (params: TableQueryParams) => {
+  const handleFetch = useTableFetch(async (params: TableQueryParams, options) => {
     if (!params.entity_id) throw new Error("Entity ID required");
 
     const response = await recurringInvoices.list({
@@ -105,6 +105,7 @@ export default function RecurringInvoiceListTable({
       order_by: params.order_by,
       search: params.search,
       query: params.query,
+      signal: options?.signal,
     });
     return response as unknown as TableQueryResponse<RecurringInvoice>;
   }, entityId);

@@ -141,7 +141,10 @@ export function RequestLogListTable({
   // Custom fetch function that handles both entity-scoped and account-scoped queries
   // Don't use useTableFetch since we need special handling for environment
   const handleFetch = useCallback(
-    async (params: TableQueryParams): Promise<TableQueryResponse<RequestLogResponse>> => {
+    async (
+      params: TableQueryParams,
+      options?: { signal?: AbortSignal },
+    ): Promise<TableQueryResponse<RequestLogResponse>> => {
       const token = getCookie(AUTH_COOKIES.TOKEN);
       if (!token) throw new Error("Not authenticated");
 
@@ -176,6 +179,7 @@ export function RequestLogListTable({
 
       const apiBaseUrl = getApiBaseUrl();
       const response = await fetch(`${apiBaseUrl}/request-logs?${queryParamsUrl.toString()}`, {
+        signal: options?.signal,
         headers: {
           Authorization: `Bearer ${token}`,
           ...getClientHeaders("ui"),

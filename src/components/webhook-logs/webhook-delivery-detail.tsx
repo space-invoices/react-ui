@@ -2,11 +2,12 @@
 
 import { format, formatDistanceToNow } from "date-fns";
 import { AlertCircle, Check, Copy } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Alert, AlertDescription } from "@/ui/components/ui/alert";
 import { Button } from "@/ui/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/ui/components/ui/tabs";
 import { getDateFnsLocale } from "@/ui/lib/date-fns-locale";
+import { JsonHighlight } from "@/ui/lib/json-highlight";
 import { cn } from "../../lib/utils";
 import type { WebhookDeliveryResponse } from "./webhook-delivery-list-table";
 
@@ -23,7 +24,7 @@ export interface WebhookDeliveryDetailProps {
 
 function JsonViewer({ data, noDataLabel, t }: { data: unknown; noDataLabel: string; t: TranslationFn }) {
   const [copied, setCopied] = useState(false);
-  const jsonString = data ? JSON.stringify(data, null, 2) : null;
+  const jsonString = useMemo(() => (data ? JSON.stringify(data, null, 2) : null), [data]);
 
   const handleCopy = async () => {
     if (jsonString) {
@@ -56,67 +57,6 @@ function JsonViewer({ data, noDataLabel, t }: { data: unknown; noDataLabel: stri
         <JsonHighlight json={jsonString ?? ""} />
       </pre>
     </div>
-  );
-}
-
-function JsonHighlight({ json }: { json: string }) {
-  const tokens: { key: string; type: string; value: string }[] = [];
-  const lines = json.split("\n");
-  let tokenKey = 0;
-
-  const pushToken = (type: string, value: string) => {
-    tokens.push({ key: `${type}:${tokenKey}`, type, value });
-    tokenKey += 1;
-  };
-
-  for (const line of lines) {
-    const keyMatch = line.match(/^(\s*)"([^"]+)":/);
-    if (keyMatch) {
-      const [, indent, key] = keyMatch;
-      const rest = line.slice(keyMatch[0].length);
-      pushToken("indent", indent);
-      pushToken("key", `"${key}"`);
-      pushToken("punctuation", ":");
-
-      const valueMatch = rest.match(/^\s*(.+?)(,?)$/);
-      if (valueMatch) {
-        const [, value, comma] = valueMatch;
-        pushToken("space", " ");
-        if (value.startsWith('"')) {
-          pushToken("string", value.replace(/,$/, ""));
-        } else if (value === "true" || value === "false") {
-          pushToken("boolean", value);
-        } else if (value === "null") {
-          pushToken("null", value);
-        } else if (!Number.isNaN(Number(value.replace(/,$/, "")))) {
-          pushToken("number", value.replace(/,$/, ""));
-        } else {
-          pushToken("other", value.replace(/,$/, ""));
-        }
-        if (comma) pushToken("punctuation", comma);
-      }
-    } else {
-      pushToken("other", line);
-    }
-    pushToken("newline", "\n");
-  }
-
-  const colorMap: Record<string, string> = {
-    key: "text-blue-600 dark:text-blue-400",
-    string: "text-green-600 dark:text-green-400",
-    number: "text-orange-600 dark:text-orange-400",
-    boolean: "text-purple-600 dark:text-purple-400",
-    null: "text-gray-500",
-  };
-
-  return (
-    <code>
-      {tokens.map((token) => (
-        <span key={token.key} className={colorMap[token.type] || ""}>
-          {token.value}
-        </span>
-      ))}
-    </code>
   );
 }
 

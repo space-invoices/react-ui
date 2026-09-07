@@ -77,7 +77,7 @@ export default function ExpenseListTable({
     translations: expenseListTranslations,
   });
 
-  const handleFetch = useTableFetch(async (params: TableQueryParams) => {
+  const handleFetch = useTableFetch(async (params: TableQueryParams, options) => {
     if (!params.entity_id) throw new Error("Entity ID required");
 
     const status = params.filter_status?.split(",")[0];
@@ -128,6 +128,7 @@ export default function ExpenseListTable({
       search: params.search,
       query,
       has_attachment: status === "missing_attachment" ? false : undefined,
+      signal: options?.signal,
     });
     return response as unknown as TableQueryResponse<Expense>;
   }, entityId);
@@ -171,10 +172,25 @@ export default function ExpenseListTable({
         id: "supplier_document_number",
         header: t("Supplier invoice no."),
         cell: (expense) => (
-          <Button variant="link" className="cursor-pointer py-0 underline" onClick={() => onRowClick?.(expense)}>
-            {expense.supplier_document_number || "—"}
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="link" className="cursor-pointer py-0 underline" onClick={() => onRowClick?.(expense)}>
+              {expense.supplier_document_number || "—"}
+            </Button>
+          </div>
         ),
+      },
+      {
+        id: "date_received",
+        header: t("Received date"),
+        sort: {
+          defaultDirection: "desc",
+        },
+        cell: (expense) =>
+          expense.date_received ? (
+            formatDateOnlyForDisplay(expense.date_received, i18nProps.locale)
+          ) : (
+            <span className="text-muted-foreground">—</span>
+          ),
       },
       {
         id: "date",
@@ -182,7 +198,7 @@ export default function ExpenseListTable({
         sort: {
           defaultDirection: "desc",
         },
-        cell: (expense) => <FormattedDate date={expense.date} locale={i18nProps.locale} />,
+        cell: (expense) => <FormattedDate date={expense.date} locale={i18nProps.locale} calendar />,
       },
       {
         id: "date_due",
@@ -250,6 +266,19 @@ export default function ExpenseListTable({
     [t, onRowClick, onView, onEdit, onMarkPaid, onDeleteDraft, onVoid, i18nProps.locale],
   );
 
+  const effectiveQueryParams = useMemo(
+    () =>
+      queryParams?.order_by
+        ? queryParams
+        : {
+            ...queryParams,
+            order_by: "-date_received",
+            next_cursor: undefined,
+            prev_cursor: undefined,
+          },
+    [queryParams],
+  );
+
   const defaultEmptyState = (
     <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
       <Receipt className="h-10 w-10 text-muted-foreground" />
@@ -279,7 +308,7 @@ export default function ExpenseListTable({
   return (
     <DataTable
       columns={columns}
-      queryParams={queryParams}
+      queryParams={effectiveQueryParams}
       resourceName="expense"
       cacheKey={cacheKey}
       onCreateNew={onCreateNew}

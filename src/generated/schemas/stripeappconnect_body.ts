@@ -12,7 +12,7 @@ import { z } from 'zod';
 const stripeAppConnectSchemaDefinition = z.object({
   state: z.string().min(1),
   entity_id: z.string().min(1),
-  force: z.boolean().optional(),
+  force: z.union([z.boolean(), z.null()]).optional(),
 });
 
 export type StripeAppConnectSchema = z.infer<typeof stripeAppConnectSchemaDefinition>;

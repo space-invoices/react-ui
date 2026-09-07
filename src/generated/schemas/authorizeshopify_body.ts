@@ -12,6 +12,21 @@ import { z } from 'zod';
 const authorizeShopifySchemaDefinition = z.object({
   shop_domain: z.string().min(1),
   name: z.string().optional(),
+  app_store_install: z.union([z.boolean(), z.null()]).optional(),
+  app_store_launch: z
+    .union([
+      z
+        .object({
+          shop: z.string().min(1),
+          host: z.string().min(1),
+          hmac: z.string().min(1),
+          timestamp: z.string().min(1),
+        })
+        .passthrough(),
+      z.null(),
+    ])
+    .optional(),
+  pending_install_token: z.union([z.string(), z.null()]).optional(),
   auto_process: z.boolean().optional(),
   auto_process_on: z
     .union([z.union([z.enum(["created", "paid", "fulfilled"]), z.null()]), z.null()])

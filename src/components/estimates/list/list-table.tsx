@@ -111,7 +111,7 @@ export default function EstimateListTable({
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-  const handleFetch = useTableFetch(async (params: TableQueryParams) => {
+  const handleFetch = useTableFetch(async (params: TableQueryParams, options) => {
     if (!params.entity_id) throw new Error("Entity ID required");
 
     const response = await estimates.list({
@@ -122,6 +122,7 @@ export default function EstimateListTable({
       order_by: params.order_by,
       search: params.search,
       query: params.query,
+      signal: options?.signal,
     });
     return response as unknown as TableQueryResponse<Estimate>;
   }, entityId);
@@ -263,13 +264,13 @@ export default function EstimateListTable({
         sort: {
           defaultDirection: "desc",
         },
-        cell: (estimate) => <FormattedDate date={estimate.date} locale={i18nProps.locale} />,
+        cell: (estimate) => <FormattedDate date={estimate.date} locale={i18nProps.locale} calendar />,
       },
       {
         id: "date_valid_till",
         header: t("Valid Until"),
         sort: true,
-        cell: (estimate) => <FormattedDate date={estimate.date_valid_till} locale={i18nProps.locale} />,
+        cell: (estimate) => <FormattedDate date={estimate.date_valid_till} locale={i18nProps.locale} calendar />,
       },
       {
         id: "total",

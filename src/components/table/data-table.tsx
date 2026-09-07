@@ -14,7 +14,7 @@ import { TableNoResults } from "./table-no-results";
 import { Pagination } from "./table-pagination";
 import { TableRefreshButton } from "./table-refresh-button";
 import { TableSkeleton } from "./table-skeleton";
-import type { Column, FilterConfig, TableQueryParams, TableQueryResponse } from "./types";
+import type { Column, FilterConfig, TableFetchOptions, TableQueryParams, TableQueryResponse } from "./types";
 
 const LazyFilterBar = lazy(() => import("./filter-bar").then((module) => ({ default: module.FilterBar })));
 
@@ -24,7 +24,7 @@ export type DataTableProps<T> = {
   /** Unique cache key for react-query */
   cacheKey: string;
   /** Fetch function for data */
-  onFetch: (params: TableQueryParams) => Promise<TableQueryResponse<T>>;
+  onFetch: (params: TableQueryParams, options?: TableFetchOptions) => Promise<TableQueryResponse<T>>;
   /** Resource name for empty states (e.g., "customer", "invoice") */
   resourceName: string;
   /** Initial/external query parameters */

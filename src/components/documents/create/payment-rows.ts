@@ -107,6 +107,20 @@ export function parsePaymentAmount(value: string): number | null {
   return roundCurrency(parsed);
 }
 
+/** Subscribe to calculation inputs without broadcasting name/description edits to the form. */
+export function getPaymentCalculationItems(
+  items:
+    | Array<{
+        type?: unknown;
+        quantity?: unknown;
+        price?: unknown;
+        taxes?: unknown;
+      }>
+    | undefined,
+) {
+  return items?.map(({ type, quantity, price, taxes }) => ({ type, quantity, price, taxes }));
+}
+
 export function calculateDocumentTotal(items: any[] | undefined, priceModes: PriceModesMap = {}): number {
   if (!items?.length) return 0;
 

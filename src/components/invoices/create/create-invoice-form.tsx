@@ -7,6 +7,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Resolver } from "react-hook-form";
 import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
+import { createPreviewChangeScheduler } from "@/ui/components/documents/create/preview-change-scheduler";
 import { Alert, AlertDescription, AlertTitle } from "@/ui/components/ui/alert";
 import { Button } from "@/ui/components/ui/button";
 import { Form, FormRoot } from "@/ui/components/ui/form";
@@ -40,7 +41,7 @@ import {
 import { invalidateRevenueRecognitionQueries } from "@/ui/lib/revenue-recognition-cache";
 import { normalizeLineItemDiscountsForForm } from "@/ui/lib/schemas/shared";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
-import { createTranslation } from "@/ui/lib/translation";
+import { useLazyTranslation } from "@/ui/lib/use-lazy-translation";
 import { cn } from "@/ui/lib/utils";
 import { useEntities } from "@/ui/providers/entities-context";
 import { useFormFooterRegistration } from "@/ui/providers/form-footer-context";
@@ -78,6 +79,7 @@ import {
   createEmptyPaymentRow,
   type DraftPaymentRow,
   getFirstValidPaymentType,
+  getPaymentCalculationItems,
   serializePaymentRows,
   validatePaymentRows,
 } from "../../documents/create/payment-rows";
@@ -99,23 +101,6 @@ import {
   translateEslogValidationError,
   validateEslogForm,
 } from "./eslog-validation";
-import bg from "./locales/bg";
-import cs from "./locales/cs";
-import de from "./locales/de";
-import es from "./locales/es";
-import et from "./locales/et";
-import fi from "./locales/fi";
-import fr from "./locales/fr";
-import hr from "./locales/hr";
-import is from "./locales/is";
-import it from "./locales/it";
-import nb from "./locales/nb";
-import nl from "./locales/nl";
-import pl from "./locales/pl";
-import pt from "./locales/pt";
-import sk from "./locales/sk";
-import sl from "./locales/sl";
-import sv from "./locales/sv";
 import { prepareInvoiceSubmission, prepareInvoiceUpdateSubmission } from "./prepare-invoice-submission";
 import { useInvoiceCustomerForm } from "./use-invoice-customer-form";
 
@@ -140,24 +125,24 @@ function isSameCalendarDate(left: string | Date | undefined, right: string | Dat
 
 const DUE_DAYS_PRESETS = [0, 7, 14, 30, 60, 90] as const;
 
-const translations = {
-  bg,
-  cs,
-  sl,
-  de,
-  it,
-  fr,
-  es,
-  et,
-  fi,
-  pt,
-  nl,
-  pl,
-  hr,
-  is,
-  nb,
-  sk,
-  sv,
+const translationLoaders = {
+  bg: () => import("./locales/bg"),
+  cs: () => import("./locales/cs"),
+  de: () => import("./locales/de"),
+  es: () => import("./locales/es"),
+  et: () => import("./locales/et"),
+  fi: () => import("./locales/fi"),
+  fr: () => import("./locales/fr"),
+  hr: () => import("./locales/hr"),
+  is: () => import("./locales/is"),
+  it: () => import("./locales/it"),
+  nb: () => import("./locales/nb"),
+  nl: () => import("./locales/nl"),
+  pl: () => import("./locales/pl"),
+  pt: () => import("./locales/pt"),
+  sk: () => import("./locales/sk"),
+  sl: () => import("./locales/sl"),
+  sv: () => import("./locales/sv"),
 } as const;
 
 const DUPLICATE_PREVIEW_SETTLE_MS = 120;
@@ -342,13 +327,15 @@ export default function CreateInvoiceForm({
   namespace,
   locale,
 }: DocumentAddFormProps) {
-  const t = createTranslation({
-    t: translateProp,
-    namespace,
-    locale,
-    translationLocale,
-    translations,
-  });
+  const t = useLazyTranslation(
+    {
+      t: translateProp,
+      namespace,
+      locale,
+      translationLocale,
+    },
+    translationLoaders,
+  );
 
   const isEditMode = mode === "edit";
   const { activeEntity } = useEntities();
@@ -535,7 +522,6 @@ export default function CreateInvoiceForm({
     !isEditMode && !initialValues?.date_due ? form.getValues("date_due") : undefined,
   );
 
-  const watchedItems = useWatch({ control: form.control, name: "items" });
   const documentTranslations = useWatch({ control: form.control, name: "translations" });
   const selectedBusinessUnitId = useWatch({ control: form.control, name: "business_unit_id" as any });
   const selectedBusinessUnit = useMemo(
@@ -549,10 +535,14 @@ export default function CreateInvoiceForm({
   const effectiveDefaultInvoiceDueDays = (mergedSettings as any)?.default_invoice_due_days ?? 30;
   const derivedDocumentDefaults = useMemo(() => getDocumentDefaultFields("invoice", mergedSettings), [mergedSettings]);
   const appliedDerivedDefaultsRef = useRef(derivedDocumentDefaults);
-  const paymentDocumentTotal = useMemo(
-    () => calculateDocumentTotal((watchedItems as any[]) ?? [], priceModesRef.current),
-    [watchedItems],
-  );
+  const watchedPaymentItems = useWatch({
+    control: form.control,
+    name: "items",
+    compute: getPaymentCalculationItems,
+  });
+  const [, setPriceModesVersion] = useState(0);
+  // Price modes update after field events; calculate during render with the final ref.
+  const paymentDocumentTotal = calculateDocumentTotal(watchedPaymentItems, priceModesRef.current);
   const hasLinkedAdvanceInvoice = sourceDocuments?.some((document) => document.type === "advance_invoice") ?? false;
   const hasExplicitNonBankTransferPayment =
     markAsPaid && paymentRows.some((row) => row.type != null && row.type !== "bank_transfer");
@@ -957,17 +947,12 @@ export default function CreateInvoiceForm({
   const watchedDateDue = useWatch({ control: form.control, name: "date_due" });
   const watchedCurrencyCode = useWatch({ control: form.control, name: "currency_code" });
   const watchedCustomer = useWatch({ control: form.control, name: "customer" });
-  const watchedValidationSnapshot = useMemo(
-    () =>
-      JSON.stringify({
-        date: watchedDate,
-        date_due: watchedDateDue,
-        currency_code: watchedCurrencyCode,
-        customer: watchedCustomer,
-        items: watchedItems,
-      }),
-    [watchedCurrencyCode, watchedCustomer, watchedDate, watchedDateDue, watchedItems],
-  );
+  const watchedValidationSnapshot = useWatch({
+    control: form.control,
+    name: ["date", "date_due", "currency_code", "customer", "items"],
+    disabled: !form.formState.isSubmitted,
+    compute: (values) => JSON.stringify(values),
+  });
   const lastRevalidatedSnapshotRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -1583,6 +1568,7 @@ export default function CreateInvoiceForm({
   );
 
   const emitCurrentPreviewPayload = useCallback(() => {
+    setPriceModesVersion((version) => version + 1);
     if (!onChange) return;
     const payload = buildPreviewPayload(form.getValues());
     prevPayloadRef.current = JSON.stringify(payload);
@@ -1663,34 +1649,48 @@ export default function CreateInvoiceForm({
       onChange(initialPayload);
     }
 
-    // Subscribe to changes
-    const subscription = form.watch((formValues, info) => {
-      const payload = buildPreviewPayload(formValues);
-      const payloadStr = JSON.stringify(payload);
-      if (payloadStr !== prevPayloadRef.current) {
-        prevPayloadRef.current = payloadStr;
-        if (hasInitialValues && duplicateHydrationStartedAtRef.current) {
-          emitInvoiceCreateDebug({
-            stage: "payload_changed",
-            hasInitialValues: true,
-            itemCount: payload.items?.length ?? 0,
-            elapsedMs: Number((performance.now() - duplicateHydrationStartedAtRef.current).toFixed(1)),
-          });
-        }
-        const isUserEdit = info.type === "change" || form.formState.isDirty;
-        if (hasInitialValues && !hasEmittedSettledInitialPreviewRef.current && !isUserEdit) {
-          emitSettledInitialPreview(payload);
-        } else {
-          if (hasInitialValues && !hasEmittedSettledInitialPreviewRef.current) {
-            hasEmittedSettledInitialPreviewRef.current = true;
-            clearSettledInitialPreview();
-          }
-          onChange(payload);
-        }
+    // Build item payloads after the typing burst, using the latest form state.
+    const scheduler = createPreviewChangeScheduler();
+    const subscription = form.watch((_formValues, info) => {
+      if (
+        hasInitialValues &&
+        !hasEmittedSettledInitialPreviewRef.current &&
+        (info.type === "change" || form.formState.isDirty)
+      ) {
+        hasEmittedSettledInitialPreviewRef.current = true;
+        clearSettledInitialPreview();
+        // The pending initial payload has never reached the parent, even if this edit is display-only.
+        prevPayloadRef.current = "";
       }
+      scheduler.schedule(() => {
+        const payload = buildPreviewPayload(form.getValues());
+        const payloadStr = JSON.stringify(payload);
+        if (payloadStr !== prevPayloadRef.current) {
+          prevPayloadRef.current = payloadStr;
+          if (hasInitialValues && duplicateHydrationStartedAtRef.current) {
+            emitInvoiceCreateDebug({
+              stage: "payload_changed",
+              hasInitialValues: true,
+              itemCount: payload.items?.length ?? 0,
+              elapsedMs: Number((performance.now() - duplicateHydrationStartedAtRef.current).toFixed(1)),
+            });
+          }
+          const isUserEdit = info.type === "change" || form.formState.isDirty;
+          if (hasInitialValues && !hasEmittedSettledInitialPreviewRef.current && !isUserEdit) {
+            emitSettledInitialPreview(payload);
+          } else {
+            if (hasInitialValues && !hasEmittedSettledInitialPreviewRef.current) {
+              hasEmittedSettledInitialPreviewRef.current = true;
+              clearSettledInitialPreview();
+            }
+            onChange(payload);
+          }
+        }
+      }, info.name);
     });
 
     return () => {
+      scheduler.cancel();
       subscription.unsubscribe();
       if (initialPreviewTimeoutRef.current) {
         clearTimeout(initialPreviewTimeoutRef.current);

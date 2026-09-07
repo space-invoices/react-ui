@@ -29,6 +29,7 @@ export type {
   Column,
   ListTableProps,
   TableColumnSort,
+  TableFetchOptions,
   TableOrderByValue,
   TableQueryParams,
   TableQueryResponse,

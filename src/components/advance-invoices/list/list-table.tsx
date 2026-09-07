@@ -117,7 +117,7 @@ export default function AdvanceInvoiceListTable({
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-  const handleFetch = useTableFetch(async (params: TableQueryParams) => {
+  const handleFetch = useTableFetch(async (params: TableQueryParams, options) => {
     if (!params.entity_id) throw new Error("Entity ID required");
 
     const response = await advanceInvoices.list({
@@ -129,6 +129,7 @@ export default function AdvanceInvoiceListTable({
       search: params.search,
       query: params.query,
       include: "document_relations",
+      signal: options?.signal,
     });
     return response as unknown as TableQueryResponse<AdvanceInvoice>;
   }, entityId);
@@ -280,7 +281,7 @@ export default function AdvanceInvoiceListTable({
         sort: {
           defaultDirection: "desc",
         },
-        cell: (advanceInvoice) => <FormattedDate date={advanceInvoice.date} locale={i18nProps.locale} />,
+        cell: (advanceInvoice) => <FormattedDate date={advanceInvoice.date} locale={i18nProps.locale} calendar />,
       },
       {
         id: "total",

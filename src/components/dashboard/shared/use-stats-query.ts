@@ -25,9 +25,9 @@ export function useStatsQuery<TData = StatsQueryResponse>(
 ) {
   return useQuery({
     queryKey: [STATS_QUERY_CACHE_KEY, entityId, query],
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       if (!entityId) throw new Error("Missing entity");
-      const results = await entityStats.queryEntityStats([query], { entity_id: entityId });
+      const results = await entityStats.queryEntityStats([query], { entity_id: entityId, signal });
       return results[0];
     },
     enabled: !!entityId,
@@ -53,9 +53,9 @@ export function useStatsBatchQuery<TData = StatsQueryBatchResponse>(
 ) {
   return useQuery({
     queryKey: [STATS_QUERY_CACHE_KEY, entityId, queryKey, queries],
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       if (!entityId) throw new Error("Missing entity");
-      return entityStats.queryEntityStats(queries, { entity_id: entityId });
+      return entityStats.queryEntityStats(queries, { entity_id: entityId, signal });
     },
     enabled: !!entityId,
     staleTime: 120_000,

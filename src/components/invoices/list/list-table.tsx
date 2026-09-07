@@ -152,7 +152,7 @@ export default function InvoiceListTable({
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-  const handleFetch = useTableFetch(async (params: TableQueryParams) => {
+  const handleFetch = useTableFetch(async (params: TableQueryParams, options) => {
     if (!params.entity_id) throw new Error("Entity ID required");
 
     const response = await invoices.list({
@@ -163,6 +163,7 @@ export default function InvoiceListTable({
       order_by: params.order_by,
       search: params.search,
       query: params.query,
+      signal: options?.signal,
     });
     return response as unknown as TableQueryResponse<Invoice>;
   }, entityId);
@@ -309,13 +310,13 @@ export default function InvoiceListTable({
         sort: {
           defaultDirection: "desc",
         },
-        cell: (invoice) => <FormattedDate date={invoice.date} locale={i18nProps.locale} />,
+        cell: (invoice) => <FormattedDate date={invoice.date} locale={i18nProps.locale} calendar />,
       },
       {
         id: "date_due",
         header: t("Date Due"),
         sort: true,
-        cell: (invoice) => <FormattedDate date={invoice.date_due} locale={i18nProps.locale} />,
+        cell: (invoice) => <FormattedDate date={invoice.date_due} locale={i18nProps.locale} calendar />,
       },
       {
         id: "total",

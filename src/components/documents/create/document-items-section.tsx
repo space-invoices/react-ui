@@ -14,7 +14,7 @@ import type {
   UseFormTrigger,
   UseFormWatch,
 } from "react-hook-form";
-import { useController, useFieldArray } from "react-hook-form";
+import { useFieldArray, useFormState } from "react-hook-form";
 import type { DocumentTypes } from "@/ui/components/documents/types";
 import { useListTaxes } from "@/ui/components/taxes/taxes.hooks";
 import { Button } from "@/ui/components/ui/button";
@@ -101,11 +101,8 @@ export function DocumentItemsSection({
   });
   const { data: taxesResponse } = useListTaxes(entityId);
   const hasEntityTaxes = (taxesResponse?.data?.length ?? 0) > 0;
-  const itemsController = useController({
-    control: control as any,
-    name: "items" as any,
-  });
-  const itemsError = itemsController.fieldState.error?.message;
+  const { errors } = useFormState({ control, name: "items" });
+  const itemsError = typeof errors.items?.message === "string" ? errors.items.message : undefined;
 
   const syncPriceModes = (updater: (current: PriceModesMap) => PriceModesMap) => {
     if (!priceModesRef) return;
@@ -156,7 +153,6 @@ export function DocumentItemsSection({
     onItemsStateChange?.();
   };
 
-  const items = watch("items") || fields;
   useEffect(() => {
     if (!isTaxSubject || !hasEntityTaxes) return;
 
@@ -195,9 +191,9 @@ export function DocumentItemsSection({
             onMoveDown={() => moveItemDown(index)}
             onAddNewTax={onAddNewTax}
             onFindEstimatedTax={onFindEstimatedTax}
-            showRemove={items.length > 1}
+            showRemove={fields.length > 1}
             showMoveUp={index > 0}
-            showMoveDown={index < items.length - 1}
+            showMoveDown={index < fields.length - 1}
             t={t}
             taxesDisabled={taxesDisabled}
             taxesDisabledMessage={taxesDisabledMessage}

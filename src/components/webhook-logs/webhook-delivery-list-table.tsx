@@ -128,7 +128,10 @@ export function WebhookDeliveryListTable({
   }, [isLargeScreen]);
 
   const handleFetch = useCallback(
-    async (params: TableQueryParams): Promise<TableQueryResponse<WebhookDeliveryResponse>> => {
+    async (
+      params: TableQueryParams,
+      options?: { signal?: AbortSignal },
+    ): Promise<TableQueryResponse<WebhookDeliveryResponse>> => {
       const token = getCookie(AUTH_COOKIES.TOKEN);
       if (!token) throw new Error("Not authenticated");
 
@@ -156,6 +159,7 @@ export function WebhookDeliveryListTable({
 
       const apiBaseUrl = getApiBaseUrl();
       const response = await fetch(`${apiBaseUrl}/webhook-logs?${queryParamsUrl.toString()}`, {
+        signal: options?.signal,
         headers: {
           Authorization: `Bearer ${token}`,
           ...getClientHeaders("ui"),

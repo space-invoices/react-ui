@@ -52,8 +52,9 @@ export default function TaxListTable({
   ...i18nProps
 }: TaxListTableProps) {
   const t = createTranslation({ translations, ...i18nProps });
-  const handleFetch = useTableFetch((params: TableQueryParams) => {
-    return taxes.list(params as any);
+  const handleFetch = useTableFetch(async (params: TableQueryParams, options) => {
+    if (!params.entity_id) throw new Error("Entity ID required");
+    return taxes.list({ ...params, entity_id: params.entity_id, signal: options?.signal });
   }, entityId);
 
   const columns: Column<Tax>[] = useMemo(

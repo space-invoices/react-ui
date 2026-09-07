@@ -3,7 +3,7 @@
 import type { CreateInvoice } from "@spaceinvoices/js-sdk";
 import { advanceInvoices, creditNotes, deliveryNotes, estimates, invoices } from "@spaceinvoices/js-sdk";
 import { Loader2 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { cn } from "@/ui/lib/utils";
 import { useEntities } from "@/ui/providers/entities-context";
 import { DocumentPreviewSkeleton } from "../shared/document-preview-skeleton";
@@ -24,6 +24,8 @@ function emitLivePreviewDebug(detail: Record<string, unknown>) {
 export type PdfTemplateId = "modern" | "classic" | "condensed" | "minimal" | "fashion";
 
 type LiveInvoicePreviewProps = {
+  /** Mount the preview only above this viewport width and while the tab is visible. */
+  minViewportWidth?: number;
   data: Partial<CreateInvoice>;
   currency?: string;
   template?: PdfTemplateId;
@@ -69,7 +71,29 @@ type PreviewRequest = {
  * - Error handling with fallback display
  * - Fully styled HTML with scoped CSS (prevents style leakage)
  */
-export function LiveInvoicePreview({
+export function LiveInvoicePreview(props: LiveInvoicePreviewProps) {
+  const minWidth = props.minViewportWidth ?? 0;
+  const media = useMemo(
+    () => (typeof window !== "undefined" && minWidth > 0 ? window.matchMedia(`(min-width: ${minWidth}px)`) : null),
+    [minWidth],
+  );
+  const subscribe = useCallback(
+    (notify: () => void) => {
+      document.addEventListener("visibilitychange", notify);
+      media?.addEventListener("change", notify);
+      return () => {
+        document.removeEventListener("visibilitychange", notify);
+        media?.removeEventListener("change", notify);
+      };
+    },
+    [media],
+  );
+  const getSnapshot = useCallback(() => document.visibilityState !== "hidden" && (media?.matches ?? true), [media]);
+  const visible = useSyncExternalStore(subscribe, getSnapshot, () => false);
+  return visible ? <ActiveLiveInvoicePreview {...props} /> : null;
+}
+
+function ActiveLiveInvoicePreview({
   data,
   currency: _currency = "EUR",
   template,
@@ -88,6 +112,7 @@ export function LiveInvoicePreview({
   const [error, setError] = useState<string | null>(null);
   const { activeEntity } = useEntities();
   const abortControllerRef = useRef<AbortController | null>(null);
+  const requestTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastRequestKeyRef = useRef<string | null>(null);
   const inFlightRequestKeyRef = useRef<string | null>(null);
@@ -211,9 +236,11 @@ export function LiveInvoicePreview({
         return;
       }
 
+      clearTimeout(requestTimeoutRef.current);
       // Cancel any pending request
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
+        abortControllerRef.current = null;
       }
 
       // Create new abort controller for this request
@@ -231,6 +258,7 @@ export function LiveInvoicePreview({
         didTimeout = true;
         abortController.abort();
       }, LIVE_PREVIEW_REQUEST_TIMEOUT_MS);
+      requestTimeoutRef.current = timeoutId;
 
       try {
         if (!activeEntityId) {
@@ -286,6 +314,7 @@ export function LiveInvoicePreview({
             break;
         }
 
+        if (abortController.signal.aborted || abortControllerRef.current !== abortController) return;
         setPreviewHtml(html);
         setError(null);
         emitLivePreviewDebug({
@@ -295,6 +324,7 @@ export function LiveInvoicePreview({
           elapsedMs: Number((performance.now() - startedAt).toFixed(1)),
         });
       } catch (err) {
+        if (abortControllerRef.current !== abortController || (abortController.signal.aborted && !didTimeout)) return;
         // Ignore abort errors (they're expected when user keeps typing)
         if (err instanceof Error && err.name === "AbortError") {
           if (didTimeout) {
@@ -375,6 +405,7 @@ export function LiveInvoicePreview({
     const currentPreviewRequest = latestPreviewRequestRef.current;
 
     if (!currentPreviewRequest) {
+      clearTimeout(requestTimeoutRef.current);
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
         abortControllerRef.current = null;
@@ -430,9 +461,11 @@ export function LiveInvoicePreview({
    */
   useEffect(() => {
     return () => {
+      clearTimeout(requestTimeoutRef.current);
       // Cancel any pending request
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
+        abortControllerRef.current = null;
       }
       // Clear timeout
       if (debounceTimeoutRef.current) {

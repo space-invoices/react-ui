@@ -86,7 +86,7 @@ export default function CustomerListTable({
     translations,
     ...i18nProps,
   });
-  const handleFetch = useTableFetch(async (params: TableQueryParams) => {
+  const handleFetch = useTableFetch(async (params: TableQueryParams, options) => {
     if (!params.entity_id) throw new Error("Entity ID required");
 
     const response = await customers.list({
@@ -97,6 +97,7 @@ export default function CustomerListTable({
       order_by: params.order_by,
       search: params.search,
       query: params.query,
+      signal: options?.signal,
     });
     return response as unknown as TableQueryResponse<Customer>;
   }, entityId);

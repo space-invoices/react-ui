@@ -1,5 +1,33 @@
+const FORMATTER_CACHE_LIMIT = 64;
+const numberFormatters = new Map<string, Intl.NumberFormat>();
+const dateFormatters = new Map<string, Intl.DateTimeFormat>();
+
+function cachedFormatter<T>(cache: Map<string, T>, key: string, create: () => T): T {
+  const existing = cache.get(key);
+  if (existing) {
+    cache.delete(key);
+    cache.set(key, existing);
+    return existing;
+  }
+  const formatter = create();
+  cache.set(key, formatter);
+  if (cache.size > FORMATTER_CACHE_LIMIT) {
+    const oldest = cache.keys().next().value;
+    if (oldest !== undefined) cache.delete(oldest);
+  }
+  return formatter;
+}
+
+function formatterKey(locale: string | undefined, options: Intl.NumberFormatOptions | Intl.DateTimeFormatOptions) {
+  return JSON.stringify([locale, Object.entries(options).sort(([a], [b]) => a.localeCompare(b))]);
+}
+
+export function getNumberFormatter(locale?: string, options: Intl.NumberFormatOptions = {}): Intl.NumberFormat {
+  return cachedFormatter(numberFormatters, formatterKey(locale, options), () => new Intl.NumberFormat(locale, options));
+}
+
 function formatNumber(value: number, locale: string | undefined, options: Intl.NumberFormatOptions): string {
-  const formatter = new Intl.NumberFormat(locale, {
+  const formatter = getNumberFormatter(locale, {
     ...options,
     trailingZeroDisplay: options.trailingZeroDisplay ?? "stripIfInteger",
   });
@@ -58,5 +86,9 @@ export function formatDateValue(
     return String(date);
   }
 
-  return new Intl.DateTimeFormat(locale, format).format(dateObj);
+  return cachedFormatter(
+    dateFormatters,
+    formatterKey(locale, format),
+    () => new Intl.DateTimeFormat(locale, format),
+  ).format(dateObj);
 }

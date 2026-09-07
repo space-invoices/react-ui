@@ -22,6 +22,8 @@ export type CustomerData = {
   peppol_scheme_id?: string | null;
   bank_accounts?: Array<Record<string, unknown>> | null;
   is_end_consumer?: boolean | null;
+  /** Explicit VAT-identified marker; `null`/missing means unknown and keeps template fallbacks. */
+  is_tax_subject?: boolean | null;
   ujp?: {
     receiver_name?: string | null;
     receiver_identifier?: string | null;
@@ -70,6 +72,24 @@ function normalizeCustomerSnapshot(customer: CustomerData | null | undefined): R
   };
 
   return (normalizeValue(customer) as Record<string, unknown> | undefined) ?? null;
+}
+
+/**
+ * Detach the form recipient from the saved customer it was selected from.
+ * The recipient is now a different identity, so the saved customer's
+ * VAT-identification marker must not carry over; explicit true/false is
+ * only meaningful for the customer it was stored on. Other snapshot fields
+ * stay as the user's editable copy.
+ */
+function detachSelectedCustomerIdentity<TForm extends DocumentFormWithCustomer>(form: UseFormReturn<TForm>) {
+  form.setValue("customer_id" as Path<TForm>, undefined as PathValue<TForm, Path<TForm>>, {
+    shouldDirty: true,
+    shouldTouch: true,
+  });
+  form.setValue("customer.is_tax_subject" as Path<TForm>, undefined as PathValue<TForm, Path<TForm>>, {
+    shouldDirty: true,
+    shouldTouch: true,
+  });
 }
 
 /**
@@ -125,10 +145,7 @@ export function useDocumentCustomerForm<TForm extends DocumentFormWithCustomer>(
       return;
     }
 
-    form.setValue("customer_id" as Path<TForm>, undefined as PathValue<TForm, Path<TForm>>, {
-      shouldDirty: true,
-      shouldTouch: true,
-    });
+    detachSelectedCustomerIdentity(form);
     setSelectedCustomerId(undefined);
     setOriginalCustomer(null);
   }, [form, originalCustomer, selectedCustomerId, watchedCustomer]);
@@ -155,6 +172,7 @@ export function useDocumentCustomerForm<TForm extends DocumentFormWithCustomer>(
       "customer.peppol_scheme_id",
       "customer.bank_accounts",
       "customer.is_end_consumer",
+      "customer.is_tax_subject",
       "customer.ujp.receiver_name",
       "customer.ujp.receiver_identifier",
       "customer.ujp.receiver_agent",
@@ -234,6 +252,10 @@ export function useDocumentCustomerForm<TForm extends DocumentFormWithCustomer>(
         (customer.is_end_consumer ?? undefined) as PathValue<TForm, Path<TForm>>,
       );
       setCustomerFieldValue(
+        "customer.is_tax_subject" as Path<TForm>,
+        (customer.is_tax_subject ?? undefined) as PathValue<TForm, Path<TForm>>,
+      );
+      setCustomerFieldValue(
         "customer.ujp.receiver_name" as Path<TForm>,
         toFormValue(customer.ujp?.receiver_name) as PathValue<TForm, Path<TForm>>,
       );
@@ -275,6 +297,7 @@ export function useDocumentCustomerForm<TForm extends DocumentFormWithCustomer>(
         peppol_scheme_id: toFormValue(customer.peppol_scheme_id),
         bank_accounts: customer.bank_accounts ?? undefined,
         is_end_consumer: customer.is_end_consumer ?? undefined,
+        is_tax_subject: customer.is_tax_subject ?? undefined,
         ujp: {
           receiver_name: toFormValue(customer.ujp?.receiver_name),
           receiver_identifier: toFormValue(customer.ujp?.receiver_identifier),
@@ -328,6 +351,10 @@ export function useDocumentCustomerForm<TForm extends DocumentFormWithCustomer>(
         customerData.is_end_consumer as PathValue<TForm, Path<TForm>>,
       );
       setCustomerFieldValue(
+        "customer.is_tax_subject" as Path<TForm>,
+        customerData.is_tax_subject as PathValue<TForm, Path<TForm>>,
+      );
+      setCustomerFieldValue(
         "customer.ujp.receiver_name" as Path<TForm>,
         customerData.ujp?.receiver_name as PathValue<TForm, Path<TForm>>,
       );
@@ -379,6 +406,7 @@ export function useDocumentCustomerForm<TForm extends DocumentFormWithCustomer>(
         peppol_scheme_id: undefined,
         bank_accounts: undefined,
         is_end_consumer: true,
+        is_tax_subject: undefined,
         ujp: undefined,
         e_invoicing: undefined,
       } as PathValue<TForm, Path<TForm>>,
@@ -391,10 +419,7 @@ export function useDocumentCustomerForm<TForm extends DocumentFormWithCustomer>(
 
   const handleCustomerEdit = (options: { detachCustomer?: boolean } = {}) => {
     if (options.detachCustomer) {
-      form.setValue("customer_id" as Path<TForm>, undefined as PathValue<TForm, Path<TForm>>, {
-        shouldDirty: true,
-        shouldTouch: true,
-      });
+      detachSelectedCustomerIdentity(form);
       setOriginalCustomer(null);
       setSelectedCustomerId(undefined);
     }

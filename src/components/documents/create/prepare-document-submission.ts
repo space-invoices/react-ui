@@ -14,6 +14,7 @@ type CustomerData = {
   company_number?: string | null;
   bank_accounts?: Array<Record<string, unknown>> | null;
   is_end_consumer?: boolean | null;
+  is_tax_subject?: boolean | null;
   ujp?: {
     receiver_name?: string | null;
     receiver_identifier?: string | null;

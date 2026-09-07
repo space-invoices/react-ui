@@ -108,7 +108,7 @@ export default function DeliveryNoteListTable({
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-  const handleFetch = useTableFetch(async (params: TableQueryParams) => {
+  const handleFetch = useTableFetch(async (params: TableQueryParams, options) => {
     if (!params.entity_id) throw new Error("Entity ID required");
 
     const response = await deliveryNotes.list({
@@ -120,6 +120,7 @@ export default function DeliveryNoteListTable({
       search: params.search,
       query: params.query,
       include: "document_relations",
+      signal: options?.signal,
     });
     return response as unknown as TableQueryResponse<DeliveryNote>;
   }, entityId);
@@ -224,7 +225,7 @@ export default function DeliveryNoteListTable({
         sort: {
           defaultDirection: "desc",
         },
-        cell: (deliveryNote) => <FormattedDate date={deliveryNote.date} locale={i18nProps.locale} />,
+        cell: (deliveryNote) => <FormattedDate date={deliveryNote.date} locale={i18nProps.locale} calendar />,
       },
       {
         id: "total",

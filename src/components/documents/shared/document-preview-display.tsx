@@ -9,7 +9,7 @@ import {
   invoices,
 } from "@spaceinvoices/js-sdk";
 import { getClientHeaders } from "@spaceinvoices/js-sdk/client-headers";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertCircle, FileText } from "lucide-react";
 import { useEffect, useMemo } from "react";
 import { getEntityCountryCapabilities } from "@/ui/lib/country-capabilities";
@@ -18,6 +18,7 @@ import { useEntitiesOptional } from "@/ui/providers/entities-context";
 import { useSpaceInvoicesRuntimeOptional } from "@/ui/providers/space-invoices-provider";
 import { getDocumentConfigFromShareableId } from "../types";
 import { DocumentPreviewSkeleton } from "./document-preview-skeleton";
+import { configureSavedPreviewCache } from "./saved-preview-cache";
 import { ScaledDocumentPreview } from "./scaled-document-preview";
 import { useA4Scaling } from "./use-a4-scaling";
 
@@ -25,7 +26,7 @@ const SAVED_PREVIEW_TIMING_EVENT = "si:saved-preview-timing";
 const SAVED_DOCUMENT_PREVIEW_QUERY_KEY = "document-preview-html";
 const SAVED_DOCUMENT_PREVIEW_RENDERER_VERSION = "html-preview-v17";
 const SAVED_DOCUMENT_PREVIEW_STALE_TIME = 1000 * 60 * 5;
-const SAVED_DOCUMENT_PREVIEW_GC_TIME = 1000 * 60 * 30;
+const SAVED_DOCUMENT_PREVIEW_GC_TIME = 1000 * 60 * 5;
 
 function emitSavedPreviewDebug(detail: Record<string, unknown>) {
   if (!import.meta.env.DEV || typeof window === "undefined") return;
@@ -111,6 +112,8 @@ export function DocumentPreviewDisplay({
   fetchEnabled = true,
   containedScroll = false,
 }: DocumentPreviewDisplayProps) {
+  const queryClient = useQueryClient();
+  useEffect(() => configureSavedPreviewCache(queryClient), [queryClient]);
   const t = tProp ?? ((key: string) => key);
   const entitiesContext = useEntitiesOptional();
   const activeEntity = entitiesContext?.activeEntity;

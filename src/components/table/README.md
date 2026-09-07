@@ -57,7 +57,7 @@ function InvoiceTable() {
       ]}
       cacheKey="invoices"
       resourceName="invoice"
-      onFetch={(params) => invoices.list(params)}
+      onFetch={(params, options) => invoices.list({ ...params, signal: options?.signal })}
     />
   );
 }
@@ -92,7 +92,7 @@ function InvoiceTable() {
       )}
       cacheKey="invoices"
       resourceName="invoice"
-      onFetch={(params) => invoices.list(params)}
+      onFetch={(params, options) => invoices.list({ ...params, signal: options?.signal })}
     />
   );
 }
@@ -194,7 +194,7 @@ import { customers } from "@spaceinvoices/js-sdk";
 
 const { data, isFetching } = useTableQuery({
   cacheKey: "customers",
-  fetchFn: (params) => customers.list(params),
+  fetchFn: (params, options) => customers.list({ ...params, signal: options?.signal }),
   params: { search: "acme" },
   entityId: "entity-123",
 });
@@ -209,7 +209,7 @@ import { useTableFetch } from "@space-invoices/ui";
 import { customers } from "@spaceinvoices/js-sdk";
 
 const handleFetch = useTableFetch(
-  (params) => customers.list(params),
+  (params, options) => customers.list({ ...params, signal: options?.signal }),
   entityId
 );
 ```
@@ -243,11 +243,12 @@ Cursor-based pagination controls:
 
 ### FormattedDate
 
-Date formatting with error handling:
+Date formatting with error handling. A plain `YYYY-MM-DD` string always renders as a calendar date (the same day in every time zone). Pass `calendar` for API `date` columns so their midnight-UTC form (`YYYY-MM-DDT00:00:00.000Z`) is also rendered as a calendar date; leave it off for real timestamps such as `created_at` or `ordered_at`, which keep local-time rendering:
 
 ```tsx
 <FormattedDate
   date="2024-01-15"
+  calendar
   format={{
     year: "numeric",
     month: "short",
@@ -280,7 +281,7 @@ For straightforward tables, define columns with cell renderers:
   ]}
   cacheKey="users"
   resourceName="user"
-  onFetch={(params) => sdk.users.getUsers(params)}
+  onFetch={(params, options) => sdk.users.getUsers(params, options)}
 />
 ```
 
@@ -302,7 +303,7 @@ For advanced tables with complex row/header components:
   )}
   cacheKey="users"
   resourceName="user"
-  onFetch={(params) => sdk.users.getUsers(params)}
+  onFetch={(params, options) => sdk.users.getUsers(params, options)}
 />
 ```
 

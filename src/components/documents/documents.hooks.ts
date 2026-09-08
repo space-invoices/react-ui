@@ -1,5 +1,6 @@
 import { documents } from "@spaceinvoices/js-sdk";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { invalidateDashboardStatsQueries } from "@/ui/lib/dashboard-stats-cache";
 
 // Document type union for API calls
 export type DocumentType = "invoice" | "estimate" | "credit_note" | "advance_invoice" | "delivery_note";
@@ -55,6 +56,8 @@ export function useFinalizeDocument(options: FinalizeDocumentOptions) {
       queryClient.invalidateQueries({
         queryKey: ["documents", variables.documentType, variables.documentId],
       });
+      // Finalizing moves the document out of the draft population the dashboard excludes.
+      void invalidateDashboardStatsQueries(queryClient, options.entityId);
 
       options.onSuccess?.(data);
     },
@@ -99,6 +102,8 @@ export function useDeleteDraftDocument(options: DeleteDraftDocumentOptions) {
       queryClient.removeQueries({
         queryKey: ["documents", variables.documentType, variables.documentId],
       });
+      // Document counts include drafts.
+      void invalidateDashboardStatsQueries(queryClient, options.entityId);
 
       options.onSuccess?.();
     },

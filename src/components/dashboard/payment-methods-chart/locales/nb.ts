@@ -1,6 +1,6 @@
 export default {
   "Payment Methods": "Betalingsmetoder",
-  "Breakdown of payments by method": "Fordeling av betalinger etter metode",
+  "Cash received on invoices, by payment method": "Mottatte betalinger på fakturaer etter betalingsmetode",
   Cash: "Kontant",
   "Bank Transfer": "Bankoverføring",
   Card: "Kort",

@@ -1,6 +1,6 @@
 export default {
   "Payment Methods": "Metody platnosci",
-  "Breakdown of payments by method": "Podzial platnosci wedlug metody",
+  "Cash received on invoices, by payment method": "Wpłaty otrzymane za faktury według metody płatności",
   Cash: "Gotowka",
   "Bank Transfer": "Przelew bankowy",
   Card: "Karta",

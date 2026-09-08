@@ -8,9 +8,11 @@ import { financialCategories } from "@spaceinvoices/js-sdk";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
 import { createResourceHooks } from "@/ui/hooks/create-resource-hooks";
+import { REVENUE_BY_CATEGORY_CACHE_KEY } from "@/ui/lib/dashboard-stats-cache";
+import { getCalendarDateInTimeZone, getCalendarYearToDateRange, resolveEntityTimeZone } from "@/ui/lib/entity-calendar";
 
 export const FINANCIAL_CATEGORIES_CACHE_KEY = "financial-categories";
-export const REVENUE_BY_CATEGORY_CACHE_KEY = "revenue-by-category";
+export { REVENUE_BY_CATEGORY_CACHE_KEY };
 
 const {
   useCreateResource: useCreateFinancialCategory,
@@ -72,17 +74,17 @@ export function useFinancialCategories(entityId: string | undefined, includeArch
   });
 }
 
-function formatDate(date: Date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
+export type RevenueByCategoryOptions = {
+  /**
+   * Entity IANA timezone; the report runs from 1 January through the entity's calendar today.
+   * Omitted, empty or unusable values fall back to the API's own entity default (`UTC`).
+   */
+  timeZone?: string | null;
+};
 
-export function useRevenueByCategory(entityId: string | undefined) {
-  const now = new Date();
-  const dateFrom = `${now.getFullYear()}-01-01`;
-  const dateTo = formatDate(now);
+export function useRevenueByCategory(entityId: string | undefined, options?: RevenueByCategoryOptions) {
+  const timeZone = resolveEntityTimeZone({ timezone: options?.timeZone });
+  const { from: dateFrom, to: dateTo } = getCalendarYearToDateRange(getCalendarDateInTimeZone(new Date(), timeZone));
 
   return useQuery({
     queryKey: [REVENUE_BY_CATEGORY_CACHE_KEY, entityId, dateFrom, dateTo],

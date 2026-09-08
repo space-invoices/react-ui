@@ -1,80 +1,68 @@
 /**
  * Payment trend hook using the entity stats API.
- * Server-side aggregation by month for accurate trend data.
+ *
+ * Population: direct positive cash receipts on finalized active invoices, in
+ * entity currency, by entity-calendar month for the last six months.
  * Sends 1 query in a batch request.
  */
 import type { StatsQueryDataItem } from "@spaceinvoices/js-sdk";
-import { formatLocalDate, formatLocalMonth } from "../shared/local-date";
+import { getRecentCalendarMonths } from "@/ui/lib/entity-calendar";
+import {
+  CONVERSION_MISSING_METRIC,
+  type DashboardQueryResult,
+  hasMissingConversion,
+  readNumber,
+  resolveUnavailable,
+} from "../shared/dashboard-query-state";
+import { type DashboardEntityOverrides, useDashboardEntity } from "../shared/use-dashboard-entity";
 import { useStatsQuery } from "../shared/use-stats-query";
 
 export const PAYMENT_TREND_CACHE_KEY = "dashboard-payment-trend";
 
-function getLastMonths(count: number): { months: string[]; startDate: string; endDate: string } {
-  const months: string[] = [];
-  const now = new Date();
-
-  const startDate = new Date(now.getFullYear(), now.getMonth() - (count - 1), 1);
-  const endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-
-  for (let i = count - 1; i >= 0; i--) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    months.push(formatLocalMonth(d));
-  }
-
-  return {
-    months,
-    startDate: formatLocalDate(startDate),
-    endDate: formatLocalDate(endDate),
-  };
-}
-
 export type PaymentTrendData = { month: string; amount: number }[];
 
-export function usePaymentTrendData(entityId: string | undefined) {
-  const { months, startDate, endDate } = getLastMonths(6);
+export type PaymentTrendResult = { data: PaymentTrendData; currency: string };
+
+export function usePaymentTrendData(
+  entityId: string | undefined,
+  overrides?: DashboardEntityOverrides,
+): DashboardQueryResult<PaymentTrendResult> {
+  const { currency, today } = useDashboardEntity(entityId, overrides);
+  const { months, from, to } = getRecentCalendarMonths(today, 6);
 
   const query = useStatsQuery(
     entityId,
     {
-      metrics: [{ type: "sum", field: "amount_converted", alias: "amount" }],
+      metrics: [{ type: "sum", field: "cash_amount_converted", alias: "amount" }, CONVERSION_MISSING_METRIC],
       table: "payments",
-      date_from: startDate,
-      date_to: endDate,
-      // The dashboard trend should reflect collected invoice payments only.
-      // Exclude AP-linked rows and credit note refunds that otherwise skew monthly totals.
-      filters: {
-        invoice_id: { not: null },
-        credit_note_id: null,
-      },
+      date_from: from,
+      date_to: to,
+      filters: { active_invoice_cash_receipt: true },
       group_by: ["month"],
       order_by: [{ field: "month", direction: "asc" }],
     },
     {
-      select: (response) => {
-        const monthMap: Record<string, number> = {};
-        for (const month of months) {
-          monthMap[month] = 0;
-        }
-
-        const data = response.data || [];
-        for (const row of data as StatsQueryDataItem[]) {
+      select: (response): PaymentTrendData | null => {
+        const rows = (response.data ?? []) as StatsQueryDataItem[];
+        if (hasMissingConversion(rows)) return null;
+        const byMonth: Record<string, number> = Object.fromEntries(months.map((month) => [month, 0]));
+        for (const row of rows) {
           const month = String(row.month);
-          if (month in monthMap) {
-            monthMap[month] += Number(row.amount) || 0;
-          }
+          if (month in byMonth) byMonth[month] += readNumber(row, "amount");
         }
-
-        return {
-          data: months.map((month) => ({ month, amount: monthMap[month] })),
-          currency: "EUR",
-        };
+        return months.map((month) => ({ month, amount: byMonth[month] }));
       },
     },
   );
 
   return {
-    data: query.data?.data || [],
-    currency: query.data?.currency || "EUR",
+    data: query.data && currency ? { data: query.data, currency } : undefined,
     isLoading: query.isLoading,
+    unavailable: resolveUnavailable({
+      isError: query.isError,
+      currency: entityId ? currency : undefined,
+      conversionMissing: query.isSuccess && query.data === null,
+    }),
+    retry: () => void query.refetch(),
   };
 }

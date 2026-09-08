@@ -14,6 +14,8 @@ import { formatCurrencyValue } from "@/ui/lib/formatting";
 import { createTranslation } from "@/ui/lib/translation";
 import { ChartEmptyState } from "../chart-empty-state";
 import { LoadingCard } from "../loading-card";
+import type { DashboardEntityOverrides } from "../shared/use-dashboard-entity";
+import { DashboardUnavailable } from "../unavailable-state/dashboard-unavailable";
 import bg from "./locales/bg";
 import cs from "./locales/cs";
 import de from "./locales/de";
@@ -46,13 +48,17 @@ type BaseProps = {
 
 type DataProps = BaseProps & {
   data: PaymentMethodsChartData;
+  /** Currency the amounts are in (entity currency). */
+  currency: string;
   entityId?: never;
+  timeZone?: never;
 };
 
-type TurnkeyProps = BaseProps & {
-  entityId: string;
-  data?: never;
-};
+type TurnkeyProps = BaseProps &
+  DashboardEntityOverrides & {
+    entityId: string;
+    data?: never;
+  };
 
 export type PaymentMethodsChartProps = DataProps | TurnkeyProps;
 
@@ -81,16 +87,45 @@ export function PaymentMethodsChart(props: PaymentMethodsChartProps) {
   const t = createTranslation({ t: externalT, namespace, locale, translationLocale, translations });
 
   // Turnkey mode - fetch own data
-  const hookResult = usePaymentMethodsData("entityId" in props ? props.entityId : undefined);
+  const hookResult = usePaymentMethodsData(
+    "entityId" in props ? props.entityId : undefined,
+    "entityId" in props ? { currency: props.currency, timeZone: props.timeZone } : undefined,
+  );
 
   // Determine data source
-  const data = "entityId" in props ? hookResult.data : props.data;
+  const result = "entityId" in props ? hookResult.data : { data: props.data, currency: props.currency };
   const isLoading = "entityId" in props ? hookResult.isLoading : false;
+  const unavailable = "entityId" in props ? hookResult.unavailable : null;
+  const retry = "entityId" in props ? hookResult.retry : undefined;
 
   if (isLoading) {
     return <LoadingCard className="h-[280px]" />;
   }
 
+  const renderCard = (content: React.ReactNode) => (
+    <Card>
+      <CardHeader>
+        <CardTitle>{t("Payment Methods")}</CardTitle>
+        <CardDescription>{t("Cash received on invoices, by payment method")}</CardDescription>
+      </CardHeader>
+      <CardContent className="overflow-hidden">{content}</CardContent>
+    </Card>
+  );
+
+  if (unavailable || !result) {
+    return renderCard(
+      <DashboardUnavailable
+        reason={unavailable ?? "error"}
+        onRetry={retry}
+        locale={locale}
+        translationLocale={translationLocale}
+        t={externalT}
+        namespace={namespace}
+      />,
+    );
+  }
+
+  const { data, currency } = result;
   const hasData = data.length > 0 && data.some((d) => d.amount > 0);
 
   // Placeholder data for empty state
@@ -139,7 +174,7 @@ export function PaymentMethodsChart(props: PaymentMethodsChartProps) {
           content={
             <ChartTooltipContent
               nameKey="name"
-              formatter={(value) => formatCurrencyValue(Number(value), "EUR", locale)}
+              formatter={(value) => formatCurrencyValue(Number(value), currency, locale)}
             />
           }
         />
@@ -153,15 +188,7 @@ export function PaymentMethodsChart(props: PaymentMethodsChartProps) {
     </ChartContainer>
   );
 
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{t("Payment Methods")}</CardTitle>
-        <CardDescription>{t("Breakdown of payments by method")}</CardDescription>
-      </CardHeader>
-      <CardContent className="overflow-hidden">
-        {hasData ? chartContent : <ChartEmptyState label={t("No data available")}>{chartContent}</ChartEmptyState>}
-      </CardContent>
-    </Card>
+  return renderCard(
+    hasData ? chartContent : <ChartEmptyState label={t("No data available")}>{chartContent}</ChartEmptyState>,
   );
 }

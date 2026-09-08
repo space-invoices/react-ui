@@ -3,15 +3,20 @@
 import { AlertTriangle, TrendingDown, TrendingUp } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/ui/components/ui/card";
 import { formatCurrencyValue } from "@/ui/lib/formatting";
+import type { ComponentTranslationProps } from "@/ui/lib/translation";
+import { DashboardUnavailable, type DashboardUnavailableReason } from "./unavailable-state/dashboard-unavailable";
 
 export type RevenueCardProps = {
   title: string;
-  value: number;
+  /** `null` renders the unavailable state (`unavailable` says why; defaults to a conversion problem). */
+  value: number | null;
   currency: string;
   variant?: "default" | "success" | "warning" | "danger";
   subtitle?: string;
   locale?: string;
-};
+  unavailable?: DashboardUnavailableReason;
+  onRetry?: () => void;
+} & Pick<ComponentTranslationProps, "translationLocale" | "t" | "namespace">;
 
 const variantStyles = {
   default: "",
@@ -27,19 +32,46 @@ const variantIcons = {
   danger: TrendingDown,
 };
 
-export function RevenueCard({ title, value, currency, variant = "default", subtitle, locale }: RevenueCardProps) {
+export function RevenueCard({
+  title,
+  value,
+  currency,
+  variant = "default",
+  subtitle,
+  locale,
+  unavailable,
+  onRetry,
+  translationLocale,
+  t,
+  namespace,
+}: RevenueCardProps) {
   const Icon = variantIcons[variant];
-  const formattedValue = formatCurrencyValue(value, currency, locale);
+  const reason = unavailable ?? (value === null ? "conversion" : undefined);
 
   return (
     <Card className="gap-2">
       <CardHeader className="flex flex-row items-center justify-between pb-1">
         <CardTitle className="font-medium text-muted-foreground text-sm">{title}</CardTitle>
-        {Icon && <Icon className={`h-4 w-4 shrink-0 ${variantStyles[variant]}`} />}
+        {Icon && !reason && <Icon className={`h-4 w-4 shrink-0 ${variantStyles[variant]}`} />}
       </CardHeader>
       <CardContent className="pt-0">
-        <div className={`break-words font-bold text-xl sm:text-2xl ${variantStyles[variant]}`}>{formattedValue}</div>
-        {subtitle && <p className="mt-1 text-muted-foreground text-xs">{subtitle}</p>}
+        {reason || value === null ? (
+          <DashboardUnavailable
+            reason={reason ?? "conversion"}
+            onRetry={onRetry}
+            locale={locale}
+            translationLocale={translationLocale}
+            t={t}
+            namespace={namespace}
+          />
+        ) : (
+          <>
+            <div className={`break-words font-bold text-xl sm:text-2xl ${variantStyles[variant]}`}>
+              {formatCurrencyValue(value, currency, locale)}
+            </div>
+            {subtitle && <p className="mt-1 text-muted-foreground text-xs">{subtitle}</p>}
+          </>
+        )}
       </CardContent>
     </Card>
   );

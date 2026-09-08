@@ -5,8 +5,9 @@
 import type { StatsQueryBatchResponse, StatsQueryRequest, StatsQueryResponse } from "@spaceinvoices/js-sdk";
 import { entityStats } from "@spaceinvoices/js-sdk";
 import { type UseQueryOptions, useQuery } from "@tanstack/react-query";
+import { STATS_QUERY_CACHE_KEY } from "@/ui/lib/dashboard-stats-cache";
 
-export const STATS_QUERY_CACHE_KEY = "entity-stats-query";
+export { STATS_QUERY_CACHE_KEY };
 
 export type StatsQueryOptions<TData = StatsQueryResponse> = Omit<
   UseQueryOptions<StatsQueryResponse, Error, TData>,

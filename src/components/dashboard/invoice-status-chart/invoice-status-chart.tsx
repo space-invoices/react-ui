@@ -13,6 +13,7 @@ import {
 import { createTranslation } from "@/ui/lib/translation";
 import { ChartEmptyState } from "../chart-empty-state";
 import { LoadingCard } from "../loading-card";
+import { DashboardUnavailable } from "../unavailable-state/dashboard-unavailable";
 import bg from "./locales/bg";
 import cs from "./locales/cs";
 import de from "./locales/de";
@@ -77,9 +78,34 @@ export function InvoiceStatusChart(props: InvoiceStatusChartProps) {
   // Determine data source
   const data = "entityId" in props ? hookResult.data : props.data;
   const isLoading = "entityId" in props ? hookResult.isLoading : false;
+  const unavailable = "entityId" in props ? hookResult.unavailable : null;
+  const retry = "entityId" in props ? hookResult.retry : undefined;
 
   if (isLoading) {
     return <LoadingCard className="h-[280px]" />;
+  }
+
+  const renderCard = (content: React.ReactNode) => (
+    <Card>
+      <CardHeader>
+        <CardTitle>{t("Invoice Status")}</CardTitle>
+        <CardDescription>{t("Breakdown of invoices by payment status")}</CardDescription>
+      </CardHeader>
+      <CardContent className="overflow-hidden">{content}</CardContent>
+    </Card>
+  );
+
+  if (unavailable || !data) {
+    return renderCard(
+      <DashboardUnavailable
+        reason={unavailable ?? "error"}
+        onRetry={retry}
+        locale={locale}
+        translationLocale={translationLocale}
+        t={externalT}
+        namespace={namespace}
+      />,
+    );
   }
 
   const chartConfig = {
@@ -139,15 +165,7 @@ export function InvoiceStatusChart(props: InvoiceStatusChartProps) {
     </ChartContainer>
   );
 
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{t("Invoice Status")}</CardTitle>
-        <CardDescription>{t("Breakdown of invoices by payment status")}</CardDescription>
-      </CardHeader>
-      <CardContent className="overflow-hidden">
-        {hasData ? chartContent : <ChartEmptyState label={t("No data available")}>{chartContent}</ChartEmptyState>}
-      </CardContent>
-    </Card>
+  return renderCard(
+    hasData ? chartContent : <ChartEmptyState label={t("No data available")}>{chartContent}</ChartEmptyState>,
   );
 }

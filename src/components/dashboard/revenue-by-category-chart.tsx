@@ -10,10 +10,14 @@ import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
 import { ChartEmptyState } from "./chart-empty-state";
 import { LoadingCard } from "./loading-card";
+import { unavailableReasonForError } from "./shared/dashboard-query-state";
+import { type DashboardEntityOverrides, useDashboardEntity } from "./shared/use-dashboard-entity";
+import { DashboardUnavailable } from "./unavailable-state/dashboard-unavailable";
 
 type RevenueByCategoryChartProps = {
   entityId: string;
-} & ComponentTranslationProps;
+} & Pick<DashboardEntityOverrides, "timeZone"> &
+  ComponentTranslationProps;
 
 const FALLBACK_COLORS = [
   "var(--chart-1)",
@@ -26,7 +30,8 @@ const FALLBACK_COLORS = [
 const translations = {
   en: {
     "revenue-by-category-chart.title": "Revenue by category",
-    "revenue-by-category-chart.description": "Accrued revenue by line-item category for the current year.",
+    "revenue-by-category-chart.description":
+      "Net revenue (excl. tax) by line-item category, by invoice date, year to date.",
     "revenue-by-category-chart.empty": "No categorized revenue yet",
     "revenue-by-category-chart.revenue": "Revenue",
     "revenue-by-category-chart.share": "Share",
@@ -51,6 +56,7 @@ function buildChartRows(rows: RevenueByCategoryRow[]) {
 
 export function RevenueByCategoryChart({
   entityId,
+  timeZone: timeZoneOverride,
   t: externalT,
   namespace,
   locale,
@@ -63,14 +69,38 @@ export function RevenueByCategoryChart({
     translationLocale,
     translations,
   });
-  const { data, isLoading } = useRevenueByCategory(entityId);
+  const { timeZone } = useDashboardEntity(entityId, { timeZone: timeZoneOverride });
+  const { data, isLoading, isError, error, refetch } = useRevenueByCategory(entityId, { timeZone });
 
   if (isLoading) {
     return <LoadingCard className="h-full min-h-[320px]" />;
   }
 
-  const rows = data?.data ?? [];
-  const currencyCode = data?.currency_code ?? "EUR";
+  const renderCard = (content: React.ReactNode) => (
+    <Card className="flex h-full flex-col">
+      <CardHeader>
+        <CardTitle>{t("revenue-by-category-chart.title")}</CardTitle>
+        <CardDescription>{t("revenue-by-category-chart.description")}</CardDescription>
+      </CardHeader>
+      <CardContent className="overflow-hidden">{content}</CardContent>
+    </Card>
+  );
+
+  if (isError || !data) {
+    return renderCard(
+      <DashboardUnavailable
+        reason={isError ? unavailableReasonForError(error) : "error"}
+        onRetry={() => void refetch()}
+        locale={locale}
+        translationLocale={translationLocale}
+        t={externalT}
+        namespace={namespace}
+      />,
+    );
+  }
+
+  const rows = data.data ?? [];
+  const currencyCode = data.currency_code;
   const hasData = rows.length > 0;
   const chartRows = hasData
     ? buildChartRows(rows)
@@ -150,15 +180,7 @@ export function RevenueByCategoryChart({
     </ChartContainer>
   );
 
-  return (
-    <Card className="flex h-full flex-col">
-      <CardHeader>
-        <CardTitle>{t("revenue-by-category-chart.title")}</CardTitle>
-        <CardDescription>{t("revenue-by-category-chart.description")}</CardDescription>
-      </CardHeader>
-      <CardContent className="overflow-hidden">
-        {hasData ? chart : <ChartEmptyState label={t("revenue-by-category-chart.empty")}>{chart}</ChartEmptyState>}
-      </CardContent>
-    </Card>
+  return renderCard(
+    hasData ? chart : <ChartEmptyState label={t("revenue-by-category-chart.empty")}>{chart}</ChartEmptyState>,
   );
 }

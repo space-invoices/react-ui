@@ -1,6 +1,6 @@
 export default {
   "Payment Methods": "Методи на плащане",
-  "Breakdown of payments by method": "Разбивка на плащанията по метод",
+  "Cash received on invoices, by payment method": "Получени плащания по фактури по метод на плащане",
   Cash: "В брой",
   "Bank Transfer": "Банков превод",
   Card: "Карта",

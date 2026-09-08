@@ -1,6 +1,7 @@
 export default {
   Revenue: "Prihod",
   "Revenue Trend": "Trend prihoda",
-  "Monthly revenue over the last 6 months": "Mjesečni prihodi u posljednjih 6 mjeseci",
+  "Invoiced incl. tax, less credit notes, by month for the last 6 months":
+    "Fakturirano s porezom, umanjeno za odobrenja, po mjesecu za zadnjih 6 mjeseci",
   "No data available": "Nema dostupnih podataka",
 } as const;

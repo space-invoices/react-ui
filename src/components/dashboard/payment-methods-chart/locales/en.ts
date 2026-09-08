@@ -1,6 +1,6 @@
 export default {
   "Payment Methods": "Payment Methods",
-  "Breakdown of payments by method": "Breakdown of payments by method",
+  "Cash received on invoices, by payment method": "Cash received on invoices, by payment method",
   Cash: "Cash",
   "Bank Transfer": "Bank Transfer",
   Card: "Card",

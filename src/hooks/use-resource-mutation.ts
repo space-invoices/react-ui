@@ -2,6 +2,7 @@ import type { SDKMethodOptions } from "@spaceinvoices/js-sdk";
 import type { UseMutationOptions } from "@tanstack/react-query";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { invalidateDashboardQueriesForResources } from "@/ui/lib/dashboard-stats-cache";
 
 type ResourceMutationOptions<TData, TError, TVariables, TContext> = {
   /** Concrete SDK module method */
@@ -84,15 +85,18 @@ export function useResourceMutation<TData, TError = Error, TVariables = unknown,
 }
 
 /**
- * Invalidate cache keys - marks queries as stale and refetches active ones
+ * Invalidate cache keys - marks queries as stale and refetches active ones.
+ * Dashboard aggregates derived from the mutated resource are invalidated for the
+ * same entity through the shared policy, so callers cannot skip that refresh.
  */
 function invalidateCacheKeys(
   queryClient: ReturnType<typeof useQueryClient>,
   cacheKey: string | string[],
-  _entityId?: string | null,
+  entityId?: string | null,
   _accountId?: string | null,
 ): void {
   const cacheKeys = Array.isArray(cacheKey) ? cacheKey : [cacheKey];
+  void invalidateDashboardQueriesForResources(queryClient, cacheKeys, entityId);
 
   cacheKeys.forEach((key) => {
     // Invalidate all queries that start with this cache key

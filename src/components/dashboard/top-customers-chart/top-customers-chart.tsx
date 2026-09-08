@@ -7,6 +7,8 @@ import { formatCurrencyValue } from "@/ui/lib/formatting";
 import { createTranslation } from "@/ui/lib/translation";
 import { ChartEmptyState } from "../chart-empty-state";
 import { LoadingCard } from "../loading-card";
+import type { DashboardEntityOverrides } from "../shared/use-dashboard-entity";
+import { DashboardUnavailable } from "../unavailable-state/dashboard-unavailable";
 import bg from "./locales/bg";
 import cs from "./locales/cs";
 import de from "./locales/de";
@@ -41,13 +43,14 @@ type DataProps = BaseProps & {
   data: TopCustomersChartData;
   currency: string;
   entityId?: never;
+  timeZone?: never;
 };
 
-type TurnkeyProps = BaseProps & {
-  entityId: string;
-  data?: never;
-  currency?: never;
-};
+type TurnkeyProps = BaseProps &
+  DashboardEntityOverrides & {
+    entityId: string;
+    data?: never;
+  };
 
 export type TopCustomersChartProps = DataProps | TurnkeyProps;
 
@@ -60,17 +63,46 @@ export function TopCustomersChart(props: TopCustomersChartProps) {
   const t = createTranslation({ t: externalT, namespace, locale, translationLocale, translations });
 
   // Turnkey mode - fetch own data
-  const hookResult = useTopCustomersData("entityId" in props ? props.entityId : undefined);
+  const hookResult = useTopCustomersData(
+    "entityId" in props ? props.entityId : undefined,
+    5,
+    "entityId" in props ? { currency: props.currency, timeZone: props.timeZone } : undefined,
+  );
 
   // Determine data source
-  const data = "entityId" in props ? hookResult.data : props.data;
-  const currency = "entityId" in props ? hookResult.currency : props.currency;
+  const result = "entityId" in props ? hookResult.data : { data: props.data, currency: props.currency };
   const isLoading = "entityId" in props ? hookResult.isLoading : false;
+  const unavailable = "entityId" in props ? hookResult.unavailable : null;
+  const retry = "entityId" in props ? hookResult.retry : undefined;
 
   if (isLoading) {
     return <LoadingCard className="h-full min-h-[280px]" />;
   }
 
+  const renderCard = (content: React.ReactNode) => (
+    <Card className="flex h-full flex-col">
+      <CardHeader>
+        <CardTitle>{t("Top Customers")}</CardTitle>
+        <CardDescription>{t("Top 5 customers by invoiced amount incl. tax, before credit notes")}</CardDescription>
+      </CardHeader>
+      <CardContent className="flex-1 overflow-hidden">{content}</CardContent>
+    </Card>
+  );
+
+  if (unavailable || !result) {
+    return renderCard(
+      <DashboardUnavailable
+        reason={unavailable ?? "error"}
+        onRetry={retry}
+        locale={locale}
+        translationLocale={translationLocale}
+        t={externalT}
+        namespace={namespace}
+      />,
+    );
+  }
+
+  const { data, currency } = result;
   const hasData = data.length > 0;
   const chartConfig = {
     revenue: {
@@ -132,15 +164,7 @@ export function TopCustomersChart(props: TopCustomersChartProps) {
     </ChartContainer>
   );
 
-  return (
-    <Card className="flex h-full flex-col">
-      <CardHeader>
-        <CardTitle>{t("Top Customers")}</CardTitle>
-        <CardDescription>{t("Top 5 customers by revenue")}</CardDescription>
-      </CardHeader>
-      <CardContent className="flex-1 overflow-hidden">
-        {hasData ? chartContent : <ChartEmptyState label={t("No data available")}>{chartContent}</ChartEmptyState>}
-      </CardContent>
-    </Card>
+  return renderCard(
+    hasData ? chartContent : <ChartEmptyState label={t("No data available")}>{chartContent}</ChartEmptyState>,
   );
 }

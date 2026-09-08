@@ -1,6 +1,6 @@
 export default {
   "Payment Methods": "Zahlungsmethoden",
-  "Breakdown of payments by method": "Aufschlüsselung der Zahlungen nach Methode",
+  "Cash received on invoices, by payment method": "Zahlungseingänge auf Rechnungen nach Zahlungsmethode",
   Cash: "Bargeld",
   "Bank Transfer": "Banküberweisung",
   Card: "Karte",

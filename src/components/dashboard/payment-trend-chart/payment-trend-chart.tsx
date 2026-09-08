@@ -3,10 +3,13 @@
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/ui/components/ui/card";
 import { type ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "@/ui/components/ui/chart";
+import { formatCalendarMonthLabel } from "@/ui/lib/entity-calendar";
 import { formatCurrencyValue } from "@/ui/lib/formatting";
 import { createTranslation } from "@/ui/lib/translation";
 import { ChartEmptyState } from "../chart-empty-state";
 import { LoadingCard } from "../loading-card";
+import type { DashboardEntityOverrides } from "../shared/use-dashboard-entity";
+import { DashboardUnavailable } from "../unavailable-state/dashboard-unavailable";
 import bg from "./locales/bg";
 import cs from "./locales/cs";
 import de from "./locales/de";
@@ -41,20 +44,16 @@ type DataProps = BaseProps & {
   data: PaymentTrendChartData;
   currency: string;
   entityId?: never;
+  timeZone?: never;
 };
 
-type TurnkeyProps = BaseProps & {
-  entityId: string;
-  data?: never;
-  currency?: never;
-};
+type TurnkeyProps = BaseProps &
+  DashboardEntityOverrides & {
+    entityId: string;
+    data?: never;
+  };
 
 export type PaymentTrendChartProps = DataProps | TurnkeyProps;
-
-function formatMonth(month: string, locale?: string): string {
-  const date = new Date(`${month}-01`);
-  return date.toLocaleDateString(locale, { month: "short" });
-}
 
 function formatCurrency(value: number, currency: string, locale?: string): string {
   return formatCurrencyValue(value, currency, locale, { minimumFractionDigits: 0, maximumFractionDigits: 0 });
@@ -65,17 +64,45 @@ export function PaymentTrendChart(props: PaymentTrendChartProps) {
   const t = createTranslation({ t: externalT, namespace, locale, translationLocale, translations });
 
   // Turnkey mode - fetch own data
-  const hookResult = usePaymentTrendData("entityId" in props ? props.entityId : undefined);
+  const hookResult = usePaymentTrendData(
+    "entityId" in props ? props.entityId : undefined,
+    "entityId" in props ? { currency: props.currency, timeZone: props.timeZone } : undefined,
+  );
 
   // Determine data source
-  const data = "entityId" in props ? hookResult.data : props.data;
-  const currency = "entityId" in props ? hookResult.currency : props.currency;
+  const result = "entityId" in props ? hookResult.data : { data: props.data, currency: props.currency };
   const isLoading = "entityId" in props ? hookResult.isLoading : false;
+  const unavailable = "entityId" in props ? hookResult.unavailable : null;
+  const retry = "entityId" in props ? hookResult.retry : undefined;
 
   if (isLoading) {
     return <LoadingCard className="h-[280px]" />;
   }
 
+  const renderCard = (content: React.ReactNode) => (
+    <Card>
+      <CardHeader>
+        <CardTitle>{t("Payment Trend")}</CardTitle>
+        <CardDescription>{t("Cash received on invoices, by month for the last 6 months")}</CardDescription>
+      </CardHeader>
+      <CardContent className="overflow-hidden">{content}</CardContent>
+    </Card>
+  );
+
+  if (unavailable || !result) {
+    return renderCard(
+      <DashboardUnavailable
+        reason={unavailable ?? "error"}
+        onRetry={retry}
+        locale={locale}
+        translationLocale={translationLocale}
+        t={externalT}
+        namespace={namespace}
+      />,
+    );
+  }
+
+  const { data, currency } = result;
   const hasData = data.some((d) => d.amount > 0);
   const chartConfig = {
     amount: {
@@ -106,7 +133,7 @@ export function PaymentTrendChart(props: PaymentTrendChartProps) {
           tickLine={false}
           axisLine={false}
           tickMargin={8}
-          tickFormatter={(m) => formatMonth(m, locale)}
+          tickFormatter={(m) => formatCalendarMonthLabel(String(m), locale)}
         />
         <YAxis
           tickLine={false}
@@ -125,7 +152,7 @@ export function PaymentTrendChart(props: PaymentTrendChartProps) {
           cursor={false}
           content={
             <ChartTooltipContent
-              labelFormatter={(label) => formatMonth(String(label), locale)}
+              labelFormatter={(label) => formatCalendarMonthLabel(String(label), locale)}
               formatter={(value) => formatCurrency(Number(value), currency, locale)}
             />
           }
@@ -135,15 +162,7 @@ export function PaymentTrendChart(props: PaymentTrendChartProps) {
     </ChartContainer>
   );
 
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{t("Payment Trend")}</CardTitle>
-        <CardDescription>{t("Monthly payments received over the last 6 months")}</CardDescription>
-      </CardHeader>
-      <CardContent className="overflow-hidden">
-        {hasData ? chartContent : <ChartEmptyState label={t("No data available")}>{chartContent}</ChartEmptyState>}
-      </CardContent>
-    </Card>
+  return renderCard(
+    hasData ? chartContent : <ChartEmptyState label={t("No data available")}>{chartContent}</ChartEmptyState>,
   );
 }

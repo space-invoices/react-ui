@@ -2,6 +2,7 @@ import type { CreateEntityBody, Entity, PatchEntityBody } from "@spaceinvoices/j
 import { entities } from "@spaceinvoices/js-sdk";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createResourceHooks } from "@/ui/hooks/create-resource-hooks";
+import { invalidateDashboardStatsQueries } from "@/ui/lib/dashboard-stats-cache";
 
 // Cache key for entities queries
 export const ENTITIES_CACHE_KEY = "entities";
@@ -58,6 +59,8 @@ function useUpdateEntity(options: UpdateEntityOptions = {}) {
       queryClient.invalidateQueries({ queryKey: [ENTITIES_CACHE_KEY] });
       const detailKey = `${ENTITIES_CACHE_KEY}-${variables.id}`;
       queryClient.invalidateQueries({ queryKey: [detailKey] });
+      // Currency, locale, and timezone changes alter converted totals and calendar windows.
+      void invalidateDashboardStatsQueries(queryClient, data?.id ?? variables.id);
       options.onSuccess?.(data, variables, context);
     },
     onError: options.onError,

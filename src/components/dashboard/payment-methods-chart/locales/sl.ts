@@ -1,6 +1,6 @@
 export default {
   "Payment Methods": "Načini plačila",
-  "Breakdown of payments by method": "Razčlenitev plačil po načinu",
+  "Cash received on invoices, by payment method": "Prejeta plačila računov po načinu plačila",
   Cash: "Gotovina",
   "Bank Transfer": "Bančno nakazilo",
   Card: "Kartica",

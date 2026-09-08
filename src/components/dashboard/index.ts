@@ -6,6 +6,7 @@ export type { CollectionRateCardProps, CollectionRateData } from "./collection-r
 export {
   COLLECTION_RATE_CACHE_KEY,
   CollectionRateCard,
+  calculateCollectionRate,
   useCollectionRateData,
 } from "./collection-rate-card";
 export type { InvoiceStatusChartData, InvoiceStatusChartProps, InvoiceStatusData } from "./invoice-status-chart";
@@ -37,11 +38,18 @@ export {
   RevenueTrendChart,
   useRevenueTrendData,
 } from "./revenue-trend-chart";
-export type { RevenueData, StatsCountsData } from "./shared";
+export type {
+  DashboardEntityContext,
+  DashboardEntityOverrides,
+  DashboardQueryResult,
+  RevenueData,
+  StatsCountsData,
+} from "./shared";
 // Shared hooks for presentational cards
 export {
   REVENUE_DATA_CACHE_KEY,
   STATS_COUNTS_CACHE_KEY,
+  useDashboardEntity,
   useRevenueData,
   useStatsCountsData,
 } from "./shared";
@@ -53,3 +61,6 @@ export {
   TopCustomersChart,
   useTopCustomersData,
 } from "./top-customers-chart";
+export type { DashboardUnavailableProps, DashboardUnavailableReason, UnavailableCardProps } from "./unavailable-state";
+// Shared unavailable/error state
+export { DashboardUnavailable, UnavailableCard } from "./unavailable-state";

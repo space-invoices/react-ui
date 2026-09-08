@@ -1,6 +1,6 @@
 export default {
   "Payment Methods": "Maksutavat",
-  "Breakdown of payments by method": "Maksujen jakauma maksutavan mukaan",
+  "Cash received on invoices, by payment method": "Laskuille vastaanotetut maksut maksutavan mukaan",
   Cash: "Käteinen",
   "Bank Transfer": "Pankkisiirto",
   Card: "Kortti",

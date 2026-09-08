@@ -1,3 +1,6 @@
+export type { DashboardQueryResult } from "./dashboard-query-state";
+export type { DashboardEntityContext, DashboardEntityOverrides } from "./use-dashboard-entity";
+export { useDashboardEntity } from "./use-dashboard-entity";
 export type { RevenueData } from "./use-revenue-data";
 export { REVENUE_DATA_CACHE_KEY, useRevenueData } from "./use-revenue-data";
 export type { StatsCountsData } from "./use-stats-counts";

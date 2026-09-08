@@ -1,6 +1,7 @@
 export default {
   Payments: "Плащания",
   "Payment Trend": "Тенденция на плащания",
-  "Monthly payments received over the last 6 months": "Месечни получени плащания за последните 6 месеца",
+  "Cash received on invoices, by month for the last 6 months":
+    "Получени плащания по фактури по месеци за последните 6 месеца",
   "No data available": "Няма налични данни",
 } as const;

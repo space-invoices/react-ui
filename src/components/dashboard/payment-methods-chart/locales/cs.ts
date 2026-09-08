@@ -1,6 +1,6 @@
 export default {
   "Payment Methods": "Způsoby platby",
-  "Breakdown of payments by method": "Rozdělení plateb podle způsobu",
+  "Cash received on invoices, by payment method": "Přijaté platby za faktury podle způsobu platby",
   Cash: "Hotovost",
   "Bank Transfer": "Bankovní převod",
   Card: "Karta",

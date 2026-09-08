@@ -1,9 +1,10 @@
 /**
  * Stats counts hook using the entity stats API.
- * Server-side counting for accurate totals.
+ * Server-side counting for accurate totals; counts include drafts.
  * Sends 4 queries in a single batch request.
  */
 import type { StatsQueryRequest } from "@spaceinvoices/js-sdk";
+import { type DashboardQueryResult, readNumber, resolveUnavailable } from "./dashboard-query-state";
 import { useStatsBatchQuery } from "./use-stats-query";
 
 export const STATS_COUNTS_CACHE_KEY = "dashboard-stats-counts";
@@ -15,7 +16,7 @@ export type StatsCountsData = {
   items: number;
 };
 
-export function useStatsCountsData(entityId: string | undefined) {
+export function useStatsCountsData(entityId: string | undefined): DashboardQueryResult<StatsCountsData> {
   const queries: StatsQueryRequest[] = [
     { metrics: [{ type: "count", alias: "total" }], table: "invoices" },
     { metrics: [{ type: "count", alias: "total" }], table: "estimates" },
@@ -23,17 +24,19 @@ export function useStatsCountsData(entityId: string | undefined) {
     { metrics: [{ type: "count", alias: "total" }], table: "items" },
   ];
 
-  const { data: results, isLoading } = useStatsBatchQuery(entityId, "stats-counts", queries, {
-    select: (batch) => ({
-      invoices: Number(batch[0].data?.[0]?.total) || 0,
-      estimates: Number(batch[1].data?.[0]?.total) || 0,
-      customers: Number(batch[2].data?.[0]?.total) || 0,
-      items: Number(batch[3].data?.[0]?.total) || 0,
+  const query = useStatsBatchQuery(entityId, "stats-counts", queries, {
+    select: (batch): StatsCountsData => ({
+      invoices: readNumber(batch[0].data?.[0], "total"),
+      estimates: readNumber(batch[1].data?.[0], "total"),
+      customers: readNumber(batch[2].data?.[0], "total"),
+      items: readNumber(batch[3].data?.[0], "total"),
     }),
   });
 
   return {
-    data: (results ?? { invoices: 0, estimates: 0, customers: 0, items: 0 }) as StatsCountsData,
-    isLoading,
+    data: query.data,
+    isLoading: query.isLoading,
+    unavailable: resolveUnavailable({ isError: query.isError }),
+    retry: () => void query.refetch(),
   };
 }

@@ -1,6 +1,7 @@
 export default {
   Payments: "Platby",
   "Payment Trend": "Vývoj plateb",
-  "Monthly payments received over the last 6 months": "Měsíční přijaté platby za posledních 6 měsíců",
+  "Cash received on invoices, by month for the last 6 months":
+    "Přijaté platby za faktury po měsících za posledních 6 měsíců",
   "No data available": "Žádná data k dispozici",
 } as const;

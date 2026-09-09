@@ -11,6 +11,7 @@ import { z } from 'zod';
 // Schema for fiscalizeDocument operation
 const fiscalizeDocumentSchemaDefinition = z
   .object({
+    payment_amount: z.union([z.number(), z.null()]),
     business_premise_name: z.union([z.string(), z.null()]),
     electronic_device_name: z.union([z.string(), z.null()]),
     operator_tax_number: z.union([z.string(), z.null()]),

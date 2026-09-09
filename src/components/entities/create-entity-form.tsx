@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { CompanyRegistryResult, CreateEntityBody, Entity } from "@spaceinvoices/js-sdk";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import type { Resolver } from "react-hook-form";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -9,9 +9,18 @@ import { useCompanyRegistrySearch, useIsCountrySupported } from "@/ui/components
 import { FormInput } from "@/ui/components/form";
 import { Button } from "@/ui/components/ui/button";
 import { Checkbox } from "@/ui/components/ui/checkbox";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/ui/components/ui/form";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/ui/components/ui/form";
+import { Select, SelectContent, SelectItem, SelectTrigger } from "@/ui/components/ui/select";
 import { type CreateEntitySchema, createEntitySchema } from "@/ui/generated/schemas";
-import { resolveCountryCodeFromName } from "@/ui/lib/country-names";
+import { ISO_COUNTRY_CODES, resolveCountryCodeFromName } from "@/ui/lib/country-names";
 import { NumericInput } from "@/ui/lib/numeric-input";
 import {
   applyPortugalEntityIssues,
@@ -36,6 +45,8 @@ export type CreateEntityFormProps = {
   locale?: string;
   translationLocale?: string;
   defaultValues?: Partial<CreateEntitySchema>;
+  structuredCountrySelection?: boolean;
+  progressiveDisclosure?: boolean;
   onSuccess?: (data: Entity) => void;
   onError?: (error: unknown) => void;
 };
@@ -52,7 +63,9 @@ const translations = {
     city: "City",
     state: "State",
     "tax-number": "Tax Number",
-    "is-tax-subject": "Tax subject",
+    "is-tax-subject": "Charges tax on invoices",
+    "is-tax-subject-help": "Turn this on if this entity is registered to charge tax.",
+    "add-details": "Add address, tax, and contact details",
     "company-number": "Company Number",
     phone: "Phone",
     email: "Email",
@@ -135,30 +148,66 @@ export function CreateEntityForm({
   locale = "en",
   translationLocale,
   defaultValues: extraDefaults,
+  structuredCountrySelection = false,
+  progressiveDisclosure = false,
   onSuccess,
   onError,
 }: CreateEntityFormProps) {
   const translate = createTranslation({ t, namespace, locale, translationLocale, translations });
 
-  const countryName = countryCode ? new Intl.DisplayNames([locale], { type: "region" }).of(countryCode) : undefined;
+  const countryDisplayNames = useMemo(() => new Intl.DisplayNames([locale], { type: "region" }), [locale]);
+  const countryName = countryCode ? countryDisplayNames.of(countryCode) : undefined;
+  const structuredInitialCountryCode = structuredCountrySelection
+    ? countryCode || resolveCountryCodeFromName(extraDefaults?.country, locale)
+    : countryCode;
+  const structuredInitialCountryName = structuredInitialCountryCode
+    ? countryDisplayNames.of(structuredInitialCountryCode)
+    : undefined;
+  const countryOptions = useMemo(() => {
+    if (!structuredCountrySelection) return [];
+
+    const collator = new Intl.Collator(locale, { usage: "sort", sensitivity: "base" });
+    return ISO_COUNTRY_CODES.map((code) => ({
+      code,
+      name: countryDisplayNames.of(code) || code,
+    })).sort((left, right) => collator.compare(left.name, right.name));
+  }, [countryDisplayNames, locale, structuredCountrySelection]);
+  const countrySelectItems = useMemo(
+    () => countryOptions.map((country) => ({ value: country.code, label: country.name })),
+    [countryOptions],
+  );
 
   // Track whether the country code is still valid (cleared when user edits country name)
-  const [activeCountryCode, setActiveCountryCode] = useState<string | undefined>(countryCode);
+  const [activeCountryCode, setActiveCountryCode] = useState<string | undefined>(structuredInitialCountryCode);
   // Set when the API rejected the create as Portuguese for a country name we could not resolve.
   const [portugalRequiredByServer, setPortugalRequiredByServer] = useState(false);
   // The country as it read when the in-flight create was submitted, to detect a stale response.
   const submittedCountryRef = useRef<string | undefined>(undefined);
-  const portugalCountryName = new Intl.DisplayNames([locale], { type: "region" }).of(PT_COUNTRY_CODE) ?? "Portugal";
-  const autoFilledCountryRef = useRef(countryName);
+  const portugalCountryName = countryDisplayNames.of(PT_COUNTRY_CODE) ?? "Portugal";
+  const autoFilledCountryRef = useRef(structuredInitialCountryName || countryName);
+  const optionalFieldsId = useId();
+  const hasOptionalDefaults = [
+    extraDefaults?.address,
+    extraDefaults?.address_2,
+    extraDefaults?.post_code,
+    extraDefaults?.city,
+    extraDefaults?.state,
+    extraDefaults?.tax_number,
+    extraDefaults?.company_number,
+    extraDefaults?.phone,
+    extraDefaults?.email,
+    extraDefaults?.starting_capital,
+  ].some((value) => value !== undefined && value !== null && String(value).trim() !== "");
+  const [showOptionalFields, setShowOptionalFields] = useState(!progressiveDisclosure || hasOptionalDefaults);
 
   // Company registry autocomplete state
   // showAutocomplete is based on the initial countryCode prop to avoid component switch mid-typing
   const [nameSearch, setNameSearch] = useState("");
-  const { isSupported: isRegistrySupported } = useIsCountrySupported(countryCode || "");
+  const { isSupported: isRegistrySupported } = useIsCountrySupported(structuredInitialCountryCode || "");
   const { data: searchData, isLoading: isSearching } = useCompanyRegistrySearch(activeCountryCode || "", nameSearch);
   const companies = searchData?.data || [];
 
-  const showAutocomplete = !!countryCode && isRegistrySupported;
+  const showAutocomplete = !!structuredInitialCountryCode && isRegistrySupported;
 
   const nameOptions = companies.map((company) => {
     const addressParts = [company.address, company.city].filter(Boolean);
@@ -194,6 +243,12 @@ export function CreateEntityForm({
       is_tax_subject: true,
       environment: environment as "live" | "sandbox" | undefined,
       ...extraDefaults,
+      ...(structuredCountrySelection && structuredInitialCountryCode
+        ? {
+            country: structuredInitialCountryName || structuredInitialCountryCode,
+            country_code: structuredInitialCountryCode,
+          }
+        : {}),
       // defaultName takes priority over extraDefaults.name if provided
       ...(defaultName ? { name: defaultName } : {}),
     },
@@ -204,7 +259,7 @@ export function CreateEntityForm({
   useEffect(() => {
     const nextCountryCode =
       countryValue === autoFilledCountryRef.current
-        ? countryCode
+        ? structuredInitialCountryCode
         : resolveCountryCodeFromName(countryValue, locale) || undefined;
 
     setActiveCountryCode(nextCountryCode);
@@ -216,7 +271,7 @@ export function CreateEntityForm({
     if (!isPortugalCountryCode(nextCountryCode)) {
       setPortugalRequiredByServer(false);
     }
-  }, [countryValue, countryCode, form, locale]);
+  }, [countryValue, form, locale, structuredInitialCountryCode]);
 
   const handleCompanySelect = (company: CompanyRegistryResult) => {
     form.setValue("name", company.name);
@@ -225,6 +280,9 @@ export function CreateEntityForm({
     if (company.city) form.setValue("city", company.city);
     if (company.tax_number) form.setValue("tax_number", company.tax_number);
     form.setValue("company_number", isSafeCompanyNumberFromRegistry(company) ? company.registration_number.trim() : "");
+    // Registry selection populates legal details that must be visible for review
+    // before submission, even when the form starts in progressive mode.
+    setShowOptionalFields(true);
     setNameSearch("");
   };
 
@@ -294,6 +352,7 @@ export function CreateEntityForm({
   // Portugal requires contact details and share capital on every entity — see
   // the Portugal overlay in the API. Other countries keep the lean form.
   const requiresPortugalFields = isPortugalCountryCode(activeCountryCode);
+  const showEntityDetails = requiresPortugalFields || showOptionalFields;
 
   return (
     <Form {...form} locale={translationLocale || locale}>
@@ -351,130 +410,190 @@ export function CreateEntityForm({
           />
         )}
 
-        <FormInput
-          control={form.control}
-          name="country"
-          label={translate("country")}
-          placeholder={translate("country")}
-          required
-        />
-
-        <FormInput
-          control={form.control}
-          name="address"
-          label={translate("address")}
-          placeholder={translate("address")}
-          required={requiresPortugalFields}
-        />
-
-        <FormInput
-          control={form.control}
-          name="address_2"
-          label={translate("address-2")}
-          placeholder={translate("address-2")}
-        />
-
-        <div className="grid grid-cols-2 gap-4">
-          <FormInput
-            control={form.control}
-            name="post_code"
-            label={translate("post-code")}
-            placeholder={requiresPortugalFields ? "1000-001" : translate("post-code")}
-            required={requiresPortugalFields}
-          />
-          <FormInput
-            control={form.control}
-            name="city"
-            label={translate("city")}
-            placeholder={translate("city")}
-            required={requiresPortugalFields}
-          />
-        </div>
-
-        <FormInput
-          control={form.control}
-          name="state"
-          label={translate("state")}
-          placeholder={translate("state")}
-          required={requiresPortugalFields}
-        />
-
-        {requiresPortugalFields && (
-          <div className="grid grid-cols-2 gap-4">
-            <FormInput
-              control={form.control}
-              name="phone"
-              label={translate("phone")}
-              placeholder="+351912345678"
-              type="tel"
-              required
-            />
-            <FormInput
-              control={form.control}
-              name="email"
-              label={translate("email")}
-              placeholder={translate("email")}
-              type="email"
-              required
-            />
-          </div>
-        )}
-
-        <div className="grid grid-cols-[1fr_auto] items-end gap-4">
-          <FormInput
-            control={form.control}
-            name="tax_number"
-            label={translate("tax-number")}
-            placeholder={translate("tax-number")}
-            disableAutofill
-            required={requiresPortugalFields}
-          />
+        {structuredCountrySelection ? (
           <FormField
             control={form.control}
-            name="is_tax_subject"
-            render={({ field }) => (
-              <FormItem className="flex flex-row items-center space-x-2 space-y-0 pb-2">
-                <FormControl>
-                  <Checkbox checked={field.value} onCheckedChange={field.onChange} />
-                </FormControl>
-                <FormLabel className="font-normal">{translate("is-tax-subject")}</FormLabel>
-              </FormItem>
-            )}
-          />
-        </div>
-
-        <FormInput
-          control={form.control}
-          name="company_number"
-          label={translate("company-number")}
-          placeholder={translate("company-number")}
-          disableAutofill
-          required={requiresPortugalFields}
-        />
-
-        {requiresPortugalFields && (
-          <FormField
-            control={form.control}
-            name="starting_capital"
+            name="country"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>
-                  {translate("starting-capital")}
+                  {translate("country")}
                   <span className="ml-1 text-red-500">*</span>
                 </FormLabel>
-                <FormControl>
-                  <NumericInput
-                    {...field}
-                    value={field.value ?? ""}
-                    onValueChange={field.onChange}
-                    inputLocale={locale}
-                    placeholder={translate("starting-capital")}
-                  />
-                </FormControl>
+                <Select<string>
+                  items={countrySelectItems}
+                  value={activeCountryCode || ""}
+                  onValueChange={(nextCountryCode) => {
+                    if (!nextCountryCode) return;
+                    const nextCountryName = countryDisplayNames.of(nextCountryCode) || nextCountryCode;
+                    field.onChange(nextCountryName);
+                  }}
+                >
+                  <FormControl>
+                    <SelectTrigger className="w-full" aria-required="true">
+                      <span className={activeCountryCode ? "truncate" : "truncate text-muted-foreground"}>
+                        {countryOptions.find((country) => country.code === activeCountryCode)?.name ||
+                          translate("country")}
+                      </span>
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {countryOptions.map((country) => (
+                      <SelectItem key={country.code} value={country.code}>
+                        {country.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <FormMessage />
               </FormItem>
             )}
           />
+        ) : (
+          <FormInput
+            control={form.control}
+            name="country"
+            label={translate("country")}
+            placeholder={translate("country")}
+            required
+          />
+        )}
+
+        {!showEntityDetails && (
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            aria-expanded="false"
+            aria-controls={optionalFieldsId}
+            onClick={() => setShowOptionalFields(true)}
+          >
+            {translate("add-details")}
+          </Button>
+        )}
+
+        <FormField
+          control={form.control}
+          name="is_tax_subject"
+          render={({ field }) => (
+            <FormItem>
+              <div className="flex flex-row items-center space-x-2">
+                <FormControl>
+                  <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                </FormControl>
+                <FormLabel className="font-normal">{translate("is-tax-subject")}</FormLabel>
+              </div>
+              <FormDescription>{translate("is-tax-subject-help")}</FormDescription>
+            </FormItem>
+          )}
+        />
+
+        {showEntityDetails && (
+          <div id={optionalFieldsId} className="space-y-4">
+            <FormInput
+              control={form.control}
+              name="address"
+              label={translate("address")}
+              placeholder={translate("address")}
+              required={requiresPortugalFields}
+            />
+
+            <FormInput
+              control={form.control}
+              name="address_2"
+              label={translate("address-2")}
+              placeholder={translate("address-2")}
+            />
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <FormInput
+                control={form.control}
+                name="post_code"
+                label={translate("post-code")}
+                placeholder={requiresPortugalFields ? "1000-001" : translate("post-code")}
+                required={requiresPortugalFields}
+              />
+              <FormInput
+                control={form.control}
+                name="city"
+                label={translate("city")}
+                placeholder={translate("city")}
+                required={requiresPortugalFields}
+              />
+            </div>
+
+            <FormInput
+              control={form.control}
+              name="state"
+              label={translate("state")}
+              placeholder={translate("state")}
+              required={requiresPortugalFields}
+            />
+
+            {requiresPortugalFields && (
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <FormInput
+                  control={form.control}
+                  name="phone"
+                  label={translate("phone")}
+                  placeholder="+351912345678"
+                  type="tel"
+                  required
+                />
+                <FormInput
+                  control={form.control}
+                  name="email"
+                  label={translate("email")}
+                  placeholder={translate("email")}
+                  type="email"
+                  required
+                />
+              </div>
+            )}
+
+            <FormInput
+              control={form.control}
+              name="tax_number"
+              label={translate("tax-number")}
+              placeholder={translate("tax-number")}
+              disableAutofill
+              required={requiresPortugalFields}
+            />
+
+            <FormInput
+              control={form.control}
+              name="company_number"
+              label={translate("company-number")}
+              placeholder={translate("company-number")}
+              disableAutofill
+              required={requiresPortugalFields}
+            />
+
+            {requiresPortugalFields && (
+              <FormField
+                control={form.control}
+                name="starting_capital"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      {translate("starting-capital")}
+                      <span className="ml-1 text-red-500">*</span>
+                    </FormLabel>
+                    <FormControl>
+                      <NumericInput
+                        {...field}
+                        value={field.value ?? ""}
+                        onValueChange={field.onChange}
+                        inputLocale={locale}
+                        placeholder={translate("starting-capital")}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+          </div>
         )}
 
         <Button

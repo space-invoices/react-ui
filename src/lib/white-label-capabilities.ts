@@ -5,6 +5,7 @@ export type WhiteLabelControlKind = "capability" | "action";
 
 export type WhiteLabelCapabilityId =
   | "developer_tools"
+  | "ai_assistants"
   | "multi_entity"
   | "email.custom_sender"
   | "documents.content_translations"
@@ -108,6 +109,14 @@ export const WHITE_LABEL_CAPABILITIES: WhiteLabelCapabilityDefinition[] = [
     description: "Hide account-level developer surfaces such as request logs and webhook logs.",
     group: "workspace",
     affectedSurfaces: ["account pages", "developer routes", "sidebar developer section"],
+  },
+  {
+    kind: "capability",
+    id: "ai_assistants",
+    label: "AI assistants",
+    description: "Allow white-label entity users to connect Claude and other MCP-compatible assistants.",
+    group: "workspace",
+    affectedSurfaces: ["integrations", "OAuth consent", "MCP"],
   },
   {
     kind: "capability",

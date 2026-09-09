@@ -11,9 +11,6 @@ import { z } from 'zod';
 // Schema for sendEInvoice operation
 const sendEInvoiceSchemaDefinition = z
   .object({
-    recipient_peppol_id: z.string().min(1),
-    recipient_scheme_id: z.string().min(1).max(10),
-    recipient_name: z.string().min(1).max(255),
     recipient_company_number: z.union([z.string(), z.null()]),
     recipient_routing_identifier: z.union([z.string(), z.null()]),
     delivery_address: z.union([
@@ -26,6 +23,9 @@ const sendEInvoiceSchemaDefinition = z
       }),
       z.null(),
     ]),
+    recipient_peppol_id: z.union([z.string(), z.null()]),
+    recipient_scheme_id: z.union([z.string(), z.null()]),
+    recipient_name: z.union([z.string(), z.null()]),
   })
   .partial();
 

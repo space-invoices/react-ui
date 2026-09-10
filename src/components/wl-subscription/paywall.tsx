@@ -9,6 +9,7 @@ import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../ui/card";
 import { Switch } from "../ui/switch";
+import { ExternalBillingNotice } from "./external-billing-notice";
 import { getPeppolMeterPricing, hasPeppolPlanAccess } from "./peppol-meter";
 import { getPlanPriceCents } from "./pricing";
 
@@ -139,12 +140,56 @@ function getPeppolMeterFeature(plan: WhiteLabelPlan, t: ReturnType<typeof create
  * or for paid-only configs with no active subscription.
  * Displays plan cards with monthly/yearly toggle and checkout buttons.
  */
-export function Paywall({ t: translateFn, namespace, locale, translationLocale, onCheckoutRequested }: PaywallProps) {
+export function Paywall({
+  t: translateFn,
+  namespace,
+  locale,
+  translationLocale,
+  onCheckoutRequested,
+  onManageExternalBilling,
+}: PaywallProps) {
   const t = createPaywallTranslation({ t: translateFn, namespace, locale, translationLocale });
-  const { subscription, isTrialExpired, availablePlans, createCheckout } = useWLSubscription();
+  const {
+    subscription,
+    isTrialExpired,
+    availablePlans,
+    createCheckout,
+    externalBillingProvider,
+    isExternalBillingResolved,
+  } = useWLSubscription();
   const [isYearly, setIsYearly] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState<string | null>(null);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
+
+  // Until the active entity's own billing ownership is loaded, an unknown owner must not be read as
+  // this app's own: neither checkout nor the external explanation is known to be correct yet, so the
+  // paywall waits instead of offering plans it may not be allowed to sell.
+  if (!isExternalBillingResolved) {
+    return (
+      <div className="flex w-full flex-col items-center px-4 py-6 lg:py-8">
+        <div className="flex justify-center py-8" data-testid="wl-paywall-pending">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" aria-hidden="true" />
+        </div>
+      </div>
+    );
+  }
+
+  // Externally billed entities never get in-app plan purchasing: the owning platform decides
+  // charges, approval, and cancellation, even while its setup is incomplete or was declined.
+  if (externalBillingProvider) {
+    return (
+      <div className="flex w-full flex-col items-center px-4 py-6 lg:py-8">
+        <ExternalBillingNotice
+          provider={externalBillingProvider}
+          onManage={onManageExternalBilling}
+          t={translateFn}
+          namespace={namespace}
+          locale={locale}
+          translationLocale={translationLocale}
+        />
+      </div>
+    );
+  }
 
   // Only show paid plans
   const paidPlans = [...availablePlans].filter((p) => !p.is_free).sort((a, b) => a.display_order - b.display_order);
@@ -236,6 +281,8 @@ type PaywallProps = ComponentTranslationProps & {
     checkoutUrl: string;
     needsCard: boolean;
   }) => boolean | Promise<boolean>;
+  /** Navigation to the external billing platform's setup/management screen (app-specific). */
+  onManageExternalBilling?: () => void;
 };
 
 // ============================================

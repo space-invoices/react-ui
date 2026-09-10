@@ -18,6 +18,8 @@ type LockedFeatureProps = {
   showUpgradeModal?: boolean;
   /** Custom render for locked state */
   lockedRender?: () => ReactNode;
+  /** Navigation to the external billing platform's setup/management screen (app-specific). */
+  onManageExternalBilling?: () => void;
 } & ComponentTranslationProps;
 
 type TranslateValues = Record<string, string | number>;
@@ -94,6 +96,7 @@ export function LockedFeature({
   lockedMessage,
   showUpgradeModal = true,
   lockedRender,
+  onManageExternalBilling,
   t: translateFn,
   namespace,
   locale,
@@ -134,6 +137,7 @@ export function LockedFeature({
             isOpen={isModalOpen}
             onClose={() => setIsModalOpen(false)}
             feature={feature}
+            onManageExternalBilling={onManageExternalBilling}
             t={translateFn}
             namespace={namespace}
             locale={locale}
@@ -174,6 +178,7 @@ export function LockedFeature({
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
           feature={feature}
+          onManageExternalBilling={onManageExternalBilling}
           t={translateFn}
           namespace={namespace}
           locale={locale}

@@ -35,6 +35,11 @@ export type WLBillingCurrencyCode = "EUR" | "USD";
 export type WLBillingProfile = "default" | "us_company";
 export type WLPaymentProvider = "stripe" | "paypal" | "bank";
 export type WLStripePublishableKeyKind = "default" | "us_company";
+/**
+ * Platform that owns charges, approval, and cancellation for an entity subscription outside this app.
+ * Ownership is durable: it also covers entities whose external setup is incomplete or was declined.
+ */
+export type WLExternalBillingProvider = "shopify";
 
 export type WhiteLabelPlan = {
   id: string;
@@ -93,6 +98,16 @@ export type CurrentSubscription = {
   usage: UsageStats;
 };
 
+/**
+ * Resolve the external billing owner of a subscription. Only the API-provided ownership flag decides;
+ * never infer ownership from user email, URL, or query parameters.
+ */
+export function getExternalBillingProvider(
+  subscription: Pick<CurrentSubscription, "shopify_managed"> | null | undefined,
+): WLExternalBillingProvider | null {
+  return subscription?.shopify_managed === true ? "shopify" : null;
+}
+
 // Known gated features for Apollo
 export type GatedFeature =
   | "furs"
@@ -125,6 +140,14 @@ type WLSubscriptionContextType = {
   isTrialExpired: boolean;
   trialDaysRemaining: number | null;
   needsPayment: boolean;
+  /** Set when charges, approval, and cancellation happen on another platform (no in-app checkout). */
+  externalBillingProvider: WLExternalBillingProvider | null;
+  /**
+   * True only when the published subscription, plans, and billing ownership were loaded for the
+   * currently active entity. While a different entity is still loading this stays false, so purchase
+   * controls must stay hidden instead of reusing the previous entity's ownership.
+   */
+  isExternalBillingResolved: boolean;
 
   // Feature/limit checks
   hasFeature: (feature: GatedFeature | string) => boolean;
@@ -200,6 +223,20 @@ const DEFAULT_SUBSCRIPTION: CurrentSubscription = {
   },
 };
 
+const EMPTY_PLANS: WhiteLabelPlan[] = [];
+
+/**
+ * Published subscription data together with the entity scope it was loaded for. Ownership, plans, and
+ * purchase state are per entity, so data loaded for one entity must never be read while another
+ * entity is active - not even for the moment its own response is still in flight.
+ */
+type LoadedSubscription = {
+  /** Scope the data below belongs to; `null` until the current scope has resolved once. */
+  scopeKey: string | null;
+  subscription: CurrentSubscription;
+  availablePlans: WhiteLabelPlan[];
+};
+
 // ============================================
 // PROVIDER
 // ============================================
@@ -222,10 +259,21 @@ export function WLSubscriptionProvider({ children, apiBaseUrl }: WLSubscriptionP
   const whiteLabel = useWhiteLabel();
 
   const entityId = entitiesContext?.activeEntity?.id ?? null;
-  const [subscription, setSubscription] = useState<CurrentSubscription>(DEFAULT_SUBSCRIPTION);
-  const [availablePlans, setAvailablePlans] = useState<WhiteLabelPlan[]>([]);
+  // Identity of the data scope: which entity, on which brand and API, the published data belongs to.
+  // The access token is deliberately excluded so an ordinary token refresh keeps the loaded entity's
+  // data visible instead of blanking the app.
+  const dataScopeKey = `${apiBaseUrl}|${whiteLabel.slug ?? ""}|${entityId ?? ""}`;
+  const [loaded, setLoaded] = useState<LoadedSubscription>({
+    scopeKey: null,
+    subscription: DEFAULT_SUBSCRIPTION,
+    availablePlans: EMPTY_PLANS,
+  });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // Ownership is only known once this entity's own response has been published.
+  const isExternalBillingResolved = loaded.scopeKey === dataScopeKey;
+  const subscription = isExternalBillingResolved ? loaded.subscription : DEFAULT_SUBSCRIPTION;
+  const availablePlans = isExternalBillingResolved ? loaded.availablePlans : EMPTY_PLANS;
   const scope = useMemo(
     () => ({ apiBaseUrl, entityId, accessToken, isLoading: whiteLabel.isLoading, slug: whiteLabel.slug }),
     [apiBaseUrl, entityId, accessToken, whiteLabel.isLoading, whiteLabel.slug],
@@ -246,12 +294,20 @@ export function WLSubscriptionProvider({ children, apiBaseUrl }: WLSubscriptionP
     }
 
     if (whiteLabel.slug === "space-invoices" || !entityId || !accessToken) {
-      setSubscription(DEFAULT_SUBSCRIPTION);
-      setAvailablePlans([]);
+      setLoaded({ scopeKey: dataScopeKey, subscription: DEFAULT_SUBSCRIPTION, availablePlans: EMPTY_PLANS });
       setError(null);
       setIsLoading(false);
       return;
     }
+
+    // A response only ever replaces data for its own entity scope; plans already loaded for that same
+    // scope survive an ordinary refresh, while another entity's plans are dropped.
+    const publishSubscription = (next: CurrentSubscription) =>
+      setLoaded((previous) => ({
+        scopeKey: dataScopeKey,
+        subscription: next,
+        availablePlans: previous.scopeKey === dataScopeKey ? previous.availablePlans : EMPTY_PLANS,
+      }));
 
     try {
       setIsLoading(true);
@@ -271,10 +327,10 @@ export function WLSubscriptionProvider({ children, apiBaseUrl }: WLSubscriptionP
       if (subResponse.ok) {
         const subData = await subResponse.json();
         if (!isCurrent()) return;
-        setSubscription(subData);
+        publishSubscription(subData);
       } else if (subResponse.status === 404) {
         // No WL subscription = use default (unlimited)
-        setSubscription(DEFAULT_SUBSCRIPTION);
+        publishSubscription(DEFAULT_SUBSCRIPTION);
       } else {
         throw new Error(`Failed to fetch subscription: ${subResponse.status}`);
       }
@@ -289,16 +345,24 @@ export function WLSubscriptionProvider({ children, apiBaseUrl }: WLSubscriptionP
       if (plansResponse.ok) {
         const plansData = await plansResponse.json();
         if (!isCurrent()) return;
-        setAvailablePlans(plansData.plans || []);
+        // Plans belong to the same scope as the subscription published just above.
+        setLoaded((previous) =>
+          previous.scopeKey === dataScopeKey
+            ? { ...previous, availablePlans: plansData.plans || EMPTY_PLANS }
+            : previous,
+        );
       }
     } catch (err) {
       if (!isCurrent()) return;
+      // A failed read says nothing about who bills this entity, so the last successfully loaded
+      // scope is kept: an entity that never loaded stays unresolved (purchase UI keeps waiting)
+      // and an entity already known to be externally billed keeps that ownership. Publishing the
+      // default here would turn a network error into "billed in this app, ready to buy".
       setError(err instanceof Error ? err.message : "Failed to fetch subscription");
-      setSubscription(DEFAULT_SUBSCRIPTION);
     } finally {
       if (isCurrent()) setIsLoading(false);
     }
-  }, [apiBaseUrl, entityId, accessToken, whiteLabel.isLoading, whiteLabel.slug, scope]);
+  }, [apiBaseUrl, entityId, accessToken, whiteLabel.isLoading, whiteLabel.slug, scope, dataScopeKey]);
 
   useEffect(() => {
     activeScopeRef.current = scope;
@@ -473,6 +537,7 @@ export function WLSubscriptionProvider({ children, apiBaseUrl }: WLSubscriptionP
     new Date(subscription.trial_ends_at) <= new Date();
 
   const trialDaysRemaining = subscription.trial_days_remaining;
+  const externalBillingProvider = getExternalBillingProvider(subscription);
 
   // needsPayment: trial expired, or no free plan and no active Stripe subscription
   const needsPayment =
@@ -494,6 +559,8 @@ export function WLSubscriptionProvider({ children, apiBaseUrl }: WLSubscriptionP
       isTrialExpired: isTrialExpiredState,
       trialDaysRemaining,
       needsPayment,
+      externalBillingProvider,
+      isExternalBillingResolved,
       hasFeature,
       isOverLimit,
       getUsagePercentage,
@@ -512,6 +579,8 @@ export function WLSubscriptionProvider({ children, apiBaseUrl }: WLSubscriptionP
       isTrialExpiredState,
       trialDaysRemaining,
       needsPayment,
+      externalBillingProvider,
+      isExternalBillingResolved,
       hasFeature,
       isOverLimit,
       getUsagePercentage,

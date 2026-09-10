@@ -79,12 +79,19 @@ export function createResourceHooks<
    * Hook for creating a new resource
    */
   function useCreateResource<TError = Error>(
-    options: ResourceMutationHookOptions<TResource, TError, TCreateData> = {},
+    options: ResourceMutationHookOptions<TResource, TError, TCreateData> & {
+      /**
+       * Replaces the SDK create call for this hook instance. The surrounding flow can own which
+       * endpoint creates the resource (for example a private onboarding endpoint that also records
+       * provenance) while cache updates, pending state and error handling stay with this hook.
+       */
+      create?: (data: TCreateData, options?: SDKMethodOptions) => Promise<TResource>;
+    } = {},
   ) {
     const queryClient = useQueryClient();
 
     return useResourceMutation<TResource, TError, TCreateData>({
-      mutationFn: methods.create,
+      mutationFn: options.create ?? methods.create,
       operation: "create",
       cacheKey,
       entityId: options.entityId,

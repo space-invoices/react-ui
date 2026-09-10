@@ -8,6 +8,7 @@ import { type GatedFeature, useWLSubscription, type WhiteLabelPlan } from "../..
 import { Button } from "../ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "../ui/dialog";
 import { Switch } from "../ui/switch";
+import { ExternalBillingNotice } from "./external-billing-notice";
 import { getPeppolMeterPricing, hasPeppolPlanAccess } from "./peppol-meter";
 import { getPlanPriceCents } from "./pricing";
 
@@ -18,6 +19,8 @@ type UpgradeModalProps = {
   feature?: GatedFeature;
   /** Optional callback when upgrade is clicked */
   onUpgrade?: (planSlug: string) => void;
+  /** Navigation to the external billing platform's setup/management screen (app-specific). */
+  onManageExternalBilling?: () => void;
 } & ComponentTranslationProps;
 
 type TranslateValues = Record<string, string | number>;
@@ -132,16 +135,93 @@ export function UpgradeModal({
   onClose,
   feature,
   onUpgrade,
+  onManageExternalBilling,
   t: translateFn,
   namespace,
   locale,
   translationLocale,
 }: UpgradeModalProps) {
-  const { plan: currentPlan, availablePlans, createCheckout } = useWLSubscription();
+  const {
+    plan: currentPlan,
+    availablePlans,
+    createCheckout,
+    externalBillingProvider,
+    isExternalBillingResolved,
+  } = useWLSubscription();
   const [isRedirecting, setIsRedirecting] = useState<string | null>(null);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [isYearly, setIsYearly] = useState(false);
   const t = createUpgradeTranslation({ t: translateFn, namespace, locale, translationLocale });
+
+  // Until the active entity's own billing ownership is loaded, neither checkout nor the external
+  // explanation is known to be correct, so the dialog waits instead of offering a purchase.
+  if (!isExternalBillingResolved) {
+    return (
+      <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+        <DialogContent className="sm:max-w-xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-primary" />
+              {t("wl-subscription.upgrade-modal.title", {
+                defaultValue: "Upgrade your plan",
+              })}
+            </DialogTitle>
+            <DialogDescription>
+              {t("wl-subscription.upgrade-modal.description.default", {
+                defaultValue: "Get access to more features and higher limits.",
+              })}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-center py-8" data-testid="wl-upgrade-modal-pending">
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" aria-hidden="true" />
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  // Externally billed entities get an explanation and the app-provided route instead of checkout.
+  if (externalBillingProvider) {
+    return (
+      <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+        <DialogContent className="sm:max-w-xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-primary" />
+              {t("wl-subscription.upgrade-modal.title", {
+                defaultValue: "Upgrade your plan",
+              })}
+            </DialogTitle>
+            <DialogDescription>
+              {feature
+                ? t("wl-subscription.upgrade-modal.description.with-feature", {
+                    feature: getFeatureDisplayName(feature, t),
+                    defaultValue: "Unlock {{feature}} and more with an upgraded plan.",
+                  })
+                : t("wl-subscription.upgrade-modal.description.default", {
+                    defaultValue: "Get access to more features and higher limits.",
+                  })}
+            </DialogDescription>
+          </DialogHeader>
+          <ExternalBillingNotice
+            provider={externalBillingProvider}
+            onManage={
+              onManageExternalBilling
+                ? () => {
+                    onClose();
+                    onManageExternalBilling();
+                  }
+                : undefined
+            }
+            t={translateFn}
+            namespace={namespace}
+            locale={locale}
+            translationLocale={translationLocale}
+          />
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   // Sort plans by display order
   const sortedPlans = [...availablePlans].sort((a, b) => a.display_order - b.display_order);

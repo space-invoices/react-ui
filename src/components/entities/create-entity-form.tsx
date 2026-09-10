@@ -47,6 +47,14 @@ export type CreateEntityFormProps = {
   defaultValues?: Partial<CreateEntitySchema>;
   structuredCountrySelection?: boolean;
   progressiveDisclosure?: boolean;
+  /**
+   * Creates the entity instead of the ordinary create call, for flows whose owner decides where an
+   * organization must be created (for example an onboarding endpoint that records its provenance in
+   * the same transaction). Receives the same validated body and returns the created entity, so form
+   * validation, pending state, error recovery and the success reset are unchanged. Left out, the
+   * form creates entities the ordinary way; the form itself holds no flow-specific policy.
+   */
+  createEntityRequest?: (data: CreateEntityBody) => Promise<Entity>;
   onSuccess?: (data: Entity) => void;
   onError?: (error: unknown) => void;
 };
@@ -150,6 +158,7 @@ export function CreateEntityForm({
   defaultValues: extraDefaults,
   structuredCountrySelection = false,
   progressiveDisclosure = false,
+  createEntityRequest,
   onSuccess,
   onError,
 }: CreateEntityFormProps) {
@@ -296,6 +305,7 @@ export function CreateEntityForm({
   const { mutate: createEntity, isPending } = useCreateEntity({
     entityId: null,
     accountId,
+    create: createEntityRequest,
     onSuccess: handleSuccess,
     onError: (error, _variables, _context) => {
       // The server resolves country names we cannot, so it can decide the entity is

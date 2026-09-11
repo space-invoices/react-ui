@@ -6,6 +6,8 @@ export default {
   Cash: "Hotovost",
   "Bank Transfer": "Bankovní převod",
   Card: "Karta",
+  "Credit Card": "Kreditní karta",
+  "Debit Card": "Debetní karta",
   Check: "Šek",
   PayPal: "PayPal",
   Coupon: "Kupón",

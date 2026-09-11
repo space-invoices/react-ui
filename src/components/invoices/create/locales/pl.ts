@@ -53,6 +53,8 @@ export default {
   Cash: "Gotówka",
   "Bank Transfer": "Przelew bankowy",
   Card: "Karta",
+  "Credit Card": "Karta kredytowa",
+  "Debit Card": "Karta debetowa",
   Check: "Czek",
   Other: "Inne",
   Note: "Uwaga",
@@ -254,4 +256,7 @@ export default {
     "Kliknij, aby wyłączyć odwrotne obciążenie z artykułu 76.a dla tej faktury",
   "Click to enable Article 76.a reverse charge for this invoice":
     "Kliknij, aby włączyć odwrotne obciążenie z artykułu 76.a dla tej faktury",
+  "Short fiscal designation, up to 200 characters. Longer wording goes in the description.":
+    "Krótkie oznaczenie podatkowe, do 200 znaków. Dłuższy tekst wpisz w opisie.",
+  "Leave empty and the export uses UN.": "Pozostaw puste, a eksport użyje UN.",
 } as const;

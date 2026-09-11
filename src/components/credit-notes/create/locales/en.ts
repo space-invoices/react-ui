@@ -42,6 +42,8 @@ export default {
   Cash: "Cash",
   "Bank Transfer": "Bank Transfer",
   Card: "Card",
+  "Credit Card": "Credit Card",
+  "Debit Card": "Debit Card",
   Check: "Check",
   Other: "Other",
   Note: "Note",
@@ -114,4 +116,6 @@ export default {
   From: "From",
   To: "To",
   "Original invoice cannot be credited": "Original invoice cannot be credited",
+  "Portugal credit notes are issued to the customer on the original document.":
+    "Portugal credit notes are issued to the customer on the original document.",
 } as const;

@@ -46,6 +46,8 @@ export default {
   Cash: "В брой",
   "Bank Transfer": "Банков превод",
   Card: "Карта",
+  "Credit Card": "Кредитна карта",
+  "Debit Card": "Дебитна карта",
   Check: "Чек",
   Other: "Друго",
   Note: "Бележка",
@@ -118,4 +120,6 @@ export default {
   From: "От",
   To: "До",
   "Original invoice cannot be credited": "Оригиналната фактура не може да бъде кредитирана",
+  "Portugal credit notes are issued to the customer on the original document.":
+    "Кредитните известия за Португалия се издават на клиента от оригиналния документ.",
 } as const;

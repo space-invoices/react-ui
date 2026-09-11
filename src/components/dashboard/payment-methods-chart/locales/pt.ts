@@ -4,6 +4,8 @@ export default {
   Cash: "Dinheiro",
   "Bank Transfer": "Transferencia bancaria",
   Card: "Cartao",
+  "Credit Card": "Cartão de crédito",
+  "Debit Card": "Cartão de débito",
   Check: "Cheque",
   "Credit Note": "Nota de credito",
   Advance: "Adiantamento",

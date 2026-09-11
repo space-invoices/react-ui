@@ -23,6 +23,8 @@ export default {
   Cash: "Sularaha",
   "Bank Transfer": "Pangaülekanne",
   Card: "Kaart",
+  "Credit Card": "Krediitkaart",
+  "Debit Card": "Deebetkaart",
   Check: "Tšekk",
   Other: "Muu",
   Premise: "Müügikoht",

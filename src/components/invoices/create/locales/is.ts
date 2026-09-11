@@ -53,6 +53,8 @@ export default {
   Cash: "Reiðufé",
   "Bank Transfer": "Bankamillifærsla",
   Card: "Kort",
+  "Credit Card": "Kreditkort",
+  "Debit Card": "Debetkort",
   Check: "Ávísun",
   Other: "Annað",
   Note: "Athugasemd",
@@ -260,4 +262,7 @@ export default {
     "Smelltu til að slökkva á öfugri skattskyldu samkvæmt grein 76.a fyrir þennan reikning",
   "Click to enable Article 76.a reverse charge for this invoice":
     "Smelltu til að virkja öfuga skattskyldu samkvæmt grein 76.a fyrir þennan reikning",
+  "Short fiscal designation, up to 200 characters. Longer wording goes in the description.":
+    "Stutt skattaleg auðkenning, allt að 200 stafir. Lengri texti fer í lýsinguna.",
+  "Leave empty and the export uses UN.": "Skildu eftir autt og þá notar útflutningurinn UN.",
 } as const;

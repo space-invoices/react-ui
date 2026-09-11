@@ -316,14 +316,42 @@ export default {
 
   // Portugal entity details
   "Portugal Details": "Portugalin tiedot",
-  "Portuguese law requires these details on every entity":
-    "Portugalin laki edellyttää nämä tiedot jokaiselta yritykseltä",
+  "Portuguese invoices carry these details. What is required depends on your legal form.":
+    "Portugalilaisissa laskuissa on nämä tiedot. Se, mitkä niistä ovat pakollisia, riippuu yhtiömuodostasi.",
+  "Legal Form": "Yhtiömuoto",
+  "Select your legal form": "Valitse yhtiömuoto",
+  "Decides which registration and capital details Portugal asks you for":
+    "Määrittää, mitä rekisteröinti- ja pääomatietoja Portugali sinulta vaatii",
+  "Individual professional or sole trader": "Itsenäinen ammatinharjoittaja tai yksityinen elinkeinonharjoittaja",
+  "Private limited company (Lda.)": "Yksityinen osakeyhtiö (Lda.)",
+  "Public limited company (S.A.)": "Julkinen osakeyhtiö (S.A.)",
+  "Partnership limited by shares": "Osakkeisiin perustuva kommandiittiyhtiö",
+  "Other company": "Muu yhtiö",
   "Company Number": "Y-tunnus",
-  "Company registration number (NIPC)": "Yrityksen rekisterinumero (NIPC)",
+  "Digits and slashes only, as shown on your registration.":
+    "Vain numeroita ja kauttaviivoja, kuten rekisteröinnissäsi.",
+  "Registry Office": "Rekisteriviranomainen",
+  "Commercial registry where the company is registered": "Kaupparekisteri, johon yhtiö on merkitty",
   Phone: "Puhelin",
-  "International format, including the country code": "Kansainvälinen muoto, mukaan lukien maatunnus",
+  "Enter 912 345 678 for Portugal, or include + and the country code for another country.":
+    "Anna Portugalin numero muodossa 912 345 678 tai lisää + ja maatunnus muun maan numeroon.",
+  "Enter 7 digits; the hyphen is added automatically.": "Anna 7 numeroa; väliviiva lisätään automaattisesti.",
+  "9 digits. You can paste it with spaces or a PT prefix.":
+    "9 numeroa. Voit liittää sen välilyöntien tai PT-etuliitteen kanssa.",
   "Share Capital": "Osakepääoma",
   "Registered share capital of the company": "Yrityksen rekisteröity osakepääoma",
+  "Conditional company disclosures": "Ehdolliset yhtiötiedot",
+  "Leave these empty unless one of them applies to your company.":
+    "Jätä nämä kentät tyhjiksi, ellei jokin niistä koske yhtiötäsi.",
+  "Paid-up Capital": "Maksettu pääoma",
+  "Only needed when less than the share capital has actually been paid in":
+    "Tarvitaan vain, jos osakepääomasta on tosiasiassa maksettu vähemmän",
+  Equity: "Oma pääoma",
+  "Only needed when equity has fallen to half the share capital or less. Use the figure from your last approved balance sheet.":
+    "Tarvitaan vain, jos oma pääoma on laskenut puoleen osakepääomasta tai sen alle. Käytä viimeisimmän vahvistetun taseen lukua.",
+  "Company is in liquidation": "Yhtiö on selvitystilassa",
+  "Documents must say so while the company is being wound up":
+    "Asiakirjoissa on mainittava tästä niin kauan kuin yhtiötä puretaan",
   // Tax rule sections and Slovenian Article 76.a
   "Calculation settings": "Laskenta-asetukset",
   "Choose how prices, discounts, and taxes are calculated on documents.":

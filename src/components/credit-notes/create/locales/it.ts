@@ -46,6 +46,8 @@ export default {
   Cash: "Contanti",
   "Bank Transfer": "Bonifico bancario",
   Card: "Carta",
+  "Credit Card": "Carta di credito",
+  "Debit Card": "Carta di debito",
   Check: "Assegno",
   Other: "Altro",
   // Note field
@@ -129,4 +131,6 @@ export default {
   From: "Da",
   To: "A",
   "Original invoice cannot be credited": "La fattura originale non può essere stornata",
+  "Portugal credit notes are issued to the customer on the original document.":
+    "Le note di credito portoghesi vengono emesse al cliente del documento originale.",
 } as const;

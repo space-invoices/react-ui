@@ -11,6 +11,7 @@ import {
   ChartTooltipContent,
 } from "@/ui/components/ui/chart";
 import { formatCurrencyValue } from "@/ui/lib/formatting";
+import { getDocumentPaymentTypeLabelKey } from "@/ui/lib/payment-types";
 import { createTranslation } from "@/ui/lib/translation";
 import { ChartEmptyState } from "../chart-empty-state";
 import { LoadingCard } from "../loading-card";
@@ -66,20 +67,15 @@ const COLORS: Record<string, string> = {
   cash: "var(--chart-1)",
   bank_transfer: "var(--chart-2)",
   card: "var(--chart-3)",
+  // The card products a country such as Portugal records instead of the generic method
+  // share the card slice colour so the chart still reads as one card family. The theme
+  // defines --chart-1 through --chart-7, so no new variable is introduced here.
+  credit_card: "var(--chart-3)",
+  debit_card: "var(--chart-3)",
   check: "var(--chart-4)",
   credit_note: "var(--chart-5)",
   advance: "var(--chart-6)",
   other: "var(--chart-7)",
-};
-
-const PAYMENT_TYPE_LABELS: Record<string, string> = {
-  cash: "Cash",
-  bank_transfer: "Bank Transfer",
-  card: "Card",
-  check: "Check",
-  credit_note: "Credit Note",
-  advance: "Advance",
-  other: "Other",
 };
 
 export function PaymentMethodsChart(props: PaymentMethodsChartProps) {
@@ -147,7 +143,7 @@ export function PaymentMethodsChart(props: PaymentMethodsChartProps) {
   const chartConfig = (hasData ? data : placeholderData).reduce((acc, item) => {
     const type = "type" in item ? item.type : item.name;
     acc[type] = {
-      label: t(PAYMENT_TYPE_LABELS[type] || type),
+      label: t(getDocumentPaymentTypeLabelKey(type)),
       color: COLORS[type] || "var(--chart-5)",
     };
     return acc;

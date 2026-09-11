@@ -59,6 +59,8 @@ interface DocumentPaymentsListProps extends ComponentTranslationProps {
   addDisabledReason?: string;
   editDisabledReason?: string;
   deleteDisabledReason?: string;
+  /** Whether the document's payments are closed to changes, as the payment policy decides. */
+  paymentMutationsBlocked?: boolean;
   variant?: "card" | "inline";
 }
 
@@ -112,10 +114,17 @@ export function DocumentPaymentsList({
   addDisabledReason,
   editDisabledReason,
   deleteDisabledReason,
+  paymentMutationsBlocked,
   variant = "card",
   ...i18nProps
 }: DocumentPaymentsListProps) {
   const t = createTranslation({ translations, locale, ...i18nProps });
+  // Where the payment policy closes the document — Portugal, once it is voided — every change is
+  // refused: add, edit and delete alike. The rows stay readable; the actions say why they are off.
+  const voidedReason = paymentMutationsBlocked ? t("This document is already voided.") : undefined;
+  const effectiveAddDisabledReason = addDisabledReason ?? voidedReason;
+  const effectiveEditDisabledReason = editDisabledReason ?? voidedReason;
+  const effectiveDeleteDisabledReason = deleteDisabledReason ?? voidedReason;
   const queryClient = useQueryClient();
 
   const [paymentToDelete, setPaymentToDelete] = useState<Payment | null>(null);
@@ -163,6 +172,12 @@ export function DocumentPaymentsList({
    */
   const handleDelete = async () => {
     if (!paymentToDelete) return;
+    // The document can be voided in another tab while this dialog sits open. The policy is
+    // re-read at the moment of confirming, so a stale dialog cannot submit a refused delete.
+    if (effectiveDeleteDisabledReason) {
+      setPaymentToDelete(null);
+      return;
+    }
 
     setIsDeleting(true);
     try {
@@ -193,21 +208,24 @@ export function DocumentPaymentsList({
   const fmt = (amount: number) => formatCurrency(amount, currencyCode, locale);
   const fmtDate = (date: Date | string | null) => formatDate(date, locale);
 
-  const addPaymentButton = (
-    <Button
-      variant="outline"
-      size="sm"
-      onClick={addDisabledReason ? undefined : onAddPayment}
-      className="cursor-pointer"
-      disabled={!!addDisabledReason}
-    >
-      <Plus className="mr-1 h-4 w-4" />
-      {t("Add payment")}
-    </Button>
-  );
+  // Without a handler and without a reason there is nothing to add a payment with, so the action
+  // is left out rather than rendered as a dead button.
+  const addPaymentButton =
+    onAddPayment || effectiveAddDisabledReason ? (
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={effectiveAddDisabledReason ? undefined : onAddPayment}
+        className="cursor-pointer"
+        disabled={!!effectiveAddDisabledReason}
+      >
+        <Plus className="mr-1 h-4 w-4" />
+        {t("Add payment")}
+      </Button>
+    ) : null;
 
   const renderDisabledAction = (item: ReactNode, reason?: string, side: "left" | "top" = "left") => {
-    if (!reason) return item;
+    if (!item || !reason) return item;
 
     return (
       <Tooltip>
@@ -232,7 +250,7 @@ export function DocumentPaymentsList({
       >
         {t("Payments")} {payments.length > 0 && `(${payments.length})`}
       </h3>
-      {renderDisabledAction(addPaymentButton, addDisabledReason)}
+      {renderDisabledAction(addPaymentButton, effectiveAddDisabledReason)}
     </div>
   );
 
@@ -254,8 +272,8 @@ export function DocumentPaymentsList({
             : appliedCreditNote
               ? t("Applied credit note payments are managed automatically.")
               : undefined;
-          const paymentEditDisabledReason = managedReason ?? editDisabledReason;
-          const paymentDeleteDisabledReason = managedReason ?? deleteDisabledReason;
+          const paymentEditDisabledReason = managedReason ?? effectiveEditDisabledReason;
+          const paymentDeleteDisabledReason = managedReason ?? effectiveDeleteDisabledReason;
 
           return (
             <div key={payment.id} className="flex items-center justify-between rounded-md border p-3">
@@ -318,7 +336,12 @@ export function DocumentPaymentsList({
           >
             {t("Cancel")}
           </Button>
-          <Button variant="destructive" onClick={handleDelete} disabled={isDeleting} className="cursor-pointer">
+          <Button
+            variant="destructive"
+            onClick={handleDelete}
+            disabled={isDeleting || !!effectiveDeleteDisabledReason}
+            className="cursor-pointer"
+          >
             {t("Delete")}
           </Button>
         </DialogFooter>
@@ -345,7 +368,7 @@ export function DocumentPaymentsList({
           <CardTitle className="text-lg">
             {t("Payments")} {payments.length > 0 && `(${payments.length})`}
           </CardTitle>
-          {renderDisabledAction(addPaymentButton, addDisabledReason)}
+          {renderDisabledAction(addPaymentButton, effectiveAddDisabledReason)}
         </CardHeader>
         <CardContent>{bodyContent}</CardContent>
       </Card>

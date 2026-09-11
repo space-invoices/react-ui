@@ -86,6 +86,8 @@ export default {
   cash: "Bargeld",
   bank_transfer: "Banküberweisung",
   card: "Karte",
+  credit_card: "Kreditkarte",
+  debit_card: "Debitkarte",
   check: "Scheck",
   credit_note: "Gutschrift",
   other: "Andere",

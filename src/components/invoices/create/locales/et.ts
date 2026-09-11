@@ -52,6 +52,8 @@ export default {
   Cash: "Sularaha",
   "Bank Transfer": "Pangaülekanne",
   Card: "Kaart",
+  "Credit Card": "Krediitkaart",
+  "Debit Card": "Deebetkaart",
   Check: "Tšekk",
   Other: "Muu",
   Note: "Märkus",
@@ -254,4 +256,7 @@ export default {
     "Klõpsake artikli 76.a pöördmaksustamise keelamiseks sellel arvel",
   "Click to enable Article 76.a reverse charge for this invoice":
     "Klõpsake artikli 76.a pöördmaksustamise lubamiseks sellel arvel",
+  "Short fiscal designation, up to 200 characters. Longer wording goes in the description.":
+    "Lühike maksualane nimetus, kuni 200 tähemärki. Pikem sõnastus käib kirjelduse alla.",
+  "Leave empty and the export uses UN.": "Jätke tühjaks ja ekspordis kasutatakse väärtust UN.",
 } as const;

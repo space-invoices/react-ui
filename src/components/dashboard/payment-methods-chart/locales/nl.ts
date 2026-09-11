@@ -4,6 +4,8 @@ export default {
   Cash: "Contant",
   "Bank Transfer": "Bankoverschrijving",
   Card: "Kaart",
+  "Credit Card": "Creditcard",
+  "Debit Card": "Debetkaart",
   Check: "Cheque",
   "Credit Note": "Creditnota",
   Advance: "Voorschot",

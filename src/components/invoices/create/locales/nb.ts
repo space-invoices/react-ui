@@ -52,6 +52,8 @@ export default {
   Cash: "Kontant",
   "Bank Transfer": "Bankoverføring",
   Card: "Kort",
+  "Credit Card": "Kredittkort",
+  "Debit Card": "Debetkort",
   Check: "Sjekk",
   Other: "Annet",
   Note: "Merknad",
@@ -253,4 +255,7 @@ export default {
     "Klikk for å deaktivere omvendt avgiftsplikt etter artikkel 76.a for denne fakturaen",
   "Click to enable Article 76.a reverse charge for this invoice":
     "Klikk for å aktivere omvendt avgiftsplikt etter artikkel 76.a for denne fakturaen",
+  "Short fiscal designation, up to 200 characters. Longer wording goes in the description.":
+    "Kort skattemessig betegnelse, opptil 200 tegn. Lengre tekst hører hjemme i beskrivelsen.",
+  "Leave empty and the export uses UN.": "La feltet stå tomt, så bruker eksporten UN.",
 } as const;

@@ -333,13 +333,42 @@ export default {
 
   // Portugal entity details
   "Portugal Details": "Portugal-gegevens",
-  "Portuguese law requires these details on every entity": "De Portugese wet vereist deze gegevens voor elke entiteit",
+  "Portuguese invoices carry these details. What is required depends on your legal form.":
+    "Portugese facturen bevatten deze gegevens. Wat verplicht is, hangt af van uw rechtsvorm.",
+  "Legal Form": "Rechtsvorm",
+  "Select your legal form": "Selecteer uw rechtsvorm",
+  "Decides which registration and capital details Portugal asks you for":
+    "Bepaalt welke registratie- en kapitaalgegevens Portugal van u vraagt",
+  "Individual professional or sole trader": "Zelfstandig beroepsbeoefenaar of eenmanszaak",
+  "Private limited company (Lda.)": "Besloten vennootschap (Lda.)",
+  "Public limited company (S.A.)": "Naamloze vennootschap (S.A.)",
+  "Partnership limited by shares": "Commanditaire vennootschap op aandelen",
+  "Other company": "Andere vennootschap",
   "Company Number": "Ondernemingsnummer",
-  "Company registration number (NIPC)": "Registratienummer van het bedrijf (NIPC)",
+  "Digits and slashes only, as shown on your registration.":
+    "Alleen cijfers en schuine strepen, zoals vermeld in uw registratie.",
+  "Registry Office": "Registerkantoor",
+  "Commercial registry where the company is registered": "Handelsregister waarin de vennootschap is ingeschreven",
   Phone: "Telefoon",
-  "International format, including the country code": "Internationaal formaat, inclusief landnummer",
+  "Enter 912 345 678 for Portugal, or include + and the country code for another country.":
+    "Voer 912 345 678 in voor Portugal, of neem + en het landnummer op voor een ander land.",
+  "Enter 7 digits; the hyphen is added automatically.": "Voer 7 cijfers in; het streepje wordt automatisch toegevoegd.",
+  "9 digits. You can paste it with spaces or a PT prefix.":
+    "9 cijfers. U kunt het plakken met spaties of met het voorvoegsel PT.",
   "Share Capital": "Maatschappelijk kapitaal",
   "Registered share capital of the company": "Geregistreerd maatschappelijk kapitaal van het bedrijf",
+  "Conditional company disclosures": "Voorwaardelijke vennootschapsvermeldingen",
+  "Leave these empty unless one of them applies to your company.":
+    "Laat deze velden leeg, tenzij een ervan op uw vennootschap van toepassing is.",
+  "Paid-up Capital": "Gestort kapitaal",
+  "Only needed when less than the share capital has actually been paid in":
+    "Alleen nodig als er daadwerkelijk minder dan het maatschappelijk kapitaal is gestort",
+  Equity: "Eigen vermogen",
+  "Only needed when equity has fallen to half the share capital or less. Use the figure from your last approved balance sheet.":
+    "Alleen nodig als het eigen vermogen is gedaald tot de helft van het maatschappelijk kapitaal of minder. Gebruik het bedrag uit uw laatst goedgekeurde balans.",
+  "Company is in liquidation": "Vennootschap is in liquidatie",
+  "Documents must say so while the company is being wound up":
+    "Documenten moeten dit vermelden zolang de vennootschap wordt vereffend",
   // Tax rule sections and Slovenian Article 76.a
   "Calculation settings": "Berekeningsinstellingen",
   "Choose how prices, discounts, and taxes are calculated on documents.":

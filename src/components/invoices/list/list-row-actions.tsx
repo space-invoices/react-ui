@@ -14,8 +14,10 @@ import {
 } from "@/ui/components/ui/dropdown-menu";
 import { actionMenuTooltipProps, Tooltip, TooltipContent, TooltipTrigger } from "@/ui/components/ui/tooltip";
 import { isApiDateOnlyBefore } from "@/ui/lib/date-only";
+import { arePaymentMutationsBlockedByVoid } from "@/ui/lib/payment-mutation-state";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
+import { useEntitiesOptional } from "@/ui/providers/entities-context";
 import { SendEmailDialog } from "../send-email-dialog";
 import { SendPaymentReminderDialog } from "../send-payment-reminder-dialog";
 import { useInvoiceDownload } from "./use-invoice-download";
@@ -73,6 +75,10 @@ export default memo(function InvoiceListRowActions({
   ...i18nProps
 }: InvoiceListRowActionsProps) {
   const t = createTranslation({ ...i18nProps, translations });
+  // Portugal refuses a payment against a voided invoice; elsewhere a voided invoice stays
+  // reconcilable, so the row keeps offering it.
+  const activeEntity = useEntitiesOptional()?.activeEntity;
+  const paymentsBlockedByVoid = arePaymentMutationsBlockedByVoid(invoice, activeEntity);
   const [emailDialogOpen, setEmailDialogOpen] = useState(false);
   const [paymentReminderDialogOpen, setPaymentReminderDialogOpen] = useState(false);
   const paymentReminderDisabledReason = getPaymentReminderDisabledReason(invoice, t);
@@ -137,7 +143,7 @@ export default memo(function InvoiceListRowActions({
               </DropdownMenuItem>
             )}
           </DropdownMenuGroup>
-          {!invoice.paid_in_full && !invoice.is_draft && onAddPayment && (
+          {!invoice.paid_in_full && !invoice.is_draft && !paymentsBlockedByVoid && onAddPayment && (
             <>
               <DropdownMenuSeparator />
               <DropdownMenuGroup>

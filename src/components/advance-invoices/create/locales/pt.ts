@@ -25,6 +25,8 @@ export default {
   Cash: "Dinheiro",
   "Bank Transfer": "Transferência bancária",
   Card: "Cartão",
+  "Credit Card": "Cartão de crédito",
+  "Debit Card": "Cartão de débito",
   Check: "Cheque",
   Other: "Outro",
   Premise: "Estabelecimento",

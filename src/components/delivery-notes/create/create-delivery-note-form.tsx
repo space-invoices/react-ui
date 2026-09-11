@@ -609,6 +609,7 @@ export default function CreateDeliveryNoteForm({
             initialCustomerName={initialCustomerName}
             t={t}
             locale={locale}
+            translationLocale={translationLocale}
           />
 
           <DocumentDetailsSection control={form.control} documentType={type} t={t} locale={locale}>
@@ -649,6 +650,7 @@ export default function CreateDeliveryNoteForm({
           onFindEstimatedTax={onFindEstimatedTax}
           t={t}
           locale={locale}
+          translationLocale={translationLocale}
           isTaxSubject={activeEntity?.is_tax_subject ?? false}
           maxTaxesPerItem={activeEntity?.country_rules?.max_taxes_per_item}
           priceModesRef={priceModesRef}

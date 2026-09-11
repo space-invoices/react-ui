@@ -61,6 +61,8 @@ type DocumentItemsSectionProps = {
   /** Called when item ordering or price mode changes outside normal field edits. */
   onItemsStateChange?: () => void;
   locale?: string;
+  /** Interface language, when it differs from the document locale. */
+  translationLocale?: string;
   isTaxSubject?: boolean;
   translationsEnabled?: boolean;
   contentLocale?: DocumentContentLocaleMode;
@@ -89,6 +91,7 @@ export function DocumentItemsSection({
   initialPriceModes = {},
   onItemsStateChange,
   locale = "en",
+  translationLocale,
   isTaxSubject = false,
   translationsEnabled = false,
   contentLocale,
@@ -206,6 +209,7 @@ export function DocumentItemsSection({
               onItemsStateChange?.();
             }}
             locale={locale}
+            translationLocale={translationLocale}
             translationsEnabled={translationsEnabled}
             contentLocale={contentLocale}
             defaultContentLocale={defaultContentLocale}

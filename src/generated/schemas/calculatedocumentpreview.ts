@@ -1055,6 +1055,9 @@ const DocumentTaxRulesInput = z
 // Schema for calculateDocumentPreview operation
 const calculateDocumentPreviewSchemaDefinition = z
   .object({
+    linked_documents: z
+      .union([z.array(z.string().min(1)), z.null()])
+      .optional(),
     items: z.array(CreateDocumentItem).min(1),
     customer: z.union([CreateDocumentCustomer, z.null()]).optional(),
     customer_id: z.union([z.string(), z.null()]).optional(),

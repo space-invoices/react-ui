@@ -45,6 +45,8 @@ export default {
   Cash: "Espèces",
   "Bank Transfer": "Virement bancaire",
   Card: "Carte",
+  "Credit Card": "Carte de crédit",
+  "Debit Card": "Carte de débit",
   Check: "Chèque",
   Other: "Autre",
   // Note field
@@ -127,4 +129,6 @@ export default {
   From: "Du",
   To: "Au",
   "Original invoice cannot be credited": "La facture d'origine ne peut pas faire l'objet d'un avoir",
+  "Portugal credit notes are issued to the customer on the original document.":
+    "Les avoirs portugais sont émis au client figurant sur le document d'origine.",
 } as const;

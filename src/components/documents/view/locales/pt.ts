@@ -86,6 +86,8 @@ export default {
   cash: "Dinheiro",
   bank_transfer: "Transferência bancária",
   card: "Cartão",
+  credit_card: "Cartão de crédito",
+  debit_card: "Cartão de débito",
   check: "Cheque",
   credit_note: "Nota de crédito",
   other: "Outro",

@@ -45,6 +45,8 @@ export default {
   Cash: "Käteinen",
   "Bank Transfer": "Tilisiirto",
   Card: "Kortti",
+  "Credit Card": "Luottokortti",
+  "Debit Card": "Debit-kortti",
   Check: "Sekki",
   Other: "Muu",
   Note: "Huomautus",
@@ -116,4 +118,6 @@ export default {
   From: "Alkaen",
   To: "Asti",
   "Original invoice cannot be credited": "Alkuperäistä laskua ei voi hyvittää",
+  "Portugal credit notes are issued to the customer on the original document.":
+    "Portugalilaiset hyvityslaskut laaditaan alkuperäisen asiakirjan asiakkaalle.",
 } as const;

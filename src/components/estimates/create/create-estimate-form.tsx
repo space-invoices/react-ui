@@ -15,6 +15,7 @@ import { createEstimateSchema } from "@/ui/generated/schemas";
 import { getInitialEslogValidationEnabled, useEslogValidation } from "@/ui/hooks/use-eslog-validation";
 import { useNextDocumentNumber } from "@/ui/hooks/use-next-document-number";
 import { useTransactionTypeCheck } from "@/ui/hooks/use-transaction-type-check";
+import { isPortugalEntity } from "@/ui/lib/country-capabilities";
 import {
   DEFAULT_CONTENT_LOCALE,
   DOCUMENT_CONTENT_TRANSLATIONS_FEATURE,
@@ -43,7 +44,11 @@ import {
   applyCustomCreatePreviewTemplate,
   applyCustomCreateTemplate,
 } from "../../documents/create/custom-create-template";
-import { withEstimateIssueDateValidation } from "../../documents/create/document-date-validation";
+import {
+  getPortugalToday,
+  withEstimateIssueDateValidation,
+  withPortugalIssueDateValidation,
+} from "../../documents/create/document-date-validation";
 import {
   DocumentDetailsSection,
   DocumentFooterField,
@@ -52,7 +57,10 @@ import {
   DocumentSignatureField,
   DocumentTaxClauseField,
 } from "../../documents/create/document-details-section";
-import { withRequiredDocumentItemFields } from "../../documents/create/document-item-validation";
+import {
+  withPortugalDocumentItems,
+  withRequiredDocumentItemFields,
+} from "../../documents/create/document-item-validation";
 import { DocumentItemsSection, type PriceModesMap } from "../../documents/create/document-items-section";
 import { DocumentRecipientSection } from "../../documents/create/document-recipient-section";
 import { prepareDocumentItems } from "../../documents/create/prepare-document-submission";
@@ -91,13 +99,11 @@ const translationLoaders = {
   pt: () => import("./locales/pt"),
   sl: () => import("./locales/sl"),
 } as const;
-const createEstimateFormSchema = withEstimateIssueDateValidation(
-  withRequiredDocumentItemFields(
-    createEstimateSchema.extend({
-      business_unit_id: z.string().nullish(),
-      pt: ptDocumentInputFormSchema.optional(),
-    }),
-  ),
+const createEstimateFormSchema = withRequiredDocumentItemFields(
+  createEstimateSchema.extend({
+    business_unit_id: z.string().nullish(),
+    pt: ptDocumentInputFormSchema.optional(),
+  }),
 );
 
 // Form values: extend schema with local-only fields (number is for display, not sent to API)
@@ -219,7 +225,22 @@ export default function CreateEstimateForm({
   const initialDocumentDefaults = getDocumentDefaultFields("estimate", initialMergedSettings);
   const defaultEstimateValidDays = (initialMergedSettings as any)?.default_estimate_valid_days ?? 30;
 
-  const baseResolver = useMemo(() => zodResolver(createEstimateFormSchema) as Resolver<CreateEstimateFormValues>, []);
+  // Portugal's issuance rules are enforced by the API for every Portugal entity, so the
+  // form mirrors them on the plain country check rather than on the gated UI capability.
+  const isPortugalIssuer = isPortugalEntity(activeEntity);
+  const baseResolver = useMemo(
+    () =>
+      zodResolver(
+        isPortugalIssuer
+          ? withPortugalDocumentItems(
+              withEstimateIssueDateValidation(withPortugalIssueDateValidation(createEstimateFormSchema), {
+                getToday: getPortugalToday,
+              }),
+            )
+          : withEstimateIssueDateValidation(createEstimateFormSchema),
+      ) as Resolver<CreateEstimateFormValues>,
+    [isPortugalIssuer],
+  );
   const resolver = useMemo<Resolver<CreateEstimateFormValues>>(
     () => async (values, context, options) => {
       const result = await baseResolver(values, context, options);
@@ -259,7 +280,7 @@ export default function CreateEstimateForm({
       number: initialValues?.number ?? "",
       business_unit_id: (initialValues as any)?.business_unit_id ?? null,
       calculation_mode: (initialValues as any)?.calculation_mode ?? undefined,
-      date: initialValues?.date || new Date().toISOString(),
+      date: initialValues?.date || (isPortugalIssuer ? getPortugalToday() : new Date().toISOString()),
       customer_id: initialValues?.customer_id ?? undefined,
       // Cast customer to form schema type (API type may have additional fields)
       customer: (initialValues?.customer as CreateEstimateFormValues["customer"]) ?? undefined,
@@ -317,7 +338,10 @@ export default function CreateEstimateForm({
         initialValues?.date_valid_till ||
         (isEditMode
           ? undefined
-          : calculateDueDate(initialValues?.date || new Date().toISOString(), defaultEstimateValidDays)),
+          : calculateDueDate(
+              initialValues?.date || (isPortugalIssuer ? getPortugalToday() : new Date().toISOString()),
+              defaultEstimateValidDays,
+            )),
       pt: ((initialValues as any)?.pt as PtDocumentInputForm | undefined) ?? undefined,
     },
   });
@@ -552,6 +576,9 @@ export default function CreateEstimateForm({
     customerIsEndConsumer: (formValues.customer as any)?.is_end_consumer,
     enabled: !!activeEntity,
   });
+
+  // Reverse charge removes the tax select from every line, so a Portugal line cannot
+  // be asked for a tax treatment it has no control to supply.
 
   // Auto-populate tax_clause from entity settings when transaction type changes
   const effectiveTransactionType = transactionType ?? "domestic";
@@ -853,6 +880,7 @@ export default function CreateEstimateForm({
             initialCustomerName={initialCustomerName}
             t={t}
             locale={locale}
+            translationLocale={translationLocale}
           />
 
           <DocumentDetailsSection control={form.control} documentType={type} t={t} locale={locale}>
@@ -883,12 +911,13 @@ export default function CreateEstimateForm({
           onFindEstimatedTax={onFindEstimatedTax}
           t={t}
           locale={locale}
+          translationLocale={translationLocale}
           isTaxSubject={activeEntity?.is_tax_subject ?? false}
-          maxTaxesPerItem={activeEntity?.country_rules?.max_taxes_per_item}
+          maxTaxesPerItem={isPortugalIssuer ? 1 : activeEntity?.country_rules?.max_taxes_per_item}
           priceModesRef={priceModesRef}
           initialPriceModes={initialPriceModes}
           onItemsStateChange={emitCurrentPreviewPayload}
-          taxesDisabled={reverseChargeApplies}
+          taxesDisabled={reverseChargeApplies && !isPortugalIssuer}
           taxesDisabledMessage={
             reverseChargeApplies ? t("Reverse charge - tax exempt EU B2B sale") : viesWarning ? viesWarning : undefined
           }

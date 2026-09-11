@@ -4,6 +4,8 @@ export default {
   Cash: "Sularaha",
   "Bank Transfer": "Pangaülekanne",
   Card: "Kaart",
+  "Credit Card": "Krediitkaart",
+  "Debit Card": "Deebetkaart",
   Check: "Tšekk",
   "Credit Note": "Kreeditarve",
   Advance: "Ettemaksuarve",

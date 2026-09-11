@@ -1094,6 +1094,11 @@ const PartialDeliveryNotePreview = z.object({
     .array(
       z
         .object({
+          item_id: z.union([z.string(), z.null()]),
+          classification: z.union([
+            z.union([z.enum(["product", "service", "advance"]), z.null()]),
+            z.null(),
+          ]),
           type: z.literal("separator"),
           name: z.string(),
           quantity: z.number(),
@@ -1111,7 +1116,17 @@ const PartialDeliveryNotePreview = z.object({
           ),
           taxes: z.array(
             z
-              .object({ rate: z.number(), tax_id: z.string() })
+              .object({
+                rate: z.union([z.number(), z.null()]),
+                tax_id: z.union([z.string(), z.null()]),
+                classification: z.union([z.string(), z.null()]),
+                reverse_charge: z.union([z.boolean(), z.null()]),
+                amount: z.union([z.number(), z.null()]),
+                is_deductible: z.union([z.boolean(), z.null()]),
+                deductible_percentage: z.union([z.number(), z.null()]),
+                pt_exemption_code: z.union([z.string(), z.null()]),
+                pt_exemption_reason: z.union([z.string(), z.null()]),
+              })
               .partial()
               .passthrough()
           ),

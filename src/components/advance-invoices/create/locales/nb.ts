@@ -24,6 +24,8 @@ export default {
   Cash: "Kontant",
   "Bank Transfer": "Bankoverføring",
   Card: "Kort",
+  "Credit Card": "Kredittkort",
+  "Debit Card": "Debetkort",
   Check: "Sjekk",
   Other: "Annet",
   Premise: "Lokale",

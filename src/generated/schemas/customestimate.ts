@@ -1038,6 +1038,19 @@ const DocumentTranslations = z
 
 
 // Dependency schema for customestimate
+const PtDocumentInput = z
+  .object({
+    operator_id: z.union([z.string(), z.null()]),
+    correction_reason: z.union([z.string(), z.null()]),
+    series_id: z.union([z.string(), z.null()]),
+    manual: z.union([z.boolean(), z.null()]),
+    manual_sequential_number: z.union([z.string(), z.number(), z.null()]),
+    manual_series_code: z.union([z.string(), z.null()]),
+  })
+  .partial();
+
+
+// Dependency schema for customestimate
 const DocumentItemEInvoicingData = z
   .object({ unit_code: z.union([z.string(), z.null()]) })
   .partial();
@@ -1220,16 +1233,7 @@ const createCustomEstimateSchemaDefinition = z.object({
   currency_code: z.union([z.string(), z.null()]).optional(),
   metadata: z.union([z.record(z.string(), z.string()).refine((value) => Object.keys(value).length <= 50, { message: "Metadata can have maximum 50 properties" }), z.null()]).optional(),
   reference: z.union([z.string(), z.null()]).optional(),
-  pt: z
-    .union([
-      z.string(),
-      z.number(),
-      z.boolean(),
-      z.null(),
-      z.object({}).partial().passthrough(),
-      z.array(z.unknown()),
-    ])
-    .optional(),
+  pt: z.union([PtDocumentInput, z.null()]).optional(),
   date_valid_till: z.union([z.string(), z.null()]).optional(),
   title_type: z
     .union([z.union([z.enum(["estimate", "proforma_invoice"]), z.null()]), z.null()])

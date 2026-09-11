@@ -1,3 +1,8 @@
+import {
+  type CountryOperation,
+  hasCountryCapability,
+  isCountryDocumentTypeSupported,
+} from "@/ui/lib/country-capabilities";
 import type { Entity } from "@/ui/providers/entities-context";
 
 export type WhiteLabelCapabilityGroup = "workspace" | "documents" | "compliance";
@@ -659,11 +664,95 @@ function entityHasCountryFeature(entity: Entity | null | undefined, feature: Cou
   return entity?.country_rules?.features?.includes(feature) ?? false;
 }
 
+/**
+ * Visibility scope for a white-label lookup.
+ *
+ * - `manage` (default) is what nav, search, create, conversion and other action entry points
+ *   ask for. It applies the country layer, so an operation the entity's country does not
+ *   support is never offered.
+ * - `read` is what list and view routes ask for. It skips the country layer so historical
+ *   documents stay readable — and existing recurrences stay pausable and deletable — in a
+ *   country that no longer allows creating them. White-label hiding still applies.
+ */
+export type WhiteLabelVisibilityScope = "manage" | "read";
+
+type CountryRequirement = {
+  /** Country operation that must be available for this control to be offered. */
+  operation?: CountryOperation;
+  /** Outgoing document type that the country must support for issuance. */
+  documentType?: WhiteLabelDocumentType;
+};
+
+/**
+ * Country availability requirements for the shared white-label catalog.
+ *
+ * The country layer is evaluated before white-label hiding and before the account-user
+ * full-UI bypass, so neither a white-label configuration nor a support-style bypass can
+ * re-enable an operation the server says the country does not support.
+ *
+ * Void and read entry points are deliberately absent: an entity in a restricted country can
+ * still hold documents created earlier (or through the API), and correcting or reading those
+ * must keep working. Only creation, drafting, conversion targets, recurrence and the country
+ * operations themselves are gated.
+ */
+const WHITE_LABEL_COUNTRY_REQUIREMENTS: Partial<Record<WhiteLabelHiddenFeatureId, CountryRequirement>> = {
+  "documents.estimates": { documentType: "estimate" },
+  "documents.credit_notes": { documentType: "credit_note" },
+  "documents.advance_invoices": { documentType: "advance_invoice" },
+  "documents.delivery_notes": { documentType: "delivery_note" },
+  "documents.recurring_invoices": { operation: "recurring_invoices" },
+  "documents.content_translations": { operation: "pdf_languages" },
+  // Denial in the capability snapshot wins over an older positive `features` entry.
+  "compliance.e_invoicing": { operation: "e_invoicing" },
+  "email.custom_sender": { operation: "document_email" },
+  "actions.documents.invoice.create": { documentType: "invoice" },
+  "actions.documents.estimate.create": { documentType: "estimate" },
+  "actions.documents.credit_note.create": { documentType: "credit_note" },
+  "actions.documents.advance_invoice.create": { documentType: "advance_invoice" },
+  "actions.documents.delivery_note.create": { documentType: "delivery_note" },
+  "actions.documents.invoice.save_draft": { operation: "document_drafts" },
+  "actions.documents.estimate.save_draft": { operation: "document_drafts" },
+  "actions.documents.credit_note.save_draft": { operation: "document_drafts" },
+  "actions.documents.advance_invoice.save_draft": { operation: "document_drafts" },
+  "actions.documents.delivery_note.save_draft": { operation: "document_drafts" },
+  "actions.documents.credit_note.payments.manage": { operation: "credit_note_payments" },
+  // Conversions are gated on the target type only. A legacy source document that the country
+  // can no longer issue must still be convertible into a type the country does support.
+  "actions.documents.credit_notes.create_from_invoice": { documentType: "credit_note" },
+  "actions.documents.invoices.create_from_estimate": { documentType: "invoice" },
+  "actions.documents.invoices.create_from_advance_invoice": { documentType: "invoice" },
+  "actions.documents.invoices.create_from_delivery_note": { documentType: "invoice" },
+  "actions.documents.recurring_invoices.create": { operation: "recurring_invoices" },
+  "actions.documents.recurring_invoices.create_from_invoice": { operation: "recurring_invoices" },
+};
+
+/**
+ * Whether the entity's country allows the operation behind a white-label catalog entry.
+ * Unknown feature ids carry no country requirement and stay available.
+ */
+export function isWhiteLabelFeatureCountryAvailable(featureId: string, entity: Entity | null | undefined): boolean {
+  const requirement = WHITE_LABEL_COUNTRY_REQUIREMENTS[featureId as WhiteLabelHiddenFeatureId];
+  if (!requirement) {
+    return true;
+  }
+
+  if (requirement.operation && !hasCountryCapability(entity, requirement.operation)) {
+    return false;
+  }
+
+  if (requirement.documentType && !isCountryDocumentTypeSupported(entity, requirement.documentType)) {
+    return false;
+  }
+
+  return true;
+}
+
 type WhiteLabelCapabilityVisibilityInput = {
   capability: WhiteLabelCapabilityId;
   hiddenFeatures: string[];
   entity?: Entity | null;
   entityCount?: number;
+  scope?: WhiteLabelVisibilityScope;
 };
 
 type WhiteLabelActionControlVisibilityInput = {
@@ -671,12 +760,18 @@ type WhiteLabelActionControlVisibilityInput = {
   hiddenFeatures: string[];
   entity?: Entity | null;
   entityCount?: number;
+  scope?: WhiteLabelVisibilityScope;
 };
 
 export function isWhiteLabelCapabilityAvailable({
   capability,
   entity,
+  scope = "manage",
 }: Omit<WhiteLabelCapabilityVisibilityInput, "hiddenFeatures">): boolean {
+  if (scope === "manage" && !isWhiteLabelFeatureCountryAvailable(capability, entity)) {
+    return false;
+  }
+
   if (capability === "multi_entity") {
     return true;
   }
@@ -689,13 +784,45 @@ export function isWhiteLabelCapabilityAvailable({
   return entityHasCountryFeature(entity, definition.countryFeatureDependency);
 }
 
+export function isWhiteLabelUiControlAvailable({
+  control,
+  entity,
+  entityCount,
+  scope = "manage",
+}: Omit<WhiteLabelActionControlVisibilityInput, "hiddenFeatures">): boolean {
+  const definition = getWhiteLabelActionControl(control);
+  if (!definition) {
+    return true;
+  }
+
+  if (scope === "manage" && !isWhiteLabelFeatureCountryAvailable(control, entity)) {
+    return false;
+  }
+
+  if (definition.parentCapability) {
+    // Country availability for an action is declared explicitly above and never inherited from
+    // its parent family, so acting on a document that already exists (voiding it, converting it
+    // into a supported type) is not withdrawn merely because the country cannot issue that
+    // family any more. The parent still contributes its country-feature dependency.
+    return isWhiteLabelCapabilityAvailable({
+      capability: definition.parentCapability,
+      entity,
+      entityCount,
+      scope: "read",
+    });
+  }
+
+  return true;
+}
+
 export function isWhiteLabelCapabilityVisible({
   capability,
   hiddenFeatures,
   entity,
   entityCount,
+  scope,
 }: WhiteLabelCapabilityVisibilityInput): boolean {
-  if (!isWhiteLabelCapabilityAvailable({ capability, entity, entityCount })) {
+  if (!isWhiteLabelCapabilityAvailable({ capability, entity, entityCount, scope })) {
     return false;
   }
 
@@ -711,19 +838,27 @@ export function isWhiteLabelUiControlVisible({
   hiddenFeatures,
   entity,
   entityCount,
+  scope,
 }: WhiteLabelActionControlVisibilityInput): boolean {
   const definition = getWhiteLabelActionControl(control);
   if (!definition) {
     return true;
   }
 
+  if (!isWhiteLabelUiControlAvailable({ control, entity, entityCount, scope })) {
+    return false;
+  }
+
   if (definition.parentCapability) {
+    // The country layer for this control was already resolved above; the parent contributes
+    // white-label hiding and its country-feature dependency only.
     if (
       !isWhiteLabelCapabilityVisible({
         capability: definition.parentCapability,
         hiddenFeatures,
         entity,
         entityCount,
+        scope: "read",
       })
     ) {
       return false;

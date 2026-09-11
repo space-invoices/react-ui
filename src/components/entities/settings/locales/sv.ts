@@ -321,13 +321,41 @@ export default {
 
   // Portugal entity details
   "Portugal Details": "Portugal-uppgifter",
-  "Portuguese law requires these details on every entity": "Portugisisk lag kräver dessa uppgifter för varje enhet",
+  "Portuguese invoices carry these details. What is required depends on your legal form.":
+    "Portugisiska fakturor innehåller dessa uppgifter. Vilka som krävs beror på din bolagsform.",
+  "Legal Form": "Bolagsform",
+  "Select your legal form": "Välj din bolagsform",
+  "Decides which registration and capital details Portugal asks you for":
+    "Avgör vilka registrerings- och kapitaluppgifter Portugal kräver av dig",
+  "Individual professional or sole trader": "Egenföretagare eller enskild näringsidkare",
+  "Private limited company (Lda.)": "Privat aktiebolag (Lda.)",
+  "Public limited company (S.A.)": "Publikt aktiebolag (S.A.)",
+  "Partnership limited by shares": "Kommanditbolag med aktier",
+  "Other company": "Annat bolag",
   "Company Number": "Organisationsnummer",
-  "Company registration number (NIPC)": "Företagets registreringsnummer (NIPC)",
+  "Digits and slashes only, as shown on your registration.":
+    "Endast siffror och snedstreck, precis som i din registrering.",
+  "Registry Office": "Registreringsmyndighet",
+  "Commercial registry where the company is registered": "Handelsregister där bolaget är registrerat",
   Phone: "Telefon",
-  "International format, including the country code": "Internationellt format, inklusive landsnummer",
+  "Enter 912 345 678 for Portugal, or include + and the country code for another country.":
+    "Ange 912 345 678 för Portugal, eller ta med + och landsnumret för ett annat land.",
+  "Enter 7 digits; the hyphen is added automatically.": "Ange 7 siffror; bindestrecket läggs till automatiskt.",
+  "9 digits. You can paste it with spaces or a PT prefix.":
+    "9 siffror. Du kan klistra in det med mellanslag eller med prefixet PT.",
   "Share Capital": "Aktiekapital",
   "Registered share capital of the company": "Företagets registrerade aktiekapital",
+  "Conditional company disclosures": "Villkorade bolagsuppgifter",
+  "Leave these empty unless one of them applies to your company.":
+    "Lämna dessa fält tomma om inget av dem gäller ditt bolag.",
+  "Paid-up Capital": "Inbetalt kapital",
+  "Only needed when less than the share capital has actually been paid in":
+    "Behövs bara om mindre än aktiekapitalet faktiskt har betalats in",
+  Equity: "Eget kapital",
+  "Only needed when equity has fallen to half the share capital or less. Use the figure from your last approved balance sheet.":
+    "Behövs bara om det egna kapitalet har sjunkit till hälften av aktiekapitalet eller lägre. Använd beloppet från din senast fastställda balansräkning.",
+  "Company is in liquidation": "Bolaget är i likvidation",
+  "Documents must say so while the company is being wound up": "Dokumenten måste ange detta så länge bolaget avvecklas",
   // Tax rule sections and Slovenian Article 76.a
   "Calculation settings": "Beräkningsinställningar",
   "Choose how prices, discounts, and taxes are calculated on documents.":

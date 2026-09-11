@@ -19,7 +19,7 @@ import { useNextDocumentNumber } from "@/ui/hooks/use-next-document-number";
 import { usePremiseSelection } from "@/ui/hooks/use-premise-selection";
 import { useStableHeaderAction } from "@/ui/hooks/use-stable-header-action";
 import { useTransactionTypeCheck } from "@/ui/hooks/use-transaction-type-check";
-import { getEntityCountryCapabilities } from "@/ui/lib/country-capabilities";
+import { getEntityCountryCapabilities, isPortugalEntity } from "@/ui/lib/country-capabilities";
 import {
   DEFAULT_CONTENT_LOCALE,
   DOCUMENT_CONTENT_TRANSLATIONS_FEATURE,
@@ -38,6 +38,7 @@ import {
   normalizePtDocumentInput,
   type PtDocumentInputForm,
   ptDocumentInputFormSchema,
+  withPortugalCorrectionReason,
 } from "@/ui/lib/pt-document-input";
 import { invalidateRevenueRecognitionQueries } from "@/ui/lib/revenue-recognition-cache";
 import { normalizeLineItemDiscountsForForm } from "@/ui/lib/schemas/shared";
@@ -58,7 +59,11 @@ import {
   applyCustomCreatePreviewTemplate,
   applyCustomCreateTemplate,
 } from "../../documents/create/custom-create-template";
-import { withCreditNoteIssueDateValidation } from "../../documents/create/document-date-validation";
+import {
+  getPortugalToday,
+  withCreditNoteIssueDateValidation,
+  withPortugalIssueDateValidation,
+} from "../../documents/create/document-date-validation";
 import {
   DocumentDetailsSection,
   DocumentFooterField,
@@ -69,6 +74,7 @@ import {
 } from "../../documents/create/document-details-section";
 import {
   documentItemValidationMessages,
+  withPortugalDocumentItems,
   withRequiredDocumentItemFields,
 } from "../../documents/create/document-item-validation";
 import { DocumentItemsSection, type PriceModesMap } from "../../documents/create/document-items-section";
@@ -179,13 +185,11 @@ const translationLoaders = {
   },
 } as const;
 const FORM_ID = "create-credit-note-form";
-const createCreditNoteFormSchema = withCreditNoteIssueDateValidation(
-  withRequiredDocumentItemFields(
-    createCreditNoteSchema.extend({
-      business_unit_id: z.string().nullish(),
-      pt: ptDocumentInputFormSchema.optional(),
-    }),
-  ),
+const createCreditNoteFormSchema = withRequiredDocumentItemFields(
+  createCreditNoteSchema.extend({
+    business_unit_id: z.string().nullish(),
+    pt: ptDocumentInputFormSchema.optional(),
+  }),
 );
 
 const CREDIT_NOTE_POSITIVE_ITEM_FIELDS = ["quantity", "price", "gross_price"] as const;
@@ -287,6 +291,9 @@ export default function CreateCreditNoteForm({
 
   const { activeEntity } = useEntities();
   const countryCapabilities = useMemo(() => getEntityCountryCapabilities(activeEntity), [activeEntity]);
+  // Portugal's issuance rules are enforced by the API for every Portugal entity, so the
+  // form mirrors them on the plain country check rather than on the gated UI capability.
+  const isPortugalIssuer = isPortugalEntity(activeEntity);
   const whiteLabel = useWhiteLabel();
   const queryClient = useQueryClient();
   const invalidateRevenueRecognitionReports = useCallback(() => {
@@ -396,10 +403,25 @@ export default function CreateCreditNoteForm({
   const defaultFooter = initialDocumentDefaults.footer;
   const defaultSignature = initialDocumentDefaults.signature;
 
-  const baseResolver = useMemo(
-    () => zodResolver(createCreditNoteFormSchema) as Resolver<CreateCreditNoteFormValues>,
-    [],
-  );
+  const baseResolver = useMemo(() => {
+    if (!isPortugalIssuer) {
+      return zodResolver(
+        withCreditNoteIssueDateValidation(createCreditNoteFormSchema),
+      ) as Resolver<CreateCreditNoteFormValues>;
+    }
+
+    const portugalSchema = withPortugalDocumentItems(
+      withCreditNoteIssueDateValidation(withPortugalIssueDateValidation(createCreditNoteFormSchema), {
+        getToday: getPortugalToday,
+      }),
+    );
+
+    // The reason belongs to issuing the credit note. An edit of one that predates the
+    // field must not be held hostage to data it was never asked for.
+    return zodResolver(
+      isEditMode ? portugalSchema : withPortugalCorrectionReason(portugalSchema),
+    ) as Resolver<CreateCreditNoteFormValues>;
+  }, [isPortugalIssuer, isEditMode]);
   const resolver = useMemo<Resolver<CreateCreditNoteFormValues>>(
     () => async (values, context, options) => {
       const result = await baseResolver(values, context, options);
@@ -441,7 +463,7 @@ export default function CreateCreditNoteForm({
       number: (initialValues as any)?.number ?? "",
       business_unit_id: (initialValues as any)?.business_unit_id ?? null,
       calculation_mode: (initialValues as any)?.calculation_mode ?? undefined,
-      date: initialValues?.date || new Date().toISOString(),
+      date: initialValues?.date || (isPortugalIssuer ? getPortugalToday() : new Date().toISOString()),
       customer_id: initialValues?.customer_id ?? undefined,
       // Cast customer to form schema type (API type may have additional fields)
       customer: (initialValues?.customer as CreateCreditNoteFormValues["customer"]) ?? undefined,
@@ -479,7 +501,9 @@ export default function CreateCreditNoteForm({
           ],
       date_service:
         (initialValues as any)?.date_service ??
-        (isEditMode ? undefined : (initialValues?.date ?? new Date().toISOString())),
+        (isEditMode
+          ? undefined
+          : (initialValues?.date ?? (isPortugalIssuer ? getPortugalToday() : new Date().toISOString()))),
       date_service_to: (initialValues as any)?.date_service_to ?? undefined,
       currency_code: initialValues?.currency_code || activeEntity?.currency_code || "EUR",
       reference: (initialValues as any)?.reference ?? "",
@@ -563,6 +587,9 @@ export default function CreateCreditNoteForm({
     customerIsEndConsumer: (formValues.customer as any)?.is_end_consumer,
     enabled: !!activeEntity,
   });
+
+  // Reverse charge removes the tax select from every line, so a Portugal line cannot
+  // be asked for a tax treatment it has no control to supply.
 
   // FINA numbering guard: use FINA numbering for domestic transactions (or all if unified numbering is on)
   const finaUnifiedNumbering = fina.settings?.unified_numbering !== false;
@@ -790,6 +817,14 @@ export default function CreateCreditNoteForm({
     handleCustomerEdit,
   } = useDocumentCustomerForm(form);
 
+  // A Portuguese credit note corrects a specific invoice, so it belongs to that
+  // invoice's customer. The recipient is already prefilled from the source document;
+  // fixing it here keeps an accidental reselection from crediting someone else.
+  const portugalRecipientLockReason =
+    isPortugalIssuer && !isEditMode && (sourceDocuments?.length ?? 0) > 0
+      ? t("Portugal credit notes are issued to the customer on the original document.")
+      : undefined;
+
   useEffect(() => {
     if (!eslog.requiresUjpValidation || showCustomerForm) {
       return;
@@ -815,12 +850,12 @@ export default function CreateCreditNoteForm({
     const today = new Date();
     if (isSameCalendarDate(form.getValues("date"), today)) return;
 
-    form.setValue("date", today.toISOString(), {
+    form.setValue("date", isPortugalIssuer ? getPortugalToday(today) : today.toISOString(), {
       shouldDirty: true,
       shouldTouch: false,
       shouldValidate: true,
     });
-  }, [form, isEditMode, isFiscalizationDateLocked]);
+  }, [form, isEditMode, isFiscalizationDateLocked, isPortugalIssuer]);
 
   // A Portugal credit note rejected because of its linked original invoice (draft, voided,
   // deleted, or another entity's) is shown inline: the remedy is choosing another original,
@@ -1327,6 +1362,7 @@ export default function CreateCreditNoteForm({
             selectedCustomerId={selectedCustomerId}
             entityCountryCode={activeEntity?.country_code}
             initialCustomerName={initialCustomerName}
+            lockedRecipientReason={portugalRecipientLockReason}
             showBusinessRecipientFields={eslog.isEnabled === true && eslog.requiresUjpValidation}
             showUjpRoutingFields={eslog.isEnabled === true && eslog.requiresUjpValidation}
             showEInvoicingBuyerReference={
@@ -1336,6 +1372,7 @@ export default function CreateCreditNoteForm({
             showPeppolRecipientFields={showPeppolRecipientFields}
             t={t}
             locale={locale}
+            translationLocale={translationLocale}
           />
           <DocumentDetailsSection
             control={form.control}
@@ -1435,8 +1472,9 @@ export default function CreateCreditNoteForm({
           onFindEstimatedTax={onFindEstimatedTax}
           t={t}
           locale={locale}
+          translationLocale={translationLocale}
           isTaxSubject={activeEntity?.is_tax_subject ?? false}
-          maxTaxesPerItem={activeEntity?.country_rules?.max_taxes_per_item}
+          maxTaxesPerItem={isPortugalIssuer ? 1 : activeEntity?.country_rules?.max_taxes_per_item}
           priceModesRef={priceModesRef}
           initialPriceModes={initialPriceModes}
           onItemsStateChange={emitCurrentPreviewPayload}
@@ -1444,7 +1482,7 @@ export default function CreateCreditNoteForm({
           contentLocale={contentLocale}
           defaultContentLocale={defaultContentLocale}
           onContentLocaleChange={setContentLocale}
-          taxesDisabled={reverseChargeApplies}
+          taxesDisabled={reverseChargeApplies && !isPortugalIssuer}
           taxesDisabledMessage={
             reverseChargeApplies ? t("Reverse charge - tax exempt EU B2B sale") : viesWarning ? viesWarning : undefined
           }

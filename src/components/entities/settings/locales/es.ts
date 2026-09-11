@@ -338,13 +338,41 @@ export default {
 
   // Portugal entity details
   "Portugal Details": "Datos de Portugal",
-  "Portuguese law requires these details on every entity": "La ley portuguesa exige estos datos para cada entidad",
+  "Portuguese invoices carry these details. What is required depends on your legal form.":
+    "Las facturas portuguesas incluyen estos datos. Cuáles son obligatorios depende de tu forma jurídica.",
+  "Legal Form": "Forma jurídica",
+  "Select your legal form": "Selecciona tu forma jurídica",
+  "Decides which registration and capital details Portugal asks you for":
+    "Determina qué datos de registro y de capital te exige Portugal",
+  "Individual professional or sole trader": "Profesional independiente o empresario individual",
+  "Private limited company (Lda.)": "Sociedad de responsabilidad limitada (Lda.)",
+  "Public limited company (S.A.)": "Sociedad anónima (S.A.)",
+  "Partnership limited by shares": "Sociedad comanditaria por acciones",
+  "Other company": "Otra sociedad",
   "Company Number": "Número de empresa",
-  "Company registration number (NIPC)": "Número de registro de la empresa (NIPC)",
+  "Digits and slashes only, as shown on your registration.": "Solo dígitos y barras, tal como aparece en su registro.",
+  "Registry Office": "Oficina del registro mercantil",
+  "Commercial registry where the company is registered": "Registro mercantil en el que está inscrita la sociedad",
   Phone: "Teléfono",
-  "International format, including the country code": "Formato internacional, incluido el prefijo del país",
+  "Enter 912 345 678 for Portugal, or include + and the country code for another country.":
+    "Introduzca 912 345 678 para Portugal, o incluya + y el prefijo del país para otro país.",
+  "Enter 7 digits; the hyphen is added automatically.": "Introduzca 7 dígitos; el guion se añade automáticamente.",
+  "9 digits. You can paste it with spaces or a PT prefix.":
+    "9 dígitos. Puede pegarlo con espacios o con el prefijo PT.",
   "Share Capital": "Capital social",
   "Registered share capital of the company": "Capital social registrado de la empresa",
+  "Conditional company disclosures": "Menciones societarias condicionales",
+  "Leave these empty unless one of them applies to your company.":
+    "Deja estos campos vacíos salvo que alguno de ellos se aplique a tu sociedad.",
+  "Paid-up Capital": "Capital desembolsado",
+  "Only needed when less than the share capital has actually been paid in":
+    "Solo es necesario si se ha desembolsado efectivamente menos del capital social",
+  Equity: "Patrimonio neto",
+  "Only needed when equity has fallen to half the share capital or less. Use the figure from your last approved balance sheet.":
+    "Solo es necesario si el patrimonio neto ha caído a la mitad del capital social o menos. Usa la cifra de tu último balance aprobado.",
+  "Company is in liquidation": "Sociedad en liquidación",
+  "Documents must say so while the company is being wound up":
+    "Los documentos deben indicarlo mientras dure la liquidación de la sociedad",
   // Tax rule sections and Slovenian Article 76.a
   "Calculation settings": "Configuración de cálculo",
   "Choose how prices, discounts, and taxes are calculated on documents.":

@@ -53,6 +53,8 @@ export default {
   Cash: "В брой",
   "Bank Transfer": "Банков превод",
   Card: "Карта",
+  "Credit Card": "Кредитна карта",
+  "Debit Card": "Дебитна карта",
   Check: "Чек",
   Other: "Друго",
   Note: "Бележка",
@@ -258,4 +260,7 @@ export default {
     "Щракнете, за да изключите обратното начисляване по член 76.a за тази фактура",
   "Click to enable Article 76.a reverse charge for this invoice":
     "Щракнете, за да включите обратното начисляване по член 76.a за тази фактура",
+  "Short fiscal designation, up to 200 characters. Longer wording goes in the description.":
+    "Кратко данъчно наименование, до 200 знака. По-дългият текст се въвежда в описанието.",
+  "Leave empty and the export uses UN.": "Оставете празно и в експорта ще се използва UN.",
 } as const;

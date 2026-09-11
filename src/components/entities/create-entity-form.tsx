@@ -18,19 +18,32 @@ import {
   FormLabel,
   FormMessage,
 } from "@/ui/components/ui/form";
-import { Select, SelectContent, SelectItem, SelectTrigger } from "@/ui/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui/components/ui/select";
 import { type CreateEntitySchema, createEntitySchema } from "@/ui/generated/schemas";
 import { ISO_COUNTRY_CODES, resolveCountryCodeFromName } from "@/ui/lib/country-names";
+import {
+  isCompanyLegalForm,
+  LEGAL_FORMS,
+  type LegalDetails,
+  type LegalForm,
+  requiresShareCapital,
+} from "@/ui/lib/legal-details";
 import { NumericInput } from "@/ui/lib/numeric-input";
 import {
   applyPortugalEntityIssues,
+  formatPortugalPhoneEntry,
+  formatPortugalPostCodeEntry,
   getPortugalRequiredFieldsFromError,
+  getRequiredPortugalEntityFields,
   isPortugalCountryCode,
+  normalizePortugalEntityInput,
+  normalizePortugalTaxNumberInput,
   PT_COUNTRY_CODE,
   portugalShareCapitalSchema,
   toSubmittableShareCapital,
 } from "@/ui/lib/pt-entity-input";
 import { createTranslation } from "@/ui/lib/translation";
+import { cn } from "@/ui/lib/utils";
 
 import ButtonLoader from "../button-loader";
 import { useCreateEntity } from "./entities.hooks";
@@ -78,10 +91,36 @@ const translations = {
     phone: "Phone",
     email: "Email",
     "starting-capital": "Share Capital",
+    "registration-office": "Registry Office",
+    "Enter 912 345 678 for Portugal, or include + and the country code for another country.":
+      "Enter 912 345 678 for Portugal, or include + and the country code for another country.",
+    "Enter 7 digits; the hyphen is added automatically.": "Enter 7 digits; the hyphen is added automatically.",
+    "9 digits. You can paste it with spaces or a PT prefix.": "9 digits. You can paste it with spaces or a PT prefix.",
+    "Digits and slashes only, as shown on your registration.":
+      "Digits and slashes only, as shown on your registration.",
+    "legal-form": "Legal Form",
+    "legal-form-placeholder": "Select your legal form",
+    "legal-form-hint": "Decides which registration and capital details Portugal asks you for",
+    "legal-form-sole_trader": "Individual professional or sole trader",
+    "legal-form-limited_liability_company": "Private limited company (Lda.)",
+    "legal-form-public_limited_company": "Public limited company (S.A.)",
+    "legal-form-partnership_limited_by_shares": "Partnership limited by shares",
+    "legal-form-other_company": "Other company",
     "portugal-required": "Portugal requires a few more company details. Please complete the fields below.",
     submit: "Create entity",
   },
 } as const;
+
+/**
+ * Form values add the Portugal legal-form inputs the create request carries inside
+ * `settings.legal_details`, and hold share capital as the raw string `NumericInput`
+ * emits until submit resolves it.
+ */
+type CreateEntityFormValues = Omit<CreateEntitySchema, "starting_capital"> & {
+  starting_capital?: number | string | null;
+  legal_form?: LegalForm | null;
+  registration_office?: string | null;
+};
 
 const REQUIRED_CREATE_ENTITY_FIELDS = new Set<keyof CreateEntitySchema>(["name", "country"]);
 const createEntityCompanyNumberSchema = createEntitySchema.pick({ company_number: true });
@@ -140,10 +179,19 @@ const createEntityFormSchema = z.preprocess(
         }),
       country: z.string().min(1),
       starting_capital: portugalShareCapitalSchema,
+      // Local-only fields, assembled into settings.legal_details on submit.
+      legal_form: z.enum(LEGAL_FORMS).nullable().optional(),
+      registration_office: z.union([z.string(), z.null()]).optional(),
     })
-    // Portugal entities carry extra mandatory data; enforce it here so the user gets
-    // localized field-level errors instead of the API's 422. No-ops for other countries.
-    .superRefine(applyPortugalEntityIssues),
+    // The Portuguese fields are accepted in the spellings a business has them printed
+    // in, and stored in the one spelling the API keeps. Normalizing here rather than
+    // in the inputs means a submit straight from the keyboard sends the same value a
+    // blur would have shown. No-ops for other countries.
+    .transform((values) => ({ ...values, ...normalizePortugalEntityInput(values) }))
+    // A Portugal entity carries extra mandatory data, and which data depends on the
+    // legal form the user picks. Enforce it here so they get localized field-level
+    // errors instead of the API's 422. No-ops for other countries.
+    .superRefine((values, ctx) => applyPortugalEntityIssues(values, ctx, { requireLegalForm: true })),
 );
 
 export function CreateEntityForm({
@@ -234,8 +282,8 @@ export function CreateEntityForm({
     };
   });
 
-  const form = useForm<CreateEntitySchema>({
-    resolver: zodResolver(createEntityFormSchema as any) as unknown as Resolver<CreateEntitySchema>,
+  const form = useForm<CreateEntityFormValues>({
+    resolver: zodResolver(createEntityFormSchema as any) as unknown as Resolver<CreateEntityFormValues>,
     defaultValues: {
       name: defaultName || "",
       address: "",
@@ -249,6 +297,10 @@ export function CreateEntityForm({
       company_number: "",
       phone: "",
       email: "",
+      // No default legal form: it is a legal fact about the business, so the user
+      // states it rather than the form guessing it.
+      legal_form: null,
+      registration_office: "",
       is_tax_subject: true,
       environment: environment as "live" | "sandbox" | undefined,
       ...extraDefaults,
@@ -330,22 +382,39 @@ export function CreateEntityForm({
     },
   });
 
-  const onSubmit = async (values: CreateEntitySchema) => {
+  const onSubmit = async (values: CreateEntityFormValues) => {
     try {
       submittedCountryRef.current = values.country;
-      const normalizedValues = normalizeCreateEntityValues(values) as CreateEntitySchema;
+      const normalizedValues = normalizeCreateEntityValues(values) as CreateEntityFormValues;
       const resolvedCountryCode =
         normalizedValues.country_code || resolveCountryCodeFromName(normalizedValues.country, locale);
-      const { country_code: _countryCode, starting_capital, ...rest } = normalizedValues;
+      const {
+        country_code: _countryCode,
+        starting_capital,
+        legal_form,
+        registration_office,
+        ...rest
+      } = normalizedValues;
       const payload: Record<string, unknown> = resolvedCountryCode
         ? { ...rest, country_code: resolvedCountryCode }
         : rest;
 
-      // Share capital is a Portugal-only input here. Resolving it at submit rather than
-      // clearing it on country change keeps a mid-edit country keystroke from wiping a
-      // value the user already typed, and keeps an unparseable entry off the request.
+      // Share capital and the legal form are Portugal-only inputs here. Resolving them
+      // at submit rather than clearing them on country change keeps a mid-edit country
+      // keystroke from wiping a value the user already typed, and keeps an unparseable
+      // entry off the request.
       if (isPortugalCountryCode(resolvedCountryCode)) {
-        payload.starting_capital = toSubmittableShareCapital(starting_capital);
+        payload.starting_capital = requiresShareCapital(legal_form)
+          ? toSubmittableShareCapital(starting_capital)
+          : undefined;
+
+        if (legal_form) {
+          const legalDetails: LegalDetails = {
+            legal_form,
+            registration_office: isCompanyLegalForm(legal_form) ? registration_office?.trim() || null : null,
+          };
+          payload.settings = { ...(rest.settings ?? {}), legal_details: legalDetails };
+        }
       }
 
       createEntity(payload as CreateEntityBody);
@@ -359,9 +428,23 @@ export function CreateEntityForm({
   };
 
   const nameValue = form.watch("name");
-  // Portugal requires contact details and share capital on every entity — see
-  // the Portugal overlay in the API. Other countries keep the lean form.
+  const legalFormValue = form.watch("legal_form");
+  // Portugal asks for the legal form first, then only the registration and capital
+  // details that form actually has. Which fields those are is the Portugal rule set's
+  // answer, not this form's, so ask it rather than restating it. Other countries keep
+  // the lean form.
   const requiresPortugalFields = isPortugalCountryCode(activeCountryCode);
+  const requiredPortugalFields = useMemo(
+    () => new Set(requiresPortugalFields ? getRequiredPortugalEntityFields(legalFormValue) : []),
+    [requiresPortugalFields, legalFormValue],
+  );
+  const requiresPortugalCompanyFields = requiredPortugalFields.has("company_number");
+  const requiresPortugalShareCapital = requiredPortugalFields.has("starting_capital");
+  // A registry pick can fill the company number before a legal form is chosen; never
+  // leave a value the user can see the effect of but not the field for.
+  const showPortugalCompanyNumber = requiresPortugalCompanyFields || !!form.watch("company_number")?.trim();
+  const showCompanyNumber = !requiresPortugalFields || showPortugalCompanyNumber;
+  // Portugal's own fields are never optional detail, so the progressive form opens on them.
   const showEntityDetails = requiresPortugalFields || showOptionalFields;
 
   return (
@@ -505,7 +588,7 @@ export function CreateEntityForm({
               name="address"
               label={translate("address")}
               placeholder={translate("address")}
-              required={requiresPortugalFields}
+              required={requiredPortugalFields.has("address")}
             />
 
             <FormInput
@@ -521,14 +604,20 @@ export function CreateEntityForm({
                 name="post_code"
                 label={translate("post-code")}
                 placeholder={requiresPortugalFields ? "1000-001" : translate("post-code")}
-                required={requiresPortugalFields}
+                required={requiredPortugalFields.has("post_code")}
+                autoComplete="postal-code"
+                description={
+                  requiresPortugalFields ? translate("Enter 7 digits; the hyphen is added automatically.") : undefined
+                }
+                inputMode={requiresPortugalFields ? "numeric" : undefined}
+                formatter={requiresPortugalFields ? formatPortugalPostCodeEntry : undefined}
               />
               <FormInput
                 control={form.control}
                 name="city"
                 label={translate("city")}
                 placeholder={translate("city")}
-                required={requiresPortugalFields}
+                required={requiredPortugalFields.has("city")}
               />
             </div>
 
@@ -537,8 +626,39 @@ export function CreateEntityForm({
               name="state"
               label={translate("state")}
               placeholder={translate("state")}
-              required={requiresPortugalFields}
+              required={requiredPortugalFields.has("state")}
             />
+
+            {requiresPortugalFields && (
+              <FormField
+                control={form.control}
+                name="legal_form"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      {translate("legal-form")}
+                      <span className="ml-1 text-red-500">*</span>
+                    </FormLabel>
+                    <Select<LegalForm> value={field.value ?? null} onValueChange={field.onChange}>
+                      <FormControl>
+                        <SelectTrigger className="w-full" aria-required="true">
+                          <SelectValue placeholder={translate("legal-form-placeholder")} />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {LEGAL_FORMS.map((legalForm) => (
+                          <SelectItem key={legalForm} value={legalForm}>
+                            {translate(`legal-form-${legalForm}`)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-muted-foreground text-xs">{translate("legal-form-hint")}</p>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
 
             {requiresPortugalFields && (
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -546,9 +666,14 @@ export function CreateEntityForm({
                   control={form.control}
                   name="phone"
                   label={translate("phone")}
-                  placeholder="+351912345678"
+                  placeholder="912 345 678"
                   type="tel"
-                  required
+                  autoComplete="tel"
+                  required={requiredPortugalFields.has("phone")}
+                  description={translate(
+                    "Enter 912 345 678 for Portugal, or include + and the country code for another country.",
+                  )}
+                  formatter={formatPortugalPhoneEntry}
                 />
                 <FormInput
                   control={form.control}
@@ -556,30 +681,56 @@ export function CreateEntityForm({
                   label={translate("email")}
                   placeholder={translate("email")}
                   type="email"
-                  required
+                  required={requiredPortugalFields.has("email")}
                 />
               </div>
             )}
 
-            <FormInput
-              control={form.control}
-              name="tax_number"
-              label={translate("tax-number")}
-              placeholder={translate("tax-number")}
-              disableAutofill
-              required={requiresPortugalFields}
-            />
+            <div className={cn("grid grid-cols-1 gap-4", showCompanyNumber && "sm:grid-cols-2")}>
+              <FormInput
+                control={form.control}
+                name="tax_number"
+                label={translate("tax-number")}
+                placeholder={requiresPortugalFields ? "501442600" : translate("tax-number")}
+                disableAutofill
+                required={requiredPortugalFields.has("tax_number")}
+                description={
+                  requiresPortugalFields
+                    ? translate("9 digits. You can paste it with spaces or a PT prefix.")
+                    : undefined
+                }
+                inputMode={requiresPortugalFields ? "numeric" : undefined}
+                formatter={requiresPortugalFields ? normalizePortugalTaxNumberInput : undefined}
+              />
 
-            <FormInput
-              control={form.control}
-              name="company_number"
-              label={translate("company-number")}
-              placeholder={translate("company-number")}
-              disableAutofill
-              required={requiresPortugalFields}
-            />
+              {showCompanyNumber && (
+                <FormInput
+                  control={form.control}
+                  name="company_number"
+                  label={translate("company-number")}
+                  placeholder={requiresPortugalFields ? "501442600" : translate("company-number")}
+                  disableAutofill
+                  required={requiresPortugalCompanyFields}
+                  description={
+                    requiresPortugalFields
+                      ? translate("Digits and slashes only, as shown on your registration.")
+                      : undefined
+                  }
+                />
+              )}
+            </div>
 
-            {requiresPortugalFields && (
+            {requiresPortugalCompanyFields && (
+              <FormInput
+                control={form.control}
+                name="registration_office"
+                label={translate("registration-office")}
+                placeholder="Lisboa"
+                required
+              />
+            )}
+
+            {requiresPortugalShareCapital && (
               <FormField
                 control={form.control}
                 name="starting_capital"

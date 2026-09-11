@@ -4,7 +4,7 @@ import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 import { FormInput } from "@/ui/components/form";
 import { Checkbox } from "@/ui/components/ui/checkbox";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel } from "@/ui/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel } from "@/ui/components/ui/form";
 import { createTaxSchema as baseCreateTaxSchema } from "@/ui/generated/schemas";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
@@ -15,6 +15,11 @@ const createTaxSchema = baseCreateTaxSchema.extend({
 });
 type CreateTaxSchema = z.infer<typeof createTaxSchema>;
 
+import {
+  createPortugalExemptionReasonRule,
+  isPortugalExemptionRate,
+  PortugalExemptionFields,
+} from "../portugal-exemption/portugal-exemption-fields";
 import { useCreateTax } from "../taxes.hooks";
 import de from "./locales/de";
 import es from "./locales/es";
@@ -58,9 +63,13 @@ export default function CreateTaxForm({
     ...i18nProps,
     translations,
   });
+  const portugalExemptionReasonRule = createPortugalExemptionReasonRule({
+    enabled: showPortugalExemptionFields,
+    ...i18nProps,
+  });
 
   const form = useForm<CreateTaxSchema>({
-    resolver: zodResolver(createTaxSchema),
+    resolver: zodResolver(createTaxSchema.superRefine(portugalExemptionReasonRule)),
     defaultValues: {
       name: "",
       tax_rates: [{ rate: undefined }],
@@ -71,7 +80,7 @@ export default function CreateTaxForm({
     control: form.control,
     name: "tax_rates.0.rate",
   });
-  const showPtFields = showPortugalExemptionFields && Number(rate ?? 0) === 0;
+  const showPtFields = showPortugalExemptionFields && isPortugalExemptionRate(rate);
 
   const { mutate: createTax, isPending } = useCreateTax({
     entityId,
@@ -99,7 +108,7 @@ export default function CreateTaxForm({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="min-w-0 space-y-4">
         <FormInput control={form.control} name="name" label={t("Name")} placeholder={t("Enter name")} />
 
         <FormInput
@@ -110,44 +119,7 @@ export default function CreateTaxForm({
           type="number"
         />
 
-        {showPtFields && (
-          <div className="space-y-4 rounded-lg border border-dashed p-4">
-            <div className="space-y-1">
-              <p className="font-medium text-sm">{t("Portugal exemption metadata")}</p>
-              <p className="text-muted-foreground text-sm">
-                {t("0% Portugal taxes require an exemption code and legal reason for SAF-T and certified documents.")}
-              </p>
-            </div>
-
-            <FormInput
-              control={form.control}
-              name="pt_exemption_code"
-              label={t("Exemption code")}
-              placeholder={t("Enter exemption code")}
-            />
-
-            <FormField
-              control={form.control}
-              name="pt_exemption_reason"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t("Exemption reason")}</FormLabel>
-                  <FormControl>
-                    <textarea
-                      className="flex min-h-24 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                      placeholder={t("Enter exemption reason")}
-                      value={field.value ?? ""}
-                      onChange={(event) => field.onChange(event.target.value || undefined)}
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    {t("Keep this aligned with the legal basis used on issued Portugal documents.")}
-                  </FormDescription>
-                </FormItem>
-              )}
-            />
-          </div>
-        )}
+        {showPtFields && <PortugalExemptionFields {...i18nProps} />}
 
         <FormField
           control={form.control}

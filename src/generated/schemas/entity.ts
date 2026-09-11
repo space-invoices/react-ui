@@ -9,6 +9,21 @@ import { z } from 'zod';
 // Schemas for entity endpoints
 
 // Dependency schema for entity
+const LegalDetails = z
+  .object({
+    legal_form: z.union([
+      z.union([z.enum(["sole_trader", "limited_liability_company", "public_limited_company", "partnership_limited_by_shares", "other_company"]), z.null()]),
+      z.null(),
+    ]),
+    registration_office: z.union([z.string(), z.null()]),
+    paid_up_capital: z.union([z.number(), z.null()]),
+    equity: z.union([z.number(), z.null()]),
+    in_liquidation: z.union([z.boolean(), z.null()]),
+  })
+  .partial();
+
+
+// Dependency schema for entity
 const NumberSequenceStarts = z
   .object({
     invoice: z.union([z.number(), z.null()]),
@@ -878,17 +893,6 @@ const SloveniaEntitySettings = z
 
 
 // Dependency schema for entity
-const PtEntitySettings = z
-  .object({
-    operator_first_name: z.string().min(1),
-    operator_last_name: z.string().min(1),
-    operator_tax_number: z.string().regex(/^\d{9}$/),
-  })
-  .partial()
-  .passthrough();
-
-
-// Dependency schema for entity
 const EuTaxRules = z
   .object({
     vies_validate_vat: z.boolean().default(true),
@@ -1028,6 +1032,7 @@ const createEntitySchemaDefinition = z.object({
   is_enabled: z.boolean().optional(),
   settings: z
     .object({
+      legal_details: z.union([LegalDetails, z.null()]),
       pdf_template: z.union([
         z.union([z.enum(["modern", "classic", "condensed", "minimal", "fashion", "timeless_modern_full_data"]), z.null()]),
         z.null(),
@@ -1132,7 +1137,6 @@ const createEntitySchemaDefinition = z.object({
           .passthrough(),
         z.null(),
       ]),
-      pt: z.union([PtEntitySettings, z.null()]),
       tax_rules: z.union([TaxRules, z.null()]),
       overdue_notifications: z.union([
         z
@@ -1224,6 +1228,7 @@ const patchEntitySchemaDefinition = z
     is_enabled: z.boolean(),
     settings: z
       .object({
+        legal_details: z.union([LegalDetails, z.null()]),
         pdf_template: z.union([
           z.union([z.enum(["modern", "classic", "condensed", "minimal", "fashion", "timeless_modern_full_data"]), z.null()]),
           z.null(),
@@ -1334,7 +1339,6 @@ const patchEntitySchemaDefinition = z
           z.object({}).partial().passthrough(),
           z.null(),
         ]),
-        pt: z.union([PtEntitySettings, z.null()]),
         tax_rules: z.union([TaxRules, z.null()]),
         overdue_notifications: z.union([
           z

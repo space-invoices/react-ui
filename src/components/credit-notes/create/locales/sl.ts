@@ -45,6 +45,8 @@ export default {
   Cash: "Gotovina",
   "Bank Transfer": "Bančno nakazilo",
   Card: "Kartica",
+  "Credit Card": "Kreditna kartica",
+  "Debit Card": "Debetna kartica",
   Check: "Ček",
   Other: "Drugo",
   // Note field
@@ -125,4 +127,6 @@ export default {
   From: "Od",
   To: "Do",
   "Original invoice cannot be credited": "Izvirnega računa ni mogoče dobropisati",
+  "Portugal credit notes are issued to the customer on the original document.":
+    "Portugalski dobropisi se izdajo kupcu z izvirnega dokumenta.",
 } as const;

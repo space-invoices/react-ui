@@ -18,7 +18,11 @@ import {
   toLocalCalendarDate,
   toLocalDateOnlyString,
 } from "@/ui/lib/date-only";
-import { DOCUMENT_PAYMENT_FORM_LABELS, DOCUMENT_PAYMENT_FORM_TYPES } from "@/ui/lib/payment-types";
+import {
+  DOCUMENT_PAYMENT_FORM_TYPES,
+  getDocumentPaymentTypeLabelKey,
+  getPaymentTypeOptions,
+} from "@/ui/lib/payment-types";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
 import { cn } from "@/ui/lib/utils";
@@ -149,16 +153,18 @@ export default function CreatePaymentForm({
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder={t("Select payment type")}>
-                      {field.value && t(DOCUMENT_PAYMENT_FORM_LABELS[field.value])}
+                      {field.value && t(getDocumentPaymentTypeLabelKey(field.value))}
                     </SelectValue>
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {DOCUMENT_PAYMENT_FORM_TYPES.map((paymentType) => (
-                    <SelectItem key={paymentType} value={paymentType}>
-                      {t(DOCUMENT_PAYMENT_FORM_LABELS[paymentType])}
-                    </SelectItem>
-                  ))}
+                  {getPaymentTypeOptions(DOCUMENT_PAYMENT_FORM_TYPES, { currentType: field.value }).map(
+                    (paymentType) => (
+                      <SelectItem key={paymentType} value={paymentType}>
+                        {t(getDocumentPaymentTypeLabelKey(paymentType))}
+                      </SelectItem>
+                    ),
+                  )}
                 </SelectContent>
               </Select>
               <FormMessage />

@@ -1040,16 +1040,12 @@ const DocumentTranslations = z
 // Dependency schema for renderestimatepreview_body
 const PtDocumentInput = z
   .object({
+    operator_id: z.union([z.string(), z.null()]),
+    correction_reason: z.union([z.string(), z.null()]),
     series_id: z.union([z.string(), z.null()]),
     manual: z.union([z.boolean(), z.null()]),
-    manual_sequential_number: z.union([z.number(), z.null()]),
+    manual_sequential_number: z.union([z.string(), z.number(), z.null()]),
     manual_series_code: z.union([z.string(), z.null()]),
-    operator_first_name: z.union([z.string(), z.null()]),
-    operator_last_name: z.union([z.string(), z.null()]),
-    operator_tax_number: z.union([z.string(), z.null()]),
-    account_first_name: z.union([z.string(), z.null()]),
-    account_last_name: z.union([z.string(), z.null()]),
-    account_tax_number: z.union([z.string(), z.null()]),
   })
   .partial();
 
@@ -1115,6 +1111,11 @@ const PartialEstimatePreview = z.object({
     .array(
       z
         .object({
+          item_id: z.union([z.string(), z.null()]),
+          classification: z.union([
+            z.union([z.enum(["product", "service", "advance"]), z.null()]),
+            z.null(),
+          ]),
           type: z.literal("separator"),
           name: z.string(),
           quantity: z.number(),
@@ -1132,7 +1133,17 @@ const PartialEstimatePreview = z.object({
           ),
           taxes: z.array(
             z
-              .object({ rate: z.number(), tax_id: z.string() })
+              .object({
+                rate: z.union([z.number(), z.null()]),
+                tax_id: z.union([z.string(), z.null()]),
+                classification: z.union([z.string(), z.null()]),
+                reverse_charge: z.union([z.boolean(), z.null()]),
+                amount: z.union([z.number(), z.null()]),
+                is_deductible: z.union([z.boolean(), z.null()]),
+                deductible_percentage: z.union([z.number(), z.null()]),
+                pt_exemption_code: z.union([z.string(), z.null()]),
+                pt_exemption_reason: z.union([z.string(), z.null()]),
+              })
               .partial()
               .passthrough()
           ),

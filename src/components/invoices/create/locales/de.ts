@@ -54,6 +54,8 @@ export default {
   Cash: "Bargeld",
   "Bank Transfer": "Banküberweisung",
   Card: "Karte",
+  "Credit Card": "Kreditkarte",
+  "Debit Card": "Debitkarte",
   Check: "Scheck",
   Other: "Andere",
   Note: "Notiz",
@@ -265,4 +267,7 @@ export default {
     "Klicken Sie, um die Umkehrung der Steuerschuldnerschaft nach Artikel 76.a für diese Rechnung zu deaktivieren",
   "Click to enable Article 76.a reverse charge for this invoice":
     "Klicken Sie, um die Umkehrung der Steuerschuldnerschaft nach Artikel 76.a für diese Rechnung zu aktivieren",
+  "Short fiscal designation, up to 200 characters. Longer wording goes in the description.":
+    "Kurze steuerliche Bezeichnung, bis zu 200 Zeichen. Längere Formulierungen gehören in die Beschreibung.",
+  "Leave empty and the export uses UN.": "Leer lassen, dann verwendet der Export UN.",
 } as const;

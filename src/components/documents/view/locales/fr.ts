@@ -87,6 +87,8 @@ export default {
   cash: "Espèces",
   bank_transfer: "Virement bancaire",
   card: "Carte",
+  credit_card: "Carte de crédit",
+  debit_card: "Carte de débit",
   check: "Chèque",
   credit_note: "Avoir",
   other: "Autre",

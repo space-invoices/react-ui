@@ -1,7 +1,7 @@
 import { forwardRef } from "react";
 import type { FieldPath, FieldValues } from "react-hook-form";
-import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/ui/components/ui/form";
-import { Input } from "@/ui/components/ui/input";
+import { FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/ui/components/ui/form";
+import { FormattedInput } from "@/ui/lib/formatted-input";
 
 type FormInputProps<
   TFieldValues extends FieldValues = FieldValues,
@@ -18,6 +18,16 @@ type FormInputProps<
   onChange?: (value: any) => void;
   className?: string;
   required?: boolean;
+  /** Short helper text under the field, for formats the label cannot explain. */
+  description?: string;
+  /** Keyboard hint for touch devices; the field stays a text input, so pasting keeps working. */
+  inputMode?: React.ComponentProps<"input">["inputMode"];
+  /**
+   * Spell the entered text the way the form will submit it, as the user types it.
+   * Rejected and half-typed input must come back unchanged: this is presentation,
+   * and the field's own validation still decides whether the value is acceptable.
+   */
+  formatter?: (value: string) => string;
 };
 
 const FormInputComponent = <
@@ -36,6 +46,9 @@ const FormInputComponent = <
     onChange,
     className,
     required = false,
+    description,
+    inputMode,
+    formatter,
   }: FormInputProps<TFieldValues, TName>,
   ref: React.Ref<HTMLInputElement>,
 ) => {
@@ -62,10 +75,6 @@ const FormInputComponent = <
     }
   };
 
-  const handleFieldChange = (field: any, e: React.ChangeEvent<HTMLInputElement>) => {
-    applyFieldValue(field, e.target.value);
-  };
-
   const handleKeyDown = (field: any, e: React.KeyboardEvent<HTMLInputElement>) => {
     if (type === "number") return;
     if (e.key !== "Backspace" || (!e.metaKey && !e.ctrlKey)) return;
@@ -87,18 +96,22 @@ const FormInputComponent = <
             </FormLabel>
           )}
           <FormControl>
-            <Input
+            <FormattedInput
               type={type}
               placeholder={placeholder}
-              disabled={disabled}
+              disabled={field.disabled ?? disabled}
               {...autofillSuppressionProps}
-              {...field}
+              name={field.name}
+              onBlur={field.onBlur}
               ref={ref}
               value={field.value ?? ""}
-              onChange={(e) => handleFieldChange(field, e)}
+              inputMode={inputMode}
+              formatter={formatter}
+              onValueChange={(value) => applyFieldValue(field, value)}
               onKeyDown={(e) => handleKeyDown(field, e)}
             />
           </FormControl>
+          {description && <FormDescription>{description}</FormDescription>}
           <FormMessage />
         </FormItem>
       )}

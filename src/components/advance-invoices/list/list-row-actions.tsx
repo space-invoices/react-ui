@@ -13,8 +13,10 @@ import {
 } from "@/ui/components/ui/dropdown-menu";
 import { actionMenuTooltipProps, Tooltip, TooltipContent, TooltipTrigger } from "@/ui/components/ui/tooltip";
 import { getAdvanceInvoiceApplicationBlockReason } from "@/ui/lib/advance-invoice-application-state";
+import { arePaymentMutationsBlockedByVoid } from "@/ui/lib/payment-mutation-state";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
+import { useEntitiesOptional } from "@/ui/providers/entities-context";
 import { useAdvanceInvoiceDownload } from "./use-advance-invoice-download";
 
 const translations = {
@@ -53,6 +55,9 @@ export default function AdvanceInvoiceListRowActions({
   ...i18nProps
 }: AdvanceInvoiceListRowActionsProps) {
   const t = createTranslation({ ...i18nProps, translations });
+  // Portugal refuses a payment against a voided advance invoice; elsewhere it stays reconcilable.
+  const activeEntity = useEntitiesOptional()?.activeEntity;
+  const paymentsBlockedByVoid = arePaymentMutationsBlockedByVoid(advanceInvoice, activeEntity);
   const { isDownloading, downloadPDF } = useAdvanceInvoiceDownload({
     onDownloadStart,
     onDownloadSuccess,
@@ -68,7 +73,8 @@ export default function AdvanceInvoiceListRowActions({
         : applicationBlockReason === "unpaid"
           ? t("documents-list-page.copy-to-invoice-unpaid-advance-not-allowed")
           : undefined;
-  const voidDisabledReason = (advanceInvoice as any).voided_at ? t("This document is already voided.") : undefined;
+  const isVoided = !!(advanceInvoice as { voided_at?: string | null }).voided_at;
+  const voidDisabledReason = isVoided ? t("This document is already voided.") : undefined;
   const createInvoiceItem = onDuplicate ? (
     <DropdownMenuItem
       className="cursor-pointer"
@@ -124,7 +130,7 @@ export default function AdvanceInvoiceListRowActions({
               createInvoiceItem
             ))}
         </DropdownMenuGroup>
-        {!advanceInvoice.paid_in_full && onAddPayment && (
+        {!advanceInvoice.paid_in_full && !paymentsBlockedByVoid && onAddPayment && (
           <>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>

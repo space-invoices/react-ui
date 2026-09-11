@@ -2,6 +2,7 @@ import type { SDKMethodOptions } from "@spaceinvoices/js-sdk";
 import type { UseMutationOptions } from "@tanstack/react-query";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { invalidateCreditPreparationForResources } from "@/ui/lib/credit-preparation-cache";
 import { invalidateDashboardQueriesForResources } from "@/ui/lib/dashboard-stats-cache";
 
 type ResourceMutationOptions<TData, TError, TVariables, TContext> = {
@@ -86,8 +87,9 @@ export function useResourceMutation<TData, TError = Error, TVariables = unknown,
 
 /**
  * Invalidate cache keys - marks queries as stale and refetches active ones.
- * Dashboard aggregates derived from the mutated resource are invalidated for the
- * same entity through the shared policy, so callers cannot skip that refresh.
+ * Dashboard aggregates and invoice credit-preparation caches derived from the mutated
+ * resource are invalidated for the same entity through their shared policies, so callers
+ * cannot skip those refreshes.
  */
 function invalidateCacheKeys(
   queryClient: ReturnType<typeof useQueryClient>,
@@ -97,6 +99,7 @@ function invalidateCacheKeys(
 ): void {
   const cacheKeys = Array.isArray(cacheKey) ? cacheKey : [cacheKey];
   void invalidateDashboardQueriesForResources(queryClient, cacheKeys, entityId);
+  invalidateCreditPreparationForResources(queryClient, cacheKeys, entityId);
 
   cacheKeys.forEach((key) => {
     // Invalidate all queries that start with this cache key

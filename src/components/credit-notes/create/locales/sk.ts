@@ -44,6 +44,8 @@ export default {
   Cash: "Hotovosť",
   "Bank Transfer": "Bankový prevod",
   Card: "Karta",
+  "Credit Card": "Kreditná karta",
+  "Debit Card": "Debetná karta",
   Check: "Šek",
   Other: "Iné",
   Note: "Poznámka",
@@ -114,4 +116,6 @@ export default {
   From: "Od",
   To: "Do",
   "Original invoice cannot be credited": "K pôvodnej faktúre nie je možné vystaviť dobropis",
+  "Portugal credit notes are issued to the customer on the original document.":
+    "Portugalské dobropisy sa vystavujú odberateľovi uvedenému na pôvodnom doklade.",
 } as const;

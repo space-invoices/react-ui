@@ -4,6 +4,8 @@ export default {
   Cash: "В брой",
   "Bank Transfer": "Банков превод",
   Card: "Карта",
+  "Credit Card": "Кредитна карта",
+  "Debit Card": "Дебитна карта",
   Check: "Чек",
   "Credit Note": "Кредитно известие",
   Advance: "Авансова фактура",

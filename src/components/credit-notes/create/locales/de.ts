@@ -46,6 +46,8 @@ export default {
   Cash: "Bargeld",
   "Bank Transfer": "Banküberweisung",
   Card: "Karte",
+  "Credit Card": "Kreditkarte",
+  "Debit Card": "Debitkarte",
   Check: "Scheck",
   Other: "Andere",
   // Note field
@@ -129,4 +131,6 @@ export default {
   From: "Von",
   To: "Bis",
   "Original invoice cannot be credited": "Die Originalrechnung kann nicht gutgeschrieben werden",
+  "Portugal credit notes are issued to the customer on the original document.":
+    "Portugiesische Gutschriften werden an den Kunden des Originaldokuments ausgestellt.",
 } as const;

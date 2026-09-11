@@ -56,6 +56,8 @@ export default {
   Cash: "Cash",
   "Bank Transfer": "Bank Transfer",
   Card: "Card",
+  "Credit Card": "Credit Card",
+  "Debit Card": "Debit Card",
   Check: "Check",
   Other: "Other",
   Note: "Note",
@@ -250,4 +252,7 @@ export default {
     "Click to disable Article 76.a reverse charge for this invoice",
   "Click to enable Article 76.a reverse charge for this invoice":
     "Click to enable Article 76.a reverse charge for this invoice",
+  "Short fiscal designation, up to 200 characters. Longer wording goes in the description.":
+    "Short fiscal designation, up to 200 characters. Longer wording goes in the description.",
+  "Leave empty and the export uses UN.": "Leave empty and the export uses UN.",
 } as const;

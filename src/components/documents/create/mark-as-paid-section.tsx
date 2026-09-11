@@ -7,6 +7,7 @@ import { Label } from "@/ui/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui/components/ui/select";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/ui/components/ui/tooltip";
 import { formatDecimalValue } from "@/ui/lib/formatting";
+import { getDocumentPaymentTypeLabelKey, getPaymentTypeOptions } from "@/ui/lib/payment-types";
 import { cn } from "@/ui/lib/utils";
 import {
   createEmptyPaymentRow,
@@ -14,19 +15,8 @@ import {
   derivePaymentRowAmounts,
   getDisplayPaymentAmount,
   getRecordedPaymentTotal,
+  REGULAR_PAYMENT_TYPES,
 } from "./payment-rows";
-
-// Regular payment types (excluding special types like credit_note and advance)
-const regularPaymentTypes = ["cash", "bank_transfer", "card", "check", "other"] as const;
-
-// Labels for payment types (used for translations)
-const PAYMENT_TYPE_LABELS: Record<string, string> = {
-  cash: "Cash",
-  bank_transfer: "Bank Transfer",
-  card: "Card",
-  check: "Check",
-  other: "Other",
-};
 
 type MarkAsPaidSectionProps = {
   /** Whether the document is marked as paid */
@@ -146,13 +136,13 @@ export function MarkAsPaidSection({
               >
                 <SelectTrigger className="w-full min-w-0" aria-label={t("Payment Type")}>
                   <SelectValue placeholder={t("Select payment type")}>
-                    {row.type ? t(PAYMENT_TYPE_LABELS[row.type]) : undefined}
+                    {row.type ? t(getDocumentPaymentTypeLabelKey(row.type)) : undefined}
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
-                  {regularPaymentTypes.map((pt) => (
-                    <SelectItem key={pt} value={pt}>
-                      {t(PAYMENT_TYPE_LABELS[pt])}
+                  {getPaymentTypeOptions(REGULAR_PAYMENT_TYPES, { currentType: row.type }).map((paymentType) => (
+                    <SelectItem key={paymentType} value={paymentType}>
+                      {t(getDocumentPaymentTypeLabelKey(paymentType))}
                     </SelectItem>
                   ))}
                 </SelectContent>

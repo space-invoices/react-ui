@@ -76,6 +76,8 @@ export default {
   cash: "kontant",
   bank_transfer: "Banköverföring",
   card: "kort",
+  credit_card: "Kreditkort",
+  debit_card: "Debetkort",
   check: "check",
   credit_note: "kreditnota",
   other: "Övrigt",

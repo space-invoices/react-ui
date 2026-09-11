@@ -23,6 +23,8 @@ export default {
   Cash: "Cash",
   "Bank Transfer": "Bank Transfer",
   Card: "Card",
+  "Credit Card": "Credit Card",
+  "Debit Card": "Debit Card",
   Check: "Check",
   Other: "Other",
   Premise: "Premise",

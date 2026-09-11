@@ -24,6 +24,8 @@ export default {
   Cash: "Espèces",
   "Bank Transfer": "Virement bancaire",
   Card: "Carte",
+  "Credit Card": "Carte de crédit",
+  "Debit Card": "Carte de débit",
   Check: "Chèque",
   Other: "Autre",
   Premise: "Local",

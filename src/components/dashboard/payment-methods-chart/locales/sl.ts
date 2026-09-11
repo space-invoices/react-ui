@@ -4,6 +4,8 @@ export default {
   Cash: "Gotovina",
   "Bank Transfer": "Bančno nakazilo",
   Card: "Kartica",
+  "Credit Card": "Kreditna kartica",
+  "Debit Card": "Debetna kartica",
   Check: "Ček",
   "Credit Note": "Dobropis",
   Advance: "Avans",

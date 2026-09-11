@@ -40,8 +40,22 @@ type DocumentRecipientSectionProps = {
   showPeppolRecipientFields?: boolean;
   /** Show the French legal delivery-address snapshot fields. */
   showDeliveryAddressFields?: boolean;
+  /**
+   * Explains why the recipient identity is fixed, and fixes it. Set by flows where
+   * the recipient is decided by the document being corrected — a Portuguese credit
+   * note must go to the customer named on the original invoice, and the API compares
+   * name, tax number, address, city, post code and country against it.
+   *
+   * Those six fields plus the recipient picker go read-only. Everything that is not
+   * part of that comparison — second address line, district, delivery address,
+   * routing and e-invoicing identifiers — stays editable.
+   */
+  lockedRecipientReason?: string;
   t: (key: string) => string;
+  /** Formatting and document-content locale, e.g. the entity locale. */
   locale?: string;
+  /** Interface language, when it differs from the document locale. */
+  translationLocale?: string;
 };
 
 const documentRecipientFieldTranslations = {
@@ -136,14 +150,18 @@ export function DocumentRecipientSection({
   showEInvoicingBuyerReference,
   showPeppolRecipientFields,
   showDeliveryAddressFields,
+  lockedRecipientReason,
   t,
   locale = "en",
+  translationLocale,
 }: DocumentRecipientSectionProps) {
   const translateRecipientField = createTranslation({
     t,
     locale,
+    translationLocale,
     translations: documentRecipientFieldTranslations,
   });
+  const isRecipientIdentityLocked = !!lockedRecipientReason;
   const isFrenchEntity = entityCountryCode?.toUpperCase() === "FR";
   const companyNumberLabel = translateRecipientField(
     isFrenchEntity ? "SIREN (French businesses, 9 digits)" : "Company Number",
@@ -190,7 +208,7 @@ export function DocumentRecipientSection({
     <div className="flex-1 space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="font-bold text-xl">{t("Recipient")}</h2>
-        {showCustomerForm && (
+        {showCustomerForm && !lockedRecipientReason && (
           <Button
             type="button"
             variant="outline"
@@ -226,8 +244,11 @@ export function DocumentRecipientSection({
           companyRegistryCountryCode={entityCountryCode}
           t={t}
           locale={locale}
+          translationLocale={translationLocale}
           ariaInvalid={!!customerNameError}
+          disabled={!!lockedRecipientReason}
         />
+        {lockedRecipientReason && <p className="text-muted-foreground text-xs">{lockedRecipientReason}</p>}
         {customerNameError && <p className="font-normal text-destructive text-xs">{customerNameError}</p>}
       </div>
 
@@ -238,6 +259,7 @@ export function DocumentRecipientSection({
             name="customer.address"
             placeholder={t("Address")}
             label=""
+            disabled={isRecipientIdentityLocked}
             onChange={onCustomerEdit}
           />
 
@@ -255,6 +277,7 @@ export function DocumentRecipientSection({
               name="customer.post_code"
               placeholder={t("Post Code")}
               label=""
+              disabled={isRecipientIdentityLocked}
               onChange={onCustomerEdit}
             />
             <FormInput
@@ -262,6 +285,7 @@ export function DocumentRecipientSection({
               name="customer.city"
               placeholder={t("City")}
               label=""
+              disabled={isRecipientIdentityLocked}
               onChange={onCustomerEdit}
             />
           </div>
@@ -279,6 +303,7 @@ export function DocumentRecipientSection({
               name="customer.country"
               placeholder={t("Country")}
               label=""
+              disabled={isRecipientIdentityLocked}
               onChange={onCustomerEdit}
             />
           </div>
@@ -290,6 +315,7 @@ export function DocumentRecipientSection({
                 name="customer.tax_number"
                 placeholder={t("Tax Number")}
                 label=""
+                disabled={isRecipientIdentityLocked}
                 onChange={onCustomerEdit}
               />
             </div>
@@ -298,6 +324,7 @@ export function DocumentRecipientSection({
                 <Checkbox
                   id="is_end_consumer"
                   checked={endConsumerController.field.value === true}
+                  disabled={isRecipientIdentityLocked}
                   onCheckedChange={(checked) => endConsumerController.field.onChange(checked === true)}
                 />
                 <Label
@@ -324,6 +351,7 @@ export function DocumentRecipientSection({
                   control={control}
                   t={t}
                   locale={locale}
+                  translationLocale={translationLocale}
                   namePrefix="customer.bank_accounts"
                   compact
                 />

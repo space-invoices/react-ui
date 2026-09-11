@@ -14,8 +14,14 @@ import {
 } from "@/ui/components/ui/form";
 import { Input } from "@/ui/components/ui/input";
 import { isPortugalEntity } from "@/ui/lib/country-capabilities";
+import { FormattedInput } from "@/ui/lib/formatted-input";
+import { LEGAL_FORMS, type LegalDetails, readLegalDetails } from "@/ui/lib/legal-details";
 import {
   applyPortugalEntityIssues,
+  formatPortugalPostCodeEntry,
+  normalizePortugalEntityInput,
+  normalizePortugalTaxNumberInput,
+  type PortugalAmountInput,
   portugalShareCapitalSchema,
   toSubmittableShareCapital,
 } from "@/ui/lib/pt-entity-input";
@@ -52,44 +58,62 @@ const translations = { bg, cs, de, en, es, et, fi, fr, hr, is, it, nb, nl, pl, p
  * refinement no-ops for every other country.
  */
 function createCompanySettingsSchema(t: (key: string) => string, countryCode: string | null | undefined) {
-  return z
-    .object({
-      name: z.string().min(1, "Name is required"),
-      email: z
-        .union([
-          z.string().trim().max(255, t("Invalid email address")).email(t("Invalid email address")),
-          z.literal(""),
-          z.null(),
-        ])
-        .optional(),
-      tax_number: z.union([z.string(), z.null()]).optional(),
-      is_tax_subject: z.boolean(),
-      tax_number_2: z.union([z.string(), z.null()]).optional(),
-      address: z.union([z.string(), z.null()]).optional(),
-      address_2: z.union([z.string(), z.null()]).optional(),
-      post_code: z.union([z.string(), z.null()]).optional(),
-      city: z.union([z.string(), z.null()]).optional(),
-      state: z.union([z.string(), z.null()]).optional(),
-      // Portugal-only fields; see PortugalCompanyFields.
-      company_number: z.union([z.string(), z.null()]).optional(),
-      phone: z.union([z.string(), z.null()]).optional(),
-      starting_capital: portugalShareCapitalSchema,
-      // Bank account fields (stored in settings.bank_accounts array)
-      bank_account_type: z.enum(["iban", "us_domestic", "uk_domestic", "other"]),
-      bank_account_iban: z
-        .union([z.string(), z.null()])
-        .refine((val) => !val || /^[A-Z]{2}[0-9A-Z]{2,32}$/.test(val.replace(/\s/g, "")), {
-          message: "Must be a valid IBAN",
-        })
-        .optional(),
-      bank_account_account_number: z.union([z.string(), z.null()]).optional(),
-      bank_account_name: z.union([z.string(), z.null()]).optional(),
-      bank_account_bank_name: z.union([z.string(), z.null()]).optional(),
-      bank_account_bic: z.union([z.string(), z.null()]).optional(),
-      bank_account_routing_number: z.union([z.string(), z.null()]).optional(),
-      bank_account_sort_code: z.union([z.string(), z.null()]).optional(),
-    })
-    .superRefine((values, ctx) => applyPortugalEntityIssues({ ...values, country_code: countryCode }, ctx));
+  return (
+    z
+      .object({
+        name: z.string().min(1, "Name is required"),
+        email: z
+          .union([
+            z.string().trim().max(255, t("Invalid email address")).email(t("Invalid email address")),
+            z.literal(""),
+            z.null(),
+          ])
+          .optional(),
+        tax_number: z.union([z.string(), z.null()]).optional(),
+        is_tax_subject: z.boolean(),
+        tax_number_2: z.union([z.string(), z.null()]).optional(),
+        address: z.union([z.string(), z.null()]).optional(),
+        address_2: z.union([z.string(), z.null()]).optional(),
+        post_code: z.union([z.string(), z.null()]).optional(),
+        city: z.union([z.string(), z.null()]).optional(),
+        state: z.union([z.string(), z.null()]).optional(),
+        // Portugal-only fields; see PortugalCompanyFields.
+        company_number: z.union([z.string(), z.null()]).optional(),
+        phone: z.union([z.string(), z.null()]).optional(),
+        starting_capital: portugalShareCapitalSchema,
+        // Flat here, assembled into settings.legal_details on submit.
+        legal_form: z.enum(LEGAL_FORMS).nullable().optional(),
+        registration_office: z.union([z.string(), z.null()]).optional(),
+        paid_up_capital: portugalShareCapitalSchema,
+        equity: portugalShareCapitalSchema,
+        in_liquidation: z.boolean().nullable().optional(),
+        // Bank account fields (stored in settings.bank_accounts array)
+        bank_account_type: z.enum(["iban", "us_domestic", "uk_domestic", "other"]),
+        bank_account_iban: z
+          .union([z.string(), z.null()])
+          .refine((val) => !val || /^[A-Z]{2}[0-9A-Z]{2,32}$/.test(val.replace(/\s/g, "")), {
+            message: "Must be a valid IBAN",
+          })
+          .optional(),
+        bank_account_account_number: z.union([z.string(), z.null()]).optional(),
+        bank_account_name: z.union([z.string(), z.null()]).optional(),
+        bank_account_bank_name: z.union([z.string(), z.null()]).optional(),
+        bank_account_bic: z.union([z.string(), z.null()]).optional(),
+        bank_account_routing_number: z.union([z.string(), z.null()]).optional(),
+        bank_account_sort_code: z.union([z.string(), z.null()]).optional(),
+      })
+      // The Portuguese fields are accepted in the spellings a business has them printed
+      // in, and stored in the one spelling the API keeps. Normalizing here rather than in
+      // the inputs means a save made straight from the keyboard sends the same value a
+      // blur would have shown. No-ops for other countries.
+      .transform((values) => ({
+        ...values,
+        ...normalizePortugalEntityInput({ ...values, country_code: countryCode }),
+      }))
+      .superRefine((values, ctx) =>
+        applyPortugalEntityIssues({ ...values, country_code: countryCode }, ctx, { requireLegalForm: true }),
+      )
+  );
 }
 
 type CompanySettingsSchema = z.infer<ReturnType<typeof createCompanySettingsSchema>>;
@@ -98,6 +122,46 @@ type BankAccountType = CompanySettingsSchema["bank_account_type"];
 function emptyToNull(value: string | null | undefined) {
   const trimmedValue = value?.trim();
   return trimmedValue ? trimmedValue : null;
+}
+
+/**
+ * A cleared numeric disclosure is `null` — an explicit "this does not apply to us".
+ *
+ * Text `NumericInput` could not parse never reaches this: the Portugal refinement fails the
+ * submit on it, so a mistyped figure is reported on its own field instead of being written
+ * back as `null` over a disclosure the entity had already published.
+ */
+function toSubmittableAmount(value: PortugalAmountInput): number | null {
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+/**
+ * The legal_details block this form owns. It is only assembled once the user has
+ * chosen a legal form. Portugal validation requires the choice before submitting;
+ * other countries may omit this country-specific block.
+ */
+function buildLegalDetails(values: CompanySettingsSchema): LegalDetails | null {
+  if (!values.legal_form) return null;
+
+  return {
+    legal_form: values.legal_form,
+    registration_office: emptyToNull(values.registration_office),
+    paid_up_capital: toSubmittableAmount(values.paid_up_capital),
+    equity: toSubmittableAmount(values.equity),
+    in_liquidation: values.in_liquidation ?? null,
+  };
+}
+
+function isSameLegalDetails(next: LegalDetails, current: LegalDetails | null): boolean {
+  if (!current) return false;
+
+  return (
+    next.legal_form === (current.legal_form ?? null) &&
+    next.registration_office === (current.registration_office ?? null) &&
+    next.paid_up_capital === (current.paid_up_capital ?? null) &&
+    next.equity === (current.equity ?? null) &&
+    next.in_liquidation === (current.in_liquidation ?? null)
+  );
 }
 
 function getPrimaryBankAccount(currentSettings: any) {
@@ -170,6 +234,7 @@ export function CompanySettingsForm({
   const t = createTranslation({ t: translateProp, namespace, locale, translationLocale, translations });
 
   const currentSettings = (entity.settings as any) || {};
+  const storedLegalDetails = readLegalDetails(entity.settings);
   const primaryBankAccount = getPrimaryBankAccount(currentSettings);
   const bankAccountType = getDefaultBankAccountType(entity, primaryBankAccount);
   // Matches the schema refinement, which normalizes country_code the same way — the two
@@ -192,6 +257,11 @@ export function CompanySettingsForm({
       company_number: entity.company_number ?? null,
       phone: entity.phone ?? null,
       starting_capital: entity.starting_capital ?? null,
+      legal_form: storedLegalDetails?.legal_form ?? null,
+      registration_office: storedLegalDetails?.registration_office ?? null,
+      paid_up_capital: storedLegalDetails?.paid_up_capital ?? null,
+      equity: storedLegalDetails?.equity ?? null,
+      in_liquidation: storedLegalDetails?.in_liquidation ?? null,
       bank_account_type: bankAccountType,
       bank_account_iban: getBankAccountValue(primaryBankAccount, "iban"),
       bank_account_account_number: getBankAccountValue(primaryBankAccount, "account_number"),
@@ -235,6 +305,8 @@ export function CompanySettingsForm({
     if (values.city !== (entity as any).city) updatePayload.city = values.city;
     if (values.state !== (entity as any).state) updatePayload.state = values.state;
 
+    let nextLegalDetails: LegalDetails | null = null;
+
     if (showPortugalFields) {
       const portugalChanges = {
         company_number: emptyToNull(values.company_number),
@@ -245,6 +317,8 @@ export function CompanySettingsForm({
       for (const [field, value] of Object.entries(portugalChanges)) {
         if (value !== ((entity as Record<string, any>)[field] ?? null)) updatePayload[field] = value;
       }
+
+      nextLegalDetails = buildLegalDetails(values);
     }
 
     // Check if bank account fields changed
@@ -267,9 +341,14 @@ export function CompanySettingsForm({
       emptyToNull(values.bank_account_routing_number) !== currentRoutingNumber ||
       emptyToNull(values.bank_account_sort_code) !== currentSortCode;
 
+    // Send only keys this surface owns — see useUpdateEntity's settings contract
+    if (nextLegalDetails && !isSameLegalDetails(nextLegalDetails, storedLegalDetails)) {
+      updatePayload.settings = { ...updatePayload.settings, legal_details: nextLegalDetails };
+    }
+
     if (bankChanged) {
-      // Send only keys this surface owns — see useUpdateEntity's settings contract
       updatePayload.settings = {
+        ...updatePayload.settings,
         bank_accounts: buildBankAccounts(
           {
             ...values,
@@ -345,15 +424,24 @@ export function CompanySettingsForm({
               <FormItem className="max-w-xs">
                 <FormLabel className="font-medium text-base">{t("Tax ID")}</FormLabel>
                 <FormControl>
-                  <Input
-                    {...field}
+                  <FormattedInput
+                    name={field.name}
+                    ref={field.ref}
+                    disabled={field.disabled}
                     value={field.value || ""}
-                    onChange={(e) => field.onChange(e.target.value || null)}
-                    placeholder="12-3456789"
+                    inputMode={showPortugalFields ? "numeric" : undefined}
+                    formatter={showPortugalFields ? normalizePortugalTaxNumberInput : undefined}
+                    onValueChange={(value) => field.onChange(value || null)}
+                    onBlur={field.onBlur}
+                    placeholder={showPortugalFields ? "501442600" : "12-3456789"}
                     className="h-10"
                   />
                 </FormControl>
-                <FormDescription className="text-xs">{t("Tax identification number (optional)")}</FormDescription>
+                <FormDescription className="text-xs">
+                  {showPortugalFields
+                    ? t("9 digits. You can paste it with spaces or a PT prefix.")
+                    : t("Tax identification number (optional)")}
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -469,14 +557,25 @@ export function CompanySettingsForm({
               <FormItem>
                 <FormLabel className="font-medium text-base">{t("Postal Code")}</FormLabel>
                 <FormControl>
-                  <Input
-                    {...field}
+                  <FormattedInput
+                    name={field.name}
+                    ref={field.ref}
+                    disabled={field.disabled}
                     value={field.value || ""}
-                    onChange={(e) => field.onChange(e.target.value || null)}
-                    placeholder="94102"
+                    inputMode={showPortugalFields ? "numeric" : undefined}
+                    autoComplete="postal-code"
+                    formatter={showPortugalFields ? formatPortugalPostCodeEntry : undefined}
+                    onValueChange={(value) => field.onChange(value || null)}
+                    onBlur={field.onBlur}
+                    placeholder={showPortugalFields ? "1000-001" : "94102"}
                     className="h-10"
                   />
                 </FormControl>
+                {showPortugalFields && (
+                  <FormDescription className="text-xs">
+                    {t("Enter 7 digits; the hyphen is added automatically.")}
+                  </FormDescription>
+                )}
                 <FormMessage />
               </FormItem>
             )}
@@ -495,7 +594,7 @@ export function CompanySettingsForm({
                     {...field}
                     value={field.value || ""}
                     onChange={(e) => field.onChange(e.target.value || null)}
-                    placeholder="CA"
+                    placeholder={showPortugalFields ? "Lisboa" : "CA"}
                     className="h-10"
                   />
                 </FormControl>
@@ -513,7 +612,14 @@ export function CompanySettingsForm({
           </FormItem>
         </div>
 
-        {showPortugalFields && <PortugalCompanyFields control={form.control} t={t} inputLocale={locale ?? "en"} />}
+        {showPortugalFields && (
+          <PortugalCompanyFields
+            control={form.control}
+            t={t}
+            inputLocale={locale ?? "en"}
+            storedLegalDetails={storedLegalDetails}
+          />
+        )}
 
         <div className="border-t pt-6">
           <p className="mb-4 font-medium text-base">{t("Bank Account")}</p>
@@ -531,7 +637,7 @@ export function CompanySettingsForm({
                         {...field}
                         value={field.value || ""}
                         onChange={(e) => field.onChange(e.target.value.toUpperCase().replace(/\s/g, "") || null)}
-                        placeholder="SI56 0123 4567 8901 234"
+                        placeholder={showPortugalFields ? "PT50 0002 0123 1234 5678 9015 4" : "SI56 0123 4567 8901 234"}
                         className="h-10 font-mono"
                       />
                     </FormControl>

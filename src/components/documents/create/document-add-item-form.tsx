@@ -33,17 +33,19 @@ import { Input } from "@/ui/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/ui/components/ui/popover";
 import { Textarea } from "@/ui/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/ui/components/ui/tooltip";
-import { getEntityCountryCapabilities } from "@/ui/lib/country-capabilities";
+import { getEntityCountryCapabilities, isPortugalEntity } from "@/ui/lib/country-capabilities";
 import {
   DEFAULT_CONTENT_LOCALE,
   type DocumentContentLocaleMode,
   readLocalizedValue,
   writeLocalizedValue,
 } from "@/ui/lib/document-content-translations";
+import { resolveTranslationLocale } from "@/ui/lib/locale";
 import { NumericInput } from "@/ui/lib/numeric-input";
 import { cn } from "@/ui/lib/utils";
 import { useEntities } from "@/ui/providers/entities-context";
 import { buildCustomItemNameUpdate, buildSelectedItemState } from "./document-item-state";
+import { PORTUGAL_DEFAULT_ITEM_UNIT, PORTUGAL_ITEM_UNIT_MAX_LENGTH } from "./document-item-validation";
 import { MarkdownTextareaToolbar } from "./markdown-textarea-toolbar";
 
 type DocumentAddItemFormProps = {
@@ -73,6 +75,8 @@ type DocumentAddItemFormProps = {
   /** Called when price mode changes - used to collect state at submit */
   onPriceModeChange?: (isGross: boolean) => void;
   locale?: string;
+  /** Interface language, when it differs from the document locale. */
+  translationLocale?: string;
   translationsEnabled?: boolean;
   contentLocale?: DocumentContentLocaleMode;
   defaultContentLocale?: string | null;
@@ -256,14 +260,20 @@ export default function DocumentAddItemForm({
   initialIsGrossPrice = false,
   onPriceModeChange,
   locale = "en",
+  translationLocale,
   translationsEnabled = false,
   contentLocale = DEFAULT_CONTENT_LOCALE,
   defaultContentLocale,
   onContentLocaleChange,
 }: DocumentAddItemFormProps) {
+  // Money, dates and item content stay on `locale`; only interface chrome follows the UI language.
+  const uiLocale = resolveTranslationLocale(translationLocale, locale);
   const { activeEntity } = useEntities();
   const descriptionTextareaRef = useRef<HTMLTextAreaElement>(null);
   const countryCapabilities = getEntityCountryCapabilities(activeEntity);
+  // The line limits below are what the API enforces on every Portugal entity, so they
+  // follow the plain country check rather than the gated Portugal UI capability.
+  const isPortugalIssuer = isPortugalEntity(activeEntity);
   const itemType = useWatch({
     control,
     name: `items.${index}.type`,
@@ -439,7 +449,7 @@ export default function DocumentAddItemForm({
                         activeLocale={contentLocale}
                         defaultLocale={defaultContentLocale}
                         onChange={onContentLocaleChange}
-                        uiLocale={locale}
+                        uiLocale={uiLocale}
                         t={t}
                       />
                     )}
@@ -521,7 +531,7 @@ export default function DocumentAddItemForm({
                           activeLocale={contentLocale}
                           defaultLocale={defaultContentLocale}
                           onChange={onContentLocaleChange}
-                          uiLocale={locale}
+                          uiLocale={uiLocale}
                           t={t}
                         />
                       )}
@@ -584,7 +594,7 @@ export default function DocumentAddItemForm({
                       defaultLocale={defaultContentLocale}
                       onChange={onContentLocaleChange}
                       disabled={lockPortugalSavedItemFields}
-                      uiLocale={locale}
+                      uiLocale={uiLocale}
                       t={t}
                     />
                   )}
@@ -606,10 +616,16 @@ export default function DocumentAddItemForm({
                     inputDataDemo={`marketing-demo-item-name-${index}`}
                     t={t}
                     locale={locale}
+                    translationLocale={translationLocale}
                     disabled={lockPortugalSavedItemFields}
                     ariaInvalid={!!fieldState.error}
                   />
                 </FormControl>
+                {isPortugalIssuer && (
+                  <p className="text-muted-foreground text-xs">
+                    {t("Short fiscal designation, up to 200 characters. Longer wording goes in the description.")}
+                  </p>
+                )}
                 <FormMessage />
               </FormItem>
             )}
@@ -623,10 +639,17 @@ export default function DocumentAddItemForm({
               name={`items.${index}.classification`}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-xs">{t("Classification")}</FormLabel>
+                  <FormLabel className="text-xs">
+                    {t("Classification")}
+                    {countryCapabilities.isPortugal && <span className="text-red-500"> *</span>}
+                  </FormLabel>
                   <FormControl>
                     <select
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                      {...field}
+                      // Announced as required, but left to the form schema to enforce: native
+                      // validation would block submission before the inline message is written.
+                      aria-required={countryCapabilities.isPortugal || undefined}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background aria-invalid:border-destructive"
                       value={field.value ?? ""}
                       onChange={(event) => field.onChange(event.target.value)}
                       disabled={lockPortugalSavedItemFields}
@@ -766,8 +789,17 @@ export default function DocumentAddItemForm({
                   )}
                 </div>
                 <FormControl>
-                  <Input {...field} value={field.value ?? ""} disabled={lockPortugalSavedItemFields} />
+                  <Input
+                    {...field}
+                    value={field.value ?? ""}
+                    disabled={lockPortugalSavedItemFields}
+                    maxLength={isPortugalIssuer ? PORTUGAL_ITEM_UNIT_MAX_LENGTH : undefined}
+                    placeholder={isPortugalIssuer ? PORTUGAL_DEFAULT_ITEM_UNIT : undefined}
+                  />
                 </FormControl>
+                {isPortugalIssuer && (
+                  <p className="text-muted-foreground text-xs">{t("Leave empty and the export uses UN.")}</p>
+                )}
                 <FormMessage />
               </FormItem>
             )}
@@ -873,6 +905,8 @@ export default function DocumentAddItemForm({
                     onFindEstimatedTax={onFindEstimatedTax}
                     showLabel={false}
                     t={t}
+                    locale={locale}
+                    translationLocale={translationLocale}
                   />
                 ))}
 
@@ -931,7 +965,7 @@ export default function DocumentAddItemForm({
                         defaultLocale={defaultContentLocale}
                         onChange={onContentLocaleChange}
                         disabled={lockPortugalSavedItemFields}
-                        uiLocale={locale}
+                        uiLocale={uiLocale}
                         t={t}
                       />
                     )}

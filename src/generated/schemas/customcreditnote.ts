@@ -1038,6 +1038,19 @@ const DocumentTranslations = z
 
 
 // Dependency schema for customcreditnote
+const PtDocumentInput = z
+  .object({
+    operator_id: z.union([z.string(), z.null()]),
+    correction_reason: z.union([z.string(), z.null()]),
+    series_id: z.union([z.string(), z.null()]),
+    manual: z.union([z.boolean(), z.null()]),
+    manual_sequential_number: z.union([z.string(), z.number(), z.null()]),
+    manual_series_code: z.union([z.string(), z.null()]),
+  })
+  .partial();
+
+
+// Dependency schema for customcreditnote
 const DocumentItemEInvoicingData = z
   .object({ unit_code: z.union([z.string(), z.null()]) })
   .partial();
@@ -1185,6 +1198,8 @@ const CreateDocumentPayment = z.object({
     "cash",
     "bank_transfer",
     "card",
+    "credit_card",
+    "debit_card",
     "check",
     "paypal",
     "coupon",
@@ -1230,7 +1245,7 @@ const CreateFinaInvoiceData = z
     operator_oib: z.union([z.string(), z.null()]),
     operator_label: z.union([z.string(), z.null()]),
     payment_type: z.union([
-      z.union([z.enum(["cash", "card", "online", "bank_transfer", "paypal", "crypto", "coupon", "other"]), z.null()]),
+      z.union([z.enum(["cash", "card", "credit_card", "debit_card", "online", "bank_transfer", "paypal", "crypto", "coupon", "other"]), z.null()]),
       z.null(),
     ]),
   })
@@ -1308,16 +1323,7 @@ const createCustomCreditNoteSchemaDefinition = z.object({
   currency_code: z.union([z.string(), z.null()]).optional(),
   metadata: z.union([z.record(z.string(), z.string()).refine((value) => Object.keys(value).length <= 50, { message: "Metadata can have maximum 50 properties" }), z.null()]).optional(),
   reference: z.union([z.string(), z.null()]).optional(),
-  pt: z
-    .union([
-      z.string(),
-      z.number(),
-      z.boolean(),
-      z.null(),
-      z.object({}).partial().passthrough(),
-      z.array(z.unknown()),
-    ])
-    .optional(),
+  pt: z.union([PtDocumentInput, z.null()]).optional(),
   date_service: z.union([z.string(), z.null()]).optional(),
   date_service_to: z.union([z.string(), z.null()]).optional(),
   date_due: z.union([z.string(), z.null()]).optional(),

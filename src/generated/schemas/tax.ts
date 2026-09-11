@@ -22,7 +22,7 @@ const createTaxSchemaDefinition = z.object({
   is_default: z.boolean().optional(),
   classification: z.union([z.string(), z.null()]).optional(),
   pt_exemption_code: z.union([z.string(), z.null()]).optional(),
-  pt_exemption_reason: z.union([z.string(), z.null()]).optional(),
+  pt_exemption_reason: z.union([z.string().max(60), z.null()]).optional(),
   metadata: z.union([z.record(z.string(), z.string()).refine((value) => Object.keys(value).length <= 50, { message: "Metadata can have maximum 50 properties" }), z.null()]).optional(),
 });
 

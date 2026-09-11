@@ -10,8 +10,10 @@ import {
   DropdownMenuTrigger,
 } from "@/ui/components/ui/dropdown-menu";
 import { actionMenuTooltipProps, Tooltip, TooltipContent, TooltipTrigger } from "@/ui/components/ui/tooltip";
+import { arePaymentMutationsBlockedByVoid } from "@/ui/lib/payment-mutation-state";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
+import { useEntitiesOptional } from "@/ui/providers/entities-context";
 import { useCreditNoteDownload } from "./use-credit-note-download";
 
 const translations = {
@@ -52,6 +54,9 @@ export default function CreditNoteListRowActions({
   ...i18nProps
 }: CreditNoteListRowActionsProps) {
   const t = createTranslation({ ...i18nProps, translations });
+  // Portugal refuses a refund against a voided credit note; elsewhere it stays reconcilable.
+  const activeEntity = useEntitiesOptional()?.activeEntity;
+  const paymentsBlockedByVoid = arePaymentMutationsBlockedByVoid(creditNote, activeEntity);
   const { isDownloading, downloadPDF } = useCreditNoteDownload({
     onDownloadStart,
     onDownloadSuccess,
@@ -92,7 +97,7 @@ export default function CreditNoteListRowActions({
             </DropdownMenuItem>
           )}
         </DropdownMenuGroup>
-        {!creditNote.paid_in_full && onAddPayment && (
+        {!creditNote.paid_in_full && !paymentsBlockedByVoid && onAddPayment && (
           <>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>

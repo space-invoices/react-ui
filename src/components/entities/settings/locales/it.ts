@@ -335,13 +335,43 @@ export default {
 
   // Portugal entity details
   "Portugal Details": "Dettagli Portogallo",
-  "Portuguese law requires these details on every entity": "La legge portoghese richiede questi dati per ogni entità",
+  "Portuguese invoices carry these details. What is required depends on your legal form.":
+    "Le fatture portoghesi riportano questi dati. Quali siano obbligatori dipende dalla tua forma giuridica.",
+  "Legal Form": "Forma giuridica",
+  "Select your legal form": "Seleziona la forma giuridica",
+  "Decides which registration and capital details Portugal asks you for":
+    "Determina quali dati di registrazione e di capitale ti richiede il Portogallo",
+  "Individual professional or sole trader": "Libero professionista o ditta individuale",
+  "Private limited company (Lda.)": "Società a responsabilità limitata (Lda.)",
+  "Public limited company (S.A.)": "Società per azioni (S.A.)",
+  "Partnership limited by shares": "Società in accomandita per azioni",
+  "Other company": "Altra società",
   "Company Number": "Numero di registrazione",
-  "Company registration number (NIPC)": "Numero di registrazione della società (NIPC)",
+  "Digits and slashes only, as shown on your registration.":
+    "Solo cifre e barre, come indicato nella tua registrazione.",
+  "Registry Office": "Ufficio del registro",
+  "Commercial registry where the company is registered": "Registro delle imprese in cui la società è iscritta",
   Phone: "Telefono",
-  "International format, including the country code": "Formato internazionale, incluso il prefisso del paese",
+  "Enter 912 345 678 for Portugal, or include + and the country code for another country.":
+    "Inserisci 912 345 678 per il Portogallo, oppure aggiungi + e il prefisso internazionale per un altro paese.",
+  "Enter 7 digits; the hyphen is added automatically.":
+    "Inserisci 7 cifre; il trattino viene aggiunto automaticamente.",
+  "9 digits. You can paste it with spaces or a PT prefix.":
+    "9 cifre. Puoi incollarlo con gli spazi o con il prefisso PT.",
   "Share Capital": "Capitale sociale",
   "Registered share capital of the company": "Capitale sociale registrato della società",
+  "Conditional company disclosures": "Informazioni societarie condizionate",
+  "Leave these empty unless one of them applies to your company.":
+    "Lascia questi campi vuoti, a meno che uno di essi non riguardi la tua società.",
+  "Paid-up Capital": "Capitale versato",
+  "Only needed when less than the share capital has actually been paid in":
+    "Necessario solo se è stato effettivamente versato meno del capitale sociale",
+  Equity: "Patrimonio netto",
+  "Only needed when equity has fallen to half the share capital or less. Use the figure from your last approved balance sheet.":
+    "Necessario solo se il patrimonio netto è sceso alla metà del capitale sociale o al di sotto. Usa il valore dell'ultimo bilancio approvato.",
+  "Company is in liquidation": "Società in liquidazione",
+  "Documents must say so while the company is being wound up":
+    "I documenti devono indicarlo per tutta la durata della liquidazione della società",
   // Tax rule sections and Slovenian Article 76.a
   "Calculation settings": "Impostazioni di calcolo",
   "Choose how prices, discounts, and taxes are calculated on documents.":

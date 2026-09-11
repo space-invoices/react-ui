@@ -23,6 +23,13 @@ export function sanitizeFiscalStartingNumberInput(value: string) {
   return value.replace(/[^0-9]/g, "");
 }
 
+/**
+ * Digits only. `Number()` reads "-1", "1.5" and "1e3" as 1, 1.5 and 1000, so a raw entry
+ * has to be matched as text before it is converted: a fiscal number must be the one the
+ * issuer typed, or an error, never a different number.
+ */
+const FISCAL_STARTING_NUMBER_PATTERN = /^\d+$/;
+
 export function getFiscalStartingNumberError(value: string) {
   const trimmed = value.trim();
   if (!trimmed) {
@@ -30,7 +37,7 @@ export function getFiscalStartingNumberError(value: string) {
   }
 
   const number = Number(trimmed);
-  if (!Number.isInteger(number) || number < 1 || number > FISCAL_STARTING_NUMBER_MAX) {
+  if (!FISCAL_STARTING_NUMBER_PATTERN.test(trimmed) || number < 1 || number > FISCAL_STARTING_NUMBER_MAX) {
     return `Starting number must be between 1 and ${FISCAL_STARTING_NUMBER_MAX}`;
   }
 

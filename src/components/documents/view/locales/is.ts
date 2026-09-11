@@ -76,6 +76,8 @@ export default {
   cash: "Reiðufé",
   bank_transfer: "Bankamillifærsla",
   card: "Kort",
+  credit_card: "Kreditkort",
+  debit_card: "Debetkort",
   check: "Ávísun",
   credit_note: "Kreditreikningur",
   other: "Annað",

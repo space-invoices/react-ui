@@ -315,14 +315,42 @@ export default {
 
   // Portugal entity details
   "Portugal Details": "Upplýsingar fyrir Portúgal",
-  "Portuguese law requires these details on every entity":
-    "Portúgölsk lög krefjast þessara upplýsinga fyrir hverja einingu",
+  "Portuguese invoices carry these details. What is required depends on your legal form.":
+    "Portúgalskir reikningar bera þessar upplýsingar. Hvað er skylda fer eftir félagaformi þínu.",
+  "Legal Form": "Félagaform",
+  "Select your legal form": "Veldu félagaform þitt",
+  "Decides which registration and capital details Portugal asks you for":
+    "Ræður hvaða skráningar- og fjármagnsupplýsinga Portúgal krefst af þér",
+  "Individual professional or sole trader": "Sjálfstætt starfandi sérfræðingur eða einyrki",
+  "Private limited company (Lda.)": "Einkahlutafélag (Lda.)",
+  "Public limited company (S.A.)": "Hlutafélag (S.A.)",
+  "Partnership limited by shares": "Samlagshlutafélag",
+  "Other company": "Annað félag",
   "Company Number": "Kennitala fyrirtækis",
-  "Company registration number (NIPC)": "Skráningarnúmer fyrirtækisins (NIPC)",
+  "Digits and slashes only, as shown on your registration.":
+    "Aðeins tölustafir og skástrik, eins og í skráningunni þinni.",
+  "Registry Office": "Skráningarstofa",
+  "Commercial registry where the company is registered": "Fyrirtækjaskrá þar sem félagið er skráð",
   Phone: "Sími",
-  "International format, including the country code": "Alþjóðlegt snið, með landsnúmeri",
+  "Enter 912 345 678 for Portugal, or include + and the country code for another country.":
+    "Sláðu inn 912 345 678 fyrir Portúgal, eða settu + og landsnúmerið fyrir annað land.",
+  "Enter 7 digits; the hyphen is added automatically.": "Sláðu inn 7 tölustafi; bandstrikið bætist við sjálfkrafa.",
+  "9 digits. You can paste it with spaces or a PT prefix.":
+    "9 tölustafir. Þú mátt líma hann inn með bilum eða PT-forskeyti.",
   "Share Capital": "Hlutafé",
   "Registered share capital of the company": "Skráð hlutafé fyrirtækisins",
+  "Conditional company disclosures": "Skilyrtar upplýsingar um félagið",
+  "Leave these empty unless one of them applies to your company.":
+    "Skildu þessa reiti eftir auða nema eitthvað þeirra eigi við um félagið þitt.",
+  "Paid-up Capital": "Innborgað hlutafé",
+  "Only needed when less than the share capital has actually been paid in":
+    "Aðeins nauðsynlegt þegar minna en hlutaféð hefur í raun verið greitt inn",
+  Equity: "Eigið fé",
+  "Only needed when equity has fallen to half the share capital or less. Use the figure from your last approved balance sheet.":
+    "Aðeins nauðsynlegt þegar eigið fé hefur fallið niður í helming hlutafjár eða minna. Notaðu fjárhæðina úr síðasta samþykkta efnahagsreikningi.",
+  "Company is in liquidation": "Félagið er í slitameðferð",
+  "Documents must say so while the company is being wound up":
+    "Skjöl verða að greina frá því á meðan félaginu er slitið",
   // Tax rule sections and Slovenian Article 76.a
   "Calculation settings": "Útreikningsstillingar",
   "Choose how prices, discounts, and taxes are calculated on documents.":

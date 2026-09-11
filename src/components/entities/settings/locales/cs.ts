@@ -311,13 +311,42 @@ export default {
 
   // Portugal entity details
   "Portugal Details": "Údaje pro Portugalsko",
-  "Portuguese law requires these details on every entity": "Portugalské právo vyžaduje tyto údaje u každého subjektu",
+  "Portuguese invoices carry these details. What is required depends on your legal form.":
+    "Portugalské faktury tyto údaje obsahují. Které z nich jsou povinné, závisí na vaší právní formě.",
+  "Legal Form": "Právní forma",
+  "Select your legal form": "Vyberte svou právní formu",
+  "Decides which registration and capital details Portugal asks you for":
+    "Určuje, které údaje o registraci a kapitálu po vás Portugalsko vyžaduje",
+  "Individual professional or sole trader": "Samostatný odborník nebo osoba samostatně výdělečně činná",
+  "Private limited company (Lda.)": "Společnost s ručením omezeným (Lda.)",
+  "Public limited company (S.A.)": "Akciová společnost (S.A.)",
+  "Partnership limited by shares": "Komanditní společnost na akcie",
+  "Other company": "Jiná společnost",
   "Company Number": "IČO",
-  "Company registration number (NIPC)": "Registrační číslo společnosti (NIPC)",
+  "Digits and slashes only, as shown on your registration.":
+    "Pouze číslice a lomítka, jak je uvedeno ve vaší registraci.",
+  "Registry Office": "Rejstříkový úřad",
+  "Commercial registry where the company is registered": "Obchodní rejstřík, ve kterém je společnost zapsána",
   Phone: "Telefon",
-  "International format, including the country code": "Mezinárodní formát včetně předvolby země",
+  "Enter 912 345 678 for Portugal, or include + and the country code for another country.":
+    "Zadejte 912 345 678 pro Portugalsko, nebo uveďte + a předvolbu země pro jinou zemi.",
+  "Enter 7 digits; the hyphen is added automatically.": "Zadejte 7 číslic; pomlčka se doplní automaticky.",
+  "9 digits. You can paste it with spaces or a PT prefix.":
+    "9 číslic. Můžete je vložit s mezerami nebo s předponou PT.",
   "Share Capital": "Základní kapitál",
   "Registered share capital of the company": "Zapsaný základní kapitál společnosti",
+  "Conditional company disclosures": "Podmíněné údaje o společnosti",
+  "Leave these empty unless one of them applies to your company.":
+    "Tato pole nechte prázdná, pokud se na vaši společnost žádné z nich nevztahuje.",
+  "Paid-up Capital": "Splacený kapitál",
+  "Only needed when less than the share capital has actually been paid in":
+    "Nutné pouze tehdy, pokud bylo skutečně splaceno méně než základní kapitál",
+  Equity: "Vlastní kapitál",
+  "Only needed when equity has fallen to half the share capital or less. Use the figure from your last approved balance sheet.":
+    "Nutné pouze tehdy, pokud vlastní kapitál klesl na polovinu základního kapitálu nebo níže. Použijte údaj z poslední schválené rozvahy.",
+  "Company is in liquidation": "Společnost je v likvidaci",
+  "Documents must say so while the company is being wound up":
+    "Dokumenty to musí uvádět po celou dobu likvidace společnosti",
   // Tax rule sections and Slovenian Article 76.a
   "Calculation settings": "Nastavení výpočtu",
   "Choose how prices, discounts, and taxes are calculated on documents.":

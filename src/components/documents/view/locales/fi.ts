@@ -75,6 +75,8 @@ export default {
   cash: "Käteinen",
   bank_transfer: "Pankkisiirto",
   card: "Kortti",
+  credit_card: "Luottokortti",
+  debit_card: "Debit-kortti",
   check: "Sekki",
   credit_note: "Hyvityslasku",
   other: "Muu",

@@ -86,6 +86,8 @@ export default {
   cash: "Contanti",
   bank_transfer: "Bonifico bancario",
   card: "Carta",
+  credit_card: "Carta di credito",
+  debit_card: "Carta di debito",
   check: "Assegno",
   credit_note: "Nota di credito",
   other: "Altro",

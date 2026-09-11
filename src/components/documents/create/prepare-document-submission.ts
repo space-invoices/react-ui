@@ -86,7 +86,11 @@ function cleanCustomerBankAccounts(bankAccounts: Array<Record<string, unknown>>)
 }
 
 function cleanCustomerPayload(customer: CustomerData, originalCustomer?: CustomerData | null): Record<string, unknown> {
-  const cleanedCustomer: Record<string, unknown> = { save_customer: true };
+  // Saving the recipient back to the customer record is the default, but a document that
+  // carries a frozen historical snapshot (a correction stating the original recipient) sets
+  // the flag to false, and that choice has to reach the API rather than being overwritten.
+  const saveCustomer = (customer as { save_customer?: boolean | null } | null)?.save_customer;
+  const cleanedCustomer: Record<string, unknown> = { save_customer: saveCustomer !== false };
 
   for (const [key, value] of Object.entries(customer)) {
     if (key === "save_customer" || value === undefined) {
@@ -199,7 +203,11 @@ export function prepareDocumentCustomerData<T extends BaseDocumentValues>(
   options: Pick<PrepareDocumentOptions, "originalCustomer" | "wasCustomerFormShown">,
 ): void {
   if (nextValues.customer_id && nextValues.customer) {
-    if (options.wasCustomerFormShown === false) {
+    // A recipient the user never opened is normally left to the API to resolve from the id.
+    // A frozen snapshot (`save_customer: false`) is the exception: the document has to state
+    // the details it was issued with, which the live customer record may no longer match.
+    const keepsFrozenSnapshot = (nextValues.customer as { save_customer?: boolean | null }).save_customer === false;
+    if (options.wasCustomerFormShown === false && !keepsFrozenSnapshot) {
       delete nextValues.customer;
     } else {
       const cleanedCustomer = cleanCustomerPayload(nextValues.customer, options.originalCustomer);

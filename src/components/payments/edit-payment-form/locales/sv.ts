@@ -6,6 +6,8 @@ export default {
   Cash: "Kontant",
   "Bank Transfer": "Banköverföring",
   Card: "Kort",
+  "Credit Card": "Kreditkort",
+  "Debit Card": "Debetkort",
   Check: "Check",
   PayPal: "PayPal",
   Coupon: "Coupon",

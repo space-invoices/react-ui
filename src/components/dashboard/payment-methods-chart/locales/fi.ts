@@ -4,6 +4,8 @@ export default {
   Cash: "Käteinen",
   "Bank Transfer": "Pankkisiirto",
   Card: "Kortti",
+  "Credit Card": "Luottokortti",
+  "Debit Card": "Debit-kortti",
   Check: "Sekki",
   "Credit Note": "Hyvityslasku",
   Advance: "Ennakkolasku",

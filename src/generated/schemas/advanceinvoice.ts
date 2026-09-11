@@ -1040,16 +1040,12 @@ const DocumentTranslations = z
 // Dependency schema for advanceinvoice
 const PtDocumentInput = z
   .object({
+    operator_id: z.union([z.string(), z.null()]),
+    correction_reason: z.union([z.string(), z.null()]),
     series_id: z.union([z.string(), z.null()]),
     manual: z.union([z.boolean(), z.null()]),
-    manual_sequential_number: z.union([z.number(), z.null()]),
+    manual_sequential_number: z.union([z.string(), z.number(), z.null()]),
     manual_series_code: z.union([z.string(), z.null()]),
-    operator_first_name: z.union([z.string(), z.null()]),
-    operator_last_name: z.union([z.string(), z.null()]),
-    operator_tax_number: z.union([z.string(), z.null()]),
-    account_first_name: z.union([z.string(), z.null()]),
-    account_last_name: z.union([z.string(), z.null()]),
-    account_tax_number: z.union([z.string(), z.null()]),
   })
   .partial();
 
@@ -1186,6 +1182,8 @@ const CreateDocumentPayment = z.object({
     "cash",
     "bank_transfer",
     "card",
+    "credit_card",
+    "debit_card",
     "check",
     "paypal",
     "coupon",
@@ -1231,7 +1229,7 @@ const CreateFinaInvoiceData = z
     operator_oib: z.union([z.string(), z.null()]),
     operator_label: z.union([z.string(), z.null()]),
     payment_type: z.union([
-      z.union([z.enum(["cash", "card", "online", "bank_transfer", "paypal", "crypto", "coupon", "other"]), z.null()]),
+      z.union([z.enum(["cash", "card", "credit_card", "debit_card", "online", "bank_transfer", "paypal", "crypto", "coupon", "other"]), z.null()]),
       z.null(),
     ]),
   })

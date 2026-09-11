@@ -77,6 +77,8 @@ export default {
   cash: "В брой",
   bank_transfer: "Банков превод",
   card: "Карта",
+  credit_card: "Кредитна карта",
+  debit_card: "Дебитна карта",
   check: "Чек",
   credit_note: "Кредитно известие",
   other: "Друго",

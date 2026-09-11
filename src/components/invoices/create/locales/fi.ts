@@ -52,6 +52,8 @@ export default {
   Cash: "Käteinen",
   "Bank Transfer": "Tilisiirto",
   Card: "Kortti",
+  "Credit Card": "Luottokortti",
+  "Debit Card": "Debit-kortti",
   Check: "Sekki",
   Other: "Muu",
   Note: "Huomautus",
@@ -253,4 +255,7 @@ export default {
     "Poista 76.a artiklan käännetty verovelvollisuus käytöstä tällä laskulla napsauttamalla",
   "Click to enable Article 76.a reverse charge for this invoice":
     "Ota 76.a artiklan käännetty verovelvollisuus käyttöön tällä laskulla napsauttamalla",
+  "Short fiscal designation, up to 200 characters. Longer wording goes in the description.":
+    "Lyhyt verotuksellinen nimike, enintään 200 merkkiä. Pidempi teksti kuuluu kuvaukseen.",
+  "Leave empty and the export uses UN.": "Jätä tyhjäksi, jolloin viennissä käytetään arvoa UN.",
 } as const;

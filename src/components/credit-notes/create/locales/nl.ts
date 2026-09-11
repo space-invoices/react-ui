@@ -46,6 +46,8 @@ export default {
   Cash: "Contant",
   "Bank Transfer": "Bankoverschrijving",
   Card: "Kaart",
+  "Credit Card": "Creditcard",
+  "Debit Card": "Debetkaart",
   Check: "Cheque",
   Other: "Overig",
   // Note field
@@ -128,4 +130,6 @@ export default {
   From: "Van",
   To: "Tot",
   "Original invoice cannot be credited": "De oorspronkelijke factuur kan niet worden gecrediteerd",
+  "Portugal credit notes are issued to the customer on the original document.":
+    "Portugese creditnota's worden uitgegeven aan de klant op het oorspronkelijke document.",
 } as const;

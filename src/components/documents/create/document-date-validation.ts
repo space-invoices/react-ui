@@ -9,12 +9,36 @@ type DocumentDateValues = {
   date_service_to?: string | null;
 };
 
+/** Only the part of the Portugal document input this rule reads. */
+type PortugalDateValues = DocumentDateValues & {
+  pt?: { manual?: boolean | null } | null;
+};
+
+export type DocumentDateRuleOptions = {
+  /** Calendar-day source for country-specific document rules. */
+  getToday?: () => string;
+};
+
 const messages = {
   dateInFuture: "Document date cannot be in the future.",
   serviceDateToBeforeServiceDate: "Service period end date must be on or after the service start date.",
   dueDateBeforeIssueDate: "Due date must be on or after the issue date.",
   validTillBeforeIssueDate: "Valid until date must be on or after the issue date.",
+  portugalIssueDateNotToday: "Portuguese documents must be issued with today's date.",
 } as const;
+
+export const documentDateValidationMessages = messages;
+
+const PORTUGAL_TIME_ZONE = "Europe/Lisbon";
+
+/**
+ * Today in Portugal. The issue date is a Portuguese calendar day, so a user in
+ * another time zone — or an entity whose browser is an hour behind Lisbon — must
+ * still see the day the document will actually carry.
+ */
+export function getPortugalToday(now: Date = new Date()): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: PORTUGAL_TIME_ZONE }).format(now);
+}
 
 function compareDateOnly(left: string, right: string): number {
   if (left === right) return 0;
@@ -35,9 +59,18 @@ function addCustomIssue(ctx: z.RefinementCtx, path: string[], message: string, c
   });
 }
 
-function applyBaseDocumentDateRules(value: DocumentDateValues, ctx: z.RefinementCtx) {
+function applyBaseDocumentDateRules(
+  value: DocumentDateValues,
+  ctx: z.RefinementCtx,
+  options: DocumentDateRuleOptions = {},
+) {
   const date = normalizeDateOnlyInput(value.date ?? undefined);
-  addCustomIssue(ctx, ["date"], messages.dateInFuture, !!date && compareDateOnly(date, getTodayDateOnly()) > 0);
+  addCustomIssue(
+    ctx,
+    ["date"],
+    messages.dateInFuture,
+    !!date && compareDateOnly(date, options.getToday?.() ?? getTodayDateOnly()) > 0,
+  );
 }
 
 function applyInvoiceLikeServiceDateRules(value: DocumentDateValues, ctx: z.RefinementCtx) {
@@ -52,10 +85,13 @@ function applyInvoiceLikeServiceDateRules(value: DocumentDateValues, ctx: z.Refi
   );
 }
 
-export function withInvoiceIssueDateValidation<T extends z.ZodTypeAny>(schema: T) {
+export function withInvoiceIssueDateValidation<T extends z.ZodTypeAny>(
+  schema: T,
+  options: DocumentDateRuleOptions = {},
+) {
   return schema.superRefine((value, ctx) => {
     const document = value as DocumentDateValues;
-    applyBaseDocumentDateRules(document, ctx);
+    applyBaseDocumentDateRules(document, ctx, options);
     applyInvoiceLikeServiceDateRules(document, ctx);
 
     const date = normalizeDateOnlyInput(document.date ?? undefined);
@@ -70,18 +106,50 @@ export function withInvoiceIssueDateValidation<T extends z.ZodTypeAny>(schema: T
   });
 }
 
-export function withCreditNoteIssueDateValidation<T extends z.ZodTypeAny>(schema: T) {
+export function withCreditNoteIssueDateValidation<T extends z.ZodTypeAny>(
+  schema: T,
+  options: DocumentDateRuleOptions = {},
+) {
   return schema.superRefine((value, ctx) => {
     const document = value as DocumentDateValues;
-    applyBaseDocumentDateRules(document, ctx);
+    applyBaseDocumentDateRules(document, ctx, options);
     applyInvoiceLikeServiceDateRules(document, ctx);
   });
 }
 
-export function withEstimateIssueDateValidation<T extends z.ZodTypeAny>(schema: T) {
+/**
+ * Portugal only issues a document on the day it is created. An earlier date is
+ * legitimate solely for a manual/offline document, which records something that
+ * was already issued on paper — so the rule steps aside as soon as manual mode is
+ * on. Service dates are unaffected: when the work was done is a separate fact from
+ * when the document was issued.
+ *
+ * Wrap the form schema with this only for Portugal entities; every other country
+ * keeps the plain not-in-the-future rule.
+ */
+export function withPortugalIssueDateValidation<T extends z.ZodTypeAny>(schema: T) {
+  return schema.superRefine((value, ctx) => {
+    const document = value as PortugalDateValues;
+    if (document.pt?.manual === true) return;
+
+    const date = normalizeDateOnlyInput(document.date ?? undefined);
+
+    addCustomIssue(
+      ctx,
+      ["date"],
+      messages.portugalIssueDateNotToday,
+      !!date && compareDateOnly(date, getPortugalToday()) !== 0,
+    );
+  });
+}
+
+export function withEstimateIssueDateValidation<T extends z.ZodTypeAny>(
+  schema: T,
+  options: DocumentDateRuleOptions = {},
+) {
   return schema.superRefine((value, ctx) => {
     const document = value as DocumentDateValues;
-    applyBaseDocumentDateRules(document, ctx);
+    applyBaseDocumentDateRules(document, ctx, options);
 
     const date = normalizeDateOnlyInput(document.date ?? undefined);
     const validTill = normalizeDateOnlyInput(document.date_valid_till ?? undefined);

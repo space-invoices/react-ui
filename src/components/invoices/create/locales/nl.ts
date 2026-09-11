@@ -53,6 +53,8 @@ export default {
   Cash: "Contant",
   "Bank Transfer": "Bankoverschrijving",
   Card: "Kaart",
+  "Credit Card": "Creditcard",
+  "Debit Card": "Debetkaart",
   Check: "Cheque",
   Other: "Overig",
   Note: "Notitie",
@@ -260,4 +262,7 @@ export default {
     "Klik om de verleggingsregeling volgens artikel 76.a voor deze factuur uit te schakelen",
   "Click to enable Article 76.a reverse charge for this invoice":
     "Klik om de verleggingsregeling volgens artikel 76.a voor deze factuur in te schakelen",
+  "Short fiscal designation, up to 200 characters. Longer wording goes in the description.":
+    "Korte fiscale omschrijving, maximaal 200 tekens. Langere tekst hoort in de beschrijving.",
+  "Leave empty and the export uses UN.": "Laat leeg, dan gebruikt de export UN.",
 } as const;

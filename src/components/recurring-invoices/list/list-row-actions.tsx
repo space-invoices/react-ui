@@ -2,7 +2,7 @@ import type { RecurringInvoice } from "@spaceinvoices/js-sdk";
 import { recurringInvoices } from "@spaceinvoices/js-sdk";
 import { useQueryClient } from "@tanstack/react-query";
 import { Eye, MoreHorizontal, Pause, Pencil, Play, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Button } from "@/ui/components/ui/button";
 import {
   DropdownMenu,
@@ -13,8 +13,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/ui/components/ui/dropdown-menu";
+import { hasCountryCapability } from "@/ui/lib/country-capabilities";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
+import { useEntitiesOptional } from "@/ui/providers/entities-context";
 
 import { RECURRING_INVOICES_CACHE_KEY, useDeleteRecurringInvoice } from "../recurring-invoices.hooks";
 import de from "./locales/de";
@@ -67,6 +69,26 @@ export default function RecurringInvoiceListRowActions({
   const queryClient = useQueryClient();
   const [isToggling, setIsToggling] = useState(false);
 
+  const entitiesContext = useEntitiesOptional();
+  const activeEntity = entitiesContext?.activeEntity ?? null;
+  const entities = entitiesContext?.entities;
+  // An explicit entityId owns the row even when another entity is active, so the row is
+  // gated by the schedule's own entity rather than by whatever the user last selected.
+  const entity = useMemo(() => {
+    if (!entityId) return activeEntity;
+    if (activeEntity?.id === entityId) return activeEntity;
+    return entities?.find((candidate) => candidate.id === entityId) ?? null;
+  }, [activeEntity, entities, entityId]);
+
+  /**
+   * A country that does not support recurring invoices keeps existing schedules listable,
+   * pausable and deletable, but the API rejects updating or resuming them. Editing is hidden
+   * there, and the pause/resume item is kept only for an `active` schedule: every other
+   * persisted status (`paused`, `completed`) routes the toggle through resume, which the
+   * server refuses, so the row never offers an action the server rejects.
+   */
+  const allowRecurringManagement = hasCountryCapability(entity, "recurring_invoices");
+
   const { mutate: deleteRecurringInvoice, isPending: isDeleting } = useDeleteRecurringInvoice({
     entityId,
     onSuccess: () => {
@@ -98,6 +120,9 @@ export default function RecurringInvoiceListRowActions({
   };
 
   const isPaused = recurringInvoice.status === "paused";
+  // `handleTogglePause` only pauses an `active` schedule; anything else resumes, which a
+  // denied country rejects. Keep the toggle under denial for `active` alone.
+  const canToggleSchedule = allowRecurringManagement || recurringInvoice.status === "active";
 
   return (
     <DropdownMenu>
@@ -110,10 +135,12 @@ export default function RecurringInvoiceListRowActions({
       <DropdownMenuContent align="end">
         <DropdownMenuLabel>{t("Actions")}</DropdownMenuLabel>
         <DropdownMenuGroup>
-          <DropdownMenuItem className="cursor-pointer" onClick={() => onEdit?.(recurringInvoice)}>
-            <Pencil className="h-4 w-4" />
-            {editLabel ?? "Edit"}
-          </DropdownMenuItem>
+          {allowRecurringManagement && (
+            <DropdownMenuItem className="cursor-pointer" onClick={() => onEdit?.(recurringInvoice)}>
+              <Pencil className="h-4 w-4" />
+              {editLabel ?? "Edit"}
+            </DropdownMenuItem>
+          )}
           {recurringInvoice.document_id && (
             <DropdownMenuItem
               className="cursor-pointer"
@@ -123,10 +150,12 @@ export default function RecurringInvoiceListRowActions({
               {t("View source invoice")}
             </DropdownMenuItem>
           )}
-          <DropdownMenuItem className="cursor-pointer" onClick={handleTogglePause} disabled={isToggling}>
-            {isPaused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
-            {isToggling ? t("Processing...") : isPaused ? t("Resume") : t("Pause")}
-          </DropdownMenuItem>
+          {canToggleSchedule && (
+            <DropdownMenuItem className="cursor-pointer" onClick={handleTogglePause} disabled={isToggling}>
+              {isPaused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
+              {isToggling ? t("Processing...") : isPaused ? t("Resume") : t("Pause")}
+            </DropdownMenuItem>
+          )}
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>

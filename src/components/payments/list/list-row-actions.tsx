@@ -10,9 +10,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/ui/components/ui/dropdown-menu";
-import { isActiveIssuedDirectAdvancePayment } from "@/ui/lib/payment-mutation-state";
+import { isActiveIssuedDirectAdvancePayment, isPaymentOnVoidedDocument } from "@/ui/lib/payment-mutation-state";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
+import { useEntitiesOptional } from "@/ui/providers/entities-context";
 
 import { useDeletePayment } from "../payments.hooks";
 import de from "./locales/de";
@@ -60,6 +61,8 @@ export default function PaymentListRowActions({
     ...i18nProps,
   });
 
+  const activeEntity = useEntitiesOptional()?.activeEntity;
+
   const { mutate: deletePayment, isPending: isDeleting } = useDeletePayment({
     entityId,
     onSuccess: () => {
@@ -78,6 +81,9 @@ export default function PaymentListRowActions({
   const isAppliedCreditNotePayment = payment.type === "credit_note" && !!payment.invoice_id && !!payment.credit_note_id;
   const isManagedSettlementPayment = isAppliedAdvancePayment || isAppliedCreditNotePayment;
   const isIssuedAdvancePayment = isActiveIssuedDirectAdvancePayment(payment);
+  // Portugal closes a voided document to payment changes and the server refuses both of these
+  // there; elsewhere a voided document stays reconcilable, so the row keeps them.
+  const isOnVoidedDocument = isPaymentOnVoidedDocument(payment, activeEntity);
 
   return (
     <DropdownMenu>
@@ -93,7 +99,7 @@ export default function PaymentListRowActions({
           <DropdownMenuItem
             className="cursor-pointer"
             onClick={() => onEditPayment?.(payment)}
-            disabled={isManagedSettlementPayment}
+            disabled={isManagedSettlementPayment || isOnVoidedDocument}
           >
             <Pencil className="h-4 w-4" />
             {t("Edit payment")}
@@ -110,7 +116,7 @@ export default function PaymentListRowActions({
           <DropdownMenuItem
             className="cursor-pointer text-destructive focus:text-destructive"
             onClick={handleDelete}
-            disabled={isDeleting || isManagedSettlementPayment || isIssuedAdvancePayment}
+            disabled={isDeleting || isManagedSettlementPayment || isIssuedAdvancePayment || isOnVoidedDocument}
           >
             <Trash2 className="h-4 w-4" />
             {isDeleting ? t("Deleting...") : t("Delete payment")}

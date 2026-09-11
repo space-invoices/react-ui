@@ -75,6 +75,8 @@ export default {
   cash: "cash",
   bank_transfer: "bank_transfer",
   card: "card",
+  credit_card: "credit card",
+  debit_card: "debit card",
   check: "check",
   credit_note: "credit note",
   other: "other",

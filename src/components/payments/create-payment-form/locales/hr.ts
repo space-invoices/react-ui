@@ -6,6 +6,8 @@ export default {
   Cash: "Gotovina",
   "Bank Transfer": "Bankovni prijenos",
   Card: "Kartica",
+  "Credit Card": "Kreditna kartica",
+  "Debit Card": "Debitna kartica",
   Check: "Ček",
   PayPal: "PayPal",
   Coupon: "Coupon",

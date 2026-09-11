@@ -6,6 +6,8 @@ export default {
   Cash: "Bargeld",
   "Bank Transfer": "Banküberweisung",
   Card: "Karte",
+  "Credit Card": "Kreditkarte",
+  "Debit Card": "Debitkarte",
   Check: "Scheck",
   PayPal: "PayPal",
   Coupon: "Coupon",

@@ -1,8 +1,16 @@
+import { GENERIC_CARD_PAYMENT_TYPE } from "@/ui/lib/payment-types";
 import type { PriceModesMap } from "./document-items-section";
 
-export const REGULAR_PAYMENT_TYPES = ["cash", "bank_transfer", "card", "check", "other"] as const;
+export const REGULAR_PAYMENT_TYPES = ["cash", "bank_transfer", "credit_card", "debit_card", "check", "other"] as const;
 
-export type RegularPaymentType = (typeof REGULAR_PAYMENT_TYPES)[number];
+/**
+ * Every method an inline payment row may hold. The offered subset comes from
+ * `getPaymentTypeOptions`; this list is what counts as a valid selection, so an already
+ * recorded generic `card` is accepted even though it is no longer offered for a new choice.
+ */
+export const SELECTABLE_PAYMENT_TYPES = [...REGULAR_PAYMENT_TYPES, GENERIC_CARD_PAYMENT_TYPE] as const;
+
+export type RegularPaymentType = (typeof SELECTABLE_PAYMENT_TYPES)[number];
 
 export type DraftPaymentRow = {
   id?: string;
@@ -84,7 +92,7 @@ export function coercePaymentRowsToType(paymentRows: DraftPaymentRow[], type: Re
 }
 
 export function isValidPaymentTypeSelection(value: string | null | undefined): value is RegularPaymentType {
-  return REGULAR_PAYMENT_TYPES.includes(value as RegularPaymentType);
+  return SELECTABLE_PAYMENT_TYPES.includes(value as RegularPaymentType);
 }
 
 export function roundCurrency(amount: number): number {

@@ -52,6 +52,8 @@ export default {
   Cash: "Dinheiro",
   "Bank Transfer": "Transferência bancária",
   Card: "Cartão",
+  "Credit Card": "Cartão de crédito",
+  "Debit Card": "Cartão de débito",
   Check: "Cheque",
   Other: "Outro",
   Note: "Nota",
@@ -258,4 +260,7 @@ export default {
     "Clique para desativar a autoliquidação do artigo 76.a nesta fatura",
   "Click to enable Article 76.a reverse charge for this invoice":
     "Clique para ativar a autoliquidação do artigo 76.a nesta fatura",
+  "Short fiscal designation, up to 200 characters. Longer wording goes in the description.":
+    "Designação fiscal curta, até 200 caracteres. O texto mais longo vai na descrição.",
+  "Leave empty and the export uses UN.": "Deixe vazio e a exportação utiliza UN.",
 } as const;

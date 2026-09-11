@@ -84,6 +84,8 @@ export default {
   cash: "Gotovina",
   bank_transfer: "Bankovni prijenos",
   card: "Kartica",
+  credit_card: "Kreditna kartica",
+  debit_card: "Debitna kartica",
   check: "Ček",
   credit_note: "Knjižno odobrenje",
   other: "Ostalo",

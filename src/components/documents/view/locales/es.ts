@@ -85,6 +85,8 @@ export default {
   cash: "Efectivo",
   bank_transfer: "Transferencia bancaria",
   card: "Tarjeta",
+  credit_card: "Tarjeta de crédito",
+  debit_card: "Tarjeta de débito",
   check: "Cheque",
   credit_note: "Nota de crédito",
   other: "Otro",

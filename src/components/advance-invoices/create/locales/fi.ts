@@ -22,6 +22,8 @@ export default {
   Cash: "Käteinen",
   "Bank Transfer": "Tilisiirto",
   Card: "Kortti",
+  "Credit Card": "Luottokortti",
+  "Debit Card": "Debit-kortti",
   Check: "Sekki",
   Other: "Muu",
   Premise: "Toimipaikka",

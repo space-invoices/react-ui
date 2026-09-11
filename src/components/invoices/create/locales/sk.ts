@@ -52,6 +52,8 @@ export default {
   Cash: "Hotovosť",
   "Bank Transfer": "Bankový prevod",
   Card: "Karta",
+  "Credit Card": "Kreditná karta",
+  "Debit Card": "Debetná karta",
   Check: "Šek",
   Other: "Iné",
   Note: "Poznámka",
@@ -250,4 +252,7 @@ export default {
     "Kliknutím vypnete prenesenie daňovej povinnosti podľa článku 76.a pre túto faktúru",
   "Click to enable Article 76.a reverse charge for this invoice":
     "Kliknutím zapnete prenesenie daňovej povinnosti podľa článku 76.a pre túto faktúru",
+  "Short fiscal designation, up to 200 characters. Longer wording goes in the description.":
+    "Krátke daňové označenie, maximálne 200 znakov. Dlhší text patrí do popisu.",
+  "Leave empty and the export uses UN.": "Nechajte prázdne a v exporte sa použije UN.",
 } as const;

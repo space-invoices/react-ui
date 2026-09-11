@@ -44,6 +44,8 @@ export default {
   Cash: "Kontant",
   "Bank Transfer": "Banköverföring",
   Card: "Kort",
+  "Credit Card": "Kreditkort",
+  "Debit Card": "Debetkort",
   Check: "Check",
   Other: "Övrigt",
   Note: "Anteckning",
@@ -115,4 +117,6 @@ export default {
   From: "Från",
   To: "Till",
   "Original invoice cannot be credited": "Originalfakturan kan inte krediteras",
+  "Portugal credit notes are issued to the customer on the original document.":
+    "Portugisiska kreditnotor utfärdas till kunden på originaldokumentet.",
 } as const;

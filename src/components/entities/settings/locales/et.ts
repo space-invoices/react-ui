@@ -312,13 +312,42 @@ export default {
 
   // Portugal entity details
   "Portugal Details": "Portugali andmed",
-  "Portuguese law requires these details on every entity": "Portugali seadus nõuab neid andmeid iga üksuse kohta",
+  "Portuguese invoices carry these details. What is required depends on your legal form.":
+    "Portugali arvetel on need andmed. See, mida nõutakse, sõltub teie õiguslikust vormist.",
+  "Legal Form": "Õiguslik vorm",
+  "Select your legal form": "Valige oma õiguslik vorm",
+  "Decides which registration and capital details Portugal asks you for":
+    "Määrab, milliseid registreerimis- ja kapitaliandmeid Portugal teilt nõuab",
+  "Individual professional or sole trader": "Vabakutseline või füüsilisest isikust ettevõtja",
+  "Private limited company (Lda.)": "Osaühing (Lda.)",
+  "Public limited company (S.A.)": "Aktsiaselts (S.A.)",
+  "Partnership limited by shares": "Aktsiatel põhinev usaldusühing",
+  "Other company": "Muu äriühing",
   "Company Number": "Registrikood",
-  "Company registration number (NIPC)": "Ettevõtte registrikood (NIPC)",
+  "Digits and slashes only, as shown on your registration.":
+    "Ainult numbrid ja kaldkriipsud, nagu teie registreeringus.",
+  "Registry Office": "Registriosakond",
+  "Commercial registry where the company is registered": "Äriregister, kuhu äriühing on kantud",
   Phone: "Telefon",
-  "International format, including the country code": "Rahvusvaheline vorming koos riigikoodiga",
+  "Enter 912 345 678 for Portugal, or include + and the country code for another country.":
+    "Sisestage Portugali puhul 912 345 678 või lisage muu riigi puhul + ja riigikood.",
+  "Enter 7 digits; the hyphen is added automatically.": "Sisestage 7 numbrit; sidekriips lisatakse automaatselt.",
+  "9 digits. You can paste it with spaces or a PT prefix.":
+    "9 numbrit. Võite selle kleepida tühikutega või PT-eesliitega.",
   "Share Capital": "Osakapital",
   "Registered share capital of the company": "Ettevõtte registreeritud osakapital",
+  "Conditional company disclosures": "Tingimuslikud andmed äriühingu kohta",
+  "Leave these empty unless one of them applies to your company.":
+    "Jätke need väljad tühjaks, kui ükski neist teie äriühingu kohta ei kehti.",
+  "Paid-up Capital": "Sissemakstud kapital",
+  "Only needed when less than the share capital has actually been paid in":
+    "Vajalik ainult siis, kui tegelikult on sisse makstud vähem kui osakapital",
+  Equity: "Omakapital",
+  "Only needed when equity has fallen to half the share capital or less. Use the figure from your last approved balance sheet.":
+    "Vajalik ainult siis, kui omakapital on langenud poolele osakapitalist või alla selle. Kasutage viimase kinnitatud bilansi näitajat.",
+  "Company is in liquidation": "Äriühing on likvideerimisel",
+  "Documents must say so while the company is being wound up":
+    "Dokumentidel tuleb seda märkida kogu äriühingu likvideerimise ajal",
   // Tax rule sections and Slovenian Article 76.a
   "Calculation settings": "Arvutuse seaded",
   "Choose how prices, discounts, and taxes are calculated on documents.":

@@ -18,7 +18,7 @@ import { getInitialEslogValidationEnabled, useEslogValidation } from "@/ui/hooks
 import { usePremiseSelection } from "@/ui/hooks/use-premise-selection";
 import { useStableHeaderAction } from "@/ui/hooks/use-stable-header-action";
 import { useTransactionTypeCheck } from "@/ui/hooks/use-transaction-type-check";
-import { getEntityCountryCapabilities } from "@/ui/lib/country-capabilities";
+import { getEntityCountryCapabilities, isPortugalEntity } from "@/ui/lib/country-capabilities";
 import { normalizeDateOnlyInput, toLocalCalendarDate, toLocalDateOnlyString } from "@/ui/lib/date-only";
 import {
   DEFAULT_CONTENT_LOCALE,
@@ -57,7 +57,11 @@ import {
   applyCustomCreatePreviewTemplate,
   applyCustomCreateTemplate,
 } from "../../documents/create/custom-create-template";
-import { withInvoiceIssueDateValidation } from "../../documents/create/document-date-validation";
+import {
+  getPortugalToday,
+  withInvoiceIssueDateValidation,
+  withPortugalIssueDateValidation,
+} from "../../documents/create/document-date-validation";
 import {
   DocumentDetailsSection,
   DocumentFooterField,
@@ -66,7 +70,10 @@ import {
   DocumentSignatureField,
   DocumentTaxClauseField,
 } from "../../documents/create/document-details-section";
-import { withRequiredDocumentItemFields } from "../../documents/create/document-item-validation";
+import {
+  withPortugalDocumentItems,
+  withRequiredDocumentItemFields,
+} from "../../documents/create/document-item-validation";
 import { DocumentItemsSection, type PriceModesMap } from "../../documents/create/document-items-section";
 import { DocumentRecipientSection } from "../../documents/create/document-recipient-section";
 import { getEInvoicingSendValidationIssues } from "../../documents/create/e-invoicing-send-validation";
@@ -148,13 +155,11 @@ const translationLoaders = {
 const DUPLICATE_PREVIEW_SETTLE_MS = 120;
 const DUPLICATE_PREVIEW_MIN_DELAY_MS = 260;
 const FORM_ID = "create-invoice-form";
-const createInvoiceFormSchema = withInvoiceIssueDateValidation(
-  withRequiredDocumentItemFields(
-    createInvoiceSchema.extend({
-      business_unit_id: z.string().nullish(),
-      pt: ptDocumentInputFormSchema.optional(),
-    }),
-  ),
+const createInvoiceFormSchema = withRequiredDocumentItemFields(
+  createInvoiceSchema.extend({
+    business_unit_id: z.string().nullish(),
+    pt: ptDocumentInputFormSchema.optional(),
+  }),
 );
 
 function emitInvoiceCreateDebug(_detail: Record<string, unknown>) {
@@ -340,6 +345,9 @@ export default function CreateInvoiceForm({
   const isEditMode = mode === "edit";
   const { activeEntity } = useEntities();
   const countryCapabilities = useMemo(() => getEntityCountryCapabilities(activeEntity), [activeEntity]);
+  // Portugal's issuance rules are enforced by the API for every Portugal entity, so the
+  // form mirrors them on the plain country check rather than on the gated UI capability.
+  const isPortugalIssuer = isPortugalEntity(activeEntity);
   const whiteLabel = useWhiteLabel();
   const showArticle76aControl =
     countryCapabilities.hasSiArticle76a &&
@@ -445,7 +453,10 @@ export default function CreateInvoiceForm({
       }),
     [initialPriceModes, initialValues],
   );
-  const fallbackNowIsoRef = useRef(normalizeDateOnlyInput(initialValues?.date || new Date().toISOString()) ?? "");
+  const fallbackNowIsoRef = useRef(
+    normalizeDateOnlyInput(initialValues?.date || (isPortugalIssuer ? getPortugalToday() : new Date().toISOString())) ??
+      "",
+  );
 
   const formDefaultValues = useMemo(
     () =>
@@ -460,7 +471,19 @@ export default function CreateInvoiceForm({
     [activeEntity?.currency_code, defaultInvoiceDueDays, initialDocumentDefaults, initialValues, isEditMode],
   );
 
-  const baseResolver = useMemo(() => zodResolver(createInvoiceFormSchema) as Resolver<CreateInvoiceFormValues>, []);
+  const baseResolver = useMemo(
+    () =>
+      zodResolver(
+        isPortugalIssuer
+          ? withPortugalDocumentItems(
+              withInvoiceIssueDateValidation(withPortugalIssueDateValidation(createInvoiceFormSchema), {
+                getToday: getPortugalToday,
+              }),
+            )
+          : withInvoiceIssueDateValidation(createInvoiceFormSchema),
+      ) as Resolver<CreateInvoiceFormValues>,
+    [isPortugalIssuer],
+  );
   const eslogResolverStateRef = useRef({
     activeEntity,
     isEnabled: eslog.isEnabled === true,
@@ -651,6 +674,9 @@ export default function CreateInvoiceForm({
     customerIsEndConsumer: customerIsEndConsumerWatch,
     enabled: !!activeEntity,
   });
+
+  // Reverse charge removes the tax select from every line, so a Portugal line cannot
+  // be asked for a tax treatment it has no control to supply.
 
   // FINA numbering guard: use FINA numbering for domestic transactions (or all if unified numbering is on)
   const finaUnifiedNumbering = fina.settings?.unified_numbering !== false;
@@ -1840,6 +1866,7 @@ export default function CreateInvoiceForm({
             showDeliveryAddressFields={countryCapabilities.isFrance && countryCapabilities.showPeppolSendingControls}
             t={t}
             locale={locale}
+            translationLocale={translationLocale}
           />
           <DocumentDetailsSection
             control={form.control}
@@ -1952,12 +1979,13 @@ export default function CreateInvoiceForm({
           onFindEstimatedTax={onFindEstimatedTax}
           t={t}
           locale={locale}
-          taxesDisabled={reverseChargeApplies}
+          translationLocale={translationLocale}
+          taxesDisabled={reverseChargeApplies && !isPortugalIssuer}
           taxesDisabledMessage={
             reverseChargeApplies ? t("Reverse charge - tax exempt EU B2B sale") : viesWarning ? viesWarning : undefined
           }
           isTaxSubject={activeEntity?.is_tax_subject ?? false}
-          maxTaxesPerItem={activeEntity?.country_rules?.max_taxes_per_item}
+          maxTaxesPerItem={isPortugalIssuer ? 1 : activeEntity?.country_rules?.max_taxes_per_item}
           priceModesRef={priceModesRef}
           initialPriceModes={initialPriceModes}
           onItemsStateChange={emitCurrentPreviewPayload}

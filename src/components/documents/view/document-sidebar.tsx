@@ -10,7 +10,9 @@ import type {
 import type { ReactNode } from "react";
 import { Card, CardContent } from "@/ui/components/ui/card";
 import { Separator } from "@/ui/components/ui/separator";
+import { arePaymentMutationsBlockedByVoid } from "@/ui/lib/payment-mutation-state";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
+import { useEntitiesOptional } from "@/ui/providers/entities-context";
 import { useWLSubscriptionOptional } from "@/ui/providers/wl-subscription-provider";
 import { FiscalizationStatusCard } from "../../invoices/view/fiscalization-status-card";
 import { DocumentActivitiesList } from "./document-activities-list";
@@ -75,6 +77,8 @@ export function DocumentSidebar({
   ...i18nProps
 }: DocumentSidebarProps) {
   const subscription = useWLSubscriptionOptional();
+  // The country rule lives with the payment policy; the sidebar only supplies what it is asked for.
+  const activeEntity = useEntitiesOptional()?.activeEntity;
   const documentRelations = (document as unknown as { document_relations?: DocumentRelation[] }).document_relations;
   const hasRelations = documentRelations && documentRelations.length > 0;
   const hasFinancialCategoriesFeature = !subscription || subscription.hasFeature("financial_categories");
@@ -112,6 +116,7 @@ export function DocumentSidebar({
               addDisabledReason={addPaymentDisabledReason}
               editDisabledReason={editPaymentDisabledReason}
               deleteDisabledReason={deletePaymentDisabledReason}
+              paymentMutationsBlocked={arePaymentMutationsBlockedByVoid(document, activeEntity)}
               {...i18nProps}
             />
           </>

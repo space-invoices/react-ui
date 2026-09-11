@@ -1,6 +1,14 @@
-import type { AdvanceInvoice, CreditNote, DeliveryNote, Estimate, Invoice } from "@spaceinvoices/js-sdk";
+import type {
+  AdvanceInvoice,
+  CountryCapabilities,
+  CreditNote,
+  DeliveryNote,
+  Estimate,
+  Invoice,
+} from "@spaceinvoices/js-sdk";
 
 import type { PdfTemplateId } from "@/ui/components/documents/create/live-preview";
+import { countryCapabilityDefaults } from "@/ui/generated/schemas/country-capability-defaults";
 import type { Entity } from "@/ui/providers/entities-context";
 
 export const PORTUGAL_COUNTRY_CODE = "PT";
@@ -8,13 +16,105 @@ export const ITALY_COUNTRY_CODE = "IT";
 export const FRANCE_COUNTRY_CODE = "FR";
 export const PORTUGAL_PDF_LOCALE = "pt-PT";
 export const PORTUGAL_CANONICAL_PDF_TEMPLATE: PdfTemplateId = "classic";
-const ACTIVE_ACCOUNT_COOKIE = "l.account";
-const SUPPORT_ACCOUNT_ID = import.meta.env.VITE_SUPPORT_ACCOUNT_ID || "acc_000000000000000000000001";
-
 export type CountryAwareDocument = Invoice | Estimate | CreditNote | AdvanceInvoice | DeliveryNote;
 export type CountryAwareDocumentType = "invoice" | "estimate" | "credit_note" | "advance_invoice" | "delivery_note";
 
+/** Every outgoing document type any country supports, from the generated country-rules table. */
+export const OUTGOING_DOCUMENT_TYPES: readonly string[] = countryCapabilityDefaults.defaults.document_types;
+
 type CountryEntity = Pick<Entity, "country_code" | "settings" | "country_rules"> | null | undefined;
+
+/**
+ * Server-owned country availability, as returned on `entity.country_rules.capabilities`.
+ * The server is the only authority: plans, white-label configuration and user roles may
+ * narrow these further, but nothing in the UI may widen them.
+ */
+export type CountryCapabilitySnapshot = CountryCapabilities;
+
+/** The boolean operations of a capability snapshot (everything except `document_types`). */
+export type CountryOperation = keyof Omit<CountryCapabilitySnapshot, "document_types">;
+
+/**
+ * Fallback for a payload that predates the capability snapshot. `capabilities` is optional
+ * only for version compatibility; it is never a signal that an operation is allowed. The
+ * country policy comes from the generated country-rules table, so the API stays the single
+ * owner of it.
+ */
+function getDefaultCapabilities(entity: CountryEntity): CountryCapabilitySnapshot {
+  const countryCode = entity?.country_code?.trim().toUpperCase();
+  const overrides = countryCapabilityDefaults.overrides as Record<string, CountryCapabilitySnapshot | undefined>;
+  const override = countryCode ? overrides[countryCode] : undefined;
+  const base = (override ?? countryCapabilityDefaults.defaults) as CountryCapabilitySnapshot;
+
+  return {
+    ...base,
+    document_types: [...base.document_types],
+    // The generated table carries no per-country e-invoicing availability, so a country
+    // without an override keeps deriving it from country_rules.features.
+    ...(override ? {} : { e_invoicing: hasCountryFeature(entity, "e_invoicing") }),
+  };
+}
+
+/**
+ * Resolve the country capability snapshot for an entity, filling in per key so a partial
+ * payload (an older API version that only sends some keys) still gets the conservative
+ * fallback for the keys it omits instead of dropping to "everything allowed".
+ */
+export function getCountryCapabilitySnapshot(entity: CountryEntity): CountryCapabilitySnapshot {
+  const fallback = getDefaultCapabilities(entity);
+  const snapshot = entity?.country_rules?.capabilities as Partial<CountryCapabilitySnapshot> | undefined;
+  if (!snapshot) {
+    return fallback;
+  }
+
+  const resolved = { ...fallback };
+  for (const key of Object.keys(fallback) as (keyof CountryCapabilitySnapshot)[]) {
+    const value = snapshot[key];
+    if (key === "document_types") {
+      if (Array.isArray(value)) resolved.document_types = [...(value as string[])];
+      continue;
+    }
+    if (typeof value === "boolean") {
+      resolved[key as CountryOperation] = value;
+    }
+  }
+  return resolved;
+}
+
+/** Whether the entity's country supports a given product operation. */
+export function hasCountryCapability(entity: CountryEntity, operation: CountryOperation): boolean {
+  return getCountryCapabilitySnapshot(entity)[operation] === true;
+}
+
+/** The outgoing document types the entity's country supports for issuance. */
+export function getSupportedCountryDocumentTypes(entity: CountryEntity): string[] {
+  return getCountryCapabilitySnapshot(entity).document_types;
+}
+
+/**
+ * True when the country supports fewer outgoing document types than this UI can create.
+ * Countries with the full set keep today's behaviour, including for unrecognised route
+ * params, so nothing changes for the ordinary non-restricted consumers.
+ */
+export function hasRestrictedCountryDocumentTypes(entity: CountryEntity): boolean {
+  const supported = getSupportedCountryDocumentTypes(entity);
+  return OUTGOING_DOCUMENT_TYPES.some((documentType) => !supported.includes(documentType));
+}
+
+/**
+ * Whether a document type may be created for this entity's country. In a country with a
+ * restricted list an unrecognised type counts as unsupported, so an unknown creation target
+ * is never offered there.
+ */
+export function isCountryDocumentTypeSupported(
+  entity: CountryEntity,
+  documentType: string | null | undefined,
+): boolean {
+  if (!hasRestrictedCountryDocumentTypes(entity)) {
+    return true;
+  }
+  return !!documentType && getSupportedCountryDocumentTypes(entity).includes(documentType);
+}
 
 /**
  * The API stores `country_code` as the client sent it, with no case normalization, so
@@ -42,7 +142,7 @@ function hasCountryFeature(entity: CountryEntity, feature: string): boolean {
 }
 
 export function hasItalyFatturaPaSupport(entity: CountryEntity): boolean {
-  return isItalyEntity(entity) && hasCountryFeature(entity, "e_invoicing");
+  return isItalyEntity(entity) && hasCountryCapability(entity, "e_invoicing");
 }
 
 export function hasUsTaxRateLookupSupport(entity: CountryEntity): boolean {
@@ -71,7 +171,7 @@ function isGermanStandardValidationRequired(entity: CountryEntity, standard: "xr
 }
 
 export function hasPeppolSendingSupport(entity: CountryEntity): boolean {
-  return hasCountryFeature(entity, "e_invoicing");
+  return hasCountryCapability(entity, "e_invoicing");
 }
 
 export function isPeppolSendingEnabled(entity: CountryEntity): boolean {
@@ -105,34 +205,8 @@ export function isFranceEmissionRequiredForUi(entity: CountryEntity, now = new D
   return settings.e_invoicing?.france_2026_emission_applicable === true || dateInFrance >= "2027-09-01";
 }
 
-function getCookieValue(name: string) {
-  if (typeof document === "undefined") {
-    return null;
-  }
-
-  const cookiePrefix = `${name}=`;
-  const rawCookie = document.cookie
-    .split(";")
-    .map((cookie) => cookie.trim())
-    .find((cookie) => cookie.startsWith(cookiePrefix));
-
-  if (!rawCookie) {
-    return null;
-  }
-  return decodeURIComponent(rawCookie.slice(cookiePrefix.length));
-}
-
-export function hasPortugalUiAccess() {
-  if (typeof document === "undefined") {
-    return true;
-  }
-
-  const activeAccountId = getCookieValue(ACTIVE_ACCOUNT_COOKIE);
-  return !!SUPPORT_ACCOUNT_ID && activeAccountId === SUPPORT_ACCOUNT_ID;
-}
-
 export function resolveDocumentPdfTemplate(entity: CountryEntity): PdfTemplateId {
-  if (isPortugalEntity(entity) && hasPortugalUiAccess()) {
+  if (isPortugalEntity(entity) && !hasCountryCapability(entity, "pdf_templates")) {
     return PORTUGAL_CANONICAL_PDF_TEMPLATE;
   }
 
@@ -141,7 +215,7 @@ export function resolveDocumentPdfTemplate(entity: CountryEntity): PdfTemplateId
 }
 
 export function getPortugalEditBlockedReason(entity: CountryEntity): string | undefined {
-  if (!isPortugalEntity(entity) || !hasPortugalUiAccess()) {
+  if (!isPortugalEntity(entity) || hasCountryCapability(entity, "issued_document_edit")) {
     return undefined;
   }
 
@@ -149,13 +223,14 @@ export function getPortugalEditBlockedReason(entity: CountryEntity): string | un
 }
 
 export function getEntityCountryCapabilities(entity: CountryEntity) {
-  const isPortugal = isPortugalEntity(entity) && hasPortugalUiAccess();
+  const capabilities = getCountryCapabilitySnapshot(entity);
+  const isPortugal = isPortugalEntity(entity);
   const isSlovenia = isEntityInCountry(entity, "SI");
   const isItaly = isItalyEntity(entity);
   const isFrance = isFranceEntity(entity);
   const hasItalyFatturaPa = hasItalyFatturaPaSupport(entity);
   const isGermany = isEntityInCountry(entity, "DE");
-  const hasEInvoicing = hasCountryFeature(entity, "e_invoicing");
+  const hasEInvoicing = capabilities.e_invoicing === true;
   const hasFurs = hasCountryFeature(entity, "furs");
   const hasFina = hasCountryFeature(entity, "fina");
   const hasEslog = hasCountryFeature(entity, "eslog");
@@ -191,7 +266,7 @@ export function getEntityCountryCapabilities(entity: CountryEntity) {
     hasLayeredTaxRates,
     hasItalyFatturaPa,
     requiresItalyFatturaPaValidation: hasItalyFatturaPa,
-    usesFixedPdfTemplate: isPortugal,
+    usesFixedPdfTemplate: !capabilities.pdf_templates,
     showPtSaftExport: isPortugal,
     showSloveniaVodExport: isSlovenia,
     showPeppolSendingSettings: hasPeppolSendingSupport(entity),
@@ -212,16 +287,24 @@ export function getEntityCountryCapabilities(entity: CountryEntity) {
     showUpnQrSettings,
     showHub3QrSettings,
     showEpcQrSettings,
-    allowTemplateSettings: !isPortugal,
-    allowEmailSettings: !isPortugal,
-    showTemplatesSettings: !isPortugal,
-    showEmailSettings: !isPortugal,
-    allowPdfTemplateSelection: !isPortugal,
-    allowPdfLanguageSelection: !isPortugal,
-    allowDocumentDrafts: !isPortugal,
+    countryCapabilities: capabilities,
+    supportedDocumentTypes: capabilities.document_types,
+    allowTemplateSettings: capabilities.pdf_templates,
+    allowEmailSettings: capabilities.document_email,
+    showTemplatesSettings: capabilities.pdf_templates,
+    showEmailSettings: capabilities.document_email,
+    allowPdfTemplateSelection: capabilities.pdf_templates,
+    allowPdfLanguageSelection: capabilities.pdf_languages,
+    allowDocumentDrafts: capabilities.document_drafts,
+    allowCustomDocumentCreate: capabilities.custom_document_create,
+    allowManualDocumentRecovery: capabilities.manual_document_recovery,
+    allowRecurringInvoices: capabilities.recurring_invoices,
+    allowIssuedDocumentEdit: capabilities.issued_document_edit,
+    allowCreditNotePayments: capabilities.credit_note_payments,
+    allowOrderReissue: capabilities.order_reissue,
     allowSavedItemFullEdit: !isPortugal,
     resolvedPdfTemplate: resolveDocumentPdfTemplate(entity),
-    forcePdfLocale: isPortugal ? PORTUGAL_PDF_LOCALE : undefined,
+    forcePdfLocale: isPortugal && !capabilities.pdf_languages ? PORTUGAL_PDF_LOCALE : undefined,
   };
 }
 
@@ -242,18 +325,20 @@ export function getDocumentCountryCapabilities(
     (documentType === "invoice" || documentType === "credit_note") &&
     entityCapabilities.showGermanEInvoicingExports;
 
+  const supportsPayments =
+    documentType === "invoice" || documentType === "advance_invoice" || documentType === "credit_note";
+  const allowPaymentAction =
+    supportsPayments && (documentType !== "credit_note" || entityCapabilities.allowCreditNotePayments);
+
   return {
     ...entityCapabilities,
-    allowEmailSend: !entityCapabilities.isPortugal,
-    allowSendEmail: !entityCapabilities.isPortugal,
-    allowEditIssuedDocument: !entityCapabilities.isPortugal || isDraft,
-    allowEditDocument: !entityCapabilities.isPortugal || isDraft,
-    allowPaymentAction:
-      (documentType === "invoice" || documentType === "advance_invoice" || documentType === "credit_note") &&
-      !(entityCapabilities.isPortugal && documentType === "credit_note"),
-    allowPaymentActions:
-      (documentType === "invoice" || documentType === "advance_invoice" || documentType === "credit_note") &&
-      !(entityCapabilities.isPortugal && documentType === "credit_note"),
+    allowEmailSend: entityCapabilities.allowEmailSettings,
+    allowSendEmail: entityCapabilities.allowEmailSettings,
+    allowEditIssuedDocument: entityCapabilities.allowIssuedDocumentEdit || isDraft,
+    allowEditDocument: entityCapabilities.allowIssuedDocumentEdit || isDraft,
+    allowCreateDocumentType: isCountryDocumentTypeSupported(entity, documentType),
+    allowPaymentAction,
+    allowPaymentActions: allowPaymentAction,
     forceDocumentPdfLocale: entityCapabilities.forcePdfLocale,
     showXRechnungExport: supportsGermanEInvoicingExport && entityCapabilities.showXRechnungExport,
     showZugferdExport: supportsGermanEInvoicingExport && entityCapabilities.showZugferdExport,

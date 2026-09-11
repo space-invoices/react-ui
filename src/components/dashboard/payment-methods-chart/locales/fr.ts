@@ -4,6 +4,8 @@ export default {
   Cash: "Especes",
   "Bank Transfer": "Virement bancaire",
   Card: "Carte",
+  "Credit Card": "Carte de crédit",
+  "Debit Card": "Carte de débit",
   Check: "Cheque",
   "Credit Note": "Avoir",
   Advance: "Acompte",

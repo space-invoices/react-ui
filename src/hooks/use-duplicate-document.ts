@@ -23,12 +23,19 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { canUseCustomerAsBuyer } from "@/ui/components/customers/customer-roles";
 import { mergeEntityAndBusinessUnitSettings } from "@/ui/components/documents/create/business-unit-utils";
+import {
+  applyRemainingCreditQuantities,
+  hasCreditableLines,
+} from "@/ui/components/documents/create/credit-note-quantities";
 import { buildCustomCreateTemplateFromDocument } from "@/ui/components/documents/create/custom-create-template";
+import { getPortugalToday } from "@/ui/components/documents/create/document-date-validation";
 import { toDocumentFormItem } from "@/ui/components/documents/create/document-form-item";
 import { totalsDifferByCents } from "@/ui/components/documents/create/preserved-expected-total";
+import { hasCountryCapability } from "@/ui/lib/country-capabilities";
+import { DUPLICATE_DOCUMENT_CACHE_KEY } from "@/ui/lib/credit-preparation-cache";
 import { toLocalDateOnlyString } from "@/ui/lib/date-only";
 import { isPortugalCountryCode } from "@/ui/lib/pt-entity-input";
-import { useEntities } from "@/ui/providers/entities-context";
+import { type Entity, useEntities } from "@/ui/providers/entities-context";
 import { resolveDuplicateDates, stripSourceTypeDefaultText } from "./duplicate-document-carry-over";
 
 const DUPLICATE_TIMING_EVENT = "si:duplicate-timing";
@@ -109,6 +116,9 @@ export function getDocumentTypeFromId(id: string): DocumentType | null {
   return null;
 }
 
+/** The entity fields the copy policy reads: its country and the server capability snapshot. */
+export type DuplicateEntity = Pick<Entity, "country_code" | "settings" | "country_rules"> | null | undefined;
+
 /**
  * Whether a conversion target may be offered for a specific source document.
  *
@@ -120,35 +130,56 @@ export function getDocumentTypeFromId(id: string): DocumentType | null {
 export function isDuplicateTargetOfferedForDocument(params: {
   sourceType: DocumentType;
   targetType: DocumentType;
-  countryCode?: string | null;
+  entity?: DuplicateEntity;
   document?: { is_draft?: boolean | null; voided_at?: string | null } | null;
 }): boolean {
-  const { sourceType, targetType, countryCode, document } = params;
-  if (sourceType !== "invoice" || targetType !== "credit_note" || !isPortugalCountryCode(countryCode)) {
+  const { sourceType, targetType, entity, document } = params;
+  if (!getAllowedDuplicateTargets(sourceType, entity).includes(targetType)) {
+    return false;
+  }
+
+  if (sourceType !== "invoice" || targetType !== "credit_note" || !isPortugalCountryCode(entity?.country_code)) {
     return true;
   }
 
   return !(document?.is_draft === true || !!document?.voided_at);
 }
 
+const DEFAULT_DUPLICATE_TARGETS: Record<DocumentType, DocumentType[]> = {
+  invoice: ["invoice", "credit_note"],
+  estimate: ["estimate", "invoice"],
+  credit_note: ["credit_note"],
+  advance_invoice: ["advance_invoice", "invoice"],
+  delivery_note: ["delivery_note", "invoice"],
+};
+
 /**
- * Get allowed target types for duplication/conversion
+ * Target types a source document may be duplicated or converted into, for this entity. This is
+ * the single owner of that policy: list rows, the document view, the create route guard and
+ * the handlers all ask it rather than repeating country checks.
+ *
+ * Two rules narrow the generic list:
+ *
+ * - Converting an advance invoice into an invoice is how an advance is applied, so it follows
+ *   the server's `advance_invoice_application` capability rather than a country name. Existing
+ *   links stay visible and removable; only starting a new application is withheld.
+ * - A Portuguese credit note may not be copied into another credit note. Every Portuguese
+ *   correction states the original it corrects, and a copy would produce a credit with no
+ *   original to link, which the API rejects at issuance.
  */
-export function getAllowedDuplicateTargets(sourceType: DocumentType): DocumentType[] {
-  switch (sourceType) {
-    case "invoice":
-      return ["invoice", "credit_note"];
-    case "estimate":
-      return ["estimate", "invoice"];
-    case "credit_note":
-      return ["credit_note"];
-    case "advance_invoice":
-      return ["advance_invoice", "invoice"];
-    case "delivery_note":
-      return ["delivery_note", "invoice"];
-    default:
-      return [];
+export function getAllowedDuplicateTargets(sourceType: DocumentType, entity?: DuplicateEntity): DocumentType[] {
+  const defaults = DEFAULT_DUPLICATE_TARGETS[sourceType];
+  if (!defaults) return [];
+
+  if (sourceType === "credit_note" && isPortugalCountryCode(entity?.country_code)) {
+    return [];
   }
+
+  if (sourceType === "advance_invoice" && !hasCountryCapability(entity, "advance_invoice_application")) {
+    return defaults.filter((targetType) => targetType !== "invoice");
+  }
+
+  return [...defaults];
 }
 
 /**
@@ -278,6 +309,10 @@ function transformDocumentForDuplication(
   options: {
     customer?: ResolvedDuplicateCustomer;
     settings?: Record<string, any> | null;
+    /** The correction keeps the original document's own snapshot instead of refreshing it. */
+    correctsSourceDocument?: boolean;
+    /** Issuer country, so the new document starts on that country's calendar day. */
+    issuerCountryCode?: string | null;
   } = {},
 ): Partial<CreateRequestWithBusinessUnit> {
   const items = source.items?.map((item) => toDocumentFormItem(item as any));
@@ -286,13 +321,25 @@ function transformDocumentForDuplication(
     customer: pickCustomerSnapshotFields(source.customer as Record<string, any> | null | undefined),
     customerId: source.customer_id ?? undefined,
   };
-  const customerData = resolvedCustomer.customer;
+  // A correction is issued to the recipient the original was issued to. Refreshing those
+  // details from the live customer record, as an ordinary re-issue does, would make the
+  // correction state a different recipient than the document it corrects. `save_customer` is
+  // false for the same reason: this frozen snapshot is history, not the customer's current
+  // details, and must not be written back over them.
+  const customerData = options.correctsSourceDocument
+    ? { ...pickCustomerSnapshotFields(source.customer as Record<string, any> | null | undefined), save_customer: false }
+    : resolvedCustomer.customer;
 
   // When converting to a different type, link back to the source document
   const sourceType = getDocumentTypeFromId(source.id);
   const isConversion = !!sourceType && sourceType !== targetType;
 
-  const date = toLocalDateOnlyString(new Date());
+  // Portugal issues on the Portuguese calendar day, and the create forms reject anything
+  // else. Taking the browser's day here would hand a user outside Lisbon a prefilled
+  // correction their own form immediately refuses.
+  const date = isPortugalCountryCode(options.issuerCountryCode)
+    ? getPortugalToday()
+    : toLocalDateOnlyString(new Date());
   const carriedDates = resolveDuplicateDates({
     source: source as any,
     sourceType,
@@ -315,8 +362,9 @@ function transformDocumentForDuplication(
     // Currency
     currency_code: source.currency_code,
     calculation_mode: (source as any).calculation_mode ?? undefined,
-    // Notes
-    note: source.note,
+    // Notes. A correction's note is read as its stated reason where the country requires one,
+    // so the original document's unrelated note is not carried into it.
+    note: options.correctsSourceDocument ? undefined : source.note,
     payment_terms: source.payment_terms,
     // A reference is often an order/PO number for that one document, but it is just as often
     // a standing contract or cost centre. Carry it either way and leave removing it to the
@@ -381,6 +429,8 @@ export type UseDuplicateDocumentResult = {
   initialValues: Partial<CreateRequestWithBusinessUnit> | undefined;
   /** Source documents linked to this document (populated for conversions) */
   sourceDocuments: LinkedDocumentSummary[];
+  /** The source invoice has nothing left to correct, so no credit note can be prepared from it. */
+  sourceFullyCredited: boolean;
   /** Loading state */
   isLoading: boolean;
   /** Error if fetch failed */
@@ -410,7 +460,7 @@ export function useDuplicateDocument({
   const sourceType = sourceId ? getDocumentTypeFromId(sourceId) : null;
 
   const query = useQuery({
-    queryKey: ["duplicate-document", sourceId, targetType, activeEntity?.id],
+    queryKey: [DUPLICATE_DOCUMENT_CACHE_KEY, sourceId, targetType, activeEntity?.id],
     queryFn: async () => {
       if (!sourceId || !activeEntity?.id || !sourceType) {
         throw new Error("Source document ID and entity ID are required");
@@ -442,13 +492,37 @@ export function useDuplicateDocument({
         throw new Error("Source document not found");
       }
 
+      const createsPortugalCreditNote =
+        sourceType === "invoice" && targetType === "credit_note" && isPortugalCountryCode(activeEntity.country_code);
+
       const customer = await resolveDuplicateCustomer(source as any, activeEntity.id);
       const settings = mergeEntityAndBusinessUnitSettings(
         (activeEntity as any)?.settings,
         (source as any).business_unit ?? null,
       );
 
-      const initialValues = transformDocumentForDuplication(source, targetType, { customer, settings });
+      const initialValues = transformDocumentForDuplication(source, targetType, {
+        customer,
+        settings,
+        correctsSourceDocument: createsPortugalCreditNote,
+        issuerCountryCode: activeEntity.country_code,
+      });
+
+      // A Portuguese credit note may only correct what the original still has outstanding, so
+      // the API's remaining-quantity snapshot replaces the copied quantities. A failure here
+      // rejects the whole prefill: falling back to the invoiced quantities would silently
+      // prepare an over-credit.
+      let sourceFullyCredited = false;
+      if (createsPortugalCreditNote) {
+        const creditOptions = await invoices.getCreditOptions(sourceId, { entity_id: activeEntity.id });
+        const creditableItems = applyRemainingCreditQuantities({
+          sourceItems: source.items,
+          formItems: initialValues.items,
+          remaining: creditOptions.items,
+        });
+        sourceFullyCredited = creditOptions.fully_credited || !hasCreditableLines(creditableItems);
+        initialValues.items = creditableItems;
+      }
       if ((source as any).creation_source === "custom") {
         const customCreateTemplate = buildCustomCreateTemplateFromDocument(source);
         customCreateTemplate.items = normalizeCustomTemplateItems(
@@ -458,7 +532,9 @@ export function useDuplicateDocument({
         );
         (initialValues as any)._custom_create_template = customCreateTemplate;
       }
-      if (shouldCheckForPreservedTotal(source)) {
+      // A partial credit deliberately totals less than the original, so the preserved-total
+      // guard for the source document does not apply to it.
+      if (!createsPortugalCreditNote && shouldCheckForPreservedTotal(source)) {
         const calculatePayload = buildCalculatePayload(initialValues);
         if (calculatePayload) {
           try {
@@ -500,7 +576,7 @@ export function useDuplicateDocument({
         elapsedMs: Number((performance.now() - startedAt).toFixed(1)),
       });
 
-      return { initialValues, sourceDocuments };
+      return { initialValues, sourceDocuments, sourceFullyCredited };
     },
     enabled: enabled && !!sourceId && !!activeEntity?.id && !!sourceType,
     retry: false,
@@ -511,6 +587,7 @@ export function useDuplicateDocument({
   return {
     initialValues: query.data?.initialValues,
     sourceDocuments: query.data?.sourceDocuments ?? [],
+    sourceFullyCredited: query.data?.sourceFullyCredited ?? false,
     isLoading: query.isLoading,
     error: query.error,
     sourceType,

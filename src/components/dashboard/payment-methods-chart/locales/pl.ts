@@ -4,6 +4,8 @@ export default {
   Cash: "Gotowka",
   "Bank Transfer": "Przelew bankowy",
   Card: "Karta",
+  "Credit Card": "Karta kredytowa",
+  "Debit Card": "Karta debetowa",
   Check: "Czek",
   "Credit Note": "Nota kredytowa",
   Advance: "Zaliczka",

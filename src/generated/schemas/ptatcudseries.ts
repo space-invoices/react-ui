@@ -17,11 +17,14 @@ const createPtAtcudSeriesSchemaDefinition = z.object({
     "estimate",
   ]),
   series_code: z.string().min(1).max(35),
-  validation_code: z.string().min(1).max(32),
-  first_number: z.string().min(1).max(100).optional(),
+  validation_code: z
+    .string()
+    .min(8)
+    .regex(/^(?:[BCDFGHJKLMNPQRSTVWXYZ2-9]{8,}|AA[A-Z0-9]{6,})$/),
+  first_number: z.union([z.string(), z.null()]).optional(),
   start_date: z.string(),
-  is_manual: z.boolean().optional(),
-  initial_sequence: z.number().int().gte(1).optional(),
+  is_manual: z.union([z.boolean(), z.null()]).optional(),
+  initial_sequence: z.union([z.number(), z.null()]).optional(),
 });
 
 export type CreatePtAtcudSeriesSchema = z.infer<typeof createPtAtcudSeriesSchemaDefinition>;

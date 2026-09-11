@@ -52,6 +52,8 @@ export default {
   Cash: "Kontant",
   "Bank Transfer": "Banköverföring",
   Card: "Kort",
+  "Credit Card": "Kreditkort",
+  "Debit Card": "Debetkort",
   Check: "Check",
   Other: "Övrigt",
   Note: "Anteckning",
@@ -253,4 +255,7 @@ export default {
     "Klicka för att inaktivera omvänd skattskyldighet enligt artikel 76.a för den här fakturan",
   "Click to enable Article 76.a reverse charge for this invoice":
     "Klicka för att aktivera omvänd skattskyldighet enligt artikel 76.a för den här fakturan",
+  "Short fiscal designation, up to 200 characters. Longer wording goes in the description.":
+    "Kort skattemässig benämning, upp till 200 tecken. Längre text hör hemma i beskrivningen.",
+  "Leave empty and the export uses UN.": "Lämna tomt så använder exporten UN.",
 } as const;

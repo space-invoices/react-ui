@@ -44,6 +44,8 @@ export default {
   Cash: "Sularaha",
   "Bank Transfer": "Pangaülekanne",
   Card: "Kaart",
+  "Credit Card": "Krediitkaart",
+  "Debit Card": "Deebetkaart",
   Check: "Tšekk",
   Other: "Muu",
   Note: "Märkus",
@@ -114,4 +116,6 @@ export default {
   From: "Alates",
   To: "Kuni",
   "Original invoice cannot be credited": "Algset arvet ei saa krediteerida",
+  "Portugal credit notes are issued to the customer on the original document.":
+    "Portugali kreeditarved väljastatakse algdokumendil olevale kliendile.",
 } as const;

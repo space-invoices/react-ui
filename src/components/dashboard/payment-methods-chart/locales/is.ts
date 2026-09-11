@@ -4,6 +4,8 @@ export default {
   Cash: "Reiðufé",
   "Bank Transfer": "Bankamillifærsla",
   Card: "Kort",
+  "Credit Card": "Kreditkort",
+  "Debit Card": "Debetkort",
   Check: "Ávísun",
   "Credit Note": "Kreditreikningur",
   Advance: "Fyrirframreikningur",

@@ -52,6 +52,8 @@ export default {
   Cash: "Efectivo",
   "Bank Transfer": "Transferencia bancaria",
   Card: "Tarjeta",
+  "Credit Card": "Tarjeta de crédito",
+  "Debit Card": "Tarjeta de débito",
   Check: "Cheque",
   Other: "Otro",
   Note: "Nota",
@@ -259,4 +261,7 @@ export default {
     "Haz clic para desactivar la inversión del sujeto pasivo del artículo 76.a en esta factura",
   "Click to enable Article 76.a reverse charge for this invoice":
     "Haz clic para activar la inversión del sujeto pasivo del artículo 76.a en esta factura",
+  "Short fiscal designation, up to 200 characters. Longer wording goes in the description.":
+    "Designación fiscal breve, hasta 200 caracteres. El texto más largo va en la descripción.",
+  "Leave empty and the export uses UN.": "Déjalo vacío y la exportación usará UN.",
 } as const;

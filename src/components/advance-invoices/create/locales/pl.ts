@@ -24,6 +24,8 @@ export default {
   Cash: "Gotówka",
   "Bank Transfer": "Przelew bankowy",
   Card: "Karta",
+  "Credit Card": "Karta kredytowa",
+  "Debit Card": "Karta debetowa",
   Check: "Czek",
   Other: "Inne",
   Premise: "Lokal",

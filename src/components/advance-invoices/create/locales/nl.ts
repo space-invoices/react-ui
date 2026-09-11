@@ -24,6 +24,8 @@ export default {
   Cash: "Contant",
   "Bank Transfer": "Bankoverschrijving",
   Card: "Kaart",
+  "Credit Card": "Creditcard",
+  "Debit Card": "Debetkaart",
   Check: "Cheque",
   Other: "Overig",
   Premise: "Bedrijfsruimte",

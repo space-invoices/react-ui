@@ -46,6 +46,8 @@ export default {
   Cash: "Reiðufé",
   "Bank Transfer": "Bankamillifærsla",
   Card: "Kort",
+  "Credit Card": "Kreditkort",
+  "Debit Card": "Debetkort",
   Check: "Ávísun",
   Other: "Annað",
   Note: "Athugasemd",
@@ -118,4 +120,6 @@ export default {
   From: "Frá",
   To: "Til",
   "Original invoice cannot be credited": "Ekki er hægt að gefa út kreditreikning fyrir upprunalega reikninginn",
+  "Portugal credit notes are issued to the customer on the original document.":
+    "Portúgalskir kreditreikningar eru gefnir út á viðskiptavininn á upprunalega skjalinu.",
 } as const;

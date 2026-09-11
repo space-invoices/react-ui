@@ -25,6 +25,8 @@ export default {
   Cash: "Contanti",
   "Bank Transfer": "Bonifico bancario",
   Card: "Carta",
+  "Credit Card": "Carta di credito",
+  "Debit Card": "Carta di debito",
   Check: "Assegno",
   Other: "Altro",
   Premise: "Locale",

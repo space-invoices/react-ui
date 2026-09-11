@@ -305,13 +305,40 @@ export default {
 
   // Portugal entity details
   "Portugal Details": "Portugal Details",
-  "Portuguese law requires these details on every entity": "Portuguese law requires these details on every entity",
+  "Portuguese invoices carry these details. What is required depends on your legal form.":
+    "Portuguese invoices carry these details. What is required depends on your legal form.",
+  "Legal Form": "Legal Form",
+  "Select your legal form": "Select your legal form",
+  "Decides which registration and capital details Portugal asks you for":
+    "Decides which registration and capital details Portugal asks you for",
+  "Individual professional or sole trader": "Individual professional or sole trader",
+  "Private limited company (Lda.)": "Private limited company (Lda.)",
+  "Public limited company (S.A.)": "Public limited company (S.A.)",
+  "Partnership limited by shares": "Partnership limited by shares",
+  "Other company": "Other company",
   "Company Number": "Company Number",
-  "Company registration number (NIPC)": "Company registration number (NIPC)",
+  "Digits and slashes only, as shown on your registration.": "Digits and slashes only, as shown on your registration.",
+  "Registry Office": "Registry Office",
+  "Commercial registry where the company is registered": "Commercial registry where the company is registered",
   Phone: "Phone",
-  "International format, including the country code": "International format, including the country code",
+  "Enter 912 345 678 for Portugal, or include + and the country code for another country.":
+    "Enter 912 345 678 for Portugal, or include + and the country code for another country.",
+  "Enter 7 digits; the hyphen is added automatically.": "Enter 7 digits; the hyphen is added automatically.",
+  "9 digits. You can paste it with spaces or a PT prefix.": "9 digits. You can paste it with spaces or a PT prefix.",
   "Share Capital": "Share Capital",
   "Registered share capital of the company": "Registered share capital of the company",
+  "Conditional company disclosures": "Conditional company disclosures",
+  "Leave these empty unless one of them applies to your company.":
+    "Leave these empty unless one of them applies to your company.",
+  "Paid-up Capital": "Paid-up Capital",
+  "Only needed when less than the share capital has actually been paid in":
+    "Only needed when less than the share capital has actually been paid in",
+  Equity: "Equity",
+  "Only needed when equity has fallen to half the share capital or less. Use the figure from your last approved balance sheet.":
+    "Only needed when equity has fallen to half the share capital or less. Use the figure from your last approved balance sheet.",
+  "Company is in liquidation": "Company is in liquidation",
+  "Documents must say so while the company is being wound up":
+    "Documents must say so while the company is being wound up",
   // Tax rule sections and Slovenian Article 76.a
   "Calculation settings": "Calculation settings",
   "Choose how prices, discounts, and taxes are calculated on documents.":

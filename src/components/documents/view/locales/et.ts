@@ -75,6 +75,8 @@ export default {
   cash: "Sularaha",
   bank_transfer: "Pangaülekanne",
   card: "Kaart",
+  credit_card: "Krediitkaart",
+  debit_card: "Deebetkaart",
   check: "Tšekk",
   credit_note: "Kreeditarve",
   other: "Muu",

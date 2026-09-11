@@ -1,5 +1,6 @@
 import { documents } from "@spaceinvoices/js-sdk";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { invalidateCreditPreparationQueries } from "@/ui/lib/credit-preparation-cache";
 import { invalidateDashboardStatsQueries } from "@/ui/lib/dashboard-stats-cache";
 
 // Document type union for API calls
@@ -58,6 +59,10 @@ export function useFinalizeDocument(options: FinalizeDocumentOptions) {
       });
       // Finalizing moves the document out of the draft population the dashboard excludes.
       void invalidateDashboardStatsQueries(queryClient, options.entityId);
+      // An issued correction consumes the original invoice's remaining creditable balance.
+      if (variables.documentType === "credit_note") {
+        invalidateCreditPreparationQueries(queryClient, options.entityId);
+      }
 
       options.onSuccess?.(data);
     },

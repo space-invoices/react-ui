@@ -75,6 +75,8 @@ export default {
   cash: "Hotovost",
   bank_transfer: "Bankovní převod",
   card: "Karta",
+  credit_card: "Kreditní karta",
+  debit_card: "Debetní karta",
   check: "Šek",
   credit_note: "Dobropis",
   other: "Jiné",

@@ -52,6 +52,8 @@ export default {
   Cash: "Gotovina",
   "Bank Transfer": "Bankovni prijenos",
   Card: "Kartica",
+  "Credit Card": "Kreditna kartica",
+  "Debit Card": "Debitna kartica",
   Check: "Ček",
   Other: "Ostalo",
   Note: "Napomena",
@@ -253,4 +255,7 @@ export default {
     "Kliknite kako biste isključili prijenos porezne obveze prema članku 76.a za ovaj račun",
   "Click to enable Article 76.a reverse charge for this invoice":
     "Kliknite kako biste uključili prijenos porezne obveze prema članku 76.a za ovaj račun",
+  "Short fiscal designation, up to 200 characters. Longer wording goes in the description.":
+    "Kratki porezni naziv, do 200 znakova. Duži tekst upišite u opis.",
+  "Leave empty and the export uses UN.": "Ostavite prazno i izvoz će koristiti UN.",
 } as const;

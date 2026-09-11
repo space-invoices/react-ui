@@ -31,6 +31,7 @@ import { actionMenuTooltipProps, Tooltip, TooltipContent, TooltipTrigger } from 
 import { type DocumentType, getAllowedDuplicateTargets } from "@/ui/hooks/use-duplicate-document";
 import { getDocumentCountryCapabilities } from "@/ui/lib/country-capabilities";
 import { ESLOG_XML_EXPORT_ENABLED } from "@/ui/lib/eslog-export";
+import { arePaymentMutationsBlockedByVoid, type PaymentDocumentLifecycle } from "@/ui/lib/payment-mutation-state";
 import type { ComponentTranslationProps } from "@/ui/lib/translation";
 import { createTranslation } from "@/ui/lib/translation";
 import type { Entity } from "@/ui/providers/entities-context";
@@ -186,7 +187,7 @@ export function DocumentActionsBar({
   const t = createTranslation({ ...i18nProps, translations, locale: currentLocale });
   const { isCapabilityVisible } = useWhiteLabel();
   const [linkCopied, setLinkCopied] = useState(false);
-  const duplicateTargets = allowedDuplicateTargets ?? getAllowedDuplicateTargets(documentType);
+  const duplicateTargets = allowedDuplicateTargets ?? getAllowedDuplicateTargets(documentType, entity);
 
   const {
     isDownloadingPdf,
@@ -503,10 +504,16 @@ export function DocumentActionsBar({
   ) : null;
 
   const paymentAllowed = countryCapabilities.allowPaymentAction;
+  // Portugal closes a voided document to payments and the server refuses one there; elsewhere a
+  // voided document stays reconcilable, so the action keeps working. Saying so beats a button
+  // that fails, so where it is refused the action is shown disabled with the reason.
+  const paymentsBlockedByVoid = arePaymentMutationsBlockedByVoid(document, entity);
+  const effectivePaymentDisabledReason =
+    paymentDisabledReason || (paymentsBlockedByVoid ? t("This document is already voided.") : undefined);
 
   const paymentButton =
-    supportsPayments && paymentAllowed && (onAddPayment || paymentDisabledReason) ? (
-      paymentDisabledReason ? (
+    supportsPayments && paymentAllowed && (onAddPayment || effectivePaymentDisabledReason) ? (
+      effectivePaymentDisabledReason ? (
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
@@ -520,7 +527,7 @@ export function DocumentActionsBar({
               {t("Payment")}
             </Button>
           </TooltipTrigger>
-          <TooltipContent {...actionMenuTooltipProps}>{paymentDisabledReason}</TooltipContent>
+          <TooltipContent {...actionMenuTooltipProps}>{effectivePaymentDisabledReason}</TooltipContent>
         </Tooltip>
       ) : (
         <Button variant="outline" size="sm" onClick={onAddPayment} className="cursor-pointer">
@@ -646,7 +653,8 @@ export function DocumentActionsBar({
       </DropdownMenu>
     ) : null;
 
-  const isAlreadyVoided = !!(document as any)?.voided_at;
+  // Voiding twice is refused everywhere, so this one is not country-scoped.
+  const isAlreadyVoided = !!(document as PaymentDocumentLifecycle).voided_at;
   const effectiveVoidDisabledReason =
     voidDisabledReason || (isAlreadyVoided ? t("This document is already voided.") : undefined);
 
@@ -879,8 +887,8 @@ export function DocumentActionsBar({
                   {t("ZUGFeRD")}
                 </DropdownMenuItem>
               ))}
-            {supportsPayments && paymentAllowed && (onAddPayment || paymentDisabledReason) ? (
-              paymentDisabledReason ? (
+            {supportsPayments && paymentAllowed && (onAddPayment || effectivePaymentDisabledReason) ? (
+              effectivePaymentDisabledReason ? (
                 <DropdownMenuItem disabled className="cursor-pointer">
                   <Plus className="mr-2 h-4 w-4" />
                   {t("Payment")}

@@ -1,5 +1,6 @@
 import { advanceInvoices, creditNotes, deliveryNotes, invoices } from "@spaceinvoices/js-sdk";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { invalidateCreditPreparationQueries } from "@/ui/lib/credit-preparation-cache";
 import { invalidateDashboardStatsQueries } from "@/ui/lib/dashboard-stats-cache";
 import { invalidateRevenueRecognitionQueries } from "@/ui/lib/revenue-recognition-cache";
 
@@ -45,6 +46,11 @@ export function useVoidDocument() {
       queryClient.invalidateQueries({ queryKey: ["documents", variables.documentType, variables.documentId] });
       invalidateRevenueRecognitionQueries(queryClient);
       void invalidateDashboardStatsQueries(queryClient, variables.entityId);
+      // Voiding a correction returns its quantities to the original, and voiding an invoice
+      // ends what can be corrected on it, so both change the remaining creditable balance.
+      if (variables.documentType === "credit_note" || variables.documentType === "invoice") {
+        invalidateCreditPreparationQueries(queryClient, variables.entityId);
+      }
     },
   });
 }

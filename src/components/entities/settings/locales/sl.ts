@@ -326,14 +326,41 @@ export default {
 
   // Portugal entity details
   "Portugal Details": "Podatki za Portugalsko",
-  "Portuguese law requires these details on every entity":
-    "Portugalska zakonodaja zahteva te podatke za vsako entiteto",
+  "Portuguese invoices carry these details. What is required depends on your legal form.":
+    "Portugalski računi vsebujejo te podatke. Kateri so obvezni, je odvisno od vaše pravne oblike.",
+  "Legal Form": "Pravna oblika",
+  "Select your legal form": "Izberite pravno obliko",
+  "Decides which registration and capital details Portugal asks you for":
+    "Določa, katere podatke o registraciji in kapitalu Portugalska zahteva od vas",
+  "Individual professional or sole trader": "Samostojni strokovnjak ali samostojni podjetnik",
+  "Private limited company (Lda.)": "Družba z omejeno odgovornostjo (Lda.)",
+  "Public limited company (S.A.)": "Delniška družba (S.A.)",
+  "Partnership limited by shares": "Komanditna delniška družba",
+  "Other company": "Druga družba",
   "Company Number": "Matična številka",
-  "Company registration number (NIPC)": "Matična številka podjetja (NIPC)",
+  "Digits and slashes only, as shown on your registration.":
+    "Samo števke in poševnice, kot je navedeno v vašem registrskem vpisu.",
+  "Registry Office": "Registrski urad",
+  "Commercial registry where the company is registered": "Poslovni register, v katerem je družba vpisana",
   Phone: "Telefon",
-  "International format, including the country code": "Mednarodni zapis, vključno s klicno številko države",
+  "Enter 912 345 678 for Portugal, or include + and the country code for another country.":
+    "Za Portugalsko vnesite 912 345 678, za drugo državo pa dodajte + in klicno številko države.",
+  "Enter 7 digits; the hyphen is added automatically.": "Vnesite 7 števk; vezaj se doda samodejno.",
+  "9 digits. You can paste it with spaces or a PT prefix.": "9 števk. Vnesete ga lahko s presledki ali s predpono PT.",
   "Share Capital": "Osnovni kapital",
   "Registered share capital of the company": "Registrirani osnovni kapital podjetja",
+  "Conditional company disclosures": "Pogojna razkritja o družbi",
+  "Leave these empty unless one of them applies to your company.":
+    "Ta polja pustite prazna, razen če se katero od njih nanaša na vašo družbo.",
+  "Paid-up Capital": "Vplačani kapital",
+  "Only needed when less than the share capital has actually been paid in":
+    "Potrebno le, če je bilo dejansko vplačanega manj, kot znaša osnovni kapital",
+  Equity: "Lastniški kapital",
+  "Only needed when equity has fallen to half the share capital or less. Use the figure from your last approved balance sheet.":
+    "Potrebno le, če je lastniški kapital padel na polovico osnovnega kapitala ali manj. Uporabite znesek iz zadnje potrjene bilance stanja.",
+  "Company is in liquidation": "Družba je v likvidaciji",
+  "Documents must say so while the company is being wound up":
+    "Med likvidacijo družbe mora biti to navedeno na dokumentih",
   // Tax rule sections and Slovenian Article 76.a
   "Calculation settings": "Nastavitve izračuna",
   "Choose how prices, discounts, and taxes are calculated on documents.":

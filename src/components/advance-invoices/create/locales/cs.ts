@@ -23,6 +23,8 @@ export default {
   Cash: "Hotovost",
   "Bank Transfer": "Bankovní převod",
   Card: "Karta",
+  "Credit Card": "Kreditní karta",
+  "Debit Card": "Debetní karta",
   Check: "Šek",
   Other: "Jiné",
   Premise: "Provozovna",

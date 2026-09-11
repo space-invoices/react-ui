@@ -29,7 +29,7 @@ const CreateFinaInvoiceData = z
     operator_oib: z.union([z.string(), z.null()]),
     operator_label: z.union([z.string(), z.null()]),
     payment_type: z.union([
-      z.union([z.enum(["cash", "card", "online", "bank_transfer", "paypal", "crypto", "coupon", "other"]), z.null()]),
+      z.union([z.enum(["cash", "card", "credit_card", "debit_card", "online", "bank_transfer", "paypal", "crypto", "coupon", "other"]), z.null()]),
       z.null(),
     ]),
   })

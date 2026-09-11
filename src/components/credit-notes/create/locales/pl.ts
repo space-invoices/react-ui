@@ -46,6 +46,8 @@ export default {
   Cash: "Gotówka",
   "Bank Transfer": "Przelew bankowy",
   Card: "Karta",
+  "Credit Card": "Karta kredytowa",
+  "Debit Card": "Karta debetowa",
   Check: "Czek",
   Other: "Inne",
   // Note field
@@ -126,4 +128,6 @@ export default {
   From: "Od",
   To: "Do",
   "Original invoice cannot be credited": "Nie można wystawić korekty do faktury pierwotnej",
+  "Portugal credit notes are issued to the customer on the original document.":
+    "Portugalskie noty kredytowe wystawia się nabywcy wskazanemu na dokumencie pierwotnym.",
 } as const;

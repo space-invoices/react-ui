@@ -319,14 +319,42 @@ export default {
 
   // Portugal entity details
   "Portugal Details": "Данни за Португалия",
-  "Portuguese law requires these details on every entity":
-    "Португалското законодателство изисква тези данни за всяко дружество",
+  "Portuguese invoices carry these details. What is required depends on your legal form.":
+    "Португалските фактури съдържат тези данни. Кои от тях са задължителни зависи от правната ви форма.",
+  "Legal Form": "Правна форма",
+  "Select your legal form": "Изберете правната си форма",
+  "Decides which registration and capital details Portugal asks you for":
+    "Определя какви данни за регистрацията и капитала изисква Португалия",
+  "Individual professional or sole trader": "Самостоятелно практикуващ специалист или едноличен търговец",
+  "Private limited company (Lda.)": "Дружество с ограничена отговорност (Lda.)",
+  "Public limited company (S.A.)": "Акционерно дружество (S.A.)",
+  "Partnership limited by shares": "Командитно дружество с акции",
+  "Other company": "Друго дружество",
   "Company Number": "ЕИК",
-  "Company registration number (NIPC)": "Регистрационен номер на дружеството (NIPC)",
+  "Digits and slashes only, as shown on your registration.":
+    "Само цифри и наклонени черти, както е в регистрацията ви.",
+  "Registry Office": "Регистърна служба",
+  "Commercial registry where the company is registered": "Търговски регистър, в който е вписано дружеството",
   Phone: "Телефон",
-  "International format, including the country code": "Международен формат, включително кода на държавата",
+  "Enter 912 345 678 for Portugal, or include + and the country code for another country.":
+    "Въведете 912 345 678 за Португалия или добавете + и кода на държавата за друга държава.",
+  "Enter 7 digits; the hyphen is added automatically.": "Въведете 7 цифри; тирето се добавя автоматично.",
+  "9 digits. You can paste it with spaces or a PT prefix.":
+    "9 цифри. Може да го поставите с интервали или с представка PT.",
   "Share Capital": "Основен капитал",
   "Registered share capital of the company": "Регистриран основен капитал на дружеството",
+  "Conditional company disclosures": "Условни данни за дружеството",
+  "Leave these empty unless one of them applies to your company.":
+    "Оставете тези полета празни, освен ако някое от тях не се отнася за вашето дружество.",
+  "Paid-up Capital": "Внесен капитал",
+  "Only needed when less than the share capital has actually been paid in":
+    "Необходимо е само когато действително е внесено по-малко от основния капитал",
+  Equity: "Собствен капитал",
+  "Only needed when equity has fallen to half the share capital or less. Use the figure from your last approved balance sheet.":
+    "Необходимо е само когато собственият капитал е спаднал до половината от основния капитал или по-малко. Използвайте стойността от последния одобрен баланс.",
+  "Company is in liquidation": "Дружеството е в ликвидация",
+  "Documents must say so while the company is being wound up":
+    "Документите трябва да посочват това, докато трае ликвидацията на дружеството",
   // Tax rule sections and Slovenian Article 76.a
   "Calculation settings": "Настройки за изчисляване",
   "Choose how prices, discounts, and taxes are calculated on documents.":

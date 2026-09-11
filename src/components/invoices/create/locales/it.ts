@@ -53,6 +53,8 @@ export default {
   Cash: "Contanti",
   "Bank Transfer": "Bonifico bancario",
   Card: "Carta",
+  "Credit Card": "Carta di credito",
+  "Debit Card": "Carta di debito",
   Check: "Assegno",
   Other: "Altro",
   Note: "Nota",
@@ -261,4 +263,7 @@ export default {
     "Fai clic per disattivare l'inversione contabile dell'articolo 76.a per questa fattura",
   "Click to enable Article 76.a reverse charge for this invoice":
     "Fai clic per attivare l'inversione contabile dell'articolo 76.a per questa fattura",
+  "Short fiscal designation, up to 200 characters. Longer wording goes in the description.":
+    "Denominazione fiscale breve, fino a 200 caratteri. Il testo più lungo va nella descrizione.",
+  "Leave empty and the export uses UN.": "Lascia vuoto e l'esportazione userà UN.",
 } as const;

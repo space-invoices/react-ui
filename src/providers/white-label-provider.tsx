@@ -3,10 +3,14 @@ import type { ReactNode } from "react";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import {
   getEffectiveWhiteLabelHiddenFeatures,
+  isWhiteLabelCapabilityAvailable,
   isWhiteLabelCapabilityVisible,
+  isWhiteLabelFeatureCountryAvailable,
+  isWhiteLabelUiControlAvailable,
   isWhiteLabelUiControlVisible,
   type WhiteLabelActionControlId,
   type WhiteLabelCapabilityId,
+  type WhiteLabelVisibilityScope,
 } from "@/ui/lib/white-label-capabilities";
 import { useEntitiesOptional } from "./entities-context";
 
@@ -68,13 +72,22 @@ const DEFAULT_CONTEXT: WhiteLabelContextType = {
   isResolved: false,
 };
 
+type WhiteLabelVisibilityOptions = {
+  /**
+   * `manage` (default) applies the server-owned country availability layer; `read` skips it so
+   * existing documents and recurrences stay reachable in a country that no longer allows
+   * creating them. White-label hiding applies in both scopes.
+   */
+  scope?: WhiteLabelVisibilityScope;
+};
+
 type WhiteLabelContextType = WhiteLabelConfig & {
   /** Check if a feature is visible (not hidden) for this white-label */
   isFeatureVisible: (feature: string) => boolean;
   /** Check if a capability is visible after country/entity and white-label rules are applied */
-  isCapabilityVisible: (capability: WhiteLabelCapabilityId) => boolean;
+  isCapabilityVisible: (capability: WhiteLabelCapabilityId, options?: WhiteLabelVisibilityOptions) => boolean;
   /** Check if a standalone UI control is visible after white-label and parent capability rules are applied */
-  isUiControlVisible: (control: WhiteLabelActionControlId) => boolean;
+  isUiControlVisible: (control: WhiteLabelActionControlId, options?: WhiteLabelVisibilityOptions) => boolean;
   isLoading: boolean;
   /**
    * True only after the white-label config was fetched and parsed successfully.
@@ -162,20 +175,40 @@ export function WhiteLabelProvider({ children, apiBaseUrl = "", isAccountUser = 
     [config.hiddenFeatures, config.hideNewFeaturesByDefault, config.reviewedFeatureCatalogIds],
   );
 
+  // Country availability is resolved before the account-user bypass and before white-label
+  // hiding. Billing, white-label configuration and the full-UI bypass may only narrow what the
+  // server says the entity's country supports; none of them may widen it.
   const isFeatureVisible = useCallback(
-    (feature: string) => accountUsersBypassUiRestrictions || !effectiveHiddenFeatures.includes(feature),
-    [accountUsersBypassUiRestrictions, effectiveHiddenFeatures],
+    (feature: string) => {
+      if (!isWhiteLabelFeatureCountryAvailable(feature, entitiesContext?.activeEntity ?? null)) {
+        return false;
+      }
+
+      return accountUsersBypassUiRestrictions || !effectiveHiddenFeatures.includes(feature);
+    },
+    [accountUsersBypassUiRestrictions, effectiveHiddenFeatures, entitiesContext?.activeEntity],
   );
 
   const isCapabilityVisible = useCallback(
-    (capability: WhiteLabelCapabilityId) =>
-      accountUsersBypassUiRestrictions ||
-      isWhiteLabelCapabilityVisible({
-        capability,
-        hiddenFeatures: effectiveHiddenFeatures,
-        entity: entitiesContext?.activeEntity ?? null,
-        entityCount: entitiesContext?.entities.length ?? 0,
-      }),
+    (capability: WhiteLabelCapabilityId, options?: WhiteLabelVisibilityOptions) => {
+      const entity = entitiesContext?.activeEntity ?? null;
+      const entityCount = entitiesContext?.entities.length ?? 0;
+
+      if (!isWhiteLabelCapabilityAvailable({ capability, entity, entityCount, scope: options?.scope })) {
+        return false;
+      }
+
+      return (
+        accountUsersBypassUiRestrictions ||
+        isWhiteLabelCapabilityVisible({
+          capability,
+          hiddenFeatures: effectiveHiddenFeatures,
+          entity,
+          entityCount,
+          scope: options?.scope,
+        })
+      );
+    },
     [
       accountUsersBypassUiRestrictions,
       effectiveHiddenFeatures,
@@ -185,14 +218,25 @@ export function WhiteLabelProvider({ children, apiBaseUrl = "", isAccountUser = 
   );
 
   const isUiControlVisible = useCallback(
-    (control: WhiteLabelActionControlId) =>
-      accountUsersBypassUiRestrictions ||
-      isWhiteLabelUiControlVisible({
-        control,
-        hiddenFeatures: effectiveHiddenFeatures,
-        entity: entitiesContext?.activeEntity ?? null,
-        entityCount: entitiesContext?.entities.length ?? 0,
-      }),
+    (control: WhiteLabelActionControlId, options?: WhiteLabelVisibilityOptions) => {
+      const entity = entitiesContext?.activeEntity ?? null;
+      const entityCount = entitiesContext?.entities.length ?? 0;
+
+      if (!isWhiteLabelUiControlAvailable({ control, entity, entityCount, scope: options?.scope })) {
+        return false;
+      }
+
+      return (
+        accountUsersBypassUiRestrictions ||
+        isWhiteLabelUiControlVisible({
+          control,
+          hiddenFeatures: effectiveHiddenFeatures,
+          entity,
+          entityCount,
+          scope: options?.scope,
+        })
+      );
+    },
     [
       accountUsersBypassUiRestrictions,
       effectiveHiddenFeatures,

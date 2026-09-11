@@ -6,6 +6,8 @@ export default {
   Cash: "Reiðufé",
   "Bank Transfer": "Bankamillifærsla",
   Card: "Kort",
+  "Credit Card": "Kreditkort",
+  "Debit Card": "Debetkort",
   Check: "Ávísun",
   PayPal: "PayPal",
   Coupon: "Afsláttarmiði",

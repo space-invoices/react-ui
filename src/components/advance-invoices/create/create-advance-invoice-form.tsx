@@ -19,6 +19,7 @@ import { useNextDocumentNumber } from "@/ui/hooks/use-next-document-number";
 import { usePremiseSelection } from "@/ui/hooks/use-premise-selection";
 import { useStableHeaderAction } from "@/ui/hooks/use-stable-header-action";
 import { useTransactionTypeCheck } from "@/ui/hooks/use-transaction-type-check";
+import { isPortugalEntity } from "@/ui/lib/country-capabilities";
 import {
   DEFAULT_CONTENT_LOCALE,
   DOCUMENT_CONTENT_TRANSLATIONS_FEATURE,
@@ -54,13 +55,21 @@ import {
   applyCustomCreateTemplate,
 } from "../../documents/create/custom-create-template";
 import {
+  getPortugalToday,
+  withInvoiceIssueDateValidation,
+  withPortugalIssueDateValidation,
+} from "../../documents/create/document-date-validation";
+import {
   DocumentDetailsSection,
   DocumentFooterField,
   DocumentNoteField,
   DocumentSignatureField,
   DocumentTaxClauseField,
 } from "../../documents/create/document-details-section";
-import { withRequiredDocumentItemFields } from "../../documents/create/document-item-validation";
+import {
+  withPortugalDocumentItems,
+  withRequiredDocumentItemFields,
+} from "../../documents/create/document-item-validation";
 import { DocumentItemsSection, type PriceModesMap } from "../../documents/create/document-items-section";
 import { DocumentRecipientSection } from "../../documents/create/document-recipient-section";
 import { HeaderActionIndicator } from "../../documents/create/header-action-indicator";
@@ -301,9 +310,21 @@ export default function CreateAdvanceInvoiceForm({
     [initialPriceModes, initialValues],
   );
 
+  // Portugal's issuance rules are enforced by the API for every Portugal entity, so the
+  // form mirrors them on the plain country check rather than on the gated UI capability.
+  const isPortugalIssuer = isPortugalEntity(activeEntity);
   const baseResolver = useMemo(
-    () => zodResolver(createAdvanceInvoiceFormSchema) as Resolver<CreateAdvanceInvoiceFormValues>,
-    [],
+    () =>
+      zodResolver(
+        isPortugalIssuer
+          ? withPortugalDocumentItems(
+              withInvoiceIssueDateValidation(withPortugalIssueDateValidation(createAdvanceInvoiceFormSchema), {
+                getToday: getPortugalToday,
+              }),
+            )
+          : createAdvanceInvoiceFormSchema,
+      ) as Resolver<CreateAdvanceInvoiceFormValues>,
+    [isPortugalIssuer],
   );
   const eslogResolverStateRef = useRef({
     activeEntity,
@@ -358,7 +379,7 @@ export default function CreateAdvanceInvoiceForm({
       number: (initialValues as any)?.number ?? "",
       business_unit_id: (initialValues as any)?.business_unit_id ?? null,
       calculation_mode: (initialValues as any)?.calculation_mode ?? undefined,
-      date: initialValues?.date || new Date().toISOString(),
+      date: initialValues?.date || (isPortugalIssuer ? getPortugalToday() : new Date().toISOString()),
       customer_id: initialValues?.customer_id ?? undefined,
       // Cast customer to form schema type (API type may have additional fields)
       customer: (initialValues?.customer as CreateAdvanceInvoiceFormValues["customer"]) ?? undefined,
@@ -645,6 +666,9 @@ export default function CreateAdvanceInvoiceForm({
     customerIsEndConsumer: (formValues.customer as any)?.is_end_consumer,
     enabled: !!activeEntity,
   });
+
+  // Reverse charge removes the tax select from every line, so a Portugal line cannot
+  // be asked for a tax treatment it has no control to supply.
 
   // FINA numbering guard: use FINA numbering for domestic transactions (or all if unified numbering is on)
   const finaUnifiedNumbering = fina.settings?.unified_numbering !== false;
@@ -1089,6 +1113,7 @@ export default function CreateAdvanceInvoiceForm({
             initialCustomerName={initialCustomerName}
             t={t}
             locale={locale}
+            translationLocale={translationLocale}
           />
           <DocumentDetailsSection
             control={form.control}
@@ -1182,12 +1207,13 @@ export default function CreateAdvanceInvoiceForm({
           onFindEstimatedTax={onFindEstimatedTax}
           t={t}
           locale={locale}
-          taxesDisabled={reverseChargeApplies}
+          translationLocale={translationLocale}
+          taxesDisabled={reverseChargeApplies && !isPortugalIssuer}
           taxesDisabledMessage={
             reverseChargeApplies ? t("Reverse charge - tax exempt EU B2B sale") : viesWarning ? viesWarning : undefined
           }
           isTaxSubject={activeEntity?.is_tax_subject ?? false}
-          maxTaxesPerItem={activeEntity?.country_rules?.max_taxes_per_item}
+          maxTaxesPerItem={isPortugalIssuer ? 1 : activeEntity?.country_rules?.max_taxes_per_item}
           priceModesRef={priceModesRef}
           initialPriceModes={initialPriceModes}
           onItemsStateChange={emitCurrentPreviewPayload}

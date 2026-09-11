@@ -85,6 +85,8 @@ export default {
   cash: "Contant",
   bank_transfer: "Bankoverschrijving",
   card: "Kaart",
+  credit_card: "Creditcard",
+  debit_card: "Debetkaart",
   check: "Cheque",
   credit_note: "Creditnota",
   other: "Overig",

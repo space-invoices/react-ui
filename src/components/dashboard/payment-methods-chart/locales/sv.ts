@@ -4,6 +4,8 @@ export default {
   Cash: "Kontant",
   "Bank Transfer": "Banköverföring",
   Card: "Kort",
+  "Credit Card": "Kreditkort",
+  "Debit Card": "Debetkort",
   Check: "Check",
   "Credit Note": "Kreditnota",
   Advance: "Förskottsfaktura",

@@ -84,6 +84,8 @@ export default {
   cash: "Gotówka",
   bank_transfer: "Przelew bankowy",
   card: "Karta",
+  credit_card: "Karta kredytowa",
+  debit_card: "Karta debetowa",
   check: "Czek",
   credit_note: "Nota kredytowa",
   other: "Inne",

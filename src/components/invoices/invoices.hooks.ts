@@ -2,12 +2,16 @@ import type {
   CreateInvoice,
   CustomCreateInvoice,
   Invoice,
+  InvoiceCreditOptions,
   SDKMethodOptions,
   UpdateInvoice,
 } from "@spaceinvoices/js-sdk";
 import { documents, invoices } from "@spaceinvoices/js-sdk";
 import { useQuery } from "@tanstack/react-query";
 import { createResourceHooks } from "@/ui/hooks/create-resource-hooks";
+import { INVOICE_CREDIT_OPTIONS_CACHE_KEY } from "@/ui/lib/credit-preparation-cache";
+
+export { INVOICE_CREDIT_OPTIONS_CACHE_KEY };
 
 // Define a constant for the invoices cache key
 export const INVOICES_CACHE_KEY = "invoices";
@@ -102,6 +106,34 @@ export function useNextInvoiceNumber(
     },
     enabled: options?.enabled !== false && !!entityId,
     staleTime: 0, // Always refetch when form opens or params change
+  });
+}
+
+// ============================================================================
+// Credit-note preparation
+// ============================================================================
+
+/**
+ * Remaining creditable quantities for one issued invoice.
+ *
+ * Only meaningful where the country tracks corrections per line, and only for a single
+ * document the user is already looking at: never call this per row of a list.
+ *
+ * The balance changes whenever a correction is issued or voided, so the answer is never
+ * reused without checking: `staleTime: 0` keeps a remount refetching, and
+ * `invalidateCreditPreparationQueries` refreshes the mounted query after those mutations.
+ */
+export function useInvoiceCreditOptions(
+  invoiceId: string | undefined,
+  entityId: string | undefined,
+  options?: { enabled?: boolean },
+) {
+  return useQuery<InvoiceCreditOptions>({
+    queryKey: [INVOICE_CREDIT_OPTIONS_CACHE_KEY, invoiceId, entityId],
+    queryFn: () => invoices.getCreditOptions(invoiceId as string, { entity_id: entityId as string }),
+    enabled: options?.enabled !== false && !!invoiceId && !!entityId,
+    retry: false,
+    staleTime: 0,
   });
 }
 

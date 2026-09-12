@@ -23,6 +23,7 @@ export const ptExemptionDefaultReasons: Readonly<Record<string, string>> = {
   "M32": "IVA - autoliquidação",
   "M33": "IVA - autoliquidação",
   "M34": "IVA - autoliquidação",
+  "M35": "IVA - autoliquidação",
   "M40": "IVA - autoliquidação",
   "M41": "IVA - autoliquidação",
   "M42": "IVA - autoliquidação",

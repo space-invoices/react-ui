@@ -106,6 +106,8 @@ export default {
   E1: "E1",
   "Enter a unique name for this device (e.g., E1, E2, POS1, DEVICE1)":
     "Sláðu inn einstakt heiti fyrir þetta tæki (t.d., E1, E2, POS1, DEVICE1)",
+  "Use 1-20 letters A-Z and digits 0-9, without spaces or symbols":
+    "Notaðu 1-20 stafi A-Z og tölustafi 0-9, án bila eða tákna",
   Cancel: "Hætta við",
   "Register Device": "Skrá tæki",
   "Registering...": "Skrái...",

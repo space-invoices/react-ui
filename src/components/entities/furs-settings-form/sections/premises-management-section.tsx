@@ -72,6 +72,7 @@ import {
   StartingNumberMenuItem,
   type StartingNumberTarget,
 } from "../../starting-number-dialog";
+import { FURS_IDENTIFIER_PATTERN } from "../furs-identifier";
 import {
   useClosePremise,
   useRegisterElectronicDevice,
@@ -181,8 +182,11 @@ export const PremisesManagementSection: FC<PremisesManagementSectionProps> = ({
     setAddDeviceDialogOpen(true);
   };
 
+  const trimmedDeviceName = deviceName.trim();
+  const isDeviceNameValid = FURS_IDENTIFIER_PATTERN.test(trimmedDeviceName);
+
   const handleRegisterDevice = () => {
-    if (!selectedPremiseId || !deviceName.trim() || !isFiscalStartingNumberValueValid(deviceStartingNumber)) return;
+    if (!selectedPremiseId || !isDeviceNameValid || !isFiscalStartingNumberValueValid(deviceStartingNumber)) return;
     const startingNumber = isDeviceStartingNumberEnabled
       ? optionalFiscalStartingNumber(deviceStartingNumber)
       : undefined;
@@ -490,12 +494,18 @@ export const PremisesManagementSection: FC<PremisesManagementSectionProps> = ({
                   value={deviceName}
                   onChange={(e) => setDeviceName(e.target.value)}
                   onKeyDown={(e) => {
-                    if (e.key === "Enter" && deviceName.trim()) {
+                    if (e.key === "Enter" && isDeviceNameValid) {
                       handleRegisterDevice();
                     }
                   }}
+                  aria-invalid={trimmedDeviceName !== "" && !isDeviceNameValid}
                   data-testid="furs-device-name-input"
                 />
+                {trimmedDeviceName !== "" && !isDeviceNameValid && (
+                  <p className="text-destructive text-sm" data-testid="furs-device-name-error">
+                    {t("Use 1-20 letters A-Z and digits 0-9, without spaces or symbols")}
+                  </p>
+                )}
                 <p className="text-muted-foreground text-sm">
                   {t("Enter a unique name for this device (e.g., E1, E2, POS1, DEVICE1)")}
                 </p>
@@ -527,7 +537,7 @@ export const PremisesManagementSection: FC<PremisesManagementSectionProps> = ({
               <Button
                 onClick={handleRegisterDevice}
                 disabled={
-                  !deviceName.trim() || isRegisteringDevice || !isFiscalStartingNumberValueValid(deviceStartingNumber)
+                  !isDeviceNameValid || isRegisteringDevice || !isFiscalStartingNumberValueValid(deviceStartingNumber)
                 }
                 className="cursor-pointer"
                 data-testid="furs-register-device-submit"

@@ -108,6 +108,8 @@ export default {
   E1: "E1",
   "Enter a unique name for this device (e.g., E1, E2, POS1, DEVICE1)":
     "Voer een unieke naam in voor dit apparaat (bijv. E1, E2, POS1, DEVICE1)",
+  "Use 1-20 letters A-Z and digits 0-9, without spaces or symbols":
+    "Gebruik 1-20 letters A-Z en cijfers 0-9, zonder spaties of symbolen",
   Cancel: "Annuleren",
   "Register Device": "Apparaat registreren",
   "Registering...": "Registreren...",

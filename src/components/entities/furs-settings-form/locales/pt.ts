@@ -108,6 +108,8 @@ export default {
   E1: "E1",
   "Enter a unique name for this device (e.g., E1, E2, POS1, DEVICE1)":
     "Introduza um nome único para este dispositivo (ex. E1, E2, POS1, DEVICE1)",
+  "Use 1-20 letters A-Z and digits 0-9, without spaces or symbols":
+    "Use de 1 a 20 letras A-Z e dígitos 0-9, sem espaços nem símbolos",
   Cancel: "Cancelar",
   "Register Device": "Registar dispositivo",
   "Registering...": "A registar...",

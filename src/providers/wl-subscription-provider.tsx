@@ -108,6 +108,16 @@ export function getExternalBillingProvider(
   return subscription?.shopify_managed === true ? "shopify" : null;
 }
 
+export function isWLSubscriptionPaymentRequired(subscription: CurrentSubscription): boolean {
+  if (subscription.plan.is_free || subscription.plan.slug === "unlimited") return false;
+  if (subscription.status === "trialing") return false;
+  if (subscription.status !== "active") return true;
+  if (subscription.billing_interval === null) return true;
+
+  // Renewal runs daily; only its lifecycle outcome, not the clock alone, revokes access.
+  return false;
+}
+
 // Known gated features for Apollo
 export type GatedFeature =
   | "furs"
@@ -158,10 +168,12 @@ type WLSubscriptionContextType = {
   createCheckout: (planSlug: string, billingInterval?: "monthly" | "yearly") => Promise<string>;
   createSetupIntent: () => Promise<{ client_secret: string }>;
   savePaymentMethod: (paymentMethodId: string) => Promise<void>;
+  /** Submit the exact server quote already displayed to and confirmed by the customer. */
   activateSubscription: (
     planSlug: string,
     billingInterval: "monthly" | "yearly",
-    couponCode?: string | null,
+    couponCode: string | null | undefined,
+    activationQuoteId: string,
   ) => Promise<{ invoice_id?: string | null; scheduled?: boolean }>;
   refresh: () => Promise<void>;
 };
@@ -494,7 +506,8 @@ export function WLSubscriptionProvider({ children, apiBaseUrl }: WLSubscriptionP
     async (
       planSlug: string,
       billingInterval: "monthly" | "yearly",
-      couponCode?: string | null,
+      couponCode: string | null | undefined,
+      activationQuoteId: string,
     ): Promise<{ invoice_id?: string | null; scheduled?: boolean }> => {
       if (!entityId || !accessToken) {
         throw new Error("Not authenticated");
@@ -511,6 +524,7 @@ export function WLSubscriptionProvider({ children, apiBaseUrl }: WLSubscriptionP
         body: JSON.stringify({
           plan_slug: planSlug,
           billing_interval: billingInterval,
+          activation_quote_id: activationQuoteId,
           ...(couponCode !== undefined ? { coupon_code: couponCode } : {}),
         }),
       });
@@ -539,13 +553,9 @@ export function WLSubscriptionProvider({ children, apiBaseUrl }: WLSubscriptionP
   const trialDaysRemaining = subscription.trial_days_remaining;
   const externalBillingProvider = getExternalBillingProvider(subscription);
 
-  // needsPayment: trial expired, or no free plan and no active Stripe subscription
-  const needsPayment =
-    isTrialExpiredState ||
-    (subscription.status === "active" &&
-      !subscription.plan.is_free &&
-      subscription.billing_interval === null &&
-      subscription.plan.slug !== "unlimited");
+  // Payment is required for never-paid assignments and failed/canceled subscriptions,
+  // not healthy paid subscriptions waiting for the nightly renewal run.
+  const needsPayment = isTrialExpiredState || isWLSubscriptionPaymentRequired(subscription);
 
   const value = useMemo(
     () => ({

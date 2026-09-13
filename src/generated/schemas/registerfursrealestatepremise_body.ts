@@ -10,12 +10,25 @@ import { z } from 'zod';
 
 // Schema for registerFursRealEstatePremise operation
 const registerFursRealEstatePremiseSchemaDefinition = z.object({
-  business_premise_name: z.string().min(1).max(20),
+  business_premise_name: z
+    .string()
+    .min(1)
+    .max(20)
+    .regex(/^[0-9a-zA-Z]{1,20}$/),
   real_estate: z
     .object({
-      cadastral_number: z.string().min(1).regex(/^\d+$/),
-      building_number: z.string().min(1).regex(/^\d+$/),
-      building_section: z.string().min(1).regex(/^\d+$/),
+      cadastral_number: z
+        .string()
+        .min(1)
+        .regex(/^0*\d{1,4}$/),
+      building_number: z
+        .string()
+        .min(1)
+        .regex(/^0*\d{1,5}$/),
+      building_section: z
+        .string()
+        .min(1)
+        .regex(/^0*\d{1,4}$/),
       street: z.string().min(1).max(100),
       house_number: z.string().min(1).max(10),
       house_number_additional: z.union([z.string(), z.null()]).optional(),

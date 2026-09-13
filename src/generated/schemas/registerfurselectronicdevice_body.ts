@@ -10,7 +10,11 @@ import { z } from 'zod';
 
 // Schema for registerFursElectronicDevice operation
 const registerFursElectronicDeviceSchemaDefinition = z.object({
-  name: z.string().min(1).max(20),
+  name: z
+    .string()
+    .min(1)
+    .max(20)
+    .regex(/^[0-9a-zA-Z]{1,20}$/),
   starting_number: z.union([z.number(), z.null()]).optional(),
 });
 

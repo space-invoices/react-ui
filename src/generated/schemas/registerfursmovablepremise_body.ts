@@ -10,7 +10,11 @@ import { z } from 'zod';
 
 // Schema for registerFursMovablePremise operation
 const registerFursMovablePremiseSchemaDefinition = z.object({
-  business_premise_name: z.string().min(1).max(20),
+  business_premise_name: z
+    .string()
+    .min(1)
+    .max(20)
+    .regex(/^[0-9a-zA-Z]{1,20}$/),
   movable_premise: z
     .object({ premise_type: z.enum(["A", "B", "C"]) })
     .passthrough(),

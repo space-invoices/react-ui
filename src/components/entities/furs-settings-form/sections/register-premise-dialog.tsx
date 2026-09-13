@@ -1,9 +1,9 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Entity } from "@spaceinvoices/js-sdk";
-import { type FC, useCallback, useEffect } from "react";
+import { type FC, useCallback, useEffect, useMemo } from "react";
 import type { Resolver } from "react-hook-form";
 import { useForm } from "react-hook-form";
-import type { z } from "zod";
+import { z } from "zod";
 import { Button } from "@/ui/components/ui/button";
 import {
   Dialog,
@@ -31,6 +31,7 @@ import {
   optionalFiscalStartingNumber,
 } from "../../fiscal-starting-number";
 import { StartingNumberInput } from "../../starting-number-dialog";
+import { FURS_IDENTIFIER_PATTERN } from "../furs-identifier";
 import { useRegisterMovablePremise, useRegisterRealEstatePremise } from "../furs-settings.hooks";
 
 // Use auto-generated schemas from OpenAPI spec (kept in sync with the API), extended with
@@ -41,6 +42,11 @@ const realEstatePremiseSchema = registerFursRealEstatePremiseSchema.extend({
 const movablePremiseSchema = registerFursMovablePremiseSchema.extend({
   starting_number: fiscalStartingNumberZodSchema,
 });
+
+// The generated pattern check has no translatable message, so the premise name carries a localized one.
+function localizedPremiseNameSchema(message: string) {
+  return z.string().regex(FURS_IDENTIFIER_PATTERN, message);
+}
 
 type RealEstatePremiseForm = z.infer<typeof realEstatePremiseSchema>;
 type MovablePremiseForm = z.infer<typeof movablePremiseSchema>;
@@ -145,15 +151,31 @@ export const RegisterPremiseDialog: FC<RegisterPremiseDialogProps> = ({
     [isPremiseStartingNumberEnabled, premises.length],
   );
 
+  const premiseNameMessage = t("Use 1-20 letters A-Z and digits 0-9, without spaces or symbols");
+  const realEstateResolver = useMemo(
+    () =>
+      zodResolver(
+        realEstatePremiseSchema.extend({ business_premise_name: localizedPremiseNameSchema(premiseNameMessage) }),
+      ) as Resolver<RealEstatePremiseForm>,
+    [premiseNameMessage],
+  );
+  const movableResolver = useMemo(
+    () =>
+      zodResolver(
+        movablePremiseSchema.extend({ business_premise_name: localizedPremiseNameSchema(premiseNameMessage) }),
+      ) as Resolver<MovablePremiseForm>,
+    [premiseNameMessage],
+  );
+
   // Real Estate Form
   const realEstateForm = useForm<RealEstatePremiseForm>({
-    resolver: zodResolver(realEstatePremiseSchema) as Resolver<RealEstatePremiseForm>,
+    resolver: realEstateResolver,
     defaultValues: buildRealEstateDefaults(),
   });
 
   // Movable Form
   const movableForm = useForm<MovablePremiseForm>({
-    resolver: zodResolver(movablePremiseSchema) as Resolver<MovablePremiseForm>,
+    resolver: movableResolver,
     defaultValues: buildMovableDefaults(),
   });
 

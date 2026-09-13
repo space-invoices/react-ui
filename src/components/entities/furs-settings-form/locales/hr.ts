@@ -107,7 +107,9 @@ export default {
   "Device Name": "Naziv uređaja",
   E1: "E1",
   "Enter a unique name for this device (e.g., E1, E2, POS1, DEVICE1)":
-    "Unesite jedinstveni naziv za ovaj uređaj (npr. E1, E2, POS1, UREĐAJ1)",
+    "Unesite jedinstveni naziv za ovaj uređaj (npr. E1, E2, POS1, UREDAJ1)",
+  "Use 1-20 letters A-Z and digits 0-9, without spaces or symbols":
+    "Koristite 1-20 slova A-Z i znamenki 0-9, bez razmaka ili simbola",
   Cancel: "Odustani",
   "Register Device": "Registriraj uređaj",
   "Registering...": "Registriranje...",

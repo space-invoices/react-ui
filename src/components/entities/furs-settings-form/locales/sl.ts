@@ -108,6 +108,8 @@ export default {
   E1: "E1",
   "Enter a unique name for this device (e.g., E1, E2, POS1, DEVICE1)":
     "Vnesite edinstveno ime za to napravo (npr. E1, E2, POS1, BLAGAJNA1)",
+  "Use 1-20 letters A-Z and digits 0-9, without spaces or symbols":
+    "Uporabite 1-20 črk A-Z in števk 0-9, brez presledkov ali simbolov",
   Cancel: "Prekliči",
   "Register Device": "Registriraj napravo",
   "Registering...": "Registracija...",

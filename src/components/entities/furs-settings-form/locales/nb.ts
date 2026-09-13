@@ -106,6 +106,8 @@ export default {
   E1: "E1",
   "Enter a unique name for this device (e.g., E1, E2, POS1, DEVICE1)":
     "Oppgi et unikt navn for denne enheten (f.eks. E1, E2, POS1, DEVICE1)",
+  "Use 1-20 letters A-Z and digits 0-9, without spaces or symbols":
+    "Bruk 1-20 bokstaver A-Z og sifre 0-9, uten mellomrom eller symboler",
   Cancel: "Avbryt",
   "Register Device": "Registrer enhet",
   "Registering...": "Registrerer...",

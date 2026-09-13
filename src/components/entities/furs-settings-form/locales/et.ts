@@ -107,6 +107,8 @@ export default {
   E1: "E1",
   "Enter a unique name for this device (e.g., E1, E2, POS1, DEVICE1)":
     "Sisestage selle seadme unikaalne nimi (nt E1, E2, POS1, DEVICE1)",
+  "Use 1-20 letters A-Z and digits 0-9, without spaces or symbols":
+    "Kasutage 1-20 tähte A-Z ja numbrit 0-9, ilma tühikute ja sümboliteta",
   Cancel: "Tühista",
   "Register Device": "Registreeri seade",
   "Registering...": "Registreerimine...",

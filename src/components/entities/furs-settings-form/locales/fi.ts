@@ -107,6 +107,8 @@ export default {
   E1: "E1",
   "Enter a unique name for this device (e.g., E1, E2, POS1, DEVICE1)":
     "Anna tälle laitteelle yksilöllinen nimi (esim. E1, E2, POS1, DEVICE1)",
+  "Use 1-20 letters A-Z and digits 0-9, without spaces or symbols":
+    "Käytä 1-20 kirjainta A-Z ja numeroa 0-9 ilman välilyöntejä tai symboleja",
   Cancel: "Peruuta",
   "Register Device": "Rekisteröi laite",
   "Registering...": "Rekisteröidään...",

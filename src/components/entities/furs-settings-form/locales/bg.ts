@@ -107,6 +107,8 @@ export default {
   E1: "E1",
   "Enter a unique name for this device (e.g., E1, E2, POS1, DEVICE1)":
     "Въведете уникално име за това устройство (напр. E1, E2, POS1, DEVICE1)",
+  "Use 1-20 letters A-Z and digits 0-9, without spaces or symbols":
+    "Използвайте 1-20 латински букви A-Z и цифри 0-9, без интервали и символи",
   Cancel: "Отказ",
   "Register Device": "Регистрирай устройство",
   "Registering...": "Регистриране...",

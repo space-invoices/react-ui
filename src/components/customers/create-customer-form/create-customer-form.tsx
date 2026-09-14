@@ -115,6 +115,7 @@ export default function CreateCustomerForm({
     if (company.post_code) form.setValue("post_code", company.post_code);
     if (company.city) form.setValue("city", company.city);
     if (company.tax_number) form.setValue("tax_number", company.tax_number);
+    if (typeof company.is_tax_subject === "boolean") form.setValue("is_tax_subject", company.is_tax_subject);
     if (company.registration_number) form.setValue("company_number", company.registration_number);
     if (company.bank_accounts?.[0]) form.setValue("bank_accounts", [company.bank_accounts[0] as any]);
     // Note: country is intentionally not set - keep entity's country or let user choose

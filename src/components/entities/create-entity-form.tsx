@@ -240,6 +240,7 @@ export function CreateEntityForm({
   const [portugalRequiredByServer, setPortugalRequiredByServer] = useState(false);
   // The country as it read when the in-flight create was submitted, to detect a stale response.
   const submittedCountryRef = useRef<string | undefined>(undefined);
+  const registryVatProfileRef = useRef<string | undefined>(undefined);
   const portugalCountryName = countryDisplayNames.of(PT_COUNTRY_CODE) ?? "Portugal";
   const autoFilledCountryRef = useRef(structuredInitialCountryName || countryName);
   const optionalFieldsId = useId();
@@ -340,6 +341,22 @@ export function CreateEntityForm({
     if (company.post_code) form.setValue("post_code", company.post_code);
     if (company.city) form.setValue("city", company.city);
     if (company.tax_number) form.setValue("tax_number", company.tax_number);
+    if (typeof company.is_tax_subject === "boolean") form.setValue("is_tax_subject", company.is_tax_subject);
+    const profile = company.settings?.slovenia?.vat_profile;
+    if (profile) {
+      registryVatProfileRef.current = profile;
+      const settings = form.getValues("settings");
+      form.setValue("settings", {
+        ...settings,
+        slovenia: { ...settings?.slovenia, vat_profile: profile },
+      });
+    } else if (registryVatProfileRef.current) {
+      if (form.getValues("settings.slovenia.vat_profile") === registryVatProfileRef.current) {
+        form.setValue("settings.slovenia.vat_profile", undefined);
+      }
+      registryVatProfileRef.current = undefined;
+    }
+
     form.setValue("company_number", isSafeCompanyNumberFromRegistry(company) ? company.registration_number.trim() : "");
     // Registry selection populates legal details that must be visible for review
     // before submission, even when the form starts in progressive mode.
@@ -349,6 +366,7 @@ export function CreateEntityForm({
 
   // Wrap onSuccess to reset form only after successful mutation
   const handleSuccess = (data: Entity) => {
+    registryVatProfileRef.current = undefined;
     form.reset();
     onSuccess?.(data);
   };
@@ -572,7 +590,21 @@ export function CreateEntityForm({
             <FormItem>
               <div className="flex flex-row items-center space-x-2">
                 <FormControl>
-                  <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                  <Checkbox
+                    checked={field.value}
+                    onCheckedChange={(checked) => {
+                      // A manual correction invalidates the imported VAT subtype.
+                      // Do not retain a hidden profile that overrides the checkbox in reporting.
+                      if (
+                        registryVatProfileRef.current &&
+                        form.getValues("settings.slovenia.vat_profile") === registryVatProfileRef.current
+                      ) {
+                        form.setValue("settings.slovenia.vat_profile", undefined);
+                      }
+                      registryVatProfileRef.current = undefined;
+                      field.onChange(checked);
+                    }}
+                  />
                 </FormControl>
                 <FormLabel className="font-normal">{translate("is-tax-subject")}</FormLabel>
               </div>

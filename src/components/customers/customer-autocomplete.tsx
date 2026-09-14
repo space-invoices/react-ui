@@ -29,6 +29,7 @@ function mapCompanyRegistryResultToCustomer(company: CompanyRegistryResult, coun
     country: null,
     country_code: countryCode || company.country_code,
     tax_number: company.tax_number,
+    is_tax_subject: company.is_tax_subject ?? undefined,
     company_number: company.registration_number,
   };
 }

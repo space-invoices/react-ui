@@ -11,6 +11,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Switch } from "../ui/switch";
 import { ExternalBillingNotice } from "./external-billing-notice";
 import { getPeppolMeterPricing, hasPeppolPlanAccess } from "./peppol-meter";
+import { getLocalizedPlanName, getPlanDescription } from "./plan-presentation";
 import { getPlanPriceCents } from "./pricing";
 
 type TranslateValues = Record<string, string | number>;
@@ -316,21 +317,8 @@ function PaywallPlanCard({
   const yearlyMonthly = Math.round((yearlyTotal / 12) * 100) / 100;
 
   const displayPrice = isYearly ? yearlyMonthly : monthlyPrice;
-  const planName = t(`entity-billing-page.plan-names.${plan.slug}`, { defaultValue: plan.name });
-  const invoiceLimit = plan.limits?.invoices_per_month ?? plan.limits?.documents_per_month;
-  const includedStores = plan.limits?.included_store_count ?? null;
-  let planDescription = t("entity-billing-page.plan-description.unlimited");
-
-  if (invoiceLimit != null && includedStores != null) {
-    planDescription = t("entity-billing-page.plan-description.invoices-and-stores", {
-      invoices: invoiceLimit,
-      stores: includedStores,
-    });
-  } else if (invoiceLimit != null) {
-    planDescription = t("entity-billing-page.plan-description.invoices-only", { invoices: invoiceLimit });
-  } else if (includedStores != null) {
-    planDescription = t("entity-billing-page.plan-description.stores-only", { stores: includedStores });
-  }
+  const planName = getLocalizedPlanName(plan, t);
+  const planDescription = getPlanDescription(plan, t);
   const featureItems = getPaywallFeatureKeys(plan).map((featureKey) =>
     t(`entity-billing-page.paywall.features.${featureKey}`),
   );

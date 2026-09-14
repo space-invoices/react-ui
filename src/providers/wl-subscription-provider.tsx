@@ -1,3 +1,10 @@
+import type {
+  AvailablePlans as GeneratedAvailablePlans,
+  PlanLimits as GeneratedPlanLimits,
+  StoreBilling as GeneratedStoreBilling,
+  UsageStats as GeneratedUsageStats,
+  WhiteLabelPlan as GeneratedWhiteLabelPlan,
+} from "@spaceinvoices/js-sdk";
 import { getClientHeaders } from "@spaceinvoices/js-sdk";
 import type { ReactNode } from "react";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
@@ -9,27 +16,9 @@ import { useWhiteLabel } from "./white-label-provider";
 // TYPES
 // ============================================
 
-export type PlanLimits = {
-  documents_per_month: number | null;
-  invoices_per_month: number | null;
-  overage_price_cents: number | null;
-  annual_price_cents: number | null;
-  included_store_count: number | null;
-  extra_store_price_cents: number | null;
-  extra_store_annual_price_cents: number | null;
-  extra_store_invoices_per_month: number | null;
-  e_invoicing_sends_included: number | null;
-  e_invoicing_send_price_cents: number | null;
-} | null;
+export type PlanLimits = GeneratedPlanLimits | null;
 
-export type StoreBilling = {
-  connected_stores: number;
-  included_stores: number;
-  billable_extra_stores: number;
-  invoices_included_from_extra_stores: number;
-  extra_store_price_cents_monthly: number | null;
-  extra_store_price_cents_yearly: number | null;
-} | null;
+export type StoreBilling = GeneratedStoreBilling | null;
 
 export type WLBillingCurrencyCode = "EUR" | "USD";
 export type WLBillingProfile = "default" | "us_company";
@@ -41,28 +30,14 @@ export type WLStripePublishableKeyKind = "default" | "us_company";
  */
 export type WLExternalBillingProvider = "shopify";
 
-export type WhiteLabelPlan = {
-  id: string;
-  slug: string;
-  name: string;
-  billing_interval: string | null;
-  base_price_cents: number | null;
+export type WhiteLabelPlan = Omit<GeneratedWhiteLabelPlan, "currency_code" | "limits"> & {
   currency_code?: WLBillingCurrencyCode;
   limits: PlanLimits;
-  features: string[];
-  is_free: boolean;
-  display_order: number;
 };
 
-export type UsageStats = {
-  documents_count: number;
-  documents_limit: number | null;
-  invoices_count: number;
-  invoices_limit: number | null;
+export type UsageStats = Omit<GeneratedUsageStats, "e_invoicing_send_count" | "e_invoicing_sends_included"> & {
   e_invoicing_send_count: number;
   e_invoicing_sends_included: number | null;
-  period_start: string;
-  period_end: string;
 };
 
 export type CurrentSubscription = {
@@ -142,6 +117,8 @@ type WLSubscriptionContextType = {
   plan: WhiteLabelPlan | null;
   usage: UsageStats | null;
   availablePlans: WhiteLabelPlan[];
+  /** Generated plans response, including billing metadata consumed by checkout screens. */
+  plansResponse: GeneratedAvailablePlans | null;
   isLoading: boolean;
   error: string | null;
 
@@ -247,6 +224,7 @@ type LoadedSubscription = {
   scopeKey: string | null;
   subscription: CurrentSubscription;
   availablePlans: WhiteLabelPlan[];
+  plansResponse: GeneratedAvailablePlans | null;
 };
 
 // ============================================
@@ -257,6 +235,16 @@ type WLSubscriptionProviderProps = {
   children: ReactNode;
   /** API base URL (required for authenticated requests) */
   apiBaseUrl: string;
+  /**
+   * Called when the API reports that this request created a trial. The callback owns one-shot
+   * side effects that must survive a route/provider unmount; exceptions never affect billing reads.
+   */
+  onTrialStarted?: (details: {
+    entityId: string;
+    environment: "live" | "sandbox";
+    subscription: CurrentSubscription;
+    whiteLabelSlug: string;
+  }) => void;
 };
 
 /**
@@ -264,21 +252,23 @@ type WLSubscriptionProviderProps = {
  * Fetches white-label subscription data and provides limit/feature checks.
  * Must be nested inside SpaceInvoicesProvider and an entity source.
  */
-export function WLSubscriptionProvider({ children, apiBaseUrl }: WLSubscriptionProviderProps) {
+export function WLSubscriptionProvider({ children, apiBaseUrl, onTrialStarted }: WLSubscriptionProviderProps) {
   // Get entity and access token from existing context
   const entitiesContext = useEntitiesOptional();
   const accessToken = useAccessToken();
   const whiteLabel = useWhiteLabel();
 
   const entityId = entitiesContext?.activeEntity?.id ?? null;
+  const environment = entitiesContext?.environment ?? "live";
   // Identity of the data scope: which entity, on which brand and API, the published data belongs to.
   // The access token is deliberately excluded so an ordinary token refresh keeps the loaded entity's
   // data visible instead of blanking the app.
-  const dataScopeKey = `${apiBaseUrl}|${whiteLabel.slug ?? ""}|${entityId ?? ""}`;
+  const dataScopeKey = `${apiBaseUrl}|${whiteLabel.slug ?? ""}|${entityId ?? ""}|${environment}`;
   const [loaded, setLoaded] = useState<LoadedSubscription>({
     scopeKey: null,
     subscription: DEFAULT_SUBSCRIPTION,
     availablePlans: EMPTY_PLANS,
+    plansResponse: null,
   });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -286,12 +276,22 @@ export function WLSubscriptionProvider({ children, apiBaseUrl }: WLSubscriptionP
   const isExternalBillingResolved = loaded.scopeKey === dataScopeKey;
   const subscription = isExternalBillingResolved ? loaded.subscription : DEFAULT_SUBSCRIPTION;
   const availablePlans = isExternalBillingResolved ? loaded.availablePlans : EMPTY_PLANS;
+  const plansResponse = isExternalBillingResolved ? loaded.plansResponse : null;
   const scope = useMemo(
-    () => ({ apiBaseUrl, entityId, accessToken, isLoading: whiteLabel.isLoading, slug: whiteLabel.slug }),
-    [apiBaseUrl, entityId, accessToken, whiteLabel.isLoading, whiteLabel.slug],
+    () => ({
+      apiBaseUrl,
+      entityId,
+      accessToken,
+      environment,
+      isLoading: whiteLabel.isLoading,
+      slug: whiteLabel.slug,
+    }),
+    [apiBaseUrl, entityId, accessToken, environment, whiteLabel.isLoading, whiteLabel.slug],
   );
   const activeScopeRef = useRef<object | null>(scope);
   const requestRef = useRef<AbortController | null>(null);
+  const onTrialStartedRef = useRef(onTrialStarted);
+  onTrialStartedRef.current = onTrialStarted;
 
   const fetchSubscription = useCallback(async () => {
     if (activeScopeRef.current !== scope) return;
@@ -306,7 +306,12 @@ export function WLSubscriptionProvider({ children, apiBaseUrl }: WLSubscriptionP
     }
 
     if (whiteLabel.slug === "space-invoices" || !entityId || !accessToken) {
-      setLoaded({ scopeKey: dataScopeKey, subscription: DEFAULT_SUBSCRIPTION, availablePlans: EMPTY_PLANS });
+      setLoaded({
+        scopeKey: dataScopeKey,
+        subscription: DEFAULT_SUBSCRIPTION,
+        availablePlans: EMPTY_PLANS,
+        plansResponse: null,
+      });
       setError(null);
       setIsLoading(false);
       return;
@@ -319,6 +324,7 @@ export function WLSubscriptionProvider({ children, apiBaseUrl }: WLSubscriptionP
         scopeKey: dataScopeKey,
         subscription: next,
         availablePlans: previous.scopeKey === dataScopeKey ? previous.availablePlans : EMPTY_PLANS,
+        plansResponse: previous.scopeKey === dataScopeKey ? previous.plansResponse : null,
       }));
 
     try {
@@ -333,11 +339,24 @@ export function WLSubscriptionProvider({ children, apiBaseUrl }: WLSubscriptionP
       };
 
       // Fetch current subscription
-      const subResponse = await fetch(`${apiBaseUrl}/white-label-subscriptions`, { headers, signal: request.signal });
-      if (!isCurrent()) return;
+      // Do not abort this one-shot response on navigation: the server may have created the trial
+      // already, and `trial_started_now` cannot be recovered by the next provider instance.
+      const subResponse = await fetch(`${apiBaseUrl}/white-label-subscriptions`, { headers });
 
       if (subResponse.ok) {
-        const subData = await subResponse.json();
+        const subData = (await subResponse.json()) as CurrentSubscription;
+        if (subData.trial_started_now) {
+          try {
+            onTrialStartedRef.current?.({
+              entityId,
+              environment,
+              subscription: subData,
+              whiteLabelSlug: whiteLabel.slug,
+            });
+          } catch {
+            // Analytics is best-effort and must never turn a subscription read into a failure.
+          }
+        }
         if (!isCurrent()) return;
         publishSubscription(subData);
       } else if (subResponse.status === 404) {
@@ -355,14 +374,16 @@ export function WLSubscriptionProvider({ children, apiBaseUrl }: WLSubscriptionP
       if (!isCurrent()) return;
 
       if (plansResponse.ok) {
-        const plansData = await plansResponse.json();
+        const plansData = (await plansResponse.json()) as GeneratedAvailablePlans;
         if (!isCurrent()) return;
         // Plans belong to the same scope as the subscription published just above.
         setLoaded((previous) =>
           previous.scopeKey === dataScopeKey
-            ? { ...previous, availablePlans: plansData.plans || EMPTY_PLANS }
+            ? { ...previous, availablePlans: plansData.plans || EMPTY_PLANS, plansResponse: plansData }
             : previous,
         );
+      } else {
+        throw new Error(`Failed to fetch plans: ${plansResponse.status}`);
       }
     } catch (err) {
       if (!isCurrent()) return;
@@ -374,7 +395,7 @@ export function WLSubscriptionProvider({ children, apiBaseUrl }: WLSubscriptionP
     } finally {
       if (isCurrent()) setIsLoading(false);
     }
-  }, [apiBaseUrl, entityId, accessToken, whiteLabel.isLoading, whiteLabel.slug, scope, dataScopeKey]);
+  }, [apiBaseUrl, entityId, accessToken, whiteLabel.isLoading, whiteLabel.slug, scope, dataScopeKey, environment]);
 
   useEffect(() => {
     activeScopeRef.current = scope;
@@ -563,6 +584,7 @@ export function WLSubscriptionProvider({ children, apiBaseUrl }: WLSubscriptionP
       plan: subscription.plan,
       usage: subscription.usage,
       availablePlans,
+      plansResponse,
       isLoading,
       error,
       isTrialActive,
@@ -583,6 +605,7 @@ export function WLSubscriptionProvider({ children, apiBaseUrl }: WLSubscriptionP
     [
       subscription,
       availablePlans,
+      plansResponse,
       isLoading,
       error,
       isTrialActive,

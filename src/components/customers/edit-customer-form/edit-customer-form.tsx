@@ -131,6 +131,8 @@ export default function EditCustomerForm({
     if (company.post_code) form.setValue("post_code", company.post_code, { shouldDirty: true });
     if (company.city) form.setValue("city", company.city, { shouldDirty: true });
     if (company.tax_number) form.setValue("tax_number", company.tax_number, { shouldDirty: true });
+    if (typeof company.is_tax_subject === "boolean")
+      form.setValue("is_tax_subject", company.is_tax_subject, { shouldDirty: true });
     if (company.registration_number) {
       form.setValue("company_number", company.registration_number, { shouldDirty: true });
     }

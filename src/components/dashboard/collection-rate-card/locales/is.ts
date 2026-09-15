@@ -1,4 +1,5 @@
 export default {
   "Collection Rate": "Innheimtuhlutfall",
-  "Collected vs. invoiced, after credit notes": "Innheimt á móti reikningsfærðu, eftir kreditreikninga",
+  "Collected vs. invoiced, with credit notes accounted for":
+    "Innheimt á móti reikningsfærðu, að teknu tilliti til kreditreikninga",
 } as const;

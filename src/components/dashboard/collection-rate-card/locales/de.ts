@@ -1,4 +1,5 @@
 export default {
   "Collection Rate": "Inkassoquote",
-  "Collected vs. invoiced, after credit notes": "Eingezogen vs. fakturiert, nach Gutschriften",
+  "Collected vs. invoiced, with credit notes accounted for":
+    "Eingezogen vs. fakturiert, unter Berücksichtigung von Gutschriften",
 } as const;

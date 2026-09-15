@@ -2,6 +2,7 @@ import type { CreditNote } from "@spaceinvoices/js-sdk";
 import { creditNotes } from "@spaceinvoices/js-sdk";
 import { AlertTriangle } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
+import { ConvertedTotalWithTaxCell } from "@/ui/components/documents/list/converted-total-with-tax-cell";
 import { CustomerLinkCell } from "@/ui/components/documents/list/customer-link-cell";
 import { DataTable } from "@/ui/components/table/data-table";
 import { FormattedDate } from "@/ui/components/table/date-cell";
@@ -275,6 +276,16 @@ export default function CreditNoteListTable({
         ),
       },
       {
+        id: "reference",
+        header: t("Reference"),
+        defaultVisible: false,
+        cell: (creditNote) => (
+          <span className="block max-w-48 truncate" title={creditNote.reference ?? undefined}>
+            {creditNote.reference ?? "-"}
+          </span>
+        ),
+      },
+      {
         id: "date",
         header: t("Date"),
         sort: {
@@ -283,13 +294,20 @@ export default function CreditNoteListTable({
         cell: (creditNote) => <FormattedDate date={creditNote.date} locale={i18nProps.locale} calendar />,
       },
       {
+        id: "status",
+        header: t("Status"),
+        cell: (creditNote) => <CreditNoteStatusBadge creditNote={creditNote} t={t} />,
+      },
+      {
         id: "total",
         header: t("Total"),
         align: "right",
         sort: {
           defaultDirection: "desc",
         },
-        cell: (creditNote) => -creditNote.total,
+        cell: (creditNote) => (
+          <ConvertedTotalWithTaxCell document={creditNote} field="total" locale={i18nProps.locale} t={t} sign={-1} />
+        ),
       },
       {
         id: "total_with_tax",
@@ -298,12 +316,9 @@ export default function CreditNoteListTable({
         sort: {
           defaultDirection: "desc",
         },
-        cell: (creditNote) => -creditNote.total_with_tax,
-      },
-      {
-        id: "status",
-        header: t("Status"),
-        cell: (creditNote) => <CreditNoteStatusBadge creditNote={creditNote} t={t} />,
+        cell: (creditNote) => (
+          <ConvertedTotalWithTaxCell document={creditNote} locale={i18nProps.locale} t={t} sign={-1} />
+        ),
       },
       {
         id: "actions",

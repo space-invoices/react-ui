@@ -3,6 +3,7 @@ import { invoices } from "@spaceinvoices/js-sdk";
 import { AlertTriangle } from "lucide-react";
 import type { ReactNode } from "react";
 import { useCallback, useMemo, useState } from "react";
+import { ConvertedTotalWithTaxCell } from "@/ui/components/documents/list/converted-total-with-tax-cell";
 import { CustomerLinkCell } from "@/ui/components/documents/list/customer-link-cell";
 import { mergeColumnOverrides } from "@/ui/components/table/columns";
 import { DataTable } from "@/ui/components/table/data-table";
@@ -97,6 +98,7 @@ type InvoiceListTableProps = {
   onEmailVerificationRequired?: () => void | Promise<void>;
   showSearchToolbar?: boolean;
   showPagination?: boolean;
+  showPageSizeSelector?: boolean;
   contentInsetClassName?: string;
   bottomPaddingClassName?: string;
   emptyState?: ReactNode;
@@ -136,6 +138,7 @@ export default function InvoiceListTable({
   onEmailVerificationRequired,
   showSearchToolbar,
   showPagination,
+  showPageSizeSelector,
   contentInsetClassName,
   bottomPaddingClassName,
   emptyState,
@@ -305,6 +308,16 @@ export default function InvoiceListTable({
         ),
       },
       {
+        id: "reference",
+        header: t("Reference"),
+        defaultVisible: false,
+        cell: (invoice) => (
+          <span className="block max-w-48 truncate" title={invoice.reference ?? undefined}>
+            {invoice.reference ?? "-"}
+          </span>
+        ),
+      },
+      {
         id: "date",
         header: t("Date"),
         sort: {
@@ -319,23 +332,25 @@ export default function InvoiceListTable({
         cell: (invoice) => <FormattedDate date={invoice.date_due} locale={i18nProps.locale} calendar />,
       },
       {
+        id: "status",
+        header: t("Status"),
+        cell: (invoice) => <InvoiceStatusBadge invoice={invoice} t={t} />,
+      },
+      {
         id: "total",
         header: t("Total"),
         align: "right",
         sort: true,
-        cell: (invoice) => invoice.total,
+        cell: (invoice) => (
+          <ConvertedTotalWithTaxCell document={invoice} field="total" locale={i18nProps.locale} t={t} />
+        ),
       },
       {
         id: "total_with_tax",
         header: t("Total with Tax"),
         align: "right",
         sort: true,
-        cell: (invoice) => invoice.total_with_tax,
-      },
-      {
-        id: "status",
-        header: t("Status"),
-        cell: (invoice) => <InvoiceStatusBadge invoice={invoice} t={t} />,
+        cell: (invoice) => <ConvertedTotalWithTaxCell document={invoice} locale={i18nProps.locale} t={t} />,
       },
       {
         id: "actions",
@@ -414,6 +429,7 @@ export default function InvoiceListTable({
       selectionToolbar={selectionToolbar}
       showSearchToolbar={showSearchToolbar}
       showPagination={showPagination}
+      showPageSizeSelector={showPageSizeSelector}
       contentInsetClassName={contentInsetClassName}
       bottomPaddingClassName={bottomPaddingClassName}
       emptyState={emptyState}

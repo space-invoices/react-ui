@@ -13,6 +13,7 @@ A comprehensive, type-safe table system with built-in search, ordering, paginati
 - **Loading States**: Skeleton loaders and empty states
 - **Cursor Pagination**: Efficient server-side pagination
 - **Sortable Headers**: Optional clickable column headers for asc/desc/clear sorting
+- **Column selection**: Show or hide columns and remember the choice in the current browser
 
 ## Quick Start
 
@@ -116,6 +117,7 @@ function InvoiceTable() {
 | `onRowClick` | `(item: T) => void` | No | Row click handler |
 | `renderRow` | `(item: T) => ReactNode` | No | Custom row renderer |
 | `renderHeader` | `() => ReactNode` | No | Custom header renderer |
+| `columnVisibilityKey` | `string \| false` | No | Browser preference key; defaults to `cacheKey` when the search toolbar is shown. Pass `false` to disable or a string to enable with a custom toolbar. |
 
 ### Column Definition
 
@@ -127,6 +129,9 @@ type Column<T> = {
   cell?: (item: T) => ReactNode; // Cell renderer function
   className?: string;            // Optional CSS classes
   sort?: boolean | TableColumnSort; // Optional header click sorting
+  defaultVisible?: boolean;      // Defaults to true; false makes a column opt-in
+  hideable?: boolean;            // false keeps a column visible
+  visibilityLabel?: string;      // Chooser label for a non-text header
 };
 
 type TableColumnSort = {
@@ -136,6 +141,24 @@ type TableColumnSort = {
   clearOnThirdClick?: boolean;   // Defaults to true
 };
 ```
+
+### Column selection
+
+The Columns menu preserves the current column order and initial layout. Set
+`defaultVisible: false` for optional fields, such as a document reference. The
+`actions` column stays visible, and at least one data column must remain visible.
+Reset columns restores the declared defaults.
+
+Preferences contain column IDs and visibility booleans only and are stored in
+localStorage per list key, shared across entities in that browser. They do not
+change queries, sorting, pagination, or exports. Invalid or unavailable storage
+falls back safely to defaults; changes still work for the mounted table.
+
+Tables without the search toolbar, such as dashboard cards, keep their declared
+defaults unless given an explicit `columnVisibilityKey`. Custom row or header
+renderers retain responsibility for their own layout and do not get the chooser.
+Columns removed by a caller before reaching DataTable cannot be restored from
+the menu.
 
 ### Sortable Headers
 

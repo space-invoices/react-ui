@@ -1,4 +1,5 @@
 export default {
   "Collection Rate": "Tasa de cobro",
-  "Collected vs. invoiced, after credit notes": "Cobrado vs. facturado, tras notas de crédito",
+  "Collected vs. invoiced, with credit notes accounted for":
+    "Cobrado vs. facturado, teniendo en cuenta las notas de crédito",
 } as const;

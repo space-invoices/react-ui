@@ -333,6 +333,18 @@ export function useTableState({
   }, []);
 
   /**
+   * Change the number of rows requested for each page and restart cursor pagination.
+   */
+  const handleLimitChange = useCallback((limit: number) => {
+    setParams((prevParams) => ({
+      ...prevParams,
+      limit,
+      prev_cursor: undefined,
+      next_cursor: undefined,
+    }));
+  }, []);
+
+  /**
    * Handle filter change - stores URL-friendly params
    */
   const handleFilterChange = useCallback((state: FilterState | null) => {
@@ -414,6 +426,7 @@ export function useTableState({
     filterState,
     handleSearch,
     handlePageChange,
+    handleLimitChange,
     handleFilterChange,
     handleSortChange,
   };

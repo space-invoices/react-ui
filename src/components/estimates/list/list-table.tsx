@@ -1,6 +1,7 @@
 import type { Estimate } from "@spaceinvoices/js-sdk";
 import { estimates } from "@spaceinvoices/js-sdk";
 import { useCallback, useMemo, useState } from "react";
+import { ConvertedTotalWithTaxCell } from "@/ui/components/documents/list/converted-total-with-tax-cell";
 import { CustomerLinkCell } from "@/ui/components/documents/list/customer-link-cell";
 import { DataTable } from "@/ui/components/table/data-table";
 import { FormattedDate } from "@/ui/components/table/date-cell";
@@ -259,6 +260,16 @@ export default function EstimateListTable({
         ),
       },
       {
+        id: "reference",
+        header: t("Reference"),
+        defaultVisible: false,
+        cell: (estimate) => (
+          <span className="block max-w-48 truncate" title={estimate.reference ?? undefined}>
+            {estimate.reference ?? "-"}
+          </span>
+        ),
+      },
+      {
         id: "date",
         header: t("Date"),
         sort: {
@@ -279,7 +290,9 @@ export default function EstimateListTable({
         sort: {
           defaultDirection: "desc",
         },
-        cell: (estimate) => estimate.total,
+        cell: (estimate) => (
+          <ConvertedTotalWithTaxCell document={estimate} field="total" locale={i18nProps.locale} t={t} />
+        ),
       },
       {
         id: "total_with_tax",
@@ -288,7 +301,7 @@ export default function EstimateListTable({
         sort: {
           defaultDirection: "desc",
         },
-        cell: (estimate) => estimate.total_with_tax,
+        cell: (estimate) => <ConvertedTotalWithTaxCell document={estimate} locale={i18nProps.locale} t={t} />,
       },
       {
         id: "actions",

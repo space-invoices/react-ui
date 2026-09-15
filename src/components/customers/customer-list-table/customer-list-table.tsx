@@ -135,6 +135,18 @@ export default function CustomerListTable({
         cell: (customer) => getContactTypeLabel(customer, t),
       },
       {
+        id: "tax_number",
+        header: t("Tax number"),
+        align: "right",
+        cell: (customer) => customer.tax_number,
+      },
+      {
+        id: "email",
+        header: t("Email"),
+        defaultVisible: false,
+        cell: (customer) => customer.email ?? "-",
+      },
+      {
         id: "address",
         header: t("Address"),
         sort: true,
@@ -161,12 +173,6 @@ export default function CustomerListTable({
         header: t("Country"),
         sort: true,
         cell: (customer) => customer.country,
-      },
-      {
-        id: "tax_number",
-        header: t("Tax number"),
-        align: "right",
-        cell: (customer) => customer.tax_number,
       },
       {
         id: "actions",

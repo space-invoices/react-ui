@@ -95,7 +95,9 @@ export function TaxCollectedCard({
             ) : (
               <p className="text-muted-foreground text-sm">{t("No tax data")}</p>
             )}
-            <p className="mt-2 text-muted-foreground text-xs">{t("Tax charged by invoice date, less credit notes")}</p>
+            <p className="mt-2 text-muted-foreground text-xs">
+              {t("Tax charged by invoice date, minus tax on credit notes")}
+            </p>
           </>
         )}
       </CardContent>

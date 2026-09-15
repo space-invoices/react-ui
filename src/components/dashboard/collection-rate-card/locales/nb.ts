@@ -1,4 +1,5 @@
 export default {
   "Collection Rate": "Innkrevingsrate",
-  "Collected vs. invoiced, after credit notes": "Innkrevd mot fakturert, etter kreditnotaer",
+  "Collected vs. invoiced, with credit notes accounted for":
+    "Innkrevd mot fakturert, med kreditnotaer tatt med i beregningen",
 } as const;

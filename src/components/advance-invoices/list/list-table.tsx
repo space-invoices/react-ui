@@ -2,6 +2,7 @@ import type { AdvanceInvoice } from "@spaceinvoices/js-sdk";
 import { advanceInvoices } from "@spaceinvoices/js-sdk";
 import { AlertTriangle } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
+import { ConvertedTotalWithTaxCell } from "@/ui/components/documents/list/converted-total-with-tax-cell";
 import { CustomerLinkCell } from "@/ui/components/documents/list/customer-link-cell";
 import { DataTable } from "@/ui/components/table/data-table";
 import { FormattedDate } from "@/ui/components/table/date-cell";
@@ -276,6 +277,16 @@ export default function AdvanceInvoiceListTable({
         ),
       },
       {
+        id: "reference",
+        header: t("Reference"),
+        defaultVisible: false,
+        cell: (advanceInvoice) => (
+          <span className="block max-w-48 truncate" title={advanceInvoice.reference ?? undefined}>
+            {advanceInvoice.reference ?? "-"}
+          </span>
+        ),
+      },
+      {
         id: "date",
         header: t("Date"),
         sort: {
@@ -284,13 +295,20 @@ export default function AdvanceInvoiceListTable({
         cell: (advanceInvoice) => <FormattedDate date={advanceInvoice.date} locale={i18nProps.locale} calendar />,
       },
       {
+        id: "status",
+        header: t("Status"),
+        cell: (advanceInvoice) => <AdvanceInvoiceStatusBadge advanceInvoice={advanceInvoice} t={t} />,
+      },
+      {
         id: "total",
         header: t("Total"),
         align: "right",
         sort: {
           defaultDirection: "desc",
         },
-        cell: (advanceInvoice) => advanceInvoice.total,
+        cell: (advanceInvoice) => (
+          <ConvertedTotalWithTaxCell document={advanceInvoice} field="total" locale={i18nProps.locale} t={t} />
+        ),
       },
       {
         id: "total_with_tax",
@@ -299,12 +317,9 @@ export default function AdvanceInvoiceListTable({
         sort: {
           defaultDirection: "desc",
         },
-        cell: (advanceInvoice) => advanceInvoice.total_with_tax,
-      },
-      {
-        id: "status",
-        header: t("Status"),
-        cell: (advanceInvoice) => <AdvanceInvoiceStatusBadge advanceInvoice={advanceInvoice} t={t} />,
+        cell: (advanceInvoice) => (
+          <ConvertedTotalWithTaxCell document={advanceInvoice} locale={i18nProps.locale} t={t} />
+        ),
       },
       {
         id: "actions",

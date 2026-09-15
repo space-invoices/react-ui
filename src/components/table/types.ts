@@ -28,6 +28,12 @@ export type Column<T> = {
   align?: "left" | "center" | "right";
   /** Optional CSS class for the column */
   className?: string;
+  /** Whether the column is initially displayed. Defaults to true. */
+  defaultVisible?: boolean;
+  /** Whether users can hide the column. Defaults to true, except the actions column. */
+  hideable?: boolean;
+  /** Label used in the column chooser when the header is not text. */
+  visibilityLabel?: string;
   /** Enable header click sorting using the column id or an explicit sort mapping */
   sort?: boolean | TableColumnSort;
 };

@@ -137,12 +137,6 @@ export default function RecurringInvoiceListTable({
         },
       },
       {
-        id: "status",
-        header: t("Status"),
-        sort: true,
-        cell: (ri) => <Badge variant={statusVariant(ri.status)}>{t(`status.${ri.status}`)}</Badge>,
-      },
-      {
         id: "next_run_date",
         header: t("Next Run"),
         sort: true,
@@ -152,6 +146,12 @@ export default function RecurringInvoiceListTable({
           ) : (
             <span className="text-muted-foreground">-</span>
           ),
+      },
+      {
+        id: "status",
+        header: t("Status"),
+        sort: true,
+        cell: (ri) => <Badge variant={statusVariant(ri.status)}>{t(`status.${ri.status}`)}</Badge>,
       },
       {
         id: "auto_send",

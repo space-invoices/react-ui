@@ -3,6 +3,7 @@ import { expenses } from "@spaceinvoices/js-sdk";
 import { CircleAlert, FilePenLine, Receipt, Upload } from "lucide-react";
 import type { ReactNode } from "react";
 import { useMemo } from "react";
+import { ConvertedTotalWithTaxCell } from "@/ui/components/documents/list/converted-total-with-tax-cell";
 import { DataTable } from "@/ui/components/table/data-table";
 import { FormattedDate } from "@/ui/components/table/date-cell";
 import { useTableFetch } from "@/ui/components/table/hooks/use-table-fetch";
@@ -180,6 +181,24 @@ export default function ExpenseListTable({
         ),
       },
       {
+        id: "reference",
+        header: t("Reference"),
+        defaultVisible: false,
+        cell: (expense) => (
+          <span className="block max-w-48 truncate" title={expense.reference ?? undefined}>
+            {expense.reference ?? "-"}
+          </span>
+        ),
+      },
+      {
+        id: "date",
+        header: t("Document date"),
+        sort: {
+          defaultDirection: "desc",
+        },
+        cell: (expense) => <FormattedDate date={expense.date} locale={i18nProps.locale} calendar />,
+      },
+      {
         id: "date_received",
         header: t("Received date"),
         sort: {
@@ -193,18 +212,20 @@ export default function ExpenseListTable({
           ),
       },
       {
-        id: "date",
-        header: t("Document date"),
-        sort: {
-          defaultDirection: "desc",
-        },
-        cell: (expense) => <FormattedDate date={expense.date} locale={i18nProps.locale} calendar />,
-      },
-      {
         id: "date_due",
         header: t("Due date"),
         sort: true,
         cell: (expense) => <ExpenseDueDate expense={expense} t={t} locale={i18nProps.locale} />,
+      },
+      {
+        id: "status",
+        header: t("Status"),
+        cell: (expense) => (
+          <div className="flex items-center gap-2">
+            <ExpenseStatusBadge expense={expense} t={t} />
+            <ExpenseRecordIndicators expense={expense} t={t} />
+          </div>
+        ),
       },
       {
         id: "amount",
@@ -214,7 +235,7 @@ export default function ExpenseListTable({
           expense.total_with_tax == null ? (
             <MissingValuePlaceholder />
           ) : (
-            formatCurrencyValue(expense.total_with_tax, expense.currency_code || "EUR", i18nProps.locale)
+            <ConvertedTotalWithTaxCell document={expense} locale={i18nProps.locale} t={t} />
           ),
       },
       {
@@ -230,16 +251,6 @@ export default function ExpenseListTable({
               {formatCurrencyValue(expense.total_due ?? 0, expense.currency_code || "EUR", i18nProps.locale)}
             </span>
           ),
-      },
-      {
-        id: "status",
-        header: t("Status"),
-        cell: (expense) => (
-          <div className="flex items-center gap-2">
-            <ExpenseStatusBadge expense={expense} t={t} />
-            <ExpenseRecordIndicators expense={expense} t={t} />
-          </div>
-        ),
       },
       {
         id: "actions",

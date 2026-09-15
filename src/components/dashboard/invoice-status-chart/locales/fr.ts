@@ -1,6 +1,6 @@
 export default {
   "Invoice Status": "Statut des factures",
-  "Breakdown of invoices by payment status": "Repartition des factures par statut de paiement",
+  "Breakdown of invoices by payment status": "Répartition des factures par statut de paiement",
   Paid: "Paye",
   Pending: "En attente",
   Overdue: "En retard",

@@ -1,4 +1,4 @@
 export default {
   "Collection Rate": "Indrivningsgrad",
-  "Collected vs. invoiced, after credit notes": "Inkasserat mot fakturerat, efter kreditnotor",
+  "Collected vs. invoiced, with credit notes accounted for": "Inkasserat mot fakturerat, med hänsyn till kreditnotor",
 } as const;

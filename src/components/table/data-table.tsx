@@ -5,6 +5,8 @@ import { Fragment, lazy, memo, Suspense, useCallback, useMemo, useState } from "
 import { Checkbox } from "@/ui/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/ui/components/ui/table";
 import { cn } from "@/ui/lib/utils";
+import { ColumnVisibilityMenu } from "./column-visibility-menu";
+import { useColumnVisibility } from "./hooks/use-column-visibility";
 import { useTableQuery } from "./hooks/use-table-query";
 import { useTableState } from "./hooks/use-table-state";
 import { SearchInput } from "./search-input";
@@ -63,10 +65,14 @@ export type DataTableProps<T> = {
   selectionToolbar?: (selectedCount: number, data: T[]) => ReactNode;
   /** When false, hides the search / filter toolbar area */
   showSearchToolbar?: boolean;
+  /** Storage key for user column visibility choices. False disables the chooser. */
+  columnVisibilityKey?: string | false;
   /** Custom empty state for truly empty collections */
   emptyState?: ReactNode;
   /** When false, hides the pagination footer */
   showPagination?: boolean;
+  /** When false, keeps cursor controls but hides the page-size selector */
+  showPageSizeSelector?: boolean;
   /** Horizontal inset around the table block and related states */
   contentInsetClassName?: string;
   /** Bottom padding on the overall table wrapper */
@@ -90,6 +96,7 @@ function SearchToolbar({
   onSearch,
   onRefresh,
   isRefreshing,
+  toolbarSlot,
   t,
 }: {
   searchValue?: string;
@@ -97,9 +104,10 @@ function SearchToolbar({
   onRefresh?: () => unknown;
   isRefreshing?: boolean;
   t: (key: string) => string;
+  toolbarSlot?: ReactNode;
 }) {
   return (
-    <div className="flex w-full flex-col gap-2 px-4 pt-4 sm:flex-row sm:items-center">
+    <div className="flex w-full flex-wrap items-center gap-2 px-4 pt-4">
       <SearchInput
         initialValue={searchValue}
         onSearch={onSearch}
@@ -107,7 +115,10 @@ function SearchToolbar({
         ariaLabel={t("Search")}
         clearAriaLabel={t("Clear search")}
       />
-      <TableRefreshButton onRefresh={onRefresh} isRefreshing={isRefreshing} t={t} />
+      <div className="ml-auto flex items-center gap-2">
+        {toolbarSlot}
+        <TableRefreshButton onRefresh={onRefresh} isRefreshing={isRefreshing} t={t} className="ml-0" />
+      </div>
     </div>
   );
 }
@@ -138,14 +149,46 @@ export function DataTable<T extends { id: string }>({
   onSelectionChange,
   selectionToolbar,
   showSearchToolbar = true,
+  columnVisibilityKey,
   emptyState,
   showPagination = true,
+  showPageSizeSelector = true,
   contentInsetClassName = "px-4",
   bottomPaddingClassName = "pb-4",
   tableClassName,
 }: DataTableProps<T>) {
+  const columnVisibilityStorageKey =
+    renderRow || renderHeader
+      ? false
+      : columnVisibilityKey === undefined
+        ? showSearchToolbar
+          ? cacheKey
+          : false
+        : columnVisibilityKey;
+  const {
+    canToggle: canToggleColumnVisibility,
+    isVisible,
+    reset: resetColumnVisibility,
+    toggle: toggleColumnVisibility,
+    visibleColumns,
+  } = useColumnVisibility(columnVisibilityStorageKey, columns);
+  const displayColumns =
+    renderRow || renderHeader
+      ? columns
+      : columnVisibilityStorageKey
+        ? visibleColumns
+        : columns.filter((column) => column.defaultVisible !== false);
+  const columnVisibilityControl = columnVisibilityStorageKey ? (
+    <ColumnVisibilityMenu
+      columns={columns}
+      canToggle={canToggleColumnVisibility}
+      isVisible={isVisible}
+      onReset={resetColumnVisibility}
+      onToggle={toggleColumnVisibility}
+      t={t}
+    />
+  ) : null;
   const hasFilters = hasFilterControls(filterConfig);
-  const displayRows = Math.max(queryParams?.limit ?? 10, 1);
   // Filter panel open state - starts open if filters are active in URL
   const hasInitialFilters = Boolean(
     queryParams?.filter_date_from ||
@@ -159,13 +202,22 @@ export function DataTable<T extends { id: string }>({
   const [filterPanelOpen, setFilterPanelOpen] = useState(hasInitialFilters);
 
   // Manage table state (search, pagination, filters)
-  const { params, apiParams, filterState, handleSearch, handlePageChange, handleFilterChange, handleSortChange } =
-    useTableState({
-      initialParams: queryParams,
-      onChangeParams,
-      disableUrlSync,
-      filterConfig,
-    });
+  const {
+    params,
+    apiParams,
+    filterState,
+    handleSearch,
+    handlePageChange,
+    handleLimitChange,
+    handleFilterChange,
+    handleSortChange,
+  } = useTableState({
+    initialParams: queryParams,
+    onChangeParams,
+    disableUrlSync,
+    filterConfig,
+  });
+  const displayRows = Math.max(params.limit ?? 10, 1);
 
   // Fetch table data (use apiParams which has the query JSON for API)
   const {
@@ -248,6 +300,7 @@ export function DataTable<T extends { id: string }>({
             onRefresh={handleRefresh}
             isRefreshing={isFetching}
             t={t}
+            toolbarSlot={columnVisibilityControl}
           />
         }
       >
@@ -263,6 +316,7 @@ export function DataTable<T extends { id: string }>({
           onToggle={setFilterPanelOpen}
           onRefresh={handleRefresh}
           isRefreshing={isFetching}
+          toolbarSlot={columnVisibilityControl}
         />
       </Suspense>
     ) : (
@@ -272,18 +326,22 @@ export function DataTable<T extends { id: string }>({
         onRefresh={handleRefresh}
         isRefreshing={isFetching}
         t={t}
+        toolbarSlot={columnVisibilityControl}
       />
     )
   ) : null;
+  const toolbar =
+    searchToolbar ??
+    (columnVisibilityControl ? <div className="flex justify-end px-4 pt-4">{columnVisibilityControl}</div> : null);
 
   // Show skeleton during initial load (with filter bar for consistency)
   if (isFetching && !queryResult) {
     return (
       <div className={cn("space-y-4", bottomPaddingClassName)}>
-        {searchToolbar}
+        {toolbar}
         <div className={contentInsetClassName}>
           <TableSkeleton
-            columns={columns.length + (selectable ? 1 : 0)}
+            columns={displayColumns.length + (selectable ? 1 : 0)}
             rows={displayRows}
             showSearch={false}
             showPagination={showPagination}
@@ -298,7 +356,7 @@ export function DataTable<T extends { id: string }>({
   if (data.length === 0 && !hasActiveFilters) {
     return (
       <div className={cn("space-y-4", bottomPaddingClassName)}>
-        {searchToolbar}
+        {toolbar}
         <div className={contentInsetClassName}>
           {emptyState ? (
             emptyState
@@ -319,7 +377,7 @@ export function DataTable<T extends { id: string }>({
 
   return (
     <div className={cn("space-y-4", bottomPaddingClassName)}>
-      {searchToolbar}
+      {toolbar}
 
       {selectable && selectedCount > 0 && selectionToolbar && (
         <div className={contentInsetClassName}>
@@ -338,7 +396,7 @@ export function DataTable<T extends { id: string }>({
               renderHeader()
             ) : (
               <DefaultTableHeader
-                columns={columns}
+                columns={displayColumns}
                 selectable={selectable}
                 allPageSelected={allPageSelected}
                 somePageSelected={somePageSelected}
@@ -362,7 +420,7 @@ export function DataTable<T extends { id: string }>({
                     <DefaultTableRow
                       key={item.id}
                       item={item}
-                      columns={columns}
+                      columns={displayColumns}
                       onRowClick={onRowClick}
                       selectable={selectable}
                       isSelected={selectedIds?.has(item.id)}
@@ -382,6 +440,8 @@ export function DataTable<T extends { id: string }>({
                 prevCursor={queryResult?.pagination.prev_cursor}
                 nextCursor={queryResult?.pagination.next_cursor}
                 onPageChange={handlePageChange}
+                limit={params.limit ?? 10}
+                onLimitChange={showPageSizeSelector ? handleLimitChange : undefined}
                 t={t}
               />
             </div>

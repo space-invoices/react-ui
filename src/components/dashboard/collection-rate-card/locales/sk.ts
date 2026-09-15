@@ -1,4 +1,4 @@
 export default {
   "Collection Rate": "Miera inkasa",
-  "Collected vs. invoiced, after credit notes": "Vybrané vs. fakturované, po dobropisoch",
+  "Collected vs. invoiced, with credit notes accounted for": "Vybrané vs. fakturované, so zohľadnením dobropisov",
 } as const;

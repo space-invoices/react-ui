@@ -1,4 +1,10 @@
 const en = {
+  Columns: "Columns",
+  "Reset columns": "Reset columns",
+  Currency: "Currency",
+  "Original amount": "Original amount",
+  Reference: "Reference",
+  "Rows per page": "Rows per page",
   "Search...": "Search...",
   Search: "Search",
   "Clear search": "Clear search",
@@ -72,6 +78,12 @@ const en = {
 } as const;
 
 const sl = {
+  Columns: "Stolpci",
+  "Reset columns": "Ponastavi stolpce",
+  Currency: "Valuta",
+  "Original amount": "Izvirni znesek",
+  Reference: "Referenca",
+  "Rows per page": "Vrstic na stran",
   "Search...": "Išči...",
   Search: "Išči",
   "Clear search": "Počisti iskanje",
@@ -144,6 +156,12 @@ const sl = {
 } as const;
 
 const de = {
+  Columns: "Spalten",
+  "Reset columns": "Spalten zurücksetzen",
+  Currency: "Währung",
+  "Original amount": "Ursprünglicher Betrag",
+  Reference: "Referenz",
+  "Rows per page": "Zeilen pro Seite",
   "Search...": "Suchen...",
   Search: "Suchen",
   "Clear search": "Suche löschen",
@@ -217,6 +235,12 @@ const de = {
 } as const;
 
 const it = {
+  Columns: "Colonne",
+  "Reset columns": "Reimposta colonne",
+  Currency: "Valuta",
+  "Original amount": "Importo originale",
+  Reference: "Riferimento",
+  "Rows per page": "Righe per pagina",
   "Search...": "Cerca...",
   Search: "Cerca",
   "Clear search": "Cancella ricerca",
@@ -290,6 +314,12 @@ const it = {
 } as const;
 
 const fr = {
+  Columns: "Colonnes",
+  "Reset columns": "Réinitialiser les colonnes",
+  Currency: "Devise",
+  "Original amount": "Montant d’origine",
+  Reference: "Référence",
+  "Rows per page": "Lignes par page",
   "Search...": "Rechercher...",
   Search: "Rechercher",
   "Clear search": "Effacer la recherche",
@@ -363,6 +393,12 @@ const fr = {
 } as const;
 
 const es = {
+  Columns: "Columnas",
+  "Reset columns": "Restablecer columnas",
+  Currency: "Moneda",
+  "Original amount": "Importe original",
+  Reference: "Referencia",
+  "Rows per page": "Filas por página",
   "Search...": "Buscar...",
   Search: "Buscar",
   "Clear search": "Borrar búsqueda",
@@ -436,6 +472,12 @@ const es = {
 } as const;
 
 const pt = {
+  Columns: "Colunas",
+  "Reset columns": "Redefinir colunas",
+  Currency: "Moeda",
+  "Original amount": "Montante original",
+  Reference: "Referência",
+  "Rows per page": "Linhas por página",
   "Search...": "Pesquisar...",
   Search: "Pesquisar",
   "Clear search": "Limpar pesquisa",
@@ -509,6 +551,12 @@ const pt = {
 } as const;
 
 const nl = {
+  Columns: "Kolommen",
+  "Reset columns": "Kolommen resetten",
+  Currency: "Valuta",
+  "Original amount": "Oorspronkelijk bedrag",
+  Reference: "Referentie",
+  "Rows per page": "Rijen per pagina",
   "Search...": "Zoeken...",
   Search: "Zoeken",
   "Clear search": "Zoekopdracht wissen",
@@ -583,6 +631,12 @@ const nl = {
 } as const;
 
 const pl = {
+  Columns: "Kolumny",
+  "Reset columns": "Resetuj kolumny",
+  Currency: "Waluta",
+  "Original amount": "Kwota wyjściowa",
+  Reference: "Odniesienie",
+  "Rows per page": "Wierszy na stronę",
   "Search...": "Szukaj...",
   Search: "Szukaj",
   "Clear search": "Wyczyść wyszukiwanie",
@@ -656,6 +710,12 @@ const pl = {
 } as const;
 
 const hr = {
+  Columns: "Stupci",
+  "Reset columns": "Poništi stupce",
+  Currency: "Valuta",
+  "Original amount": "Izvorni iznos",
+  Reference: "Referenca",
+  "Rows per page": "Redaka po stranici",
   "Search...": "Pretraži...",
   Search: "Pretraži",
   "Clear search": "Očisti pretragu",
@@ -728,6 +788,12 @@ const hr = {
 } as const;
 
 const bg = {
+  Columns: "Колони",
+  "Reset columns": "Нулиране на колоните",
+  Currency: "Валута",
+  "Original amount": "Оригинална сума",
+  Reference: "Референция",
+  "Rows per page": "Редове на страница",
   "Search...": "Търсене...",
   Search: "Търсене",
   "Clear search": "Изчисти търсенето",
@@ -801,6 +867,12 @@ const bg = {
 } as const;
 
 const cs = {
+  Columns: "Sloupce",
+  "Reset columns": "Obnovit sloupce",
+  Currency: "Měna",
+  "Original amount": "Původní částka",
+  Reference: "Reference",
+  "Rows per page": "Řádků na stránku",
   "Search...": "Hledat...",
   Search: "Hledat",
   "Clear search": "Vymazat hledání",
@@ -874,6 +946,12 @@ const cs = {
 } as const;
 
 const et = {
+  Columns: "Veerud",
+  "Reset columns": "Lähtesta veerud",
+  Currency: "Valuuta",
+  "Original amount": "Algne summa",
+  Reference: "Viide",
+  "Rows per page": "Ridu lehel",
   "Search...": "Otsi...",
   Search: "Otsi",
   "Clear search": "Tühjenda otsing",
@@ -946,6 +1024,12 @@ const et = {
 } as const;
 
 const fi = {
+  Columns: "Sarakkeet",
+  "Reset columns": "Nollaa sarakkeet",
+  Currency: "Valuutta",
+  "Original amount": "Alkuperäinen summa",
+  Reference: "Viite",
+  "Rows per page": "Rivejä sivulla",
   "Search...": "Hae...",
   Search: "Hae",
   "Clear search": "Tyhjennä haku",
@@ -1019,6 +1103,12 @@ const fi = {
 } as const;
 
 const is = {
+  Columns: "Dálkar",
+  "Reset columns": "Endurstilla dálka",
+  Currency: "Gjaldmiðill",
+  "Original amount": "Upphafleg upphæð",
+  Reference: "Tilvísun",
+  "Rows per page": "Raðir á síðu",
   "Search...": "Leita...",
   Search: "Leita",
   "Clear search": "Hreinsa leit",
@@ -1092,6 +1182,12 @@ const is = {
 } as const;
 
 const nb = {
+  Columns: "Kolonner",
+  "Reset columns": "Tilbakestill kolonner",
+  Currency: "Valuta",
+  "Original amount": "Opprinnelig beløp",
+  Reference: "Referanse",
+  "Rows per page": "Rader per side",
   "Search...": "Søk...",
   Search: "Søk",
   "Clear search": "Fjern søk",
@@ -1165,6 +1261,12 @@ const nb = {
 } as const;
 
 const sk = {
+  Columns: "Stĺpce",
+  "Reset columns": "Obnoviť stĺpce",
+  Currency: "Mena",
+  "Original amount": "Pôvodná suma",
+  Reference: "Referencia",
+  "Rows per page": "Riadkov na stránku",
   "Search...": "Hľadať...",
   Search: "Hľadať",
   "Clear search": "Vymazať hľadanie",
@@ -1238,6 +1340,12 @@ const sk = {
 } as const;
 
 const sv = {
+  Columns: "Kolumner",
+  "Reset columns": "Återställ kolumner",
+  Currency: "Valuta",
+  "Original amount": "Ursprungligt belopp",
+  Reference: "Referens",
+  "Rows per page": "Rader per sida",
   "Search...": "Sök...",
   Search: "Sök",
   "Clear search": "Rensa sökning",

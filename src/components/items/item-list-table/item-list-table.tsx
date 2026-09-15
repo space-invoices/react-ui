@@ -85,7 +85,7 @@ export default function ItemListTable({
         id: "name",
         header: t("Name"),
         sort: true,
-        className: "w-auto max-w-0 sm:w-[42%]",
+        className: "w-auto min-w-[8rem] max-w-0 sm:w-[42%]",
         cell: (item) => (
           <Button
             variant="link"
@@ -109,6 +109,13 @@ export default function ItemListTable({
               {item.description}
             </div>
           ) : null,
+      },
+      {
+        id: "unit",
+        header: t("Unit"),
+        defaultVisible: false,
+        className: "w-[4.5rem]",
+        cell: (item) => item.unit ?? "-",
       },
       {
         id: "price",

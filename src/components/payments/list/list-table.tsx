@@ -98,15 +98,6 @@ export default function PaymentListTable({
         cell: (payment) => <FormattedDate date={payment.date} locale={i18nProps.locale} calendar />,
       },
       {
-        id: "amount",
-        header: t("Amount"),
-        align: "right",
-        sort: {
-          defaultDirection: "desc",
-        },
-        cell: (payment) => <span className="font-medium">{formatDecimalValue(payment.amount, i18nProps.locale)}</span>,
-      },
-      {
         id: "type",
         header: t("Type"),
         sort: true,
@@ -147,6 +138,15 @@ export default function PaymentListTable({
         header: t("Note"),
         className: "max-w-[200px]",
         cell: (payment) => <NoteCell note={payment.note} t={t} />,
+      },
+      {
+        id: "amount",
+        header: t("Amount"),
+        align: "right",
+        sort: {
+          defaultDirection: "desc",
+        },
+        cell: (payment) => <span className="font-medium">{formatDecimalValue(payment.amount, i18nProps.locale)}</span>,
       },
       {
         id: "actions",

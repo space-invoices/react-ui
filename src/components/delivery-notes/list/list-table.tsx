@@ -1,6 +1,7 @@
 import type { DeliveryNote } from "@spaceinvoices/js-sdk";
 import { deliveryNotes } from "@spaceinvoices/js-sdk";
 import { useCallback, useMemo, useState } from "react";
+import { ConvertedTotalWithTaxCell } from "@/ui/components/documents/list/converted-total-with-tax-cell";
 import { CustomerLinkCell } from "@/ui/components/documents/list/customer-link-cell";
 import { DataTable } from "@/ui/components/table/data-table";
 import { FormattedDate } from "@/ui/components/table/date-cell";
@@ -220,30 +221,22 @@ export default function DeliveryNoteListTable({
         ),
       },
       {
+        id: "reference",
+        header: t("Reference"),
+        defaultVisible: false,
+        cell: (deliveryNote) => (
+          <span className="block max-w-48 truncate" title={deliveryNote.reference ?? undefined}>
+            {deliveryNote.reference ?? "-"}
+          </span>
+        ),
+      },
+      {
         id: "date",
         header: t("Date"),
         sort: {
           defaultDirection: "desc",
         },
         cell: (deliveryNote) => <FormattedDate date={deliveryNote.date} locale={i18nProps.locale} calendar />,
-      },
-      {
-        id: "total",
-        header: t("Total"),
-        align: "right",
-        sort: {
-          defaultDirection: "desc",
-        },
-        cell: (deliveryNote) => deliveryNote.total,
-      },
-      {
-        id: "total_with_tax",
-        header: t("Total with Tax"),
-        align: "right",
-        sort: {
-          defaultDirection: "desc",
-        },
-        cell: (deliveryNote) => deliveryNote.total_with_tax,
       },
       {
         id: "status",
@@ -271,6 +264,26 @@ export default function DeliveryNoteListTable({
           }
           return null;
         },
+      },
+      {
+        id: "total",
+        header: t("Total"),
+        align: "right",
+        sort: {
+          defaultDirection: "desc",
+        },
+        cell: (deliveryNote) => (
+          <ConvertedTotalWithTaxCell document={deliveryNote} field="total" locale={i18nProps.locale} t={t} />
+        ),
+      },
+      {
+        id: "total_with_tax",
+        header: t("Total with Tax"),
+        align: "right",
+        sort: {
+          defaultDirection: "desc",
+        },
+        cell: (deliveryNote) => <ConvertedTotalWithTaxCell document={deliveryNote} locale={i18nProps.locale} t={t} />,
       },
       {
         id: "actions",

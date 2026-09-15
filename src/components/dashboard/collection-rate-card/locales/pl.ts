@@ -1,4 +1,4 @@
 export default {
   "Collection Rate": "Wskaznik sciagalnosci",
-  "Collected vs. invoiced, after credit notes": "Ściągnięto vs. zafakturowano, po korektach",
+  "Collected vs. invoiced, with credit notes accounted for": "Ściągnięto vs. zafakturowano, z uwzględnieniem korekt",
 } as const;

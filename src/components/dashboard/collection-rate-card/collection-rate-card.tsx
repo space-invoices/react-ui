@@ -113,7 +113,9 @@ export function CollectionRateCard(props: CollectionRateCardProps) {
             <p className="mt-1 break-words text-muted-foreground text-xs">
               {formatCurrency(data.totalCollected, data.currency)} / {formatCurrency(data.totalInvoiced, data.currency)}
             </p>
-            <p className="mt-1 text-muted-foreground text-xs">{t("Collected vs. invoiced, after credit notes")}</p>
+            <p className="mt-1 text-muted-foreground text-xs">
+              {t("Collected vs. invoiced, with credit notes accounted for")}
+            </p>
           </>
         )}
       </CardContent>

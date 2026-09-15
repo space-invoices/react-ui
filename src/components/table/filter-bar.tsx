@@ -1,4 +1,5 @@
 import { FilterIcon } from "lucide-react";
+import type { ReactNode } from "react";
 
 import { Badge } from "@/ui/components/ui/badge";
 import { Button } from "@/ui/components/ui/button";
@@ -32,6 +33,8 @@ type FilterBarProps = {
   onRefresh?: () => unknown;
   /** Whether the list is currently refreshing */
   isRefreshing?: boolean;
+  /** Additional controls shown with filter and refresh actions. */
+  toolbarSlot?: ReactNode;
 };
 
 /**
@@ -49,6 +52,7 @@ export function FilterBar({
   onToggle,
   onRefresh,
   isRefreshing,
+  toolbarSlot,
 }: FilterBarProps) {
   const hasFilters =
     filterConfig?.dateFields?.length ||
@@ -61,7 +65,7 @@ export function FilterBar({
   if (!hasFilters) {
     // No filters configured, just show search
     return (
-      <div className="flex w-full flex-col gap-2 px-4 pt-4 sm:flex-row sm:items-center">
+      <div className="flex w-full flex-wrap items-center gap-2 px-4 pt-4">
         <SearchInput
           initialValue={searchValue}
           onSearch={onSearch}
@@ -69,14 +73,17 @@ export function FilterBar({
           ariaLabel={t("Search")}
           clearAriaLabel={t("Clear search")}
         />
-        <TableRefreshButton onRefresh={onRefresh} isRefreshing={isRefreshing} t={t} />
+        <div className="ml-auto flex items-center gap-2">
+          {toolbarSlot}
+          <TableRefreshButton onRefresh={onRefresh} isRefreshing={isRefreshing} t={t} className="ml-0" />
+        </div>
       </div>
     );
   }
 
   return (
     <Collapsible open={isOpen} onOpenChange={onToggle} className="px-4 pt-4">
-      <div className="flex w-full items-center gap-2">
+      <div className="flex w-full flex-wrap items-center gap-2">
         <SearchInput
           initialValue={searchValue}
           onSearch={onSearch}
@@ -95,7 +102,10 @@ export function FilterBar({
             )}
           </Button>
         </CollapsibleTrigger>
-        <TableRefreshButton onRefresh={onRefresh} isRefreshing={isRefreshing} t={t} />
+        <div className="ml-auto flex items-center gap-2">
+          {toolbarSlot}
+          <TableRefreshButton onRefresh={onRefresh} isRefreshing={isRefreshing} t={t} className="ml-0" />
+        </div>
       </div>
       <CollapsibleContent className="mt-3">
         <FilterPanel config={filterConfig} state={filterState} onChange={onFilterChange} t={t} locale={locale} />
